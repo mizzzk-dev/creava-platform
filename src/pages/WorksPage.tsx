@@ -1,7 +1,9 @@
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useStrapiCollection, useContentAccess } from '@/hooks'
 import { getWorksList } from '@/modules/works/api'
 import { formatDate } from '@/utils'
+import { detailPath } from '@/lib/routes'
 import type { Work } from '@/types'
 
 export default function WorksPage() {
@@ -41,15 +43,22 @@ export default function WorksPage() {
           <ul className="divide-y divide-gray-100">
             {visibleItems.map((item) => (
               <li key={item.id} className="py-4">
-                <p className="text-sm font-medium text-gray-900">{item.title}</p>
-                {item.category && (
-                  <p className="mt-0.5 text-xs text-gray-400">{item.category}</p>
-                )}
-                {item.publishAt && (
-                  <p className="mt-1 text-xs text-gray-400">
-                    {formatDate(item.publishAt)}
+                <Link
+                  to={detailPath.work(item.slug)}
+                  className="group block"
+                >
+                  <p className="text-sm font-medium text-gray-900 group-hover:text-gray-600 transition-colors">
+                    {item.title}
                   </p>
-                )}
+                  {item.category && (
+                    <p className="mt-0.5 text-xs text-gray-400">{item.category}</p>
+                  )}
+                  {item.publishAt && (
+                    <p className="mt-1 text-xs text-gray-400">
+                      {formatDate(item.publishAt)}
+                    </p>
+                  )}
+                </Link>
               </li>
             ))}
           </ul>

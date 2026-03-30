@@ -27,5 +27,8 @@
     "notSignedIn": "You need to sign in to view this page.",
     "notMember": "This page is for fan club members only.",
     "noContent": "No content available"
+  },
+  "detail": {
+    "backToList": "Back to list"
   }
 }
