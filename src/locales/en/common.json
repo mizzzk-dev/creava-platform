@@ -1,0 +1,19 @@
+{
+  "nav": {
+    "home": "Home",
+    "works": "Works",
+    "news": "News",
+    "blog": "Blog",
+    "fanclub": "Fan Club",
+    "contact": "Contact"
+  },
+  "footer": {
+    "copyright": "© 2025 Creava Platform. All rights reserved."
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "notFound": "Page not found",
+    "backToHome": "Back to Home"
+  }
+}
