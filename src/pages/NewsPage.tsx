@@ -1,15 +1,19 @@
 import { useTranslation } from 'react-i18next'
-import { useStrapiCollection } from '@/hooks'
+import { useStrapiCollection, useContentAccess } from '@/hooks'
 import { getNewsList } from '@/modules/news/api'
 import { formatDate } from '@/utils'
 import type { NewsItem } from '@/types'
 
 export default function NewsPage() {
   const { t } = useTranslation()
+  const { filterVisible } = useContentAccess()
 
   const { items, loading, error } = useStrapiCollection<NewsItem>(
     () => getNewsList({ pagination: { pageSize: 20 } }),
   )
+
+  // 閲覧不可コンテンツを除外（fc_only / 期限切れ limited）
+  const visibleItems = items ? filterVisible(items) : null
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-20">
@@ -29,13 +33,13 @@ export default function NewsPage() {
           </div>
         )}
 
-        {!loading && !error && items !== null && items.length === 0 && (
-          <p className="text-sm text-gray-400">コンテンツがありません</p>
+        {!loading && !error && visibleItems !== null && visibleItems.length === 0 && (
+          <p className="text-sm text-gray-400">{t('access.noContent')}</p>
         )}
 
-        {items && items.length > 0 && (
+        {visibleItems && visibleItems.length > 0 && (
           <ul className="divide-y divide-gray-100">
-            {items.map((item) => (
+            {visibleItems.map((item) => (
               <li key={item.id} className="py-4">
                 <p className="text-sm font-medium text-gray-900">{item.title}</p>
                 {item.publishAt && (

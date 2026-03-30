@@ -1,9 +1,12 @@
 import { useTranslation } from 'react-i18next'
-import { useCurrentUser } from '@/hooks'
+import FanclubGuard from '@/components/guards/FanclubGuard'
+import { useStrapiCollection, useContentAccess } from '@/hooks'
+import { getFanclubList } from '@/modules/fanclub/api'
+import { formatDate } from '@/utils'
+import type { FanclubContent } from '@/types'
 
 export default function FanclubPage() {
   const { t } = useTranslation()
-  const { user, isLoaded, isSignedIn } = useCurrentUser()
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-20">
@@ -12,31 +15,55 @@ export default function FanclubPage() {
       </h1>
 
       <div className="mt-10">
-        {!isLoaded && (
-          <p className="text-sm text-gray-400">{t('common.loading')}</p>
-        )}
-
-        {isLoaded && !isSignedIn && (
-          <p className="text-sm text-gray-500">{t('auth.memberOnly')}</p>
-        )}
-
-        {isLoaded && isSignedIn && user && (
-          <div className="space-y-2">
-            <p className="text-sm text-gray-700">
-              {t('auth.signedInAs')}{' '}
-              <span className="rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-600">
-                {user.email ?? '—'}
-              </span>
-            </p>
-            <p className="text-sm text-gray-700">
-              {t('auth.role')}{' '}
-              <span className="rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-600">
-                {user.role}
-              </span>
-            </p>
-          </div>
-        )}
+        <FanclubGuard>
+          <FanclubContentList />
+        </FanclubGuard>
       </div>
     </section>
+  )
+}
+
+/**
+ * ガード通過後に描画するコンテンツリスト
+ * この時点で role = member | admin が保証されている
+ */
+function FanclubContentList() {
+  const { t } = useTranslation()
+  const { filterVisible } = useContentAccess()
+
+  const { items, loading, error } = useStrapiCollection<FanclubContent>(
+    () => getFanclubList({ pagination: { pageSize: 20 } }),
+  )
+
+  const visibleItems = items ? filterVisible(items) : null
+
+  if (loading) {
+    return <p className="text-sm text-gray-400">{t('common.loading')}</p>
+  }
+
+  if (error) {
+    return (
+      <div className="rounded border border-red-200 bg-red-50 px-4 py-3">
+        <p className="text-sm font-medium text-red-600">{t('common.error')}</p>
+        <p className="mt-1 font-mono text-xs text-red-400">{error}</p>
+      </div>
+    )
+  }
+
+  if (visibleItems !== null && visibleItems.length === 0) {
+    return <p className="text-sm text-gray-400">{t('access.noContent')}</p>
+  }
+
+  return (
+    <ul className="divide-y divide-gray-100">
+      {visibleItems?.map((item) => (
+        <li key={item.id} className="py-4">
+          <p className="text-sm font-medium text-gray-900">{item.title}</p>
+          {item.publishAt && (
+            <p className="mt-1 text-xs text-gray-400">{formatDate(item.publishAt)}</p>
+          )}
+        </li>
+      ))}
+    </ul>
   )
 }

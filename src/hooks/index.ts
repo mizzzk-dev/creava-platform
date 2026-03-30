@@ -4,3 +4,4 @@
 export { useAsyncState } from './useAsyncState'
 export { useStrapiCollection, useStrapiSingle } from './useStrapiCollection'
 export { useCurrentUser } from './useCurrentUser'
+export { useContentAccess } from './useContentAccess'
