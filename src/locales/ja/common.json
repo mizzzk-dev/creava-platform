@@ -15,5 +15,20 @@
     "error": "エラーが発生しました",
     "notFound": "ページが見つかりません",
     "backToHome": "ホームへ戻る"
+  },
+  "auth": {
+    "signIn": "ログイン",
+    "signOut": "ログアウト",
+    "memberOnly": "このコンテンツは会員限定です。ログインしてください。",
+    "signedInAs": "ログイン中:",
+    "role": "ロール:"
+  },
+  "access": {
+    "notSignedIn": "このページの閲覧にはログインが必要です。",
+    "notMember": "このページはファンクラブ会員限定です。",
+    "noContent": "表示できるコンテンツがありません"
+  },
+  "detail": {
+    "backToList": "一覧に戻る"
   }
 }

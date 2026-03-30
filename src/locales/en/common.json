@@ -15,5 +15,20 @@
     "error": "An error occurred",
     "notFound": "Page not found",
     "backToHome": "Back to Home"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "memberOnly": "This content is for members only. Please sign in.",
+    "signedInAs": "Signed in as:",
+    "role": "Role:"
+  },
+  "access": {
+    "notSignedIn": "You need to sign in to view this page.",
+    "notMember": "This page is for fan club members only.",
+    "noContent": "No content available"
+  },
+  "detail": {
+    "backToList": "Back to list"
   }
 }

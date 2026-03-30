@@ -83,3 +83,12 @@ export interface FanclubContent extends ContentBase {
   body: string | null
   thumbnailUrl: string | null
 }
+
+/**
+ * サイト設定（Strapi Single Type: site-setting）
+ */
+export interface SiteSettings extends StrapiBase {
+  siteName: string
+  description: string | null
+  logoUrl: string | null
+}
