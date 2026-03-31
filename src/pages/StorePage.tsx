@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { useProductList } from '@/modules/store/hooks/useProductList'
 import ProductCard from '@/modules/store/components/ProductCard'
 import PageHead from '@/components/seo/PageHead'
+import SkeletonProductCard from '@/components/common/SkeletonProductCard'
 
 export default function StorePage() {
   const { t } = useTranslation()
@@ -21,7 +22,11 @@ export default function StorePage() {
         </h1>
 
         {loading && (
-          <p className="mt-8 text-sm text-gray-400">{t('common.loading')}</p>
+          <div className="mt-8 grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <SkeletonProductCard key={i} />
+            ))}
+          </div>
         )}
 
         {error && (

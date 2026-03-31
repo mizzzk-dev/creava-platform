@@ -5,6 +5,7 @@ import { getWorksList } from '@/modules/works/api'
 import { formatDate } from '@/utils'
 import { detailPath } from '@/lib/routes'
 import PageHead from '@/components/seo/PageHead'
+import SkeletonListItem from '@/components/common/SkeletonListItem'
 import type { Work } from '@/types'
 
 export default function WorksPage() {
@@ -27,7 +28,11 @@ export default function WorksPage() {
 
       <div className="mt-10">
         {loading && (
-          <p className="text-sm text-gray-400">{t('common.loading')}</p>
+          <ul className="divide-y divide-gray-100">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonListItem key={i} />
+            ))}
+          </ul>
         )}
 
         {error && (
