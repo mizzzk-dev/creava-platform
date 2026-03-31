@@ -30,5 +30,42 @@
   },
   "detail": {
     "backToList": "Back to list"
+  },
+  "home": {
+    "hero": {
+      "headline": "Creative Works",
+      "subCopy": "Creating across film, photography, and music.",
+      "ctaWorks": "View Works",
+      "ctaContact": "Contact",
+      "ctaFanclub": "Fan Club"
+    },
+    "latest": {
+      "title": "Latest",
+      "news": "News",
+      "blog": "Blog",
+      "events": "Events",
+      "viewAll": "View all",
+      "empty": "No content available"
+    },
+    "works": {
+      "title": "Works",
+      "viewAll": "View all works"
+    },
+    "store": {
+      "title": "Store",
+      "description": "Merchandise and photo books coming soon.",
+      "comingSoon": "Coming Soon",
+      "viewAll": "Visit Store"
+    },
+    "media": {
+      "title": "Media & Awards",
+      "viewAll": "View all"
+    },
+    "fanclub": {
+      "title": "Fan Club",
+      "description": "Get exclusive content and early access.",
+      "joinButton": "Join the Fan Club",
+      "memberButton": "View exclusive content"
+    }
   }
 }

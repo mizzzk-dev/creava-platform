@@ -59,6 +59,7 @@ export interface Work extends ContentBase {
   description: string | null
   thumbnailUrl: string | null
   category: string | null
+  isFeatured?: boolean
 }
 
 export interface NewsItem extends ContentBase {
@@ -82,6 +83,19 @@ export interface Event extends ContentBase {
 export interface FanclubContent extends ContentBase {
   body: string | null
   thumbnailUrl: string | null
+}
+
+export interface MediaItem extends StrapiBase {
+  title: string
+  source: string | null
+  url: string | null
+  publishedAt: string | null
+}
+
+export interface Award extends StrapiBase {
+  title: string
+  year: number | null
+  organization: string | null
 }
 
 /**
