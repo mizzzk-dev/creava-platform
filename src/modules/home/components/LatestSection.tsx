@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { useHomeLatest } from '@/modules/home/hooks/useHomeLatest'
-import { ROUTES, detailPath } from '@/lib/routes'
+import { ROUTES, detailPath } from '@/lib/routeConstants'
 import ContentCard from '@/components/cards/ContentCard'
 
 export default function LatestSection() {

@@ -14,30 +14,9 @@ import NotFoundPage from '@/pages/NotFoundPage'
 import StorePage from '@/pages/StorePage'
 import StoreDetailPage from '@/pages/StoreDetailPage'
 
-/** ルートパスの定数（Route element で使用） */
-export const ROUTES = {
-  HOME: '/',
-  WORKS: '/works',
-  WORK_DETAIL: '/works/:slug',
-  NEWS: '/news',
-  NEWS_DETAIL: '/news/:slug',
-  BLOG: '/blog',
-  BLOG_DETAIL: '/blog/:slug',
-  FANCLUB: '/fanclub',
-  FANCLUB_DETAIL: '/fanclub/:slug',
-  CONTACT: '/contact',
-  STORE: '/store',
-  STORE_DETAIL: '/store/:handle',
-} as const
-
-/** 詳細ページへの URL を生成する */
-export const detailPath = {
-  news: (slug: string) => `/news/${slug}`,
-  blog: (slug: string) => `/blog/${slug}`,
-  work: (slug: string) => `/works/${slug}`,
-  fanclub: (slug: string) => `/fanclub/${slug}`,
-  product: (handle: string) => `/store/${handle}`,
-} as const
+// 定数は循環参照を避けるため routeConstants から取得し re-export する
+export { ROUTES, detailPath } from './routeConstants'
+import { ROUTES } from './routeConstants'
 
 export function AppRoutes() {
   return (

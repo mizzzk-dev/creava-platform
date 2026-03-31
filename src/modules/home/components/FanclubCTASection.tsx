@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { useClerk } from '@clerk/clerk-react'
 import { useCurrentUser } from '@/hooks'
-import { ROUTES } from '@/lib/routes'
+import { ROUTES } from '@/lib/routeConstants'
 
 export default function FanclubCTASection() {
   const { t } = useTranslation()

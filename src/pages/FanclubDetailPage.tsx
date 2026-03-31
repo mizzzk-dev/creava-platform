@@ -9,7 +9,7 @@ import PageHead from '@/components/seo/PageHead'
 import SkeletonDetail from '@/components/common/SkeletonDetail'
 import { formatDate } from '@/utils'
 import { truncateForDescription } from '@/lib/seo'
-import { ROUTES } from '@/lib/routes'
+import { ROUTES } from '@/lib/routeConstants'
 import type { FanclubContent } from '@/types'
 
 export default function FanclubDetailPage() {
