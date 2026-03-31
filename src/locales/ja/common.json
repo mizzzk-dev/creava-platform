@@ -30,5 +30,42 @@
   },
   "detail": {
     "backToList": "一覧に戻る"
+  },
+  "home": {
+    "hero": {
+      "headline": "クリエイティブな作品を",
+      "subCopy": "映像・写真・音楽を中心に活動しています。",
+      "ctaWorks": "作品を見る",
+      "ctaContact": "お問い合わせ",
+      "ctaFanclub": "ファンクラブ"
+    },
+    "latest": {
+      "title": "最新情報",
+      "news": "ニュース",
+      "blog": "ブログ",
+      "events": "イベント",
+      "viewAll": "すべて見る",
+      "empty": "コンテンツがありません"
+    },
+    "works": {
+      "title": "作品",
+      "viewAll": "作品一覧へ"
+    },
+    "store": {
+      "title": "ストア",
+      "description": "グッズ・写真集などを販売予定です。",
+      "comingSoon": "近日公開",
+      "viewAll": "ストアへ"
+    },
+    "media": {
+      "title": "メディア・受賞",
+      "viewAll": "すべて見る"
+    },
+    "fanclub": {
+      "title": "ファンクラブ",
+      "description": "限定コンテンツや最新情報をいち早くお届けします。",
+      "joinButton": "ファンクラブに参加する",
+      "memberButton": "限定コンテンツを見る"
+    }
   }
 }
