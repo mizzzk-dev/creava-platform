@@ -5,7 +5,9 @@
     "news": "News",
     "blog": "Blog",
     "fanclub": "Fan Club",
-    "contact": "Contact"
+    "contact": "Contact",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
   },
   "footer": {
     "copyright": "© 2025 Creava Platform. All rights reserved."

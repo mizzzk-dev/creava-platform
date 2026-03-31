@@ -5,7 +5,9 @@
     "news": "ニュース",
     "blog": "ブログ",
     "fanclub": "ファンクラブ",
-    "contact": "お問い合わせ"
+    "contact": "お問い合わせ",
+    "openMenu": "メニューを開く",
+    "closeMenu": "メニューを閉じる"
   },
   "footer": {
     "copyright": "© 2025 Creava Platform. All rights reserved."
