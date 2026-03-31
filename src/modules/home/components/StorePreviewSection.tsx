@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
+import { ROUTES } from '@/lib/routes'
 
 const PLACEHOLDER_ITEMS = [
   { id: 1 },
@@ -25,7 +26,7 @@ export default function StorePreviewSection() {
             {t('home.store.title')}
           </h2>
           <Link
-            to="/store"
+            to={ROUTES.STORE}
             className="text-xs text-gray-400 transition-colors hover:text-gray-700"
           >
             {t('home.store.viewAll')}

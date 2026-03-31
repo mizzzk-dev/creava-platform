@@ -31,6 +31,14 @@
   "detail": {
     "backToList": "Back to list"
   },
+  "store": {
+    "title": "Store",
+    "empty": "No products available",
+    "outOfStock": "Out of stock",
+    "variants": "Variants",
+    "buyOnShopify": "Buy on Shopify",
+    "backToStore": "Back to store"
+  },
   "home": {
     "hero": {
       "headline": "Creative Works",

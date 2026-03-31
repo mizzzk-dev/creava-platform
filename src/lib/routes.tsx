@@ -11,6 +11,8 @@ import FanclubPage from '@/pages/FanclubPage'
 import FanclubDetailPage from '@/pages/FanclubDetailPage'
 import ContactPage from '@/pages/ContactPage'
 import NotFoundPage from '@/pages/NotFoundPage'
+import StorePage from '@/pages/StorePage'
+import StoreDetailPage from '@/pages/StoreDetailPage'
 
 /** ルートパスの定数（Route element で使用） */
 export const ROUTES = {
@@ -24,6 +26,8 @@ export const ROUTES = {
   FANCLUB: '/fanclub',
   FANCLUB_DETAIL: '/fanclub/:slug',
   CONTACT: '/contact',
+  STORE: '/store',
+  STORE_DETAIL: '/store/:handle',
 } as const
 
 /** 詳細ページへの URL を生成する */
@@ -32,6 +36,7 @@ export const detailPath = {
   blog: (slug: string) => `/blog/${slug}`,
   work: (slug: string) => `/works/${slug}`,
   fanclub: (slug: string) => `/fanclub/${slug}`,
+  product: (handle: string) => `/store/${handle}`,
 } as const
 
 export function AppRoutes() {
@@ -48,6 +53,8 @@ export function AppRoutes() {
         <Route path={ROUTES.FANCLUB} element={<FanclubPage />} />
         <Route path={ROUTES.FANCLUB_DETAIL} element={<FanclubDetailPage />} />
         <Route path={ROUTES.CONTACT} element={<ContactPage />} />
+        <Route path={ROUTES.STORE} element={<StorePage />} />
+        <Route path={ROUTES.STORE_DETAIL} element={<StoreDetailPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

@@ -31,6 +31,14 @@
   "detail": {
     "backToList": "一覧に戻る"
   },
+  "store": {
+    "title": "ストア",
+    "empty": "商品がありません",
+    "outOfStock": "在庫なし",
+    "variants": "バリエーション",
+    "buyOnShopify": "Shopifyで購入する",
+    "backToStore": "ストアへ戻る"
+  },
   "home": {
     "hero": {
       "headline": "クリエイティブな作品を",

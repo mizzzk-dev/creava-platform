@@ -66,3 +66,15 @@ export function formatDate(isoString: string, locale: string = 'ja-JP'): string 
     day: 'numeric',
   })
 }
+
+/**
+ * Shopify の価格文字列を表示用にフォーマットする
+ */
+export function formatPrice(amount: string, currencyCode: string): string {
+  const num = parseFloat(amount)
+  return new Intl.NumberFormat('ja-JP', {
+    style: 'currency',
+    currency: currencyCode,
+    minimumFractionDigits: 0,
+  }).format(num)
+}
