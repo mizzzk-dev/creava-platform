@@ -39,6 +39,37 @@
     "buyOnShopify": "Buy on Shopify",
     "backToStore": "Back to store"
   },
+  "contact": {
+    "tabContact": "Contact",
+    "tabRequest": "Work Request",
+    "name": "Name",
+    "email": "Email",
+    "subject": "Subject",
+    "message": "Message",
+    "company": "Company / Organization",
+    "requestType": "Request Type",
+    "selectRequestType": "Select a type",
+    "budget": "Budget",
+    "deadline": "Preferred Deadline",
+    "detail": "Project Details",
+    "submit": "Send",
+    "submitting": "Sending...",
+    "successTitle": "Message sent",
+    "successMessage": "Thank you for reaching out. We will get back to you shortly.",
+    "errorMessage": "Something went wrong. Please try again later.",
+    "sendAnother": "Send another message",
+    "errors": {
+      "required": "This field is required",
+      "emailFormat": "Please enter a valid email address",
+      "minLength": "Please enter at least {{min}} characters"
+    },
+    "requestTypes": {
+      "video": "Video Production",
+      "photo": "Photography",
+      "music": "Music Production",
+      "other": "Other"
+    }
+  },
   "home": {
     "hero": {
       "headline": "Creative Works",

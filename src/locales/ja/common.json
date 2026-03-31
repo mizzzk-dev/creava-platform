@@ -39,6 +39,37 @@
     "buyOnShopify": "Shopifyで購入する",
     "backToStore": "ストアへ戻る"
   },
+  "contact": {
+    "tabContact": "お問い合わせ",
+    "tabRequest": "仕事依頼",
+    "name": "お名前",
+    "email": "メールアドレス",
+    "subject": "件名",
+    "message": "お問い合わせ内容",
+    "company": "会社名・団体名",
+    "requestType": "依頼種別",
+    "selectRequestType": "依頼種別を選択",
+    "budget": "予算",
+    "deadline": "希望納期",
+    "detail": "依頼内容詳細",
+    "submit": "送信する",
+    "submitting": "送信中...",
+    "successTitle": "送信が完了しました",
+    "successMessage": "お問い合わせありがとうございます。内容を確認の上、ご連絡いたします。",
+    "errorMessage": "送信に失敗しました。しばらく時間をおいてから再度お試しください。",
+    "sendAnother": "別のお問い合わせをする",
+    "errors": {
+      "required": "この項目は必須です",
+      "emailFormat": "正しいメールアドレスを入力してください",
+      "minLength": "{{min}}文字以上入力してください"
+    },
+    "requestTypes": {
+      "video": "映像制作",
+      "photo": "写真撮影",
+      "music": "音楽制作",
+      "other": "その他"
+    }
+  },
   "home": {
     "hero": {
       "headline": "クリエイティブな作品を",
