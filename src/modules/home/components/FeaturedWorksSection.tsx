@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { useStrapiCollection } from '@/hooks'
 import { getWorksList } from '@/modules/works/api'
-import { ROUTES, detailPath } from '@/lib/routes'
+import { ROUTES, detailPath } from '@/lib/routeConstants'
 import WorkCard from '@/components/cards/WorkCard'
 import type { Work } from '@/types'
 

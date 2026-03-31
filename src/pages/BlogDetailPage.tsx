@@ -1,24 +1,23 @@
 import { useParams } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import { useSlugDetail } from '@/hooks'
 import { getBlogDetail } from '@/modules/blog/api'
 import ContentAccessGuard from '@/components/guards/ContentAccessGuard'
 import NotFoundState from '@/components/common/NotFoundState'
 import ErrorState from '@/components/common/ErrorState'
 import PageHead from '@/components/seo/PageHead'
+import SkeletonDetail from '@/components/common/SkeletonDetail'
 import { formatDate } from '@/utils'
 import { truncateForDescription } from '@/lib/seo'
-import { ROUTES } from '@/lib/routes'
+import { ROUTES } from '@/lib/routeConstants'
 import type { BlogPost } from '@/types'
 
 export default function BlogDetailPage() {
   const { slug } = useParams<{ slug: string }>()
-  const { t } = useTranslation()
   const { item, loading, error, notFound } = useSlugDetail<BlogPost>(getBlogDetail, slug)
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-20">
-      {loading && <p className="text-sm text-gray-400">{t('common.loading')}</p>}
+      {loading && <SkeletonDetail />}
       {error && <ErrorState message={error} />}
       {notFound && <NotFoundState backTo={ROUTES.BLOG} />}
 

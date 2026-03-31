@@ -1,5 +1,4 @@
 import { useParams } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import { useSlugDetail } from '@/hooks'
 import { getFanclubDetail } from '@/modules/fanclub/api'
 import FanclubGuard from '@/components/guards/FanclubGuard'
@@ -7,9 +6,10 @@ import ContentAccessGuard from '@/components/guards/ContentAccessGuard'
 import NotFoundState from '@/components/common/NotFoundState'
 import ErrorState from '@/components/common/ErrorState'
 import PageHead from '@/components/seo/PageHead'
+import SkeletonDetail from '@/components/common/SkeletonDetail'
 import { formatDate } from '@/utils'
 import { truncateForDescription } from '@/lib/seo'
-import { ROUTES } from '@/lib/routes'
+import { ROUTES } from '@/lib/routeConstants'
 import type { FanclubContent } from '@/types'
 
 export default function FanclubDetailPage() {
@@ -28,13 +28,12 @@ export default function FanclubDetailPage() {
  * FanclubGuard 通過後（member / admin 確認済み）に描画する詳細コンテンツ
  */
 function FanclubDetailContent({ slug }: { slug: string | undefined }) {
-  const { t } = useTranslation()
   const { item, loading, error, notFound } = useSlugDetail<FanclubContent>(
     getFanclubDetail,
     slug,
   )
 
-  if (loading) return <p className="text-sm text-gray-400">{t('common.loading')}</p>
+  if (loading) return <SkeletonDetail />
   if (error) return <ErrorState message={error} />
   if (notFound || !item) return <NotFoundState backTo={ROUTES.FANCLUB} />
 

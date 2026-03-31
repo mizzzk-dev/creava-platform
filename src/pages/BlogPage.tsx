@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { useStrapiCollection, useContentAccess } from '@/hooks'
 import { getBlogList } from '@/modules/blog/api'
 import { formatDate } from '@/utils'
-import { detailPath } from '@/lib/routes'
+import { detailPath } from '@/lib/routeConstants'
 import PageHead from '@/components/seo/PageHead'
+import SkeletonListItem from '@/components/common/SkeletonListItem'
 import type { BlogPost } from '@/types'
 
 export default function BlogPage() {
@@ -27,7 +28,11 @@ export default function BlogPage() {
 
       <div className="mt-10">
         {loading && (
-          <p className="text-sm text-gray-400">{t('common.loading')}</p>
+          <ul className="divide-y divide-gray-100">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonListItem key={i} />
+            ))}
+          </ul>
         )}
 
         {error && (

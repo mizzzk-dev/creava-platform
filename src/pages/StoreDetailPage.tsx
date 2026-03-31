@@ -4,10 +4,11 @@ import { motion } from 'framer-motion'
 import { useProductDetail } from '@/modules/store/hooks/useProductDetail'
 import { shopifyProductUrl } from '@/modules/store/api'
 import { formatPrice } from '@/utils'
-import { ROUTES } from '@/lib/routes'
+import { ROUTES } from '@/lib/routeConstants'
 import NotFoundState from '@/components/common/NotFoundState'
 import ErrorState from '@/components/common/ErrorState'
 import PageHead from '@/components/seo/PageHead'
+import SkeletonProductDetail from '@/components/common/SkeletonProductDetail'
 
 export default function StoreDetailPage() {
   const { handle } = useParams<{ handle: string }>()
@@ -18,7 +19,7 @@ export default function StoreDetailPage() {
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-20">
-      {loading && <p className="text-sm text-gray-400">{t('common.loading')}</p>}
+      {loading && <SkeletonProductDetail />}
       {error && <ErrorState message={error} />}
       {notFound && <NotFoundState backTo={ROUTES.STORE} />}
 

@@ -4,8 +4,9 @@ import FanclubGuard from '@/components/guards/FanclubGuard'
 import { useStrapiCollection, useContentAccess } from '@/hooks'
 import { getFanclubList } from '@/modules/fanclub/api'
 import { formatDate } from '@/utils'
-import { detailPath } from '@/lib/routes'
+import { detailPath } from '@/lib/routeConstants'
 import PageHead from '@/components/seo/PageHead'
+import SkeletonListItem from '@/components/common/SkeletonListItem'
 import type { FanclubContent } from '@/types'
 
 export default function FanclubPage() {
@@ -42,7 +43,13 @@ function FanclubContentList() {
   const visibleItems = items ? filterVisible(items) : null
 
   if (loading) {
-    return <p className="text-sm text-gray-400">{t('common.loading')}</p>
+    return (
+      <ul className="divide-y divide-gray-100">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <SkeletonListItem key={i} />
+        ))}
+      </ul>
+    )
   }
 
   if (error) {

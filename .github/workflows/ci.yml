@@ -24,6 +24,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Unit tests
+        run: npm test
+
       - name: Build (production)
         run: npm run build:prod
         env:
@@ -35,3 +38,5 @@ jobs:
           VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
           VITE_SHOPIFY_STORE_DOMAIN: ${{ secrets.VITE_SHOPIFY_STORE_DOMAIN }}
           VITE_SHOPIFY_STOREFRONT_TOKEN: ${{ secrets.VITE_SHOPIFY_STOREFRONT_TOKEN }}
+          VITE_FORMSPREE_CONTACT_ID: ${{ secrets.VITE_FORMSPREE_CONTACT_ID }}
+          VITE_FORMSPREE_REQUEST_ID: ${{ secrets.VITE_FORMSPREE_REQUEST_ID }}

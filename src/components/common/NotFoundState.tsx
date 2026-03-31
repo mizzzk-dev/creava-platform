@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ROUTES } from '@/lib/routes'
+import { ROUTES } from '@/lib/routeConstants'
 
 interface Props {
   /** 「一覧に戻る」リンクの遷移先（省略時はホームへ） */
