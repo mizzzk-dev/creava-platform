@@ -36,9 +36,11 @@
   "store": {
     "title": "ストア",
     "empty": "商品がありません",
-    "outOfStock": "在庫なし",
-    "variants": "バリエーション",
-    "buyOnShopify": "Shopifyで購入する",
+    "buyNow": "今すぐ購入",
+    "buyOn": "購入する",
+    "buyOnBase": "PayPay / Amazon Pay / PayPal はこちら",
+    "soldOut": "完売",
+    "comingSoon": "販売準備中",
     "backToStore": "ストアへ戻る"
   },
   "contact": {

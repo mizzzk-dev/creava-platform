@@ -1,18 +1,14 @@
-import { useEffect } from 'react'
-import { useAsyncState } from '@/hooks'
+import { useStrapiCollection } from '@/hooks'
 import { getProducts } from '@/modules/store/api'
-import type { ShopifyProductSummary } from '@/lib/shopify/types'
+import type { StoreProductSummary } from '@/modules/store/types'
 
-export function useProductList(first = 12) {
-  const { data, loading, error, execute } = useAsyncState<ShopifyProductSummary[]>()
-
-  useEffect(() => {
-    void execute(() => getProducts(first))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+export function useProductList(pageSize = 12) {
+  const { items, loading, error } = useStrapiCollection<StoreProductSummary>(
+    () => getProducts({ pagination: { pageSize } }),
+  )
 
   return {
-    products: data ?? [],
+    products: items ?? [],
     loading,
     error,
   }
