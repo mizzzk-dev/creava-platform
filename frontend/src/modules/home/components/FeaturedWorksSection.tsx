@@ -27,24 +27,31 @@ export default function FeaturedWorksSection() {
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
     >
-      <div className="flex items-baseline justify-between">
-        <h2 className="text-xs uppercase tracking-widest text-gray-400">
-          {t('home.works.title')}
-        </h2>
+      <div className="flex items-center justify-between">
+        {/* section label */}
+        <div className="flex items-center gap-1.5">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-gray-300" />
+          </span>
+          <h2 className="font-mono text-xs uppercase tracking-wider text-gray-400">
+            {t('home.works.title')}
+          </h2>
+        </div>
+
         <Link
           to={ROUTES.WORKS}
-          className="text-xs text-gray-400 transition-colors hover:text-gray-700"
+          className="font-mono text-[10px] text-gray-300 transition-colors hover:text-gray-600"
         >
-          {t('home.works.viewAll')}
+          all →
         </Link>
       </div>
 
       {loading && (
-        <p className="mt-8 text-xs text-gray-400">{t('common.loading')}</p>
+        <p className="mt-8 font-mono text-[11px] text-gray-300">{t('common.loading')}</p>
       )}
 
       {!loading && featured.length === 0 && (
-        <p className="mt-8 text-xs text-gray-400">{t('access.noContent')}</p>
+        <p className="mt-8 font-mono text-[11px] text-gray-300">{t('access.noContent')}</p>
       )}
 
       {featured.length > 0 && (

@@ -5,6 +5,16 @@ import { useHomeLatest } from '@/modules/home/hooks/useHomeLatest'
 import { ROUTES, detailPath } from '@/lib/routeConstants'
 import ContentCard from '@/components/cards/ContentCard'
 
+/** セクションタイトル with モノスペース prefix */
+function SectionLabel({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="font-mono text-[10px] text-gray-300 select-none">//</span>
+      <span className="font-mono text-xs uppercase tracking-wider text-gray-400">{label}</span>
+    </div>
+  )
+}
+
 export default function LatestSection() {
   const { t } = useTranslation()
   const { news, blog, events } = useHomeLatest()
@@ -41,29 +51,35 @@ export default function LatestSection() {
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
     >
-      <h2 className="text-xs uppercase tracking-widest text-gray-400">
-        {t('home.latest.title')}
-      </h2>
+      {/* section header */}
+      <div className="flex items-center gap-1.5">
+        <span className="relative flex h-1.5 w-1.5">
+          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-gray-300" />
+        </span>
+        <h2 className="font-mono text-xs uppercase tracking-wider text-gray-400">
+          {t('home.latest.title')}
+        </h2>
+      </div>
 
       <div className="mt-8 grid grid-cols-1 gap-10 md:grid-cols-3">
         {categories.map(({ key, label, data, viewAllTo, toHref }) => (
           <div key={key}>
             <div className="flex items-baseline justify-between">
-              <h3 className="text-sm font-semibold text-gray-900">{label}</h3>
+              <SectionLabel label={label} />
               <Link
                 to={viewAllTo}
-                className="text-xs text-gray-400 transition-colors hover:text-gray-700"
+                className="font-mono text-[10px] text-gray-300 transition-colors hover:text-gray-600"
               >
-                {t('home.latest.viewAll')}
+                all →
               </Link>
             </div>
 
             {data.loading && (
-              <p className="mt-4 text-xs text-gray-400">{t('common.loading')}</p>
+              <p className="mt-4 font-mono text-[11px] text-gray-300">{t('common.loading')}</p>
             )}
 
             {!data.loading && data.items.length === 0 && (
-              <p className="mt-4 text-xs text-gray-400">{t('home.latest.empty')}</p>
+              <p className="mt-4 font-mono text-[11px] text-gray-300">{t('home.latest.empty')}</p>
             )}
 
             {data.items.slice(0, 3).map((item) => (

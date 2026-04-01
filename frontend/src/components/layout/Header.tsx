@@ -6,9 +6,9 @@ import { ROUTES } from '@/lib/routeConstants'
 import AuthButton from '@/components/auth/AuthButton'
 
 const NAV_ITEMS = [
-  { key: 'nav.works', to: ROUTES.WORKS },
-  { key: 'nav.news', to: ROUTES.NEWS },
-  { key: 'nav.blog', to: ROUTES.BLOG },
+  { key: 'nav.works',   to: ROUTES.WORKS   },
+  { key: 'nav.news',    to: ROUTES.NEWS    },
+  { key: 'nav.blog',    to: ROUTES.BLOG    },
   { key: 'nav.fanclub', to: ROUTES.FANCLUB },
   { key: 'nav.contact', to: ROUTES.CONTACT },
 ] as const
@@ -18,47 +18,38 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
   const { pathname } = useLocation()
 
-  // ルート変更時にメニューを閉じる
-  useEffect(() => {
-    setIsOpen(false)
-  }, [pathname])
+  useEffect(() => { setIsOpen(false) }, [pathname])
 
-  // メニューを開いている間は背景スクロールを無効化
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-    }
+    document.body.style.overflow = isOpen ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
   }, [isOpen])
 
   return (
-    <header className="sticky top-0 z-50 border-b border-gray-100 bg-white">
+    <header className="glass sticky top-0 z-50 border-b border-gray-100/80">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-        {/* ロゴ */}
+        {/* logo */}
         <NavLink
           to={ROUTES.HOME}
-          className="text-lg font-semibold tracking-tight text-gray-900"
+          className="flex items-center gap-2 text-sm font-semibold tracking-tight text-gray-900 transition-opacity hover:opacity-70"
         >
+          <span className="font-mono text-[10px] font-medium text-gray-300 select-none">&gt;_</span>
           Creava
         </NavLink>
 
-        {/* デスクトップナビ */}
+        {/* desktop nav */}
         <div className="hidden items-center gap-6 md:flex">
           <nav>
-            <ul className="flex items-center gap-6">
+            <ul className="flex items-center gap-1">
               {NAV_ITEMS.map(({ key, to }) => (
                 <li key={to}>
                   <NavLink
                     to={to}
                     className={({ isActive }) =>
-                      `text-sm transition-colors ${
+                      `relative rounded px-3 py-1.5 text-sm transition-colors duration-150 ${
                         isActive
-                          ? 'font-medium text-gray-900'
-                          : 'text-gray-500 hover:text-gray-900'
+                          ? 'font-medium text-gray-900 bg-gray-50'
+                          : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50/60'
                       }`
                     }
                   >
@@ -71,32 +62,20 @@ export default function Header() {
           <AuthButton />
         </div>
 
-        {/* ハンバーガーボタン（モバイルのみ） */}
+        {/* hamburger (mobile) */}
         <button
           onClick={() => setIsOpen((v) => !v)}
           className="flex h-8 w-8 flex-col items-center justify-center gap-1.5 md:hidden"
           aria-label={isOpen ? t('nav.closeMenu') : t('nav.openMenu')}
           aria-expanded={isOpen}
         >
-          <span
-            className={`block h-px w-5 bg-gray-700 transition-transform duration-300 ${
-              isOpen ? 'translate-y-[3px] rotate-45' : ''
-            }`}
-          />
-          <span
-            className={`block h-px w-5 bg-gray-700 transition-opacity duration-300 ${
-              isOpen ? 'opacity-0' : ''
-            }`}
-          />
-          <span
-            className={`block h-px w-5 bg-gray-700 transition-transform duration-300 ${
-              isOpen ? '-translate-y-[9px] -rotate-45' : ''
-            }`}
-          />
+          <span className={`block h-px w-5 bg-gray-700 transition-transform duration-300 ${isOpen ? 'translate-y-[3px] rotate-45' : ''}`} />
+          <span className={`block h-px w-5 bg-gray-700 transition-opacity duration-300 ${isOpen ? 'opacity-0' : ''}`} />
+          <span className={`block h-px w-5 bg-gray-700 transition-transform duration-300 ${isOpen ? '-translate-y-[9px] -rotate-45' : ''}`} />
         </button>
       </div>
 
-      {/* モバイルメニュードロワー */}
+      {/* mobile drawer */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -105,7 +84,8 @@ export default function Header() {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.25, ease: 'easeInOut' }}
-            className="overflow-hidden border-t border-gray-100 bg-white md:hidden"
+            className="overflow-hidden border-t border-gray-100/80 md:hidden"
+            style={{ backgroundColor: 'rgba(255,255,255,0.95)' }}
           >
             <nav className="px-4 pb-6 pt-4">
               <ul className="flex flex-col">
