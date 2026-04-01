@@ -5,7 +5,9 @@ import { useClerk } from '@clerk/clerk-react'
 import { useCurrentUser } from '@/hooks'
 import { ROUTES } from '@/lib/routeConstants'
 
-export default function FanclubCTASection() {
+const HAS_CLERK = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY)
+
+function FanclubCTASectionWithClerk() {
   const { t } = useTranslation()
   const { openSignIn } = useClerk()
   const { user, isLoaded, isSignedIn } = useCurrentUser()
@@ -64,3 +66,36 @@ export default function FanclubCTASection() {
     </motion.section>
   )
 }
+
+function FanclubCTASectionNoClerk() {
+  const { t } = useTranslation()
+
+  return (
+    <motion.section
+      className="bg-gray-900 px-4 py-24 text-white"
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6 }}
+    >
+      <div className="mx-auto max-w-5xl text-center">
+        <h2 className="text-xs uppercase tracking-widest text-gray-400">
+          {t('home.fanclub.title')}
+        </h2>
+        <p className="mt-4 text-2xl font-semibold md:text-3xl">
+          {t('home.fanclub.description')}
+        </p>
+        <div className="mt-8">
+          <Link
+            to={ROUTES.FANCLUB}
+            className="inline-flex items-center bg-white px-8 py-3 text-sm font-medium tracking-wide text-gray-900 transition-colors hover:bg-gray-100"
+          >
+            {t('home.fanclub.joinButton')}
+          </Link>
+        </div>
+      </div>
+    </motion.section>
+  )
+}
+
+export default HAS_CLERK ? FanclubCTASectionWithClerk : FanclubCTASectionNoClerk
