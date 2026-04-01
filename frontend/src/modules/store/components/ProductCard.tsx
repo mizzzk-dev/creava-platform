@@ -1,23 +1,23 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { detailPath } from '@/lib/routeConstants'
-import { formatPrice } from '@/utils'
-import type { ShopifyProductSummary } from '@/lib/shopify/types'
+import { formatPriceNum } from '@/utils'
+import type { StoreProductSummary } from '../types'
 
 interface Props {
-  product: ShopifyProductSummary
+  product: StoreProductSummary
 }
 
 export default function ProductCard({ product }: Props) {
   const { t } = useTranslation()
 
   return (
-    <Link to={detailPath.product(product.handle)} className="group block">
+    <Link to={detailPath.product(product.slug)} className="group block">
       <div className="aspect-square overflow-hidden bg-gray-100">
-        {product.featuredImage ? (
+        {product.previewImage ? (
           <img
-            src={product.featuredImage.url}
-            alt={product.featuredImage.altText ?? product.title}
+            src={product.previewImage.url}
+            alt={product.previewImage.alt ?? product.title}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
@@ -32,13 +32,13 @@ export default function ProductCard({ product }: Props) {
           {product.title}
         </h3>
         <p className="text-sm text-gray-500">
-          {formatPrice(
-            product.priceRange.minVariantPrice.amount,
-            product.priceRange.minVariantPrice.currencyCode,
-          )}
+          {formatPriceNum(product.price, product.currency)}
         </p>
-        {!product.availableForSale && (
-          <p className="text-xs text-gray-400">{t('store.outOfStock')}</p>
+        {product.purchaseStatus === 'soldout' && (
+          <p className="text-xs text-gray-400">{t('store.soldOut')}</p>
+        )}
+        {product.purchaseStatus === 'coming_soon' && (
+          <p className="text-xs text-gray-400">{t('store.comingSoon')}</p>
         )}
       </div>
     </Link>

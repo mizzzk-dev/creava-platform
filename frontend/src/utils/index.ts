@@ -78,3 +78,14 @@ export function formatPrice(amount: string, currencyCode: string): string {
     minimumFractionDigits: 0,
   }).format(num)
 }
+
+/**
+ * 数値価格を表示用にフォーマットする（Strapi / Stripe + BASE 向け）
+ */
+export function formatPriceNum(price: number, currencyCode: string = 'JPY'): string {
+  return new Intl.NumberFormat('ja-JP', {
+    style: 'currency',
+    currency: currencyCode,
+    minimumFractionDigits: 0,
+  }).format(price)
+}
