@@ -1,24 +1,47 @@
 # creava-platform
 
-Strapi（Headless CMS）・Clerk 認証・Shopify 連携で構築するクリエイター向けポートフォリオ / ファンクラブ / ストアプラットフォーム
+クリエイター向けポートフォリオ / ファンクラブ / ストアプラットフォーム
 
-## 技術スタック
+React + Vite フロントエンドと Strapi CMS バックエンドで構成されるモノレポです。
 
-| レイヤー | 技術 |
+---
+
+## ディレクトリ構成
+
+```
+creava-platform/
+├── frontend/          # React + Vite + TypeScript フロントエンド
+│   ├── src/
+│   ├── public/
+│   ├── docs/          # デプロイ・運用ドキュメント
+│   ├── index.html
+│   └── package.json
+├── backend/           # Strapi CMS（初期化前の準備ディレクトリ）
+│   └── README.md
+├── .github/
+│   └── workflows/     # CI / デプロイ自動化
+├── .gitignore
+├── package.json       # ルート: モノレポ管理スクリプト
+└── README.md
+```
+
+---
+
+## 各パッケージの役割
+
+| ディレクトリ | 役割 |
 |---|---|
-| Frontend | React 18 + Vite + TypeScript |
-| Styling | Tailwind CSS + Framer Motion |
-| CMS | Strapi Cloud v5 |
-| Auth | Clerk |
-| Store | Shopify Storefront API |
-| i18n | i18next（ja / en） |
-| Routing | React Router v6 |
-| Testing | Vitest |
+| `frontend/` | React + Vite による SPA。Strapi・Clerk・Shopify に接続する |
+| `backend/` | Strapi CMS。コンテンツ管理 API を提供する（初期化は次ステップ） |
 
-## 開発環境のセットアップ
+---
+
+## セットアップ
+
+### frontend のみ使う場合（現在の主な開発フロー）
 
 ```bash
-# 依存パッケージのインストール
+cd frontend
 npm install
 
 # 環境変数の設定
@@ -29,28 +52,93 @@ cp .env.example .env.local
 npm run dev
 ```
 
-## 主要コマンド
+### 全パッケージ一括インストール
 
 ```bash
-npm run dev           # 開発サーバー起動
-npm run build:prod    # 本番ビルド（dist/ に出力）
-npm run preview       # ビルド結果のプレビュー
-npm test              # ユニットテスト実行
-npm run test:coverage # カバレッジ付きテスト
+# リポジトリルートで
+npm run install:all
 ```
+
+---
+
+## 開発起動コマンド
+
+| コマンド | 説明 |
+|---|---|
+| `npm run dev:frontend` | frontend 開発サーバー起動 |
+| `npm run build:frontend` | frontend 本番ビルド |
+| `npm run test:frontend` | frontend ユニットテスト |
+| `npm run dev:backend` | backend（Strapi）開発サーバー起動 |
+| `npm run build:backend` | backend ビルド |
+
+または各ディレクトリで直接実行することもできます:
+
+```bash
+cd frontend && npm run dev
+cd backend && npm run develop  # Strapi 初期化後
+```
+
+---
+
+## 技術スタック
+
+### frontend
+
+| レイヤー | 技術 |
+|---|---|
+| UI | React 18 + TypeScript |
+| ビルド | Vite |
+| スタイル | Tailwind CSS + Framer Motion |
+| ルーティング | React Router v6 |
+| 認証 | Clerk |
+| CMS | Strapi Cloud v5（API 経由） |
+| ストア | Shopify Storefront API |
+| i18n | i18next（ja / en） |
+| テスト | Vitest |
+
+### backend
+
+| レイヤー | 技術 |
+|---|---|
+| CMS | Strapi v5（予定） |
+| DB | SQLite（開発）/ PostgreSQL（本番） |
+| デプロイ | Strapi Cloud |
+
+---
+
+## 環境変数
+
+`frontend/.env.example`（開発用）および `frontend/.env.production.example`（本番用）を参照してください。
+
+| 変数名 | 説明 |
+|---|---|
+| `VITE_SITE_URL` | サイトの URL |
+| `VITE_STRAPI_API_URL` | Strapi Cloud API エンドポイント |
+| `VITE_STRAPI_API_TOKEN` | Strapi API トークン |
+| `VITE_CLERK_PUBLISHABLE_KEY` | Clerk Publishable Key |
+| `VITE_SHOPIFY_STORE_DOMAIN` | Shopify ストアドメイン |
+| `VITE_SHOPIFY_STOREFRONT_TOKEN` | Shopify Storefront API トークン |
+| `VITE_FORMSPREE_CONTACT_ID` | Formspree お問い合わせフォーム ID |
+| `VITE_FORMSPREE_REQUEST_ID` | Formspree 仕事依頼フォーム ID |
+
+---
 
 ## デプロイ
 
-| ホスティング | ドキュメント |
-|---|---|
-| ロリポップレンタルサーバー | [docs/deploy-lolipop.md](docs/deploy-lolipop.md) |
-| お名前.comレンタルサーバー | [docs/deploy-onamae.md](docs/deploy-onamae.md) |
+### frontend（ロリポップレンタルサーバー）
 
-## 運用
+`main` ブランチへの push で自動デプロイされます。
 
-公開後の更新・トラブル対応については [docs/operation.md](docs/operation.md) を参照してください。
+手動ビルド手順: `frontend/docs/deploy-lolipop.md` を参照してください。
 
-## 主要ページ
+### backend（Strapi Cloud）
+
+Strapi Cloud とリポジトリを連携し、`backend/` をルートディレクトリとして指定します。
+詳細は `backend/README.md` を参照してください。
+
+---
+
+## ページ構成
 
 | パス | ページ |
 |---|---|
@@ -67,32 +155,17 @@ npm run test:coverage # カバレッジ付きテスト
 | `/store/:handle` | 商品詳細 |
 | `/contact` | お問い合わせ / 仕事依頼 |
 
-## 環境変数
-
-| 変数名 | 説明 |
-|---|---|
-| `VITE_SITE_URL` | サイトの URL |
-| `VITE_STRAPI_API_URL` | Strapi Cloud API エンドポイント |
-| `VITE_STRAPI_API_TOKEN` | Strapi API トークン |
-| `VITE_CLERK_PUBLISHABLE_KEY` | Clerk Publishable Key |
-| `VITE_SHOPIFY_STORE_DOMAIN` | Shopify ストアドメイン |
-| `VITE_SHOPIFY_STOREFRONT_TOKEN` | Shopify Storefront API トークン |
-| `VITE_FORMSPREE_CONTACT_ID` | Formspree お問い合わせフォーム ID |
-| `VITE_FORMSPREE_REQUEST_ID` | Formspree 仕事依頼フォーム ID |
-
-テンプレート: `.env.example`（開発用）/ `.env.production.example`（本番用）
-
-## アクセス制御
-
-| ユーザー種別 | 閲覧できるコンテンツ |
-|---|---|
-| ゲスト（未ログイン） | `public` コンテンツ |
-| メンバー（ログイン済み） | `public` + `fc_only` + 有効期限内の `limited` |
-| 管理者 | すべて |
+---
 
 ## CI / CD
 
 | ワークフロー | トリガー | 内容 |
 |---|---|---|
 | `ci.yml` | PR・`main` push | 型チェック + テスト + ビルド確認 |
-| `deploy.yml` | `main` push・手動 | ビルド + FTP デプロイ |
+| `deploy.yml` | `main` push・手動 | ビルド + FTP デプロイ（ロリポップ） |
+
+---
+
+## 次のステップ
+
+Strapi を `backend/` に初期化する場合は `backend/README.md` を参照してください。

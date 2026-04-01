@@ -2,40 +2,12 @@
   "name": "creava-platform",
   "private": true,
   "version": "0.1.0",
-  "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "build:prod": "tsc -b && vite build --mode production",
-    "preview": "vite preview",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
-  },
-  "dependencies": {
-    "@clerk/clerk-react": "^5.61.4",
-    "framer-motion": "^11.15.0",
-    "i18next": "^23.16.0",
-    "i18next-browser-languagedetector": "^8.0.4",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-helmet-async": "^3.0.0",
-    "react-i18next": "^15.4.0",
-    "react-router-dom": "^6.28.0"
-  },
-  "devDependencies": {
-    "@types/node": "^25.5.0",
-    "@types/react": "^18.3.18",
-    "@types/react-dom": "^18.3.5",
-    "@vitejs/plugin-react": "^4.3.4",
-    "@vitest/coverage-v8": "^4.1.2",
-    "autoprefixer": "^10.4.21",
-    "eslint": "^9.18.0",
-    "postcss": "^8.5.3",
-    "tailwindcss": "^3.4.17",
-    "typescript": "^5.7.3",
-    "vite": "^6.0.11",
-    "vitest": "^4.1.2"
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build:frontend": "npm run build:prod --prefix frontend",
+    "test:frontend": "npm run test --prefix frontend",
+    "dev:backend": "npm run develop --prefix backend",
+    "build:backend": "npm run build --prefix backend",
+    "install:all": "npm install --prefix frontend && npm install --prefix backend"
   }
 }

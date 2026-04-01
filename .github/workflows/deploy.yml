@@ -1,15 +1,17 @@
-name: Deploy to お名前.com
+name: Deploy to ロリポップ
 
 on:
   push:
     branches: [main]
-  # 手動実行も可能にする
   workflow_dispatch:
 
 jobs:
   build-and-deploy:
     name: Build & Deploy
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
 
     steps:
       - name: Checkout
@@ -20,6 +22,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -42,14 +45,9 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          # デプロイ元: Vite ビルド出力ディレクトリ
-          local-dir: ./dist/
-          # デプロイ先: お名前.com の公開ディレクトリ
-          # 環境に合わせて Secrets で上書き可能
+          local-dir: ./frontend/dist/
           server-dir: ${{ secrets.FTP_SERVER_DIR || '/public_html/' }}
-          # 差分のみアップロード（初回は全ファイル）
           dangerous-clean-slate: false
-          # .htaccess などのドットファイルも転送
           exclude: |
             **/.git*
             **/.git*/**
