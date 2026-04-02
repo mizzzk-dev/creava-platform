@@ -1,0 +1,122 @@
+[
+  {
+    "title": "FC 限定 — 月刊クリエイター日記 Vol.12",
+    "slug": "fc-diary-vol12",
+    "status": "fc_only",
+    "publishAt": "2024-03-28T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "body": "今月の制作活動を振り返ります。新しいプロジェクトのリサーチ、機材のテスト、そして日々の写真記録。会員の皆さんに特別に公開します。",
+    "category": "diary"
+  },
+  {
+    "title": "FC 限定 — 未公開写真集「街の余白」",
+    "slug": "fc-photoset-street-margins",
+    "status": "fc_only",
+    "publishAt": "2024-03-15T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "body": "商業的な理由で未公開となった都市スナップ写真集。40点以上の写真とともに、撮影当時の思いを綴ります。",
+    "category": "exclusive"
+  },
+  {
+    "title": "FC 限定 — 月刊クリエイター日記 Vol.11",
+    "slug": "fc-diary-vol11",
+    "status": "fc_only",
+    "publishAt": "2024-02-28T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "body": "2月は映像プロジェクトに集中した月でした。プリプロダクションから撮影初日まで、詳しく記録しています。",
+    "category": "diary"
+  },
+  {
+    "title": "FC 限定 — ライブ Q&A セッション（3月）アーカイブ",
+    "slug": "fc-qa-march-2024",
+    "status": "fc_only",
+    "publishAt": "2024-03-20T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "body": "3月に開催したライブ Q&A の録画アーカイブ。機材・制作・キャリアについての質問に2時間かけて回答しました。",
+    "category": "qa"
+  },
+  {
+    "title": "FC 限定 — 新作映像「光の旅」メイキング完全版",
+    "slug": "fc-making-hikari-journey",
+    "status": "fc_only",
+    "publishAt": "2024-03-05T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "body": "次回作「光の旅」のメイキング映像（60分）。ロケハン、照明設計、編集プロセスまで全工程を公開。",
+    "category": "behind_scenes"
+  },
+  {
+    "title": "FC 限定 — 月刊クリエイター日記 Vol.10",
+    "slug": "fc-diary-vol10",
+    "status": "fc_only",
+    "publishAt": "2024-01-31T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "body": "新年最初の月。機材見直し、スタジオ環境の改善、そして新しい撮影スタイルへの挑戦について記録します。",
+    "category": "diary"
+  },
+  {
+    "title": "FC 限定 — ライブ Q&A セッション（1月）アーカイブ",
+    "slug": "fc-qa-january-2024",
+    "status": "fc_only",
+    "publishAt": "2024-01-25T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "body": "1月のライブ Q&A 録画。写真集制作の裏話や、今年の制作計画について詳しく話しました。",
+    "category": "qa"
+  },
+  {
+    "title": "会員限定ティーザー — 次回個展「Between Light and Shadow」",
+    "slug": "fc-teaser-next-exhibition",
+    "status": "fc_only",
+    "publishAt": "2024-03-25T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "body": "2025年秋予定の次回個展の構想を初公開。テーマ、出展予定作品、会場候補など、会員の皆さんに先行してお伝えします。",
+    "category": "teaser"
+  },
+  {
+    "title": "期間限定 — 写真集制作ライブ配信アーカイブ",
+    "slug": "fc-limited-photobook-live",
+    "status": "limited",
+    "publishAt": "2024-02-15T10:00:00.000Z",
+    "limitedEndAt": "2025-05-31T23:59:59.000Z",
+    "archiveVisibleForFC": true,
+    "body": "写真集のデザイン作業をリアルタイム配信したアーカイブ。3時間の作業過程がそのまま収録されています。期間終了後もFC会員は閲覧可。",
+    "category": "live_archive"
+  },
+  {
+    "title": "FC 限定 — 機材レンタル・購入交渉のリアル",
+    "slug": "fc-gear-buying-tips",
+    "status": "fc_only",
+    "publishAt": "2024-01-15T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "body": "プロの機材購入術を完全公開。中古市場の見方、レンタルとの比較、交渉のポイントまで詳しく解説。",
+    "category": "tips"
+  },
+  {
+    "title": "FC 限定 — クライアントワークの舞台裏 2023",
+    "slug": "fc-client-work-behind-2023",
+    "status": "fc_only",
+    "publishAt": "2023-12-20T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "body": "2023年に手がけた主要なクライアントワーク案件（匿名）の制作過程と学び。契約から納品まで、フリーランスの実態を共有します。",
+    "category": "behind_scenes"
+  },
+  {
+    "title": "一般公開 — ファンクラブについてのご案内",
+    "slug": "fc-public-about",
+    "status": "public",
+    "publishAt": "2024-01-01T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "body": "ファンクラブでは月次の制作日記、未公開コンテンツ、ライブ Q&A、先行情報などをお届けしています。会員登録はこちらから。",
+    "category": "info"
+  }
+]

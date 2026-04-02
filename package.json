@@ -4,10 +4,14 @@
   "version": "0.1.0",
   "scripts": {
     "dev:frontend": "npm run dev --prefix frontend",
-    "build:frontend": "npm run build:prod --prefix frontend",
-    "test:frontend": "npm run test --prefix frontend",
     "dev:backend": "npm run develop --prefix backend",
+    "build:frontend": "npm run build:prod --prefix frontend",
     "build:backend": "npm run build --prefix backend",
-    "install:all": "npm install --prefix frontend && npm install --prefix backend"
+    "test:frontend": "npm run test --prefix frontend",
+    "test:frontend:watch": "npm run test:watch --prefix frontend",
+    "test:frontend:coverage": "npm run test:coverage --prefix frontend",
+    "seed:backend": "npm run seed --prefix backend",
+    "install:all": "npm install --prefix frontend && npm install --prefix backend",
+    "setup:dev": "npm run install:all && echo '\\n✅ Install complete. Next:\\n  cp frontend/.env.local.example frontend/.env.local\\n  cp backend/.env.local.example backend/.env\\n  Then edit each .env file with your values.'"
   }
 }

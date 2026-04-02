@@ -1,0 +1,122 @@
+[
+  {
+    "title": "写真集 Vol.1「光の記憶」発売のお知らせ",
+    "slug": "news-photobook-vol1-release",
+    "status": "public",
+    "publishAt": "2024-03-20T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "body": "2024年4月1日より写真集 Vol.1「光の記憶」の販売を開始します。ストアページからご購入いただけます。",
+    "thumbnailUrl": null
+  },
+  {
+    "title": "渋谷 WWW ライブ映像を公開しました",
+    "slug": "news-live-video-shibuya",
+    "status": "public",
+    "publishAt": "2024-03-10T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "body": "2024年1月に開催したワンマンライブの映像をYouTubeで公開しました。",
+    "thumbnailUrl": null
+  },
+  {
+    "title": "2024年春の展示会開催決定",
+    "slug": "news-exhibition-spring-2024",
+    "status": "public",
+    "publishAt": "2024-02-28T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "body": "2024年5月、東京・恵比寿にて個展を開催します。詳細は近日公開予定。",
+    "thumbnailUrl": null
+  },
+  {
+    "title": "雑誌「Creative Monthly」に掲載されました",
+    "slug": "news-creative-monthly-feature",
+    "status": "public",
+    "publishAt": "2024-02-15T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "body": "今月号の Creative Monthly にて、制作活動と写真表現についてのインタビューが掲載されました。",
+    "thumbnailUrl": null
+  },
+  {
+    "title": "新作サウンドトラックをリリースしました",
+    "slug": "news-new-ost-release",
+    "status": "public",
+    "publishAt": "2024-02-01T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "body": "短編映画「夜の庭」のオリジナルサウンドトラックを各主要配信サービスにてリリースしました。",
+    "thumbnailUrl": null
+  },
+  {
+    "title": "ウェブサイトをリニューアルしました",
+    "slug": "news-website-renewal",
+    "status": "public",
+    "publishAt": "2024-01-15T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "body": "ポートフォリオサイトを全面リニューアルしました。新機能としてファンクラブとストアが追加されました。",
+    "thumbnailUrl": null
+  },
+  {
+    "title": "2023年活動まとめ",
+    "slug": "news-2023-annual-report",
+    "status": "public",
+    "publishAt": "2023-12-31T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "body": "2023年は映像3本、写真作品2シリーズ、楽曲12曲を発表しました。多くのご支援に感謝します。",
+    "thumbnailUrl": null
+  },
+  {
+    "title": "Photography Award 2023 受賞",
+    "slug": "news-photography-award-2023",
+    "status": "public",
+    "publishAt": "2023-11-20T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "body": "Photography Award 2023 ポートレート部門にて最優秀賞を受賞しました。",
+    "thumbnailUrl": null
+  },
+  {
+    "title": "FC 限定 — 次回作のティーザー映像を公開",
+    "slug": "news-fc-teaser-next-work",
+    "status": "fc_only",
+    "publishAt": "2024-03-25T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "body": "次回作のティーザー映像をファンクラブ会員限定で先行公開します。正式発表は来月を予定。",
+    "thumbnailUrl": null
+  },
+  {
+    "title": "FC 限定 — 展示会の事前情報と優先招待について",
+    "slug": "news-fc-exhibition-invite",
+    "status": "fc_only",
+    "publishAt": "2024-02-20T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "body": "春の展示会についての詳細情報をファンクラブ会員に先行でお知らせします。オープニングへの招待も予定しています。",
+    "thumbnailUrl": null
+  },
+  {
+    "title": "期間限定 — 写真展「北の光」開催中",
+    "slug": "news-limited-exhibition-north",
+    "status": "limited",
+    "publishAt": "2024-01-01T10:00:00.000Z",
+    "limitedEndAt": "2025-06-30T23:59:59.000Z",
+    "archiveVisibleForFC": true,
+    "body": "2024年1月〜6月、札幌ギャラリーにて写真展を開催中。期間終了後もFC会員はアーカイブで閲覧できます。",
+    "thumbnailUrl": null
+  },
+  {
+    "title": "プレスリリース — 新作映像作品について",
+    "slug": "news-press-new-video",
+    "status": "public",
+    "publishAt": "2023-10-01T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "body": "10月より新作映像作品「余白」の上映を開始します。各地のフィルムフェスティバルへの応募も予定しています。",
+    "thumbnailUrl": null
+  }
+]

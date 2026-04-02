@@ -1,0 +1,98 @@
+[
+  {
+    "title": "個展「光の航跡」— 恵比寿ガーデンプレイス",
+    "slug": "event-solo-exhibition-2024",
+    "status": "public",
+    "publishAt": "2024-04-01T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "description": "2024年5月に東京・恵比寿にて初の大規模個展を開催します。写真・映像・音楽の複合展示。入場無料。",
+    "startAt": "2025-05-10T11:00:00.000Z",
+    "endAt": "2025-05-25T19:00:00.000Z",
+    "venue": "恵比寿ガーデンプレイス センター広場 / 東京"
+  },
+  {
+    "title": "写真集発売記念トークイベント",
+    "slug": "event-book-release-talk",
+    "status": "public",
+    "publishAt": "2024-03-25T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "description": "写真集 Vol.1「光の記憶」の発売を記念したトークイベント。制作秘話や写真表現について語ります。",
+    "startAt": "2025-04-20T14:00:00.000Z",
+    "endAt": "2025-04-20T16:00:00.000Z",
+    "venue": "代官山蔦屋書店 / 東京"
+  },
+  {
+    "title": "ワークショップ — ポートレート撮影の基礎",
+    "slug": "event-workshop-portrait",
+    "status": "public",
+    "publishAt": "2024-03-15T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "description": "初心者〜中級者向けのポートレート撮影ワークショップ。実践的な撮影実習付き。定員10名。",
+    "startAt": "2025-04-06T13:00:00.000Z",
+    "endAt": "2025-04-06T17:00:00.000Z",
+    "venue": "スタジオ渋谷 / 東京"
+  },
+  {
+    "title": "FC 限定 — メンバーズミートアップ 2024",
+    "slug": "event-fc-meetup-2024",
+    "status": "fc_only",
+    "publishAt": "2024-03-20T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "description": "ファンクラブ会員限定のオフ会・交流イベント。定員20名、軽食あり。",
+    "startAt": "2025-05-03T15:00:00.000Z",
+    "endAt": "2025-05-03T18:00:00.000Z",
+    "venue": "表参道 UNKNOWN TOKYO / 東京"
+  },
+  {
+    "title": "サイン会 & ポートレート撮影会",
+    "slug": "event-sign-photo-session",
+    "status": "public",
+    "publishAt": "2023-12-01T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "description": "写真集購入者を対象としたサイン会。希望者には簡単なポートレート撮影も行います。（終了）",
+    "startAt": "2024-01-27T13:00:00.000Z",
+    "endAt": "2024-01-27T17:00:00.000Z",
+    "venue": "ジュンク堂書店池袋本店 / 東京"
+  },
+  {
+    "title": "グループ展示「New Voices 2023」",
+    "slug": "event-group-show-new-voices",
+    "status": "public",
+    "publishAt": "2023-09-01T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "description": "若手クリエイター5名による合同展示。（終了）",
+    "startAt": "2023-10-01T11:00:00.000Z",
+    "endAt": "2023-10-15T19:00:00.000Z",
+    "venue": "六本木 Art Space / 東京"
+  },
+  {
+    "title": "LIVE PERFORMANCE — 「Between the Lines」",
+    "slug": "event-live-between-lines",
+    "status": "public",
+    "publishAt": "2023-07-01T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "description": "インストゥルメンタル EP 発売記念のライブパフォーマンス。映像・音楽・写真の融合。（終了）",
+    "startAt": "2023-08-05T19:00:00.000Z",
+    "endAt": "2023-08-05T21:00:00.000Z",
+    "venue": "渋谷 WWW / 東京"
+  },
+  {
+    "title": "期間限定 — オンライン個展「夜の旅」",
+    "slug": "event-online-exhibition-night",
+    "status": "limited",
+    "publishAt": "2024-01-01T10:00:00.000Z",
+    "limitedEndAt": "2025-03-31T23:59:59.000Z",
+    "archiveVisibleForFC": true,
+    "description": "オンライン上で公開する仮想個展。VR 対応デバイスで没入体験が可能。期間終了後はFC会員が閲覧可。",
+    "startAt": "2024-02-01T00:00:00.000Z",
+    "endAt": "2025-03-31T23:59:59.000Z",
+    "venue": "オンライン（特設サイト）"
+  }
+]

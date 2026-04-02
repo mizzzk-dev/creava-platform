@@ -1,4 +1,5 @@
 import { fetchCollection, fetchBySlug } from '@/lib/api/strapi'
+import { getMockStoreProducts, getMockStoreProduct } from '@/lib/mock/store-products'
 import type { StrapiQueryParams } from '@/lib/api/strapi'
 import type { StrapiListResponse } from '@/types'
 import type { StoreProduct, StoreProductSummary } from './types'
@@ -17,11 +18,22 @@ import type { StoreProduct, StoreProductSummary } from './types'
 const ENDPOINT = '/store-products'
 
 /**
+ * VITE_STRAPI_API_URL 未設定時はモックデータを使う
+ * → Strapi なしでフロントエンドのストア UI を確認できる
+ */
+const USE_MOCK = !import.meta.env.VITE_STRAPI_API_URL
+
+/**
  * 商品一覧を取得する
+ * Strapi 未設定時: モックデータを返す
  */
 export function getProducts(
   params?: StrapiQueryParams,
 ): Promise<StrapiListResponse<StoreProductSummary>> {
+  if (USE_MOCK) {
+    const pageSize = params?.pagination?.pageSize ?? 12
+    return Promise.resolve(getMockStoreProducts(pageSize))
+  }
   return fetchCollection<StoreProductSummary>(ENDPOINT, {
     populate: ['previewImage'],
     sort: ['publishAt:desc'],
@@ -32,8 +44,13 @@ export function getProducts(
 /**
  * スラッグで商品詳細を取得する
  * 見つからない場合は null を返す
+ * Strapi 未設定時: モックデータから検索する
  */
-export function getProduct(slug: string): Promise<StoreProduct | null> {
+export async function getProduct(slug: string): Promise<StoreProduct | null> {
+  if (USE_MOCK) {
+    const res = getMockStoreProduct(slug)
+    return res?.data ?? null
+  }
   return fetchBySlug<StoreProduct>(ENDPOINT, slug, {
     populate: ['previewImage'],
   })
