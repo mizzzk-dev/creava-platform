@@ -7,9 +7,12 @@ export default function HeroSection() {
   const { t } = useTranslation()
 
   return (
-    <section className="relative flex min-h-[85vh] items-center overflow-hidden px-4">
-      {/* subtle dot-grid background */}
-      <div className="dot-grid pointer-events-none absolute inset-0 opacity-[0.35]" />
+    <section className="relative flex min-h-[88vh] items-center overflow-hidden px-4">
+      {/* dot-grid background */}
+      <div className="dot-grid pointer-events-none absolute inset-0 opacity-[0.32]" />
+
+      {/* very subtle bottom fade */}
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent" />
 
       <div className="relative mx-auto w-full max-w-5xl">
         {/* system status label */}
@@ -19,7 +22,6 @@ export default function HeroSection() {
           transition={{ duration: 0.5 }}
           className="mb-8 flex items-center gap-2"
         >
-          {/* live ping dot */}
           <span className="relative flex h-2 w-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
@@ -34,11 +36,14 @@ export default function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: 'easeOut', delay: 0.1 }}
         >
-          <h1 className="text-5xl font-semibold leading-tight tracking-tight text-gray-900 md:text-7xl">
+          <h1 className="text-gradient text-5xl font-semibold leading-tight tracking-tight md:text-7xl">
             {t('home.hero.headline')}
           </h1>
 
-          <p className="mt-6 flex max-w-xl items-start gap-2 text-lg text-gray-500">
+          {/* thin decorative line */}
+          <div className="mt-6 h-px w-12 bg-gray-200" />
+
+          <p className="mt-5 flex max-w-xl items-start gap-2 text-lg text-gray-500">
             <span className="font-mono text-sm leading-7 text-gray-300 select-none">&gt;</span>
             <span>{t('home.hero.subCopy')}</span>
           </p>
@@ -63,7 +68,7 @@ export default function HeroSection() {
               {t('home.hero.ctaContact')}
             </Link>
 
-            {/* tertiary CTA — fanclub, subtle */}
+            {/* tertiary CTA — fanclub */}
             <Link
               to={ROUTES.FANCLUB}
               className="inline-flex items-center gap-1.5 px-4 py-3 text-sm tracking-wide text-gray-400 transition-colors duration-200 hover:text-gray-900"
@@ -72,6 +77,17 @@ export default function HeroSection() {
               {t('home.hero.ctaFanclub')}
             </Link>
           </div>
+        </motion.div>
+
+        {/* scroll hint */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2, duration: 0.6 }}
+          className="absolute bottom-8 left-0 flex items-center gap-2"
+        >
+          <div className="h-4 w-px bg-gray-200" />
+          <span className="font-mono text-[10px] uppercase tracking-widest text-gray-300">scroll</span>
         </motion.div>
       </div>
     </section>

@@ -1,9 +1,9 @@
-import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { useStrapiCollection } from '@/hooks'
 import { getWorksList } from '@/modules/works/api'
 import { ROUTES, detailPath } from '@/lib/routeConstants'
+import SectionHeader from '@/components/common/SectionHeader'
 import WorkCard from '@/components/cards/WorkCard'
 import type { Work } from '@/types'
 
@@ -27,27 +27,14 @@ export default function FeaturedWorksSection() {
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
     >
-      <div className="flex items-center justify-between">
-        {/* section label */}
-        <div className="flex items-center gap-1.5">
-          <span className="relative flex h-1.5 w-1.5">
-            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-gray-300" />
-          </span>
-          <h2 className="font-mono text-xs uppercase tracking-wider text-gray-400">
-            {t('home.works.title')}
-          </h2>
-        </div>
-
-        <Link
-          to={ROUTES.WORKS}
-          className="font-mono text-[10px] text-gray-300 transition-colors hover:text-gray-600"
-        >
-          all →
-        </Link>
-      </div>
+      <SectionHeader label={t('home.works.title')} viewAllTo={ROUTES.WORKS} viewAllLabel={t('home.works.viewAll')} />
 
       {loading && (
-        <p className="mt-8 font-mono text-[11px] text-gray-300">{t('common.loading')}</p>
+        <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="aspect-square animate-pulse bg-gray-100" />
+          ))}
+        </div>
       )}
 
       {!loading && featured.length === 0 && (
@@ -56,13 +43,14 @@ export default function FeaturedWorksSection() {
 
       {featured.length > 0 && (
         <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
-          {featured.slice(0, 4).map((work) => (
+          {featured.slice(0, 4).map((work, i) => (
             <WorkCard
               key={work.id}
               title={work.title}
               href={detailPath.work(work.slug)}
               category={work.category}
               thumbnailUrl={work.thumbnailUrl}
+              index={i}
             />
           ))}
         </div>

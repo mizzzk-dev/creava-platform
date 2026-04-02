@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { useStrapiCollection } from '@/hooks'
 import { getMediaList, getAwardsList } from '@/modules/media/api'
+import SectionHeader from '@/components/common/SectionHeader'
 import type { MediaItem, Award } from '@/types'
 
 export default function MediaAwardsSection() {
@@ -27,26 +28,27 @@ export default function MediaAwardsSection() {
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
     >
-      <h2 className="text-xs uppercase tracking-widest text-gray-400">
-        {t('home.media.title')}
-      </h2>
+      <SectionHeader label={t('home.media.title')} />
 
       {(media.loading || awards.loading) && (
-        <p className="mt-4 text-xs text-gray-400">{t('common.loading')}</p>
+        <p className="mt-4 font-mono text-[11px] text-gray-300">{t('common.loading')}</p>
       )}
 
       <div className="mt-8 grid grid-cols-1 gap-12 md:grid-cols-2">
         {awards.items && awards.items.length > 0 && (
           <div>
-            <h3 className="mb-4 text-sm font-semibold text-gray-900">
-              Awards
-            </h3>
-            <ul className="space-y-3">
+            <p className="mb-4 font-mono text-[10px] uppercase tracking-wider text-gray-400">
+              // awards
+            </p>
+            <ul className="space-y-0">
               {awards.items.map((award) => (
-                <li key={award.id} className="border-t border-gray-100 pt-3">
-                  <p className="text-sm text-gray-900">{award.title}</p>
+                <li
+                  key={award.id}
+                  className="group border-t border-gray-100 py-3 transition-colors hover:border-gray-200"
+                >
+                  <p className="text-sm font-medium text-gray-900">{award.title}</p>
                   {(award.organization || award.year) && (
-                    <p className="mt-0.5 text-xs text-gray-400">
+                    <p className="mt-0.5 font-mono text-[11px] text-gray-400">
                       {[award.organization, award.year].filter(Boolean).join(' · ')}
                     </p>
                   )}
@@ -58,26 +60,30 @@ export default function MediaAwardsSection() {
 
         {media.items && media.items.length > 0 && (
           <div>
-            <h3 className="mb-4 text-sm font-semibold text-gray-900">
-              Media
-            </h3>
-            <ul className="space-y-3">
+            <p className="mb-4 font-mono text-[10px] uppercase tracking-wider text-gray-400">
+              // press
+            </p>
+            <ul className="space-y-0">
               {media.items.map((item) => (
-                <li key={item.id} className="border-t border-gray-100 pt-3">
+                <li
+                  key={item.id}
+                  className="group border-t border-gray-100 py-3 transition-colors hover:border-gray-200"
+                >
                   {item.url ? (
                     <a
                       href={item.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-gray-900 transition-colors hover:text-gray-500"
+                      className="text-sm font-medium text-gray-900 transition-colors group-hover:text-gray-500"
                     >
                       {item.title}
+                      <span className="ml-1 font-mono text-[10px] text-gray-300">↗</span>
                     </a>
                   ) : (
-                    <p className="text-sm text-gray-900">{item.title}</p>
+                    <p className="text-sm font-medium text-gray-900">{item.title}</p>
                   )}
                   {item.source && (
-                    <p className="mt-0.5 text-xs text-gray-400">{item.source}</p>
+                    <p className="mt-0.5 font-mono text-[11px] text-gray-400">{item.source}</p>
                   )}
                 </li>
               ))}

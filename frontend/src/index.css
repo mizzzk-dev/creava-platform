@@ -37,4 +37,27 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
+  /* thin top border with fade — section divider などに使う */
+  .border-fade {
+    border-top: 1px solid transparent;
+    background-image: linear-gradient(to right, transparent, #e5e7eb 20%, #e5e7eb 80%, transparent);
+    background-size: 100% 1px;
+    background-repeat: no-repeat;
+    background-position: top;
+  }
+
+  /* ambient glow behind dark section CTAs */
+  .ambient-violet {
+    background: radial-gradient(ellipse 60% 50% at 50% 100%, rgba(139, 92, 246, 0.12) 0%, transparent 70%);
+  }
+
+  /* card ring — subtle 1px outline for cards */
+  .card-ring {
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+  }
+
+  .card-ring-hover:hover {
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
 }

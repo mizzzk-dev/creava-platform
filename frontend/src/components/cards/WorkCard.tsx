@@ -5,9 +5,13 @@ interface Props {
   href: string
   category?: string | null
   thumbnailUrl?: string | null
+  /** コレクション番号ラベル用（0 始まり） */
+  index?: number
 }
 
-export default function WorkCard({ title, href, category, thumbnailUrl }: Props) {
+export default function WorkCard({ title, href, category, thumbnailUrl, index }: Props) {
+  const label = index !== undefined ? String(index + 1).padStart(2, '0') : null
+
   return (
     <Link to={href} className="group block">
       {/* image area */}
@@ -19,19 +23,28 @@ export default function WorkCard({ title, href, category, thumbnailUrl }: Props)
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <span className="font-mono text-[10px] text-gray-300">no image</span>
+          <div className="dot-grid flex h-full w-full items-center justify-center opacity-60">
+            {label && (
+              <span className="font-mono text-[11px] text-gray-300">{label}</span>
+            )}
           </div>
         )}
 
-        {/* overlay on hover — collection feel */}
-        <div className="absolute inset-0 bg-gray-900/0 transition-colors duration-300 group-hover:bg-gray-900/10" />
+        {/* overlay on hover */}
+        <div className="absolute inset-0 bg-gray-900/0 transition-colors duration-300 group-hover:bg-gray-900/8" />
+
+        {/* index label — top-left on hover */}
+        {label && thumbnailUrl && (
+          <span className="absolute left-2 top-2 font-mono text-[9px] text-white/0 transition-colors duration-200 group-hover:text-white/60">
+            {label}
+          </span>
+        )}
       </div>
 
       {/* meta */}
-      <div className="mt-3 space-y-1">
+      <div className="mt-3 space-y-0.5">
         {category && (
-          <span className="inline-block font-mono text-[10px] uppercase tracking-wider text-gray-400">
+          <span className="block font-mono text-[10px] uppercase tracking-wider text-gray-400">
             {category}
           </span>
         )}
