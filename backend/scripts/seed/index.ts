@@ -18,14 +18,15 @@
  *   - Reports counts at the end
  *
  * Supported content types (Strapi collection API IDs):
- *   api::work.work           → fixtures/works.json
- *   api::news.news           → fixtures/news.json
- *   api::blog.blog           → fixtures/blog.json
- *   api::event.event         → fixtures/events.json
- *   api::fanclub.fanclub     → fixtures/fanclub.json
- *   api::store-product.store-product → fixtures/store-products.json
- *   api::medium.medium       → fixtures/media.json
- *   api::faq.faq             → fixtures/faq.json
+ *   api::work.work                     → fixtures/works.json
+ *   api::news-item.news-item           → fixtures/news.json
+ *   api::blog-post.blog-post           → fixtures/blog.json
+ *   api::event.event                   → fixtures/events.json
+ *   api::fanclub-content.fanclub-content → fixtures/fanclub.json
+ *   api::store-product.store-product   → fixtures/store-products.json
+ *   api::media-item.media-item         → fixtures/media-items.json
+ *   api::award.award                   → fixtures/awards.json
+ *   api::faq.faq                       → fixtures/faq.json
  */
 
 import path from 'path'
@@ -48,14 +49,15 @@ interface SeedConfig {
 }
 
 const SEED_CONFIGS: SeedConfig[] = [
-  { uid: 'api::work.work',                     file: 'works.json',          label: 'Works'          },
-  { uid: 'api::news.news',                     file: 'news.json',           label: 'News'           },
-  { uid: 'api::blog-post.blog-post',           file: 'blog.json',           label: 'Blog'           },
-  { uid: 'api::event.event',                   file: 'events.json',         label: 'Events'         },
-  { uid: 'api::fanclub-post.fanclub-post',     file: 'fanclub.json',        label: 'Fanclub'        },
-  { uid: 'api::store-product.store-product',   file: 'store-products.json', label: 'Store Products' },
-  { uid: 'api::medium.medium',                 file: 'media.json',          label: 'Media/Awards'   },
-  { uid: 'api::faq.faq',                       file: 'faq.json',            label: 'FAQ'            },
+  { uid: 'api::work.work',                               file: 'works.json',          label: 'Works'          },
+  { uid: 'api::news-item.news-item',                     file: 'news.json',           label: 'News'           },
+  { uid: 'api::blog-post.blog-post',                     file: 'blog.json',           label: 'Blog'           },
+  { uid: 'api::event.event',                             file: 'events.json',         label: 'Events'         },
+  { uid: 'api::fanclub-content.fanclub-content',         file: 'fanclub.json',        label: 'Fanclub'        },
+  { uid: 'api::store-product.store-product',             file: 'store-products.json', label: 'Store Products' },
+  { uid: 'api::media-item.media-item',                   file: 'media-items.json',    label: 'Media Items'    },
+  { uid: 'api::award.award',                             file: 'awards.json',         label: 'Awards'         },
+  { uid: 'api::faq.faq',                                 file: 'faq.json',            label: 'FAQ'            },
 ]
 
 const FIXTURES_DIR = path.join(__dirname, 'fixtures')
