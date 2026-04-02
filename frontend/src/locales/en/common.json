@@ -5,6 +5,7 @@
     "news": "News",
     "blog": "Blog",
     "fanclub": "Fan Club",
+    "events": "Events",
     "contact": "Contact",
     "openMenu": "Open menu",
     "closeMenu": "Close menu"
@@ -79,7 +80,13 @@
     "blog": "Blog posts and articles.",
     "fanclub": "Exclusive content for fan club members.",
     "store": "Shop merchandise and photo books.",
-    "contact": "Get in touch or submit a work request."
+    "contact": "Get in touch or submit a work request.",
+    "events": "Live shows, exhibitions, and workshops."
+  },
+  "events": {
+    "empty": "No upcoming events",
+    "book": "Reserve / Details",
+    "backToEvents": "Back to events"
   },
   "home": {
     "hero": {
