@@ -7,7 +7,30 @@ import { ROUTES } from '@/lib/routeConstants'
 
 const HAS_CLERK = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY)
 
-/** 共通レイアウト — ダーク背景 + member area 演出 */
+/** Benefits list — items sourced from i18n */
+function BenefitsList() {
+  const { t } = useTranslation()
+  const benefits = [
+    t('home.fanclub.benefit1'),
+    t('home.fanclub.benefit2'),
+    t('home.fanclub.benefit3'),
+  ]
+
+  return (
+    <ul className="mb-8 inline-flex flex-col gap-2 text-left">
+      {benefits.map((text, i) => (
+        <li key={i} className="flex items-center gap-2.5">
+          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-violet-500/30 bg-violet-500/10">
+            <span className="h-1 w-1 rounded-full bg-violet-400" />
+          </span>
+          <span className="text-sm text-gray-300">{text}</span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/** Shared dark layout */
 function FanclubCTALayout({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation()
 
@@ -22,7 +45,7 @@ function FanclubCTALayout({ children }: { children: React.ReactNode }) {
       {/* dot-grid overlay */}
       <div className="dot-grid pointer-events-none absolute inset-0 opacity-[0.05]" />
 
-      {/* ambient violet glow at bottom */}
+      {/* ambient violet glow */}
       <div className="ambient-violet pointer-events-none absolute inset-0" />
 
       {/* top thin border */}
@@ -31,20 +54,28 @@ function FanclubCTALayout({ children }: { children: React.ReactNode }) {
       <div className="relative mx-auto max-w-5xl text-center">
         {/* member area badge */}
         <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 backdrop-blur-sm">
-          <span className="h-1.5 w-1.5 rounded-full bg-violet-400" />
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-violet-400 opacity-50" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-violet-400" />
+          </span>
           <span className="font-mono text-[10px] uppercase tracking-widest text-gray-400">
             member area
           </span>
         </div>
 
-        <h2 className="text-[10px] uppercase tracking-widest text-gray-500">
+        <h2 className="font-mono text-[10px] uppercase tracking-widest text-gray-500">
           {t('home.fanclub.title')}
         </h2>
         <p className="mt-4 text-2xl font-semibold leading-snug md:text-3xl">
           {t('home.fanclub.description')}
         </p>
 
-        <div className="mt-8">{children}</div>
+        {/* benefits list */}
+        <div className="mt-8 flex justify-center">
+          <BenefitsList />
+        </div>
+
+        {children}
       </div>
     </motion.section>
   )
@@ -63,7 +94,7 @@ function FanclubCTASectionWithClerk() {
       {isLoaded && isMember && (
         <Link
           to={ROUTES.FANCLUB}
-          className="group inline-flex items-center gap-2 border border-white/20 px-8 py-3 text-sm font-medium tracking-wide text-white transition-all duration-200 hover:border-white/60 hover:bg-white/10"
+          className="group inline-flex items-center gap-2 border border-white/20 px-8 py-3 text-sm font-medium tracking-wide text-white transition-all duration-200 hover:border-violet-400/60 hover:bg-violet-500/10"
         >
           {t('home.fanclub.memberButton')}
           <span className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>

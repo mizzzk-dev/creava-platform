@@ -60,4 +60,34 @@
   .card-ring-hover:hover {
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.06);
   }
+
+  /* skeleton shimmer — loading placeholders */
+  .skeleton {
+    background: linear-gradient(90deg, #f3f4f6 25%, #e9ecef 50%, #f3f4f6 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  /* dark glass — for dark section overlays */
+  .glass-dark {
+    background-color: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* subtle violet border glow */
+  .glow-violet {
+    box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.25), 0 0 16px rgba(139, 92, 246, 0.08);
+  }
+
+  /* bento card — elevated card surface */
+  .bento-card {
+    background-color: #ffffff;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
+    transition: box-shadow 0.2s ease;
+  }
+
+  .bento-card:hover {
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 4px 16px rgba(0, 0, 0, 0.07);
+  }
 }

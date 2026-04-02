@@ -6,6 +6,7 @@ const NAV_LINKS = [
   { key: 'nav.works',   to: ROUTES.WORKS   },
   { key: 'nav.news',    to: ROUTES.NEWS    },
   { key: 'nav.blog',    to: ROUTES.BLOG    },
+  { key: 'nav.events',  to: ROUTES.EVENTS  },
   { key: 'nav.fanclub', to: ROUTES.FANCLUB },
   { key: 'nav.contact', to: ROUTES.CONTACT },
 ] as const

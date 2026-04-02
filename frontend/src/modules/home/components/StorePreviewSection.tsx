@@ -4,17 +4,18 @@ import { motion } from 'framer-motion'
 import { useProductList } from '@/modules/store/hooks/useProductList'
 import { ROUTES, detailPath } from '@/lib/routeConstants'
 import SectionHeader from '@/components/common/SectionHeader'
+import Badge from '@/components/common/Badge'
 import { formatPriceNum } from '@/utils'
 
 export default function StorePreviewSection() {
   const { t } = useTranslation()
-  const { products, loading } = useProductList(3)
+  const { products, loading } = useProductList(6)
 
   const previewItems = products.filter((p) => p.status === 'public').slice(0, 3)
 
   return (
     <motion.section
-      className="bg-gray-50/60 px-4 py-20"
+      className="bg-gray-50/50 px-4 py-20"
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -31,7 +32,11 @@ export default function StorePreviewSection() {
         {loading && (
           <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="aspect-square animate-pulse bg-gray-100" />
+              <div key={i}>
+                <div className="skeleton aspect-square" />
+                <div className="skeleton mt-2 h-3 w-3/4 rounded" />
+                <div className="skeleton mt-1.5 h-2.5 w-16 rounded" />
+              </div>
             ))}
           </div>
         )}
@@ -43,31 +48,37 @@ export default function StorePreviewSection() {
               <Link
                 key={product.id}
                 to={detailPath.product(product.slug)}
-                className="group card-ring card-ring-hover block overflow-hidden bg-white transition-all duration-200"
+                className="group bento-card block overflow-hidden transition-all duration-200"
               >
-                {/* image area */}
+                {/* image */}
                 <div className="relative aspect-square overflow-hidden bg-gray-50">
                   {product.previewImage ? (
                     <img
                       src={product.previewImage.url}
                       alt={product.previewImage.alt ?? product.title}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
                     />
                   ) : (
-                    <div className="flex h-full w-full flex-col items-center justify-center gap-2">
-                      <span className="font-mono text-[9px] uppercase tracking-widest text-gray-200">
+                    <div className="dot-grid flex h-full w-full flex-col items-center justify-center gap-2 opacity-40">
+                      <span className="font-mono text-[9px] uppercase tracking-widest text-gray-300">
                         item_{String(i + 1).padStart(2, '0')}
                       </span>
                     </div>
                   )}
 
+                  {/* soldout overlay */}
                   {product.purchaseStatus === 'soldout' && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-white/60">
-                      <span className="font-mono text-[10px] uppercase tracking-widest text-gray-400">
-                        {t('store.soldOut')}
-                      </span>
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/70">
+                      <Badge variant="soldout" size="sm" />
                     </div>
                   )}
+
+                  {/* status badges top-right */}
+                  <div className="absolute right-2 top-2 flex flex-col gap-1">
+                    {product.status === 'fc_only' && <Badge variant="fc" />}
+                    {product.status === 'limited' && <Badge variant="limited" />}
+                    {product.purchaseStatus === 'coming_soon' && <Badge variant="coming_soon" />}
+                  </div>
                 </div>
 
                 {/* meta */}
@@ -75,9 +86,18 @@ export default function StorePreviewSection() {
                   <p className="line-clamp-1 text-sm font-medium text-gray-900 transition-colors group-hover:text-gray-600">
                     {product.title}
                   </p>
-                  <p className="mt-0.5 font-mono text-xs text-gray-400">
-                    {formatPriceNum(product.price, product.currency)}
-                  </p>
+                  <div className="mt-1 flex items-center justify-between">
+                    <p className="font-mono text-xs text-gray-400">
+                      {product.purchaseStatus === 'soldout'
+                        ? t('store.soldOut')
+                        : product.purchaseStatus === 'coming_soon'
+                          ? t('store.comingSoon')
+                          : formatPriceNum(product.price, product.currency)}
+                    </p>
+                    <span className="font-mono text-[10px] text-gray-200 transition-all duration-150 group-hover:translate-x-0.5 group-hover:text-gray-400">
+                      →
+                    </span>
+                  </div>
                 </div>
               </Link>
             ))}

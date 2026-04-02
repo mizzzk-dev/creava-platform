@@ -4,6 +4,20 @@ import { useHomeLatest } from '@/modules/home/hooks/useHomeLatest'
 import { ROUTES, detailPath } from '@/lib/routeConstants'
 import SectionHeader from '@/components/common/SectionHeader'
 import ContentCard from '@/components/cards/ContentCard'
+import type { Event } from '@/types/content'
+
+function SkeletonRows() {
+  return (
+    <div className="mt-3 space-y-3.5">
+      {[80, 65, 90].map((w, i) => (
+        <div key={i} className="border-t border-gray-100 pt-3.5">
+          <div className={`skeleton h-2.5 rounded`} style={{ width: `${w}%` }} />
+          <div className="skeleton mt-2 h-2 w-20 rounded" />
+        </div>
+      ))}
+    </div>
+  )
+}
 
 export default function LatestSection() {
   const { t } = useTranslation()
@@ -15,23 +29,48 @@ export default function LatestSection() {
       label: t('home.latest.news'),
       data: news,
       viewAllTo: ROUTES.NEWS,
-      toHref: (slug: string) => detailPath.news(slug),
+      renderCard: (item: { id: number; title: string; slug: string; publishAt: string | null; status: 'public' | 'fc_only' | 'limited' }) => (
+        <ContentCard
+          key={item.id}
+          title={item.title}
+          href={detailPath.news(item.slug)}
+          publishAt={item.publishAt}
+          status={item.status}
+        />
+      ),
     },
     {
       key: 'blog',
       label: t('home.latest.blog'),
       data: blog,
       viewAllTo: ROUTES.BLOG,
-      toHref: (slug: string) => detailPath.blog(slug),
+      renderCard: (item: { id: number; title: string; slug: string; publishAt: string | null; status: 'public' | 'fc_only' | 'limited' }) => (
+        <ContentCard
+          key={item.id}
+          title={item.title}
+          href={detailPath.blog(item.slug)}
+          publishAt={item.publishAt}
+          status={item.status}
+        />
+      ),
     },
     {
       key: 'events',
       label: t('home.latest.events'),
       data: events,
       viewAllTo: ROUTES.EVENTS,
-      toHref: (slug: string) => detailPath.event(slug),
+      renderCard: (item: Event) => (
+        <ContentCard
+          key={item.id}
+          title={item.title}
+          href={detailPath.event(item.slug)}
+          startAt={item.startAt}
+          venue={item.venue}
+          status={item.status}
+        />
+      ),
     },
-  ]
+  ] as const
 
   return (
     <motion.section
@@ -43,27 +82,29 @@ export default function LatestSection() {
     >
       <SectionHeader label={t('home.latest.title')} />
 
-      <div className="mt-8 grid grid-cols-1 gap-10 md:grid-cols-3">
-        {categories.map(({ key, label, data, viewAllTo, toHref }) => (
-          <div key={key}>
-            <SectionHeader label={label} viewAllTo={viewAllTo} />
+      <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-0">
+        {categories.map(({ key, label, data, viewAllTo, renderCard }, colIdx) => (
+          <div
+            key={key}
+            className={colIdx < 2 ? 'md:border-r md:border-gray-100 md:pr-8' : 'md:pl-8'}
+          >
+            {/* column header */}
+            <div className={colIdx > 0 ? 'md:pl-0' : ''}>
+              <SectionHeader label={label} viewAllTo={viewAllTo} />
+            </div>
 
-            {data.loading && (
-              <p className="mt-4 font-mono text-[11px] text-gray-300">{t('common.loading')}</p>
-            )}
+            {/* loading skeleton */}
+            {data.loading && <SkeletonRows />}
 
+            {/* empty */}
             {!data.loading && data.items.length === 0 && (
               <p className="mt-4 font-mono text-[11px] text-gray-300">{t('home.latest.empty')}</p>
             )}
 
-            {data.items.slice(0, 3).map((item) => (
-              <ContentCard
-                key={item.id}
-                title={item.title}
-                href={toHref(item.slug)}
-                publishAt={item.publishAt}
-              />
-            ))}
+            {/* items */}
+            {!data.loading &&
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (data.items as any[]).slice(0, 3).map((item) => renderCard(item))}
           </div>
         ))}
       </div>

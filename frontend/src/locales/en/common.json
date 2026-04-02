@@ -122,7 +122,10 @@
       "title": "Fan Club",
       "description": "Get exclusive content and early access.",
       "joinButton": "Join the Fan Club",
-      "memberButton": "View exclusive content"
+      "memberButton": "View exclusive content",
+      "benefit1": "Access to exclusive videos, photos & music",
+      "benefit2": "Early announcements and member-only updates",
+      "benefit3": "Priority event invites & ticket pre-sales"
     }
   }
 }
