@@ -6,8 +6,7 @@
     "publishAt": "2024-03-18T10:00:00.000Z",
     "limitedEndAt": null,
     "archiveVisibleForFC": false,
-    "body": "ポートレート撮影において、私が最も重視しているのは「被写体との対話」です。...",
-    "thumbnailUrl": null,
+    "body": "ポートレート撮影において、私が最も重視しているのは「被写体との対話」です。カメラを持つ前に、その人のことを知ろうとする時間が、写真の質を決める。",
     "tags": ["写真", "ポートレート", "撮影技法"]
   },
   {
@@ -18,7 +17,6 @@
     "limitedEndAt": null,
     "archiveVisibleForFC": false,
     "body": "今年から Adobe Premiere Pro から DaVinci Resolve に移行しました。その経緯と現在のワークフローをまとめます。",
-    "thumbnailUrl": null,
     "tags": ["映像", "編集", "DaVinci Resolve"]
   },
   {
@@ -29,7 +27,6 @@
     "limitedEndAt": null,
     "archiveVisibleForFC": false,
     "body": "メイン機として Sony α7RV を3ヶ月使用しました。スチル・動画両方の観点からレビューします。",
-    "thumbnailUrl": null,
     "tags": ["機材", "カメラ", "Sony"]
   },
   {
@@ -40,7 +37,6 @@
     "limitedEndAt": null,
     "archiveVisibleForFC": false,
     "body": "昨年末にホームスタジオを大幅にアップグレードしました。新しい機材構成と吸音対策について。",
-    "thumbnailUrl": null,
     "tags": ["音楽", "スタジオ", "機材"]
   },
   {
@@ -51,7 +47,6 @@
     "limitedEndAt": null,
     "archiveVisibleForFC": false,
     "body": "1月に北海道を10日間巡る撮影旅行に行ってきました。極寒での撮影で気づいたこと、装備について。",
-    "thumbnailUrl": null,
     "tags": ["旅行", "写真", "北海道"]
   },
   {
@@ -62,7 +57,6 @@
     "limitedEndAt": null,
     "archiveVisibleForFC": false,
     "body": "フリーランスのクリエイターとして活動する中で確立した、毎日のルーティンと健康管理の方法を共有します。",
-    "thumbnailUrl": null,
     "tags": ["ライフスタイル", "生産性"]
   },
   {
@@ -73,7 +67,6 @@
     "limitedEndAt": null,
     "archiveVisibleForFC": false,
     "body": "今年訪れた撮影スポットの中から、特に印象に残った10か所を紹介します。アクセス情報付き。",
-    "thumbnailUrl": null,
     "tags": ["撮影スポット", "写真", "旅行"]
   },
   {
@@ -84,8 +77,27 @@
     "limitedEndAt": null,
     "archiveVisibleForFC": false,
     "body": "半年間、メインカメラをフィルムカメラに戻してみました。デジタルでは気づけなかったことが多くありました。",
-    "thumbnailUrl": null,
     "tags": ["フィルム", "写真", "アナログ"]
+  },
+  {
+    "title": "ポートレート撮影の光の使い方 — 応用編",
+    "slug": "blog-portrait-lighting-advanced",
+    "status": "public",
+    "publishAt": "2023-10-20T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "body": "自然光・ストロボ・LEDパネルを組み合わせた中級〜上級向けのポートレート撮影テクニックを解説します。",
+    "tags": ["写真", "照明", "ポートレート"]
+  },
+  {
+    "title": "クリエイターが知っておきたい著作権の基礎",
+    "slug": "blog-copyright-basics",
+    "status": "public",
+    "publishAt": "2023-09-05T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "body": "写真・映像・音楽のクリエイターが日常的に知っておくべき著作権の基礎知識。よくある誤解についても解説します。",
+    "tags": ["著作権", "法律", "クリエイター"]
   },
   {
     "title": "FC限定 — 次回作の制作過程と考え方",
@@ -95,7 +107,6 @@
     "limitedEndAt": null,
     "archiveVisibleForFC": false,
     "body": "現在制作中の新プロジェクトについて、コンセプトから実際の制作過程まで、会員の皆さんだけに詳しくお話しします。",
-    "thumbnailUrl": null,
     "tags": ["制作秘話", "FC限定"]
   },
   {
@@ -106,7 +117,6 @@
     "limitedEndAt": null,
     "archiveVisibleForFC": false,
     "body": "現在使用しているカメラ、レンズ、ソフトウェアの全リストを公開します。購入価格や感想も含めた詳細版です。",
-    "thumbnailUrl": null,
     "tags": ["機材", "FC限定"]
   },
   {
@@ -117,18 +127,16 @@
     "limitedEndAt": "2025-06-30T23:59:59.000Z",
     "archiveVisibleForFC": true,
     "body": "写真集 Vol.1 の制作過程を詳しく紹介します。印刷会社の選び方から装丁デザインまで。FC会員はアーカイブでも閲覧可。",
-    "thumbnailUrl": null,
     "tags": ["写真集", "制作過程"]
   },
   {
-    "title": "ポートレート撮影の光の使い方 — 応用編",
-    "slug": "blog-portrait-lighting-advanced",
-    "status": "public",
-    "publishAt": "2023-10-20T10:00:00.000Z",
-    "limitedEndAt": null,
+    "title": "アーカイブ — 2023年の制作を振り返る",
+    "slug": "blog-archive-2023-review",
+    "status": "limited",
+    "publishAt": "2023-12-20T10:00:00.000Z",
+    "limitedEndAt": "2024-03-31T23:59:59.000Z",
     "archiveVisibleForFC": false,
-    "body": "自然光・ストロボ・LEDパネルを組み合わせた中級〜上級向けのポートレート撮影テクニックを解説します。",
-    "thumbnailUrl": null,
-    "tags": ["写真", "照明", "ポートレート"]
+    "body": "2023年に取り組んだ主要プロジェクトを振り返ります。公開終了コンテンツのため現在は一般非公開です。",
+    "tags": ["振り返り", "2023"]
   }
 ]

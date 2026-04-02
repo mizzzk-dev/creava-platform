@@ -298,30 +298,97 @@ Settings > API Tokens > Create new API Token
 
 ## テストデータの投入
 
-コンテンツタイプ定義後、`backend/scripts/seed/` のフィクスチャデータを投入できます。
+### 実行手順
+
+コンテンツタイプ定義後、以下のコマンドで全データを一括投入できます。
 
 ```bash
-# Strapi を停止してから実行
+# 1. Strapi が起動中の場合は停止する
+# 2. seed を実行（Strapi を内部で起動して投入後、自動終了）
 npm run seed --prefix backend
-# または
+# または root から:
 npm run seed:backend
 ```
 
-フィクスチャファイルの場所:
+> ⚠️ seed スクリプトは Strapi を内部で起動します。Strapi が別プロセスで起動中だと競合するため、必ず停止してから実行してください。
+
+### フィクスチャファイル一覧
 
 ```
 backend/scripts/seed/fixtures/
-├── works.json          # 14件（featured / public / fc_only / limited）
-├── news.json           # 12件
-├── blog.json           # 12件
-├── events.json         # 8件
-├── fanclub.json        # 12件
-├── store-products.json # 12件
-├── media.json          # 10件
-└── faq.json            # 14件
+│
+│ # Collection Types
+├── works.json          # 16件（featured×4 / public×7 / fc_only×2 / limited×3）
+├── news.json           # 14件（public×10 / fc_only×2 / limited×2）
+├── blog.json           # 14件（public×10 / fc_only×2 / limited×2）
+├── events.json         #  8件（public×6 / fc_only×1 / limited×1）
+├── fanclub.json        # 12件（fc_only×11 / public×1 / limited×1）
+├── store-products.json # 12件（public×9 / fc_only×1 / limited×1 / soldout×1）
+├── media-items.json    # 10件（メディア掲載）
+├── awards.json         #  8件（受賞履歴）
+├── faq.json            # 14件（FAQ）
+│
+│ # Single Types（存在しない場合のみ作成）
+├── profile.json        # プロフィール（name / bio / bioShort / location / website）
+└── site-setting.json   # サイト設定（siteName / heroTitle / heroSubtitle / CTA / SNS）
 ```
 
-詳細は [`backend/scripts/seed/README.md`](../backend/scripts/seed/README.md) を参照してください。
+**合計: Collection 98件 + Single Type 2件**
+
+### 再実行時の挙動
+
+- Collection Types: `slug`（FAQは`order`）で重複チェック → 既存レコードはスキップ
+- Single Types: データが存在する場合はスキップ（既存データを上書きしない）
+
+### status バリエーション一覧
+
+| status | 意味 | 例 |
+|---|---|---|
+| `public` | 全員閲覧可 | 一般公開作品 / ニュース |
+| `fc_only` | FC会員以上のみ | 限定映像 / 会員限定記事 |
+| `limited` + 期限内 | 全員閲覧可（期限内） | 期間限定展示 |
+| `limited` + 期限切れ + `archiveVisibleForFC: true` | FC会員のみ閲覧可 | アーカイブ（FC閲覧可） |
+| `limited` + 期限切れ + `archiveVisibleForFC: false` | 誰も閲覧不可 | 完全終了コンテンツ |
+
+---
+
+## FC制御の動作確認
+
+seed データには以下の確認用レコードが含まれています。
+
+### 確認用レコード
+
+| slug | status | 確認できること |
+|---|---|---|
+| `fc-unreleased-portraits` | `fc_only` | FC会員ログイン時のみ表示 |
+| `archive-summer-sound` | `limited` / 期限切れ / archiveFC=true | FC会員のみアーカイブ閲覧可 |
+| `archive-spring-haze` | `limited` / 期限切れ / archiveFC=false | ログイン状態に関わらず非表示 |
+| `limited-winter-journey` | `limited` / 期限内 | 全員閲覧可 |
+
+### 確認手順
+
+1. **未ログイン状態**で `/works` を開く → `fc_only` / 期限切れ（archiveFC=false）は非表示
+2. **FC会員ログイン**後に `/works` を開く → `fc_only` が表示される
+3. **期限切れ + archiveVisibleForFC: true** のレコード（`archive-summer-sound`）を直接 URL で開く
+   - 未ログイン → アクセス拒否
+   - FC会員 → アクセス可
+
+FC制御ロジックは `frontend/src/utils/index.ts` の `canViewContent()` に集約されています。
+
+---
+
+## Home で確認できる内容
+
+seed データ投入後、Home（`/`）で以下が確認できます。
+
+| セクション | 確認できる内容 |
+|---|---|
+| **Hero** | site-setting の heroTitle / heroSubtitle が設定されていれば利用可（現在は i18n テキスト） |
+| **Featured Works** | `isFeatured: true` の4件（VIDEO / PHOTO / MUSIC / LIVE） |
+| **Latest** | News / Blog / Events の最新3件ずつ |
+| **Store Preview** | `purchaseStatus: available` の最新3件 |
+| **Media & Awards** | awards 8件 + media-items 10件 |
+| **Fanclub CTA** | ログイン状態により CTA ボタンが切り替わる |
 
 ---
 

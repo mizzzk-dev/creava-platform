@@ -11,8 +11,7 @@
     "currency": "JPY",
     "stripeLink": "https://buy.stripe.com/test_photobook_vol1",
     "baseLink": "https://thebase.com/shop/example/items/photobook-vol1",
-    "purchaseStatus": "available",
-    "previewImageUrl": null
+    "purchaseStatus": "available"
   },
   {
     "title": "Instrumental EP「Between」DL版",
@@ -26,8 +25,7 @@
     "currency": "JPY",
     "stripeLink": "https://buy.stripe.com/test_ep_between_dl",
     "baseLink": null,
-    "purchaseStatus": "available",
-    "previewImageUrl": null
+    "purchaseStatus": "available"
   },
   {
     "title": "ポートレートプリント A3（限定30枚）",
@@ -41,8 +39,7 @@
     "currency": "JPY",
     "stripeLink": "https://buy.stripe.com/test_print_portrait_a3",
     "baseLink": null,
-    "purchaseStatus": "available",
-    "previewImageUrl": null
+    "purchaseStatus": "available"
   },
   {
     "title": "オリジナルトートバッグ",
@@ -56,8 +53,7 @@
     "currency": "JPY",
     "stripeLink": null,
     "baseLink": "https://thebase.com/shop/example/items/tote-bag",
-    "purchaseStatus": "available",
-    "previewImageUrl": null
+    "purchaseStatus": "available"
   },
   {
     "title": "Original Soundtrack「夜の庭」DL版",
@@ -71,8 +67,7 @@
     "currency": "JPY",
     "stripeLink": "https://buy.stripe.com/test_ost_night_garden",
     "baseLink": "https://thebase.com/shop/example/items/ost-night-garden",
-    "purchaseStatus": "available",
-    "previewImageUrl": null
+    "purchaseStatus": "available"
   },
   {
     "title": "ポストカードセット（10枚組）",
@@ -86,83 +81,7 @@
     "currency": "JPY",
     "stripeLink": null,
     "baseLink": "https://thebase.com/shop/example/items/postcard-set-10",
-    "purchaseStatus": "available",
-    "previewImageUrl": null
-  },
-  {
-    "title": "FC 限定 — 壁紙パック Vol.1（デジタル）",
-    "slug": "fc-wallpaper-pack-vol1",
-    "status": "fc_only",
-    "publishAt": "2024-03-20T10:00:00.000Z",
-    "limitedEndAt": null,
-    "archiveVisibleForFC": false,
-    "description": "ファンクラブ会員限定の高解像度壁紙パック。PC・スマートフォン向けに最適化した20点セット。ZIP形式でダウンロード。",
-    "price": 550,
-    "currency": "JPY",
-    "stripeLink": "https://buy.stripe.com/test_fc_wallpaper_vol1",
-    "baseLink": null,
-    "purchaseStatus": "available",
-    "previewImageUrl": null
-  },
-  {
-    "title": "写真集 Vol.1「光の記憶」+ プリントセット",
-    "slug": "photobook-vol1-print-bundle",
-    "status": "public",
-    "publishAt": "2024-04-01T10:00:00.000Z",
-    "limitedEndAt": "2025-06-30T23:59:59.000Z",
-    "archiveVisibleForFC": false,
-    "description": "写真集 Vol.1 に厳選ポストカード5枚とA5プリント1枚がセットになった限定バンドル。期間限定販売。",
-    "price": 5500,
-    "currency": "JPY",
-    "stripeLink": "https://buy.stripe.com/test_photobook_bundle",
-    "baseLink": null,
-    "purchaseStatus": "available",
-    "previewImageUrl": null
-  },
-  {
-    "title": "オリジナルステッカーパック",
-    "slug": "sticker-pack-original",
-    "status": "public",
-    "publishAt": "2023-12-15T10:00:00.000Z",
-    "limitedEndAt": null,
-    "archiveVisibleForFC": false,
-    "description": "ロゴ・作品モチーフのステッカー8枚セット。防水素材、UVカット加工済み。",
-    "price": 660,
-    "currency": "JPY",
-    "stripeLink": null,
-    "baseLink": "https://thebase.com/shop/example/items/sticker-pack",
-    "purchaseStatus": "soldout",
-    "previewImageUrl": null
-  },
-  {
-    "title": "撮影ワークショップ参加券（2025年4月）",
-    "slug": "workshop-ticket-april-2025",
-    "status": "public",
-    "publishAt": "2024-03-01T10:00:00.000Z",
-    "limitedEndAt": "2025-04-05T23:59:59.000Z",
-    "archiveVisibleForFC": false,
-    "description": "2025年4月6日開催「ポートレート撮影の基礎」ワークショップへの参加券。定員10名。当日の機材貸出なし。",
-    "price": 8800,
-    "currency": "JPY",
-    "stripeLink": "https://buy.stripe.com/test_workshop_april_2025",
-    "baseLink": null,
-    "purchaseStatus": "available",
-    "previewImageUrl": null
-  },
-  {
-    "title": "アクリルスタンド — 「夕暮れの港」",
-    "slug": "acrylic-stand-sunset-harbor",
-    "status": "public",
-    "publishAt": "2024-02-01T10:00:00.000Z",
-    "limitedEndAt": null,
-    "archiveVisibleForFC": false,
-    "description": "作品「夕暮れの港」をアクリルスタンドに。高精細印刷、W100×H150mm。デスクやシェルフに飾れるサイズ感。",
-    "price": 3300,
-    "currency": "JPY",
-    "stripeLink": "https://buy.stripe.com/test_acrylic_sunset",
-    "baseLink": "https://thebase.com/shop/example/items/acrylic-sunset-harbor",
-    "purchaseStatus": "coming_soon",
-    "previewImageUrl": null
+    "purchaseStatus": "available"
   },
   {
     "title": "デジタルプリント — 「光の記憶」シリーズ全5点セット",
@@ -176,7 +95,76 @@
     "currency": "JPY",
     "stripeLink": "https://buy.stripe.com/test_digital_print_hikari",
     "baseLink": null,
-    "purchaseStatus": "available",
-    "previewImageUrl": null
+    "purchaseStatus": "available"
+  },
+  {
+    "title": "写真集 Vol.1「光の記憶」+ プリントセット",
+    "slug": "photobook-vol1-print-bundle",
+    "status": "limited",
+    "publishAt": "2024-04-01T10:00:00.000Z",
+    "limitedEndAt": "2025-06-30T23:59:59.000Z",
+    "archiveVisibleForFC": false,
+    "description": "写真集 Vol.1 に厳選ポストカード5枚とA5プリント1枚がセットになった限定バンドル。期間限定販売。",
+    "price": 5500,
+    "currency": "JPY",
+    "stripeLink": "https://buy.stripe.com/test_photobook_bundle",
+    "baseLink": null,
+    "purchaseStatus": "available"
+  },
+  {
+    "title": "FC 限定 — 壁紙パック Vol.1（デジタル）",
+    "slug": "fc-wallpaper-pack-vol1",
+    "status": "fc_only",
+    "publishAt": "2024-03-20T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "description": "ファンクラブ会員限定の高解像度壁紙パック。PC・スマートフォン向けに最適化した20点セット。ZIP形式でダウンロード。",
+    "price": 550,
+    "currency": "JPY",
+    "stripeLink": "https://buy.stripe.com/test_fc_wallpaper_vol1",
+    "baseLink": null,
+    "purchaseStatus": "available"
+  },
+  {
+    "title": "撮影ワークショップ参加券（2025年4月）",
+    "slug": "workshop-ticket-april-2025",
+    "status": "public",
+    "publishAt": "2024-03-01T10:00:00.000Z",
+    "limitedEndAt": "2025-04-05T23:59:59.000Z",
+    "archiveVisibleForFC": false,
+    "description": "2025年4月6日開催「ポートレート撮影の基礎」ワークショップへの参加券。定員10名。当日の機材貸出なし。",
+    "price": 8800,
+    "currency": "JPY",
+    "stripeLink": "https://buy.stripe.com/test_workshop_april_2025",
+    "baseLink": null,
+    "purchaseStatus": "available"
+  },
+  {
+    "title": "アクリルスタンド — 「夕暮れの港」",
+    "slug": "acrylic-stand-sunset-harbor",
+    "status": "public",
+    "publishAt": "2024-02-01T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "description": "作品「夕暮れの港」をアクリルスタンドに。高精細印刷、W100×H150mm。デスクやシェルフに飾れるサイズ感。",
+    "price": 3300,
+    "currency": "JPY",
+    "stripeLink": "https://buy.stripe.com/test_acrylic_sunset",
+    "baseLink": "https://thebase.com/shop/example/items/acrylic-sunset-harbor",
+    "purchaseStatus": "coming_soon"
+  },
+  {
+    "title": "オリジナルステッカーパック",
+    "slug": "sticker-pack-original",
+    "status": "public",
+    "publishAt": "2023-12-15T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "description": "ロゴ・作品モチーフのステッカー8枚セット。防水素材、UVカット加工済み。",
+    "price": 660,
+    "currency": "JPY",
+    "stripeLink": null,
+    "baseLink": "https://thebase.com/shop/example/items/sticker-pack",
+    "purchaseStatus": "soldout"
   }
 ]

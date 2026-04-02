@@ -7,7 +7,6 @@
     "limitedEndAt": null,
     "archiveVisibleForFC": false,
     "description": "2023年に撮影した光と影をテーマにした短編映像作品。自然光のみで撮影。",
-    "thumbnailUrl": null,
     "category": "VIDEO",
     "isFeatured": true
   },
@@ -19,7 +18,6 @@
     "limitedEndAt": null,
     "archiveVisibleForFC": false,
     "description": "東京都内で撮影した人物ポートレートシリーズ第1弾。12名のクリエイターを収録。",
-    "thumbnailUrl": null,
     "category": "PHOTO",
     "isFeatured": true
   },
@@ -31,7 +29,6 @@
     "limitedEndAt": null,
     "archiveVisibleForFC": false,
     "description": "短編映画「夜の庭」のオリジナルサウンドトラック。ピアノとストリングス編成。",
-    "thumbnailUrl": null,
     "category": "MUSIC",
     "isFeatured": true
   },
@@ -43,7 +40,6 @@
     "limitedEndAt": null,
     "archiveVisibleForFC": false,
     "description": "渋谷 WWW でのワンマンライブ映像記録。90分のフルパフォーマンス。",
-    "thumbnailUrl": null,
     "category": "LIVE",
     "isFeatured": true
   },
@@ -55,7 +51,6 @@
     "limitedEndAt": null,
     "archiveVisibleForFC": false,
     "description": "横浜港で撮影した夕景シリーズ。ゴールデンアワーの光を追った作品。",
-    "thumbnailUrl": null,
     "category": "PHOTO",
     "isFeatured": false
   },
@@ -67,7 +62,6 @@
     "limitedEndAt": null,
     "archiveVisibleForFC": false,
     "description": "東京都内で撮影した人物ポートフォリオシリーズ第2弾。新世代クリエイター18名収録。",
-    "thumbnailUrl": null,
     "category": "PHOTO",
     "isFeatured": false
   },
@@ -79,7 +73,6 @@
     "limitedEndAt": null,
     "archiveVisibleForFC": false,
     "description": "日常の余白を記録した15分の短編ドキュメンタリー映像。",
-    "thumbnailUrl": null,
     "category": "VIDEO",
     "isFeatured": false
   },
@@ -91,7 +84,39 @@
     "limitedEndAt": null,
     "archiveVisibleForFC": false,
     "description": "5曲収録のインストゥルメンタルEP。アンビエントとジャズの融合を試みた作品。",
-    "thumbnailUrl": null,
+    "category": "MUSIC",
+    "isFeatured": false
+  },
+  {
+    "title": "MV — 「Still Water」",
+    "slug": "mv-still-water",
+    "status": "public",
+    "publishAt": "2023-06-15T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "description": "楽曲「Still Water」のオフィシャルミュージックビデオ。監督・撮影・編集を一人で担当。",
+    "category": "VIDEO",
+    "isFeatured": false
+  },
+  {
+    "title": "Ambient Series — 「霧と光」",
+    "slug": "ambient-kiri-hikari",
+    "status": "public",
+    "publishAt": "2023-04-20T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "description": "朝霧の中で撮影した連作写真シリーズ。フィルムとデジタルのハイブリッド制作。",
+    "category": "PHOTO",
+    "isFeatured": false
+  },
+  {
+    "title": "Sound Design — 「静寂のレイヤー」",
+    "slug": "sound-design-seijaku",
+    "status": "public",
+    "publishAt": "2023-02-10T10:00:00.000Z",
+    "limitedEndAt": null,
+    "archiveVisibleForFC": false,
+    "description": "フィールドレコーディングと電子音楽を融合させた実験的サウンドデザイン作品。",
     "category": "MUSIC",
     "isFeatured": false
   },
@@ -103,7 +128,6 @@
     "limitedEndAt": null,
     "archiveVisibleForFC": false,
     "description": "ファンクラブ会員限定の未公開ポートレート30点。撮影時のコメントつき。",
-    "thumbnailUrl": null,
     "category": "PHOTO",
     "isFeatured": false
   },
@@ -115,7 +139,6 @@
     "limitedEndAt": null,
     "archiveVisibleForFC": false,
     "description": "「光の記憶」の撮影過程を記録したメイキング映像。約30分。",
-    "thumbnailUrl": null,
     "category": "VIDEO",
     "isFeatured": false
   },
@@ -127,7 +150,6 @@
     "limitedEndAt": "2025-12-31T23:59:59.000Z",
     "archiveVisibleForFC": true,
     "description": "北海道での撮影旅行をまとめた写真展示作品。期間限定公開。",
-    "thumbnailUrl": null,
     "category": "PHOTO",
     "isFeatured": false
   },
@@ -139,7 +161,6 @@
     "limitedEndAt": "2023-12-31T23:59:59.000Z",
     "archiveVisibleForFC": true,
     "description": "2023年夏に制作したアンビエントサウンドスケープ作品。一般公開期間終了後はFC会員のみ閲覧可。",
-    "thumbnailUrl": null,
     "category": "MUSIC",
     "isFeatured": false
   },
@@ -151,20 +172,7 @@
     "limitedEndAt": "2023-06-30T23:59:59.000Z",
     "archiveVisibleForFC": false,
     "description": "2023年春限定公開の写真作品。公開終了後は誰も閲覧できません。",
-    "thumbnailUrl": null,
     "category": "PHOTO",
-    "isFeatured": false
-  },
-  {
-    "title": "MV — 「Still Water」",
-    "slug": "mv-still-water",
-    "status": "public",
-    "publishAt": "2023-06-15T10:00:00.000Z",
-    "limitedEndAt": null,
-    "archiveVisibleForFC": false,
-    "description": "楽曲「Still Water」のオフィシャルミュージックビデオ。監督・撮影・編集を一人で担当。",
-    "thumbnailUrl": null,
-    "category": "VIDEO",
     "isFeatured": false
   }
 ]

@@ -9,24 +9,28 @@
  * Prerequisites:
  *   1. Strapi content types must be defined (see docs/backend-setup.md)
  *   2. Strapi must NOT be running (this script starts its own instance)
- *   3. STRAPI_ADMIN_EMAIL + STRAPI_ADMIN_PASSWORD must be set (optional, for admin creation)
  *
  * What this script does:
  *   - Loads fixture JSON files from ./fixtures/
  *   - Creates records via Strapi Entity Service API
- *   - Skips records that already exist (identified by slug)
+ *   - Skips records that already exist (identified by slug or order)
+ *   - Single types (Profile, SiteSettings) are created once; skip if data already exists
  *   - Reports counts at the end
  *
- * Supported content types (Strapi collection API IDs):
- *   api::work.work                     → fixtures/works.json
- *   api::news-item.news-item           → fixtures/news.json
- *   api::blog-post.blog-post           → fixtures/blog.json
- *   api::event.event                   → fixtures/events.json
- *   api::fanclub-content.fanclub-content → fixtures/fanclub.json
- *   api::store-product.store-product   → fixtures/store-products.json
- *   api::media-item.media-item         → fixtures/media-items.json
- *   api::award.award                   → fixtures/awards.json
- *   api::faq.faq                       → fixtures/faq.json
+ * Collection types (9):
+ *   api::work.work                       → fixtures/works.json           (16 items)
+ *   api::news-item.news-item             → fixtures/news.json            (14 items)
+ *   api::blog-post.blog-post             → fixtures/blog.json            (14 items)
+ *   api::event.event                     → fixtures/events.json          (8 items)
+ *   api::fanclub-content.fanclub-content → fixtures/fanclub.json         (12 items)
+ *   api::store-product.store-product     → fixtures/store-products.json  (12 items)
+ *   api::media-item.media-item           → fixtures/media-items.json     (10 items)
+ *   api::award.award                     → fixtures/awards.json          (8 items)
+ *   api::faq.faq                         → fixtures/faq.json             (14 items)
+ *
+ * Single types (2):
+ *   api::profile.profile                 → fixtures/profile.json
+ *   api::site-setting.site-setting       → fixtures/site-setting.json
  */
 
 import path from 'path'
@@ -48,6 +52,16 @@ interface SeedConfig {
   label: string
 }
 
+interface SingleTypeSeedConfig {
+  uid: string
+  file: string
+  label: string
+}
+
+// ---------------------------------------------------------------------------
+// Config
+// ---------------------------------------------------------------------------
+
 const SEED_CONFIGS: SeedConfig[] = [
   { uid: 'api::work.work',                               file: 'works.json',          label: 'Works'          },
   { uid: 'api::news-item.news-item',                     file: 'news.json',           label: 'News'           },
@@ -58,6 +72,11 @@ const SEED_CONFIGS: SeedConfig[] = [
   { uid: 'api::media-item.media-item',                   file: 'media-items.json',    label: 'Media Items'    },
   { uid: 'api::award.award',                             file: 'awards.json',         label: 'Awards'         },
   { uid: 'api::faq.faq',                                 file: 'faq.json',            label: 'FAQ'            },
+]
+
+const SINGLE_TYPE_CONFIGS: SingleTypeSeedConfig[] = [
+  { uid: 'api::profile.profile',           file: 'profile.json',       label: 'Profile'       },
+  { uid: 'api::site-setting.site-setting', file: 'site-setting.json',  label: 'Site Settings' },
 ]
 
 const FIXTURES_DIR = path.join(__dirname, 'fixtures')
@@ -74,6 +93,16 @@ function loadFixture(filename: string): SeedFixture[] {
   }
   const raw = fs.readFileSync(filepath, 'utf-8')
   return JSON.parse(raw) as SeedFixture[]
+}
+
+function loadSingleTypeFixture(filename: string): Record<string, unknown> | null {
+  const filepath = path.join(FIXTURES_DIR, filename)
+  if (!fs.existsSync(filepath)) {
+    console.warn(`  ⚠️  Fixture file not found: ${filepath}`)
+    return null
+  }
+  const raw = fs.readFileSync(filepath, 'utf-8')
+  return JSON.parse(raw) as Record<string, unknown>
 }
 
 async function seedCollection(
@@ -121,6 +150,29 @@ async function seedCollection(
   return { created, skipped, errors }
 }
 
+async function seedSingleType(
+  strapi: any,
+  config: SingleTypeSeedConfig,
+  data: Record<string, unknown>,
+): Promise<'created' | 'skipped' | 'error'> {
+  try {
+    // Single types: findMany returns an array with 0 or 1 records
+    const existing = await strapi.entityService.findMany(config.uid, { limit: 1 })
+    const hasData = Array.isArray(existing) ? existing.length > 0 : existing !== null && existing !== undefined
+
+    if (hasData) {
+      return 'skipped'
+    }
+
+    await strapi.entityService.create(config.uid, { data })
+    return 'created'
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error(`    ✗ Failed to seed single type ${config.label}: ${message}`)
+    return 'error'
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
@@ -129,7 +181,6 @@ async function main() {
   console.log('🌱 Starting Strapi seed script...\n')
 
   // Strapi must be loaded as a library (not started as a server)
-  // This is the standard approach for Strapi v5 seed scripts
   const strapiFactory = require('@strapi/strapi')
   const strapiApp = strapiFactory.default({ appDir: path.join(__dirname, '../..') })
 
@@ -139,6 +190,10 @@ async function main() {
 
     const results: Record<string, { created: number; skipped: number; errors: number }> = {}
 
+    // -------------------------------------------------------------------------
+    // 1. Seed collection types
+    // -------------------------------------------------------------------------
+    console.log('── Collection Types ──────────────────────────────────')
     for (const config of SEED_CONFIGS) {
       const fixtures = loadFixture(config.file)
       if (fixtures.length === 0) {
@@ -157,20 +212,51 @@ async function main() {
       console.log(`     ${parts.join(', ')}`)
     }
 
+    // -------------------------------------------------------------------------
+    // 2. Seed single types
+    // -------------------------------------------------------------------------
+    console.log('\n── Single Types ──────────────────────────────────────')
+    const singleTypeResults: Record<string, 'created' | 'skipped' | 'error'> = {}
+
+    for (const config of SINGLE_TYPE_CONFIGS) {
+      const data = loadSingleTypeFixture(config.file)
+      if (!data) {
+        console.log(`  — ${config.label}: no fixture loaded, skipping`)
+        continue
+      }
+
+      console.log(`  → Seeding ${config.label}...`)
+      const result = await seedSingleType(strapiApp, config, data)
+      singleTypeResults[config.label] = result
+      console.log(`     ${result}`)
+    }
+
+    // -------------------------------------------------------------------------
+    // Summary
+    // -------------------------------------------------------------------------
     console.log('\n📊 Summary:')
     let totalCreated = 0
     let totalSkipped = 0
     let totalErrors = 0
+
     for (const [label, result] of Object.entries(results)) {
       console.log(`  ${label}: +${result.created} created, ${result.skipped} skipped, ${result.errors} errors`)
       totalCreated += result.created
       totalSkipped += result.skipped
       totalErrors  += result.errors
     }
+
+    for (const [label, result] of Object.entries(singleTypeResults)) {
+      console.log(`  ${label}: ${result}`)
+      if (result === 'created') totalCreated++
+      else if (result === 'skipped') totalSkipped++
+      else if (result === 'error') totalErrors++
+    }
+
     console.log(`\n  Total: ${totalCreated} created, ${totalSkipped} skipped, ${totalErrors} errors`)
 
     if (totalErrors > 0) {
-      console.log('\n⚠️  Some records failed to create. Check content type definitions in docs/backend-setup.md')
+      console.log('\n⚠️  Some records failed to create. Check docs/backend-setup.md')
       process.exit(1)
     } else {
       console.log('\n✅ Seed complete!')
