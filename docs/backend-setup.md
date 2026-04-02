@@ -77,19 +77,36 @@ npm run start
 1. `npm run develop` で起動
 2. `http://localhost:1337/admin` を開く
 3. 管理者アカウント（名前 / メール / パスワード）を入力して作成
-4. ログイン後、Content Type Builder でコンテンツタイプを定義する
+4. ログイン後、Content Manager からコンテンツを管理できます
 
 ---
 
-## コンテンツタイプの定義
+## コンテンツタイプ一覧
 
-> ⚠️ **重要:** Strapi のコンテンツタイプは管理画面の Content Type Builder か  
-> `backend/src/api/` に JSON スキーマファイルを配置することで定義します。  
-> 現在は空のため、以下のコンテンツタイプを手動で作成してください。
+スキーマ JSON ファイルは `backend/src/api/` に配置済みです。  
+Strapi 起動時に自動的に読み込まれます。
 
-### 必要なコンテンツタイプ一覧
+### フロントエンドと API エンドポイントの対応
 
-各コンテンツタイプに共通で含める基本フィールド（**ContentBase**）:
+| コンテンツタイプ | Strapi API ID | フロントエンドエンドポイント |
+|---|---|---|
+| 作品 | `api::work.work` | `/api/works` |
+| ニュース | `api::news-item.news-item` | `/api/news-items` |
+| ブログ | `api::blog-post.blog-post` | `/api/blog-posts` |
+| イベント | `api::event.event` | `/api/events` |
+| ファンクラブ | `api::fanclub-content.fanclub-content` | `/api/fanclub-contents` |
+| ストア商品 | `api::store-product.store-product` | `/api/store-products` |
+| メディア掲載 | `api::media-item.media-item` | `/api/media-items` |
+| 受賞 | `api::award.award` | `/api/awards` |
+| FAQ | `api::faq.faq` | `/api/faqs` |
+| サイト設定 | `api::site-setting.site-setting` | `/api/site-setting` |
+| プロフィール | `api::profile.profile` | `/api/profile` |
+
+---
+
+### 共通フィールド（ContentBase）
+
+コンテンツ系タイプ（works / news / blog / events / fanclub）はすべて以下を持ちます:
 
 | フィールド | 型 | 説明 |
 |---|---|---|
@@ -102,88 +119,70 @@ npm run start
 
 ---
 
-### 1. works（作品）
-
-API ID: `work` → エンドポイント: `/api/works`
-
-追加フィールド:
+### 1. works（作品）`/api/works`
 
 | フィールド | 型 |
 |---|---|
 | `description` | Text |
-| `thumbnailUrl` | String |
+| `thumbnail` | Media（画像） |
 | `category` | String |
 | `isFeatured` | Boolean |
+| `externalUrl` | String |
 
 ---
 
-### 2. news-items（ニュース）
-
-API ID: `news-item` → エンドポイント: `/api/news-items`
-
-追加フィールド:
+### 2. news-items（ニュース）`/api/news-items`
 
 | フィールド | 型 |
 |---|---|
 | `body` | RichText |
-| `thumbnailUrl` | String |
+| `thumbnail` | Media（画像） |
 
 ---
 
-### 3. blog-posts（ブログ）
-
-API ID: `blog-post` → エンドポイント: `/api/blog-posts`
-
-追加フィールド:
+### 3. blog-posts（ブログ）`/api/blog-posts`
 
 | フィールド | 型 |
 |---|---|
 | `body` | RichText |
-| `thumbnailUrl` | String |
+| `thumbnail` | Media（画像） |
 | `tags` | JSON |
 
 ---
 
-### 4. events（イベント）
-
-API ID: `event` → エンドポイント: `/api/events`
-
-追加フィールド:
+### 4. events（イベント）`/api/events`
 
 | フィールド | 型 |
 |---|---|
 | `description` | Text |
-| `startAt` | DateTime |
+| `startAt` | DateTime（必須） |
 | `endAt` | DateTime |
 | `venue` | String |
+| `venueUrl` | String |
+| `bookingLink` | String |
+| `bookingStatus` | Enumeration: `open` / `closed` / `soldout` / `free` |
+| `thumbnail` | Media（画像） |
 
 ---
 
-### 5. fanclub-contents（ファンクラブ）
-
-API ID: `fanclub-content` → エンドポイント: `/api/fanclub-contents`
-
-追加フィールド:
+### 5. fanclub-contents（ファンクラブ）`/api/fanclub-contents`
 
 | フィールド | 型 |
 |---|---|
 | `body` | RichText |
-| `thumbnailUrl` | String |
+| `category` | Enumeration: `diary` / `exclusive` / `qa` / `behind_scenes` / `teaser` / `live_archive` / `tips` / `info` |
+| `thumbnail` | Media（画像） |
 
 ---
 
-### 6. store-products（ストア商品）
-
-API ID: `store-product` → エンドポイント: `/api/store-products`
-
-追加フィールド:
+### 6. store-products（ストア商品）`/api/store-products`
 
 | フィールド | 型 |
 |---|---|
 | `price` | Integer |
 | `currency` | String（デフォルト: `JPY`） |
 | `description` | Text |
-| `previewImage` | Media |
+| `previewImage` | Media（画像） |
 | `stripeLink` | String |
 | `baseLink` | String |
 | `purchaseStatus` | Enumeration: `available` / `soldout` / `coming_soon` |
@@ -191,41 +190,95 @@ API ID: `store-product` → エンドポイント: `/api/store-products`
 
 ---
 
-### 7. media-items（メディア）
-
-API ID: `media-item` → エンドポイント: `/api/media-items`
+### 7. media-items（メディア掲載）`/api/media-items`
 
 | フィールド | 型 |
 |---|---|
-| `title` | String |
+| `title` | String（必須） |
 | `source` | String |
 | `url` | String |
-| `publishedAt` | DateTime |
 
 ---
 
-### 8. awards（受賞）
-
-API ID: `award` → エンドポイント: `/api/awards`
+### 8. awards（受賞）`/api/awards`
 
 | フィールド | 型 |
 |---|---|
-| `title` | String |
+| `title` | String（必須） |
 | `year` | Integer |
 | `organization` | String |
 
 ---
 
+### 9. faqs（FAQ）`/api/faqs`
+
+| フィールド | 型 |
+|---|---|
+| `question` | String（必須） |
+| `answer` | Text（必須） |
+| `category` | Enumeration: `general` / `fanclub` / `store` / `works` / `events` / `contact` |
+| `order` | Integer |
+
+---
+
+### 10. site-setting（サイト設定）`/api/site-setting`（Single Type）
+
+| フィールド | 型 |
+|---|---|
+| `siteName` | String（必須） |
+| `description` | Text |
+| `logoUrl` | String |
+| `heroTitle` | String |
+| `heroSubtitle` | Text |
+| `heroCTALabel` | String |
+| `heroCTAUrl` | String |
+| `ogImage` | Media（画像） |
+| `socialInstagram` | String |
+| `socialX` | String |
+| `socialYoutube` | String |
+
+---
+
+### 11. profile（プロフィール）`/api/profile`（Single Type）
+
+| フィールド | 型 |
+|---|---|
+| `name` | String（必須） |
+| `bio` | Text |
+| `bioShort` | String |
+| `avatar` | Media（画像） |
+| `location` | String |
+| `website` | String |
+
+---
+
 ## Public Role の権限設定
 
-コンテンツタイプを作成したら、未認証ユーザーが読み取れるよう権限を設定します。
+コンテンツタイプ起動後、未認証ユーザーが読み取れるよう権限を設定します。
 
-1. `Settings > Roles > Public` を開く
-2. 各コンテンツタイプに対して `find` と `findOne` を有効化
-3. Save
+```
+Settings > Roles > Public > 各コンテンツタイプ
+```
 
-**FC 限定コンテンツについて:** Strapi 側ではすべて公開し、  
-フロントエンドの `canViewContent()` + `status` フィールドでアクセス制御しています。
+**読み取り専用として許可する操作:**
+
+| コンテンツタイプ | find | findOne |
+|---|---|---|
+| work | ✅ | ✅ |
+| news-item | ✅ | ✅ |
+| blog-post | ✅ | ✅ |
+| event | ✅ | ✅ |
+| fanclub-content | ✅ | ✅ |
+| store-product | ✅ | ✅ |
+| media-item | ✅ | ✅ |
+| award | ✅ | ✅ |
+| faq | ✅ | ✅ |
+| site-setting | ✅ | — |
+| profile | ✅ | — |
+
+> **FC 限定コンテンツについて:** Strapi 側ではすべて公開し、  
+> フロントエンドの `canViewContent()` + `status` フィールドでアクセス制御しています。  
+> 管理系 API（create / update / delete）は Public Role では絶対に許可しないでください。
 
 ---
 
@@ -235,6 +288,7 @@ API ID: `award` → エンドポイント: `/api/awards`
 Settings > API Tokens > Create new API Token
 ```
 
+- **Token name:** `frontend-read` など識別しやすい名前
 - **Token type:** `Read-only`
 - **Duration:** Unlimited（本番）または 90 days（テスト）
 
@@ -247,8 +301,10 @@ Settings > API Tokens > Create new API Token
 コンテンツタイプ定義後、`backend/scripts/seed/` のフィクスチャデータを投入できます。
 
 ```bash
-# seed スクリプト実行（コンテンツタイプ定義後）
+# Strapi を停止してから実行
 npm run seed --prefix backend
+# または
+npm run seed:backend
 ```
 
 フィクスチャファイルの場所:
@@ -259,10 +315,10 @@ backend/scripts/seed/fixtures/
 ├── news.json           # 12件
 ├── blog.json           # 12件
 ├── events.json         # 8件
-├── fanclub.json        # 8件
-├── store-products.json # 10件
-├── media.json          # 8件
-└── faq.json            # 12件
+├── fanclub.json        # 12件
+├── store-products.json # 12件
+├── media.json          # 10件
+└── faq.json            # 14件
 ```
 
 詳細は [`backend/scripts/seed/README.md`](../backend/scripts/seed/README.md) を参照してください。
@@ -310,3 +366,12 @@ npm install --prefix backend
 
 開発中に Strapi を二重起動するとロックが発生します。  
 `lsof -i :1337` で既存プロセスを確認して kill してください。
+
+### コンテンツタイプが API に表示されない
+
+スキーマ JSON を追加した後は Strapi を再起動してください:
+
+```bash
+# Strapi 停止後
+npm run develop --prefix backend
+```

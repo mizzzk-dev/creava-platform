@@ -1,0 +1,62 @@
+{
+  "kind": "collectionType",
+  "collectionName": "works",
+  "info": {
+    "singularName": "work",
+    "pluralName": "works",
+    "displayName": "Work",
+    "description": "Portfolio works / 作品"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": { "localized": false }
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "title",
+      "required": true
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["public", "fc_only", "limited"],
+      "default": "public",
+      "required": true
+    },
+    "publishAt": {
+      "type": "datetime"
+    },
+    "limitedEndAt": {
+      "type": "datetime"
+    },
+    "archiveVisibleForFC": {
+      "type": "boolean",
+      "default": false
+    },
+    "description": {
+      "type": "text"
+    },
+    "category": {
+      "type": "string"
+    },
+    "isFeatured": {
+      "type": "boolean",
+      "default": false
+    },
+    "thumbnail": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "externalUrl": {
+      "type": "string"
+    }
+  }
+}

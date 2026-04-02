@@ -1,0 +1,55 @@
+{
+  "kind": "collectionType",
+  "collectionName": "fanclub_contents",
+  "info": {
+    "singularName": "fanclub-content",
+    "pluralName": "fanclub-contents",
+    "displayName": "Fanclub Post",
+    "description": "Fan club exclusive content / ファンクラブ限定コンテンツ"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "title",
+      "required": true
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["public", "fc_only", "limited"],
+      "default": "fc_only",
+      "required": true
+    },
+    "publishAt": {
+      "type": "datetime"
+    },
+    "limitedEndAt": {
+      "type": "datetime"
+    },
+    "archiveVisibleForFC": {
+      "type": "boolean",
+      "default": false
+    },
+    "body": {
+      "type": "richtext"
+    },
+    "category": {
+      "type": "enumeration",
+      "enum": ["diary", "exclusive", "qa", "behind_scenes", "teaser", "live_archive", "tips", "info"],
+      "default": "diary"
+    },
+    "thumbnail": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    }
+  }
+}

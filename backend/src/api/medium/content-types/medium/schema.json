@@ -1,0 +1,26 @@
+{
+  "kind": "collectionType",
+  "collectionName": "media_items",
+  "info": {
+    "singularName": "media-item",
+    "pluralName": "media-items",
+    "displayName": "Media Item",
+    "description": "Press mentions / メディア掲載"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "source": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string"
+    }
+  }
+}

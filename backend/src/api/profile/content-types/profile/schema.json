@@ -1,0 +1,38 @@
+{
+  "kind": "singleType",
+  "collectionName": "profile",
+  "info": {
+    "singularName": "profile",
+    "pluralName": "profiles",
+    "displayName": "Profile",
+    "description": "Creator profile / クリエイタープロフィール"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "bio": {
+      "type": "text"
+    },
+    "bioShort": {
+      "type": "string"
+    },
+    "avatar": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "location": {
+      "type": "string"
+    },
+    "website": {
+      "type": "string"
+    }
+  }
+}

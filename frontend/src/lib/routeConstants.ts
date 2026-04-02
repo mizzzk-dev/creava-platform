@@ -9,6 +9,8 @@ export const ROUTES = {
   BLOG_DETAIL: '/blog/:slug',
   FANCLUB: '/fanclub',
   FANCLUB_DETAIL: '/fanclub/:slug',
+  EVENTS: '/events',
+  EVENT_DETAIL: '/events/:slug',
   CONTACT: '/contact',
   STORE: '/store',
   STORE_DETAIL: '/store/:handle',
@@ -20,5 +22,6 @@ export const detailPath = {
   blog: (slug: string) => `/blog/${slug}`,
   work: (slug: string) => `/works/${slug}`,
   fanclub: (slug: string) => `/fanclub/${slug}`,
+  event: (slug: string) => `/events/${slug}`,
   product: (handle: string) => `/store/${handle}`,
 } as const

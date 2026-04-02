@@ -13,6 +13,8 @@ import ContactPage from '@/pages/ContactPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 import StorePage from '@/pages/StorePage'
 import StoreDetailPage from '@/pages/StoreDetailPage'
+import EventsPage from '@/pages/EventsPage'
+import EventDetailPage from '@/pages/EventDetailPage'
 
 // 定数は循環参照を避けるため routeConstants から取得し re-export する
 export { ROUTES, detailPath } from './routeConstants'
@@ -31,6 +33,8 @@ export function AppRoutes() {
         <Route path={ROUTES.BLOG_DETAIL} element={<BlogDetailPage />} />
         <Route path={ROUTES.FANCLUB} element={<FanclubPage />} />
         <Route path={ROUTES.FANCLUB_DETAIL} element={<FanclubDetailPage />} />
+        <Route path={ROUTES.EVENTS} element={<EventsPage />} />
+        <Route path={ROUTES.EVENT_DETAIL} element={<EventDetailPage />} />
         <Route path={ROUTES.CONTACT} element={<ContactPage />} />
         <Route path={ROUTES.STORE} element={<StorePage />} />
         <Route path={ROUTES.STORE_DETAIL} element={<StoreDetailPage />} />
