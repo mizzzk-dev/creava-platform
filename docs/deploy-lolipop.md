@@ -52,29 +52,29 @@ RewriteRule ^ index.html [QSA,L]
 - FTP サーバー: `ftp.lolipop.jp`
 - ユーザー名: `xxx.xxx@lolipop.jp`
 - パスワード: ロリポップのパスワード
-- アップロード先: **`www/`**（FTP ルートから見た公開ディレクトリ）
+- アップロード先: **`mizzz/`**（FTP ルートから見た公開ディレクトリ）
 
 > ⚠️ `httpdocs/` や `/public_html/` は cPanel の慣例であり、ロリポップには存在しません。  
-> ロリポップの公開ディレクトリは FTP ルートの `www/` です。
+> ロリポップの公開ディレクトリはアカウント名に対応した `mizzz/` 等です。
 
 ### アップロード手順
 
 1. FTP クライアント（FileZilla 等）で接続
-2. `frontend/dist/` の**中身**を `www/` ディレクトリへアップロード
+2. `frontend/dist/` の**中身**を `mizzz/` ディレクトリへアップロード
 
 ```
 FTP ルート構成例:
 /
 ├── log/
 ├── mail/
-└── www/         ← ここに dist/ の中身を配置
+└── mizzz/       ← ここに dist/ の中身を配置
     ├── index.html
     ├── .htaccess
     └── assets/
 ```
 
 > ⚠️ `dist/` フォルダごとではなく、`dist/` の**中身**をアップロードしてください。  
-> `www/dist/index.html` になると 404 になります。`www/index.html` が正しい配置です。
+> `mizzz/dist/index.html` になると 404 になります。`mizzz/index.html` が正しい配置です。
 
 ---
 
@@ -91,7 +91,7 @@ GitHub のリポジトリ設定 → Secrets and variables → Actions:
 | `FTP_SERVER` | `ftp.lolipop.jp` | FTP サーバーアドレス |
 | `FTP_USERNAME` | `xxx.xxx@lolipop.jp` | FTP ユーザー名 |
 | `FTP_PASSWORD` | ロリポップのパスワード | FTP パスワード |
-| `FTP_SERVER_DIR` | `www/` | 公開ディレクトリ（未設定時は `www/` がデフォルト）|
+| `FTP_SERVER_DIR` | `mizzz/` | 公開ディレクトリ（未設定時は `mizzz/` がデフォルト）|
 | `VITE_STRAPI_API_URL` | Strapi Cloud URL | — |
 | `VITE_STRAPI_API_TOKEN` | Strapi API トークン | — |
 | `VITE_CLERK_PUBLISHABLE_KEY` | `pk_live_...` | — |

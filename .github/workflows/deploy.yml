@@ -46,9 +46,9 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./frontend/dist/
-          # ロリポップの公開ディレクトリは www/ (FTPルートからの相対パス)
+          # ロリポップの公開ディレクトリは mizzz/ (FTPルートからの相対パス)
           # 異なる場合は GitHub Secrets の FTP_SERVER_DIR で上書きすること
-          server-dir: ${{ secrets.FTP_SERVER_DIR || 'www/' }}
+          server-dir: ${{ secrets.FTP_SERVER_DIR || 'mizzz/' }}
           dangerous-clean-slate: false
           exclude: |
             **/.git*
