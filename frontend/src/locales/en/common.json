@@ -1,12 +1,14 @@
 {
   "nav": {
     "home": "Home",
+    "about": "About",
     "works": "Works",
     "news": "News",
     "blog": "Blog",
     "fanclub": "Fan Club",
     "events": "Events",
     "contact": "Contact",
+    "pricing": "Pricing",
     "openMenu": "Open menu",
     "closeMenu": "Close menu"
   },
@@ -40,7 +42,9 @@
     "outOfStock": "Out of stock",
     "variants": "Variants",
     "buyOnShopify": "Buy on Shopify",
-    "backToStore": "Back to store"
+    "backToStore": "Back to store",
+    "soldOut": "Sold out",
+    "comingSoon": "Coming soon"
   },
   "form": {
     "required": "Required",
@@ -59,21 +63,29 @@
     "budget": "Budget",
     "deadline": "Preferred Deadline",
     "detail": "Project Details",
+    "attachFile": "Attach File",
+    "attachFileSub": "PDF, images, Word, ZIP (max 10MB)",
+    "removeFile": "Remove file",
     "submit": "Send",
     "submitting": "Sending...",
     "successTitle": "Message sent",
     "successMessage": "Thank you for reaching out. We will get back to you shortly.",
+    "successReply": "Expected reply time: 2–3 business days",
     "errorMessage": "Something went wrong. Please try again later.",
     "sendAnother": "Send another message",
+    "backToHome": "Back to Home",
     "errors": {
       "required": "This field is required",
       "emailFormat": "Please enter a valid email address",
-      "minLength": "Please enter at least {{min}} characters"
+      "minLength": "Please enter at least {{min}} characters",
+      "fileTooLarge": "File size must be 10MB or less",
+      "fileType": "File type not supported"
     },
     "requestTypes": {
       "video": "Video Production",
       "photo": "Photography",
       "music": "Music Production",
+      "web": "Web / System Development",
       "other": "Other"
     }
   },
@@ -85,7 +97,34 @@
     "fanclub": "Exclusive content for fan club members.",
     "store": "Shop merchandise and photo books.",
     "contact": "Get in touch or submit a work request.",
-    "events": "Live shows, exhibitions, and workshops."
+    "events": "Live shows, exhibitions, and workshops.",
+    "about": "About the creator — bio, skills, and experience.",
+    "pricing": "Pricing guide for video, photo, music, and web projects."
+  },
+  "about": {
+    "headline": "Creator — Film, Photo & Music",
+    "subHeadline": "Exploring the boundary between digital and analog.",
+    "bio1": "A creator working across film, photography, and music. From commercial projects to personal work, I pursue the right expression for each theme.",
+    "bio2": "I specialize in brand building and world-building, shaping the client's vision through both visual and sonic elements.",
+    "skills": "Skills & Capabilities",
+    "services": "What I Do",
+    "ctaContact": "Get in touch",
+    "ctaWorks": "View works",
+    "ctaPricing": "Pricing & Services",
+    "experience": "Experience",
+    "approach": "My Approach",
+    "approachText": "Rather than just fulfilling a brief, I start by clarifying what you want to communicate. I propose the most fitting expression for the goal, and care about building something we're both proud of."
+  },
+  "pricing": {
+    "title": "Pricing",
+    "subtitle": "Estimated rates for creative work",
+    "note": "All prices vary depending on project scope, requirements, and timeline. Feel free to get in touch for a free estimate.",
+    "cta": "Discuss your project",
+    "ctaSub": "Free estimates available. No commitment required.",
+    "from": "from",
+    "custom": "Custom",
+    "perDay": "/ day",
+    "perMonth": "/ month"
   },
   "events": {
     "empty": "No upcoming events",
@@ -112,6 +151,12 @@
       "title": "Works",
       "viewAll": "View all works"
     },
+    "about": {
+      "title": "About",
+      "headline": "Creator — Film, Photo & Music",
+      "body": "Working across film, photography, and music. From commercial projects to personal work, pursuing the right expression for each theme.",
+      "cta": "Learn more"
+    },
     "store": {
       "title": "Store",
       "description": "Merchandise and photo books coming soon.",
@@ -131,5 +176,18 @@
       "benefit2": "Early announcements and member-only updates",
       "benefit3": "Priority event invites & ticket pre-sales"
     }
+  },
+  "sns": {
+    "follow": "Follow on SNS",
+    "followSub": "Latest updates & behind-the-scenes"
+  },
+  "error": {
+    "404title": "404 — Not Found",
+    "404sub": "This page doesn't exist or has moved.",
+    "404hint": "Check the URL or navigate home.",
+    "500title": "500 — System Error",
+    "500sub": "Something went wrong on our end. Please try again later.",
+    "403title": "403 — Access Restricted",
+    "403sub": "This content is for fan club members only."
   }
 }

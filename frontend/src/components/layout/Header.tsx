@@ -13,14 +13,22 @@ const NAV_ITEMS = [
   { key: 'nav.news',    to: ROUTES.NEWS    },
   { key: 'nav.blog',    to: ROUTES.BLOG    },
   { key: 'nav.events',  to: ROUTES.EVENTS  },
-  { key: 'nav.fanclub', to: ROUTES.FANCLUB },
+  { key: 'nav.about',   to: ROUTES.ABOUT   },
   { key: 'nav.contact', to: ROUTES.CONTACT },
 ] as const
+
+/** AuthButton は Fanclub・Store ページのみ表示 */
+function useShowAuth() {
+  const { pathname } = useLocation()
+  return pathname.startsWith(ROUTES.FANCLUB) || pathname.startsWith(ROUTES.STORE)
+}
 
 export default function Header() {
   const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const { pathname } = useLocation()
+  const showAuth = useShowAuth()
 
   useEffect(() => { setIsOpen(false) }, [pathname])
 
@@ -29,9 +37,21 @@ export default function Header() {
     return () => { document.body.style.overflow = '' }
   }, [isOpen])
 
+  useEffect(() => {
+    const handler = () => setScrolled(window.scrollY > 12)
+    window.addEventListener('scroll', handler, { passive: true })
+    return () => window.removeEventListener('scroll', handler)
+  }, [])
+
   return (
-    <header className="glass sticky top-0 z-50 border-b border-gray-100/80 dark:border-gray-800/80">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
+    <header
+      className={`sticky top-0 z-50 transition-shadow duration-300 ${
+        scrolled
+          ? 'shadow-[0_1px_12px_rgba(0,0,0,0.07)] dark:shadow-[0_1px_12px_rgba(0,0,0,0.4)]'
+          : ''
+      } glass dark:border-b dark:border-gray-800/60 border-b border-gray-100/80`}
+    >
+      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3.5">
         {/* logo */}
         <NavLink
           to={ROUTES.HOME}
@@ -42,18 +62,18 @@ export default function Header() {
         </NavLink>
 
         {/* desktop nav */}
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-2 md:flex">
           <nav>
-            <ul className="flex items-center gap-1">
+            <ul className="flex items-center gap-0.5">
               {NAV_ITEMS.map(({ key, to }) => (
                 <li key={to}>
                   <NavLink
                     to={to}
                     className={({ isActive }) =>
-                      `relative rounded px-3 py-1.5 text-sm transition-colors duration-150 ${
+                      `relative rounded-md px-3 py-1.5 text-sm transition-colors duration-150 ${
                         isActive
-                          ? 'font-medium text-gray-900 bg-gray-50 dark:text-gray-100 dark:bg-gray-800'
-                          : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50/60 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800/60'
+                          ? 'font-medium text-gray-900 bg-gray-100/80 dark:text-gray-100 dark:bg-gray-800/80'
+                          : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100/50 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800/50'
                       }`
                     }
                   >
@@ -63,10 +83,11 @@ export default function Header() {
               ))}
             </ul>
           </nav>
-          <div className="flex items-center gap-1 border-l border-gray-100 dark:border-gray-800 pl-3">
+
+          <div className="ml-2 flex items-center gap-1 border-l border-gray-200/70 dark:border-gray-700/50 pl-3">
             <LangSwitcher />
             <ThemeToggle />
-            <AuthButton />
+            {showAuth && <AuthButton />}
           </div>
         </div>
 
@@ -76,13 +97,13 @@ export default function Header() {
           <ThemeToggle />
           <button
             onClick={() => setIsOpen((v) => !v)}
-            className="flex h-8 w-8 flex-col items-center justify-center gap-1.5"
+            className="flex h-8 w-8 flex-col items-center justify-center gap-[5px]"
             aria-label={isOpen ? t('nav.closeMenu') : t('nav.openMenu')}
             aria-expanded={isOpen}
           >
-            <span className={`block h-px w-5 bg-gray-700 dark:bg-gray-300 transition-transform duration-300 ${isOpen ? 'translate-y-[3px] rotate-45' : ''}`} />
-            <span className={`block h-px w-5 bg-gray-700 dark:bg-gray-300 transition-opacity duration-300 ${isOpen ? 'opacity-0' : ''}`} />
-            <span className={`block h-px w-5 bg-gray-700 dark:bg-gray-300 transition-transform duration-300 ${isOpen ? '-translate-y-[9px] -rotate-45' : ''}`} />
+            <span className={`block h-px w-5 bg-gray-600 dark:bg-gray-400 transition-all duration-300 origin-center ${isOpen ? 'translate-y-[3.5px] rotate-45' : ''}`} />
+            <span className={`block h-px w-5 bg-gray-600 dark:bg-gray-400 transition-opacity duration-300 ${isOpen ? 'opacity-0' : ''}`} />
+            <span className={`block h-px w-5 bg-gray-600 dark:bg-gray-400 transition-all duration-300 origin-center ${isOpen ? '-translate-y-[9px] -rotate-45' : ''}`} />
           </button>
         </div>
       </div>
@@ -95,11 +116,11 @@ export default function Header() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            transition={{ duration: 0.22, ease: 'easeInOut' }}
             className="overflow-hidden border-t border-gray-100/80 dark:border-gray-800/80 md:hidden"
           >
-            <nav className="bg-white/95 dark:bg-gray-900/95 px-4 pb-6 pt-4">
-              <ul className="flex flex-col">
+            <nav className="bg-white/96 dark:bg-gray-900/96 px-4 pb-6 pt-3 backdrop-blur-md">
+              <ul className="flex flex-col divide-y divide-gray-50 dark:divide-gray-800">
                 {NAV_ITEMS.map(({ key, to }) => (
                   <li key={to}>
                     <NavLink
@@ -117,9 +138,11 @@ export default function Header() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-4 border-t border-gray-100 dark:border-gray-800 pt-4">
-                <AuthButton />
-              </div>
+              {showAuth && (
+                <div className="mt-4 border-t border-gray-100 dark:border-gray-800 pt-4">
+                  <AuthButton />
+                </div>
+              )}
             </nav>
           </motion.div>
         )}

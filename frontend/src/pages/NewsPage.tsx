@@ -6,6 +6,7 @@ import { formatDate } from '@/utils'
 import { detailPath } from '@/lib/routeConstants'
 import PageHead from '@/components/seo/PageHead'
 import SkeletonListItem from '@/components/common/SkeletonListItem'
+import SnsLinks from '@/components/common/SnsLinks'
 import type { NewsItem } from '@/types'
 
 export default function NewsPage() {
@@ -68,6 +69,9 @@ export default function NewsPage() {
           </ul>
         )}
       </div>
+
+      {/* SNS follow links */}
+      <SnsLinks />
     </section>
   )
 }

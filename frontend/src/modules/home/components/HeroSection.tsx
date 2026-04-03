@@ -20,7 +20,7 @@ export default function HeroSection() {
       />
 
       {/* bottom fade */}
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-white to-transparent" />
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-white dark:from-gray-950 to-transparent" />
 
       <div className="relative mx-auto w-full max-w-5xl">
         <div className="grid grid-cols-1 gap-16 md:grid-cols-[1fr_auto]">
@@ -111,7 +111,7 @@ export default function HeroSection() {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="hidden self-center md:block"
           >
-            <div className="w-52 rounded-sm border border-gray-100 bg-white/80 p-4 backdrop-blur-sm">
+            <div className="w-52 rounded-sm border border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 p-4 backdrop-blur-sm">
               <div className="mb-3 flex items-center justify-between">
                 <span className="font-mono text-[9px] uppercase tracking-widest text-gray-300">
                   // system

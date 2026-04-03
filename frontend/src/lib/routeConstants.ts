@@ -1,6 +1,7 @@
 /** ルートパスの定数 */
 export const ROUTES = {
   HOME: '/',
+  ABOUT: '/about',
   WORKS: '/works',
   WORK_DETAIL: '/works/:slug',
   NEWS: '/news',
@@ -14,6 +15,7 @@ export const ROUTES = {
   CONTACT: '/contact',
   STORE: '/store',
   STORE_DETAIL: '/store/:handle',
+  PRICING: '/pricing',
   PREVIEW: '/preview',
 } as const
 
