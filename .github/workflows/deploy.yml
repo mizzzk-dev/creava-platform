@@ -38,6 +38,10 @@ jobs:
           VITE_SHOPIFY_STOREFRONT_TOKEN: ${{ secrets.VITE_SHOPIFY_STOREFRONT_TOKEN }}
           VITE_FORMSPREE_CONTACT_ID: ${{ secrets.VITE_FORMSPREE_CONTACT_ID }}
           VITE_FORMSPREE_REQUEST_ID: ${{ secrets.VITE_FORMSPREE_REQUEST_ID }}
+          VITE_SNS_X_URL: ${{ vars.VITE_SNS_X_URL }}
+          VITE_SNS_INSTAGRAM_URL: ${{ vars.VITE_SNS_INSTAGRAM_URL }}
+          VITE_SNS_NOTE_URL: ${{ vars.VITE_SNS_NOTE_URL }}
+          VITE_SNS_YOUTUBE_URL: ${{ vars.VITE_SNS_YOUTUBE_URL }}
 
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
