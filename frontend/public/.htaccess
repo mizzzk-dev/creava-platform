@@ -1,6 +1,9 @@
 # SPA (Single Page Application) ルーティング設定
 # React Router の直接URLアクセス・リロード時に 404 にならないようにする
 
+# MultiViews を無効化（Apache のコンテンツネゴシエーションが SPA ルーティングに干渉するのを防ぐ）
+Options -MultiViews
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /

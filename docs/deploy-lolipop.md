@@ -52,19 +52,29 @@ RewriteRule ^ index.html [QSA,L]
 - FTP サーバー: `ftp.lolipop.jp`
 - ユーザー名: `xxx.xxx@lolipop.jp`
 - パスワード: ロリポップのパスワード
-- アップロード先: `httpdocs/` または `www/` 配下
+- アップロード先: **`www/`**（FTP ルートから見た公開ディレクトリ）
+
+> ⚠️ `httpdocs/` や `/public_html/` は cPanel の慣例であり、ロリポップには存在しません。  
+> ロリポップの公開ディレクトリは FTP ルートの `www/` です。
 
 ### アップロード手順
 
 1. FTP クライアント（FileZilla 等）で接続
-2. `frontend/dist/` の**中身**を公開ディレクトリへアップロード
+2. `frontend/dist/` の**中身**を `www/` ディレクトリへアップロード
 
 ```
-アップロード先例:
-/home/user-name/www/  ← サイトルートに配置する場合
+FTP ルート構成例:
+/
+├── log/
+├── mail/
+└── www/         ← ここに dist/ の中身を配置
+    ├── index.html
+    ├── .htaccess
+    └── assets/
 ```
 
-> ⚠️ `dist/` フォルダごとではなく、`dist/` の**中身**をアップロードしてください。
+> ⚠️ `dist/` フォルダごとではなく、`dist/` の**中身**をアップロードしてください。  
+> `www/dist/index.html` になると 404 になります。`www/index.html` が正しい配置です。
 
 ---
 
@@ -76,17 +86,21 @@ RewriteRule ^ index.html [QSA,L]
 
 GitHub のリポジトリ設定 → Secrets and variables → Actions:
 
-| Secret 名 | 値 |
-|---|---|
-| `LOLIPOP_FTP_HOST` | `ftp.lolipop.jp` |
-| `LOLIPOP_FTP_USER` | FTP ユーザー名 |
-| `LOLIPOP_FTP_PASS` | FTP パスワード |
-| `VITE_STRAPI_API_URL` | Strapi Cloud URL |
-| `VITE_STRAPI_API_TOKEN` | Strapi API トークン |
-| `VITE_CLERK_PUBLISHABLE_KEY` | `pk_live_...` |
-| `VITE_SITE_URL` | `https://your-domain.com` |
-| `VITE_FORMSPREE_CONTACT_ID` | Formspree ID |
-| `VITE_FORMSPREE_REQUEST_ID` | Formspree ID |
+| Secret 名 | 値 | 備考 |
+|---|---|---|
+| `FTP_SERVER` | `ftp.lolipop.jp` | FTP サーバーアドレス |
+| `FTP_USERNAME` | `xxx.xxx@lolipop.jp` | FTP ユーザー名 |
+| `FTP_PASSWORD` | ロリポップのパスワード | FTP パスワード |
+| `FTP_SERVER_DIR` | `www/` | 公開ディレクトリ（未設定時は `www/` がデフォルト）|
+| `VITE_STRAPI_API_URL` | Strapi Cloud URL | — |
+| `VITE_STRAPI_API_TOKEN` | Strapi API トークン | — |
+| `VITE_CLERK_PUBLISHABLE_KEY` | `pk_live_...` | — |
+| `VITE_SITE_URL` | `https://mizzz.jp` | 本番ドメイン |
+| `VITE_FORMSPREE_CONTACT_ID` | Formspree ID | — |
+| `VITE_FORMSPREE_REQUEST_ID` | Formspree ID | — |
+
+> `FTP_SERVER_DIR` を設定しない場合、デフォルトの `www/` が使われます。  
+> ロリポップで独自ドメインを別ディレクトリに設定している場合のみ変更してください。
 
 ### デプロイフロー
 
