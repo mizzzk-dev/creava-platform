@@ -196,6 +196,50 @@ src/locales/
 
 ---
 
+## Formspree の設定（お問い合わせフォーム）
+
+フォームの送信先は [Formspree](https://formspree.io) を使っています。送信内容はメールで届きます。
+
+### アカウント・フォーム作成
+
+1. [formspree.io](https://formspree.io) でアカウントを作成（無料プランで月 50 件）
+2. ダッシュボード → **New Form** を 2 つ作成:
+   - `creava-contact`（お問い合わせ用）
+   - `creava-request`（仕事依頼用）
+3. 各フォームの **Settings** → **Notifications** で受信メールアドレスを設定
+4. 各フォームの **Integration** タブからフォーム ID（`xxxxxxxx` 形式）をコピー
+
+### ローカル開発で設定
+
+```bash
+# frontend/.env.local に追記
+VITE_FORMSPREE_CONTACT_ID=xxxxxxxx
+VITE_FORMSPREE_REQUEST_ID=xxxxxxxx
+```
+
+未設定の場合は 800ms 遅延のスタブ動作（実際には送信されません）。  
+開発サーバーのコンソールに警告が表示されます。
+
+### 本番環境（GitHub Actions）
+
+GitHub リポジトリ → Settings → Secrets and variables → Actions:
+
+| Secret 名 | 値 |
+|---|---|
+| `VITE_FORMSPREE_CONTACT_ID` | お問い合わせフォームの ID |
+| `VITE_FORMSPREE_REQUEST_ID` | 仕事依頼フォームの ID |
+
+`main` へのプッシュで自動ビルド・デプロイされ、本番環境に反映されます。
+
+### 動作確認
+
+1. `npm run dev` で開発サーバーを起動
+2. `/contact` を開く
+3. フォームを送信 → Formspree ダッシュボードで受信確認
+4. 設定したメールアドレスに通知が届くことを確認
+
+---
+
 ## 関連ドキュメント
 
 - [開発環境セットアップ](./development-setup.md)

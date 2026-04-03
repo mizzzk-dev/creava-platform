@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 interface Option {
   value: string
   label: string
@@ -26,11 +28,13 @@ export default function FormSelect({
   options,
   placeholder,
 }: Props) {
+  const { t } = useTranslation()
+
   return (
     <div className="space-y-1">
       <label htmlFor={id} className="flex items-baseline gap-2 text-sm text-gray-700">
         {label}
-        {required && <span className="text-xs text-gray-400">必須</span>}
+        {required && <span className="text-xs text-gray-400">{t('form.required')}</span>}
       </label>
 
       <select

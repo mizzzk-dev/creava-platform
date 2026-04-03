@@ -42,6 +42,10 @@
     "buyOnShopify": "Buy on Shopify",
     "backToStore": "Back to store"
   },
+  "form": {
+    "required": "Required",
+    "optional": "Optional"
+  },
   "contact": {
     "tabContact": "Contact",
     "tabRequest": "Work Request",

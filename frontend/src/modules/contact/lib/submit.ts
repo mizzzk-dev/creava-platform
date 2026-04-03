@@ -42,7 +42,9 @@ async function postToFormspree(formId: string, data: Record<string, string>): Pr
  */
 export async function submitContact(payload: ContactPayload): Promise<void> {
   if (!CONTACT_FORM_ID) {
-    // Dev fallback: simulate network delay
+    if (import.meta.env.DEV) {
+      console.warn('[contact] VITE_FORMSPREE_CONTACT_ID is not set. Using dev stub (no email sent).')
+    }
     await new Promise<void>((resolve) => setTimeout(resolve, 800))
     return
   }
@@ -62,6 +64,9 @@ export async function submitContact(payload: ContactPayload): Promise<void> {
  */
 export async function submitRequest(payload: RequestPayload): Promise<void> {
   if (!REQUEST_FORM_ID) {
+    if (import.meta.env.DEV) {
+      console.warn('[contact] VITE_FORMSPREE_REQUEST_ID is not set. Using dev stub (no email sent).')
+    }
     await new Promise<void>((resolve) => setTimeout(resolve, 800))
     return
   }

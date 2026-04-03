@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 interface Props {
   id: string
   name: string
@@ -29,6 +31,8 @@ export default function FormField({
   value,
   onChange,
 }: Props) {
+  const { t } = useTranslation()
+
   const inputClass = `w-full border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-gray-500 ${
     error ? 'border-red-300' : 'border-gray-200'
   }`
@@ -38,10 +42,10 @@ export default function FormField({
       <label htmlFor={id} className="flex items-baseline gap-2 text-sm text-gray-700">
         {label}
         {required && (
-          <span className="text-xs text-gray-400">必須</span>
+          <span className="text-xs text-gray-400">{t('form.required')}</span>
         )}
         {optional && (
-          <span className="text-xs text-gray-400">任意</span>
+          <span className="text-xs text-gray-400">{t('form.optional')}</span>
         )}
       </label>
 
