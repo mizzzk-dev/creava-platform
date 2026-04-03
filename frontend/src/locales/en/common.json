@@ -9,6 +9,7 @@
     "events": "Events",
     "contact": "Contact",
     "pricing": "Pricing",
+    "faq": "FAQ",
     "openMenu": "Open menu",
     "closeMenu": "Close menu"
   },
@@ -99,7 +100,8 @@
     "contact": "Get in touch or submit a work request.",
     "events": "Live shows, exhibitions, and workshops.",
     "about": "About the creator — bio, skills, and experience.",
-    "pricing": "Pricing guide for video, photo, music, and web projects."
+    "pricing": "Pricing guide for video, photo, music, and web projects.",
+    "faq": "Frequently asked questions about requests, production, and pricing."
   },
   "about": {
     "headline": "Creator — Film, Photo & Music",
@@ -180,6 +182,18 @@
   "sns": {
     "follow": "Follow on SNS",
     "followSub": "Latest updates & behind-the-scenes"
+  },
+  "faq": {
+    "title": "FAQ",
+    "subtitle": "Frequently Asked Questions",
+    "contactPrompt": "Still have questions?",
+    "contactLink": "Contact us",
+    "categories": {
+      "request": "About requests",
+      "production": "About production",
+      "pricing": "Pricing & contracts",
+      "other": "Other"
+    }
   },
   "error": {
     "404title": "404 — Not Found",

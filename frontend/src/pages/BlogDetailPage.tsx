@@ -4,12 +4,13 @@ import { useTranslation } from 'react-i18next'
 import { useSlugDetail } from '@/hooks'
 import { getBlogDetail } from '@/modules/blog/api'
 import { getMediaUrl, formatDate } from '@/utils'
-import { truncateForDescription } from '@/lib/seo'
+import { truncateForDescription, SITE_NAME, SITE_URL } from '@/lib/seo'
 import { ROUTES } from '@/lib/routeConstants'
 import ContentAccessGuard from '@/components/guards/ContentAccessGuard'
 import NotFoundState from '@/components/common/NotFoundState'
 import ErrorState from '@/components/common/ErrorState'
 import PageHead from '@/components/seo/PageHead'
+import StructuredData from '@/components/seo/StructuredData'
 import SkeletonDetail from '@/components/common/SkeletonDetail'
 import Badge from '@/components/common/Badge'
 import type { BlogPost } from '@/types'
@@ -40,6 +41,27 @@ export default function BlogDetailPage() {
             description={item.body ? truncateForDescription(item.body) : undefined}
             ogImage={getMediaUrl(item.thumbnail) ?? undefined}
             ogType="article"
+          />
+          <StructuredData
+            schema={{
+              type: 'Article',
+              headline: item.title,
+              description: item.body ? truncateForDescription(item.body) : undefined,
+              datePublished: item.publishAt ?? undefined,
+              image: getMediaUrl(item.thumbnail) ?? undefined,
+              authorName: SITE_NAME,
+              url: `${SITE_URL}${ROUTES.BLOG_DETAIL.replace(':slug', slug ?? '')}`,
+            }}
+          />
+          <StructuredData
+            schema={{
+              type: 'BreadcrumbList',
+              items: [
+                { name: 'Home', url: SITE_URL },
+                { name: t('nav.blog'), url: `${SITE_URL}${ROUTES.BLOG}` },
+                { name: item.title, url: `${SITE_URL}${ROUTES.BLOG_DETAIL.replace(':slug', slug ?? '')}` },
+              ],
+            }}
           />
 
           {/* cover image */}

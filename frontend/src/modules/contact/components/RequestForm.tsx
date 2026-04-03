@@ -88,8 +88,7 @@ export default function RequestForm() {
   }
 
   function handleFormSubmit(e: React.FormEvent) {
-    ;(fields as typeof fields & { file?: File }).file = file ?? undefined
-    void handleSubmit(e)
+    void handleSubmit(e, file ?? undefined)
   }
 
   function handleReset() {

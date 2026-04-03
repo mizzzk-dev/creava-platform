@@ -47,12 +47,12 @@ export function useContactForm() {
     return Object.keys(next).length === 0
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent, file?: File) {
     e.preventDefault()
     if (!validate()) return
     setStatus('submitting')
     try {
-      await submitContact(fields)
+      await submitContact({ ...fields, file })
       setStatus('success')
     } catch {
       setStatus('error')

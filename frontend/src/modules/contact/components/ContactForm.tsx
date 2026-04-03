@@ -74,9 +74,7 @@ export default function ContactForm() {
   }
 
   function handleFormSubmit(e: React.FormEvent) {
-    // inject file into payload by attaching to fields ref before submit
-    ;(fields as typeof fields & { file?: File }).file = file ?? undefined
-    void handleSubmit(e)
+    void handleSubmit(e, file ?? undefined)
   }
 
   function handleReset() {

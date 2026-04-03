@@ -2,7 +2,10 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import PageHead from '@/components/seo/PageHead'
+import StructuredData from '@/components/seo/StructuredData'
+import GitHubActivityCard from '@/components/common/GitHubActivityCard'
 import { ROUTES } from '@/lib/routeConstants'
+import { SITE_URL, SITE_NAME } from '@/lib/seo'
 
 const SKILLS = [
   { label: 'Video', items: ['MV / CM / Short Film', 'Documentary', 'Editing / Color Grading'] },
@@ -16,6 +19,20 @@ const SERVICES = [
   { icon: '◎', title: '音楽制作', desc: '楽曲制作・編曲・MIX。映像や空間に合わせたオリジナルサウンドを制作します。' },
   { icon: '◇', title: 'ブランディング支援', desc: 'ビジュアルアイデンティティの設計から世界観の一貫した表現まで。' },
 ]
+
+const PRICING_HIGHLIGHTS = [
+  { label: '映像制作', from: '¥150,000〜' },
+  { label: '写真撮影', from: '¥30,000〜' },
+  { label: '音楽制作', from: '¥15,000〜' },
+  { label: 'Web制作', from: '¥80,000〜' },
+]
+
+const SNS_SAME_AS: string[] = [
+  import.meta.env.VITE_SNS_X_URL,
+  import.meta.env.VITE_SNS_INSTAGRAM_URL,
+  import.meta.env.VITE_SNS_NOTE_URL,
+  import.meta.env.VITE_SNS_YOUTUBE_URL,
+].filter(Boolean) as string[]
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -32,6 +49,24 @@ export default function AboutPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-20">
       <PageHead title={t('nav.about')} description={t('seo.about')} />
+      <StructuredData
+        schema={{
+          type: 'Person',
+          name: SITE_NAME,
+          url: `${SITE_URL}${ROUTES.ABOUT}`,
+          description: t('seo.about'),
+          sameAs: SNS_SAME_AS,
+        }}
+      />
+      <StructuredData
+        schema={{
+          type: 'BreadcrumbList',
+          items: [
+            { name: 'Home', url: SITE_URL },
+            { name: t('nav.about'), url: `${SITE_URL}${ROUTES.ABOUT}` },
+          ],
+        }}
+      />
 
       {/* — hero — */}
       <motion.div
@@ -72,10 +107,18 @@ export default function AboutPage() {
         className="py-16 border-b border-gray-100 dark:border-gray-800"
       >
         <div className="grid grid-cols-1 gap-10 md:grid-cols-[1fr_1.6fr]">
-          {/* profile image placeholder */}
-          <div className="aspect-square w-full max-w-[260px] overflow-hidden bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
-            <div className="dot-grid flex h-full w-full items-center justify-center opacity-30">
-              <span className="font-mono text-[11px] text-gray-400 dark:text-gray-600">photo</span>
+          {/* left: profile image + GitHub card */}
+          <div className="flex flex-col gap-4">
+            {/* profile image placeholder */}
+            <div className="aspect-square w-full max-w-[260px] overflow-hidden bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
+              <div className="dot-grid flex h-full w-full items-center justify-center opacity-30">
+                <span className="font-mono text-[11px] text-gray-400 dark:text-gray-600">photo</span>
+              </div>
+            </div>
+
+            {/* GitHub activity */}
+            <div className="max-w-[260px]">
+              <GitHubActivityCard />
             </div>
           </div>
 
@@ -167,6 +210,42 @@ export default function AboutPage() {
             </motion.div>
           ))}
         </div>
+      </motion.section>
+
+      {/* — pricing teaser — */}
+      <motion.section
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+        variants={fadeUp}
+        className="py-16 border-b border-gray-100 dark:border-gray-800"
+      >
+        <div className="flex items-start justify-between gap-4 flex-col sm:flex-row sm:items-center">
+          <p className="font-mono text-[11px] uppercase tracking-widest text-gray-400 dark:text-gray-600">
+            {t('about.ctaPricing')}
+          </p>
+          <Link
+            to={ROUTES.PRICING}
+            className="font-mono text-[11px] text-gray-400 dark:text-gray-600 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+          >
+            {t('pricing.title')} →
+          </Link>
+        </div>
+
+        <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+          {PRICING_HIGHLIGHTS.map(({ label, from }) => (
+            <div
+              key={label}
+              className="border border-gray-100 dark:border-gray-800 p-4 space-y-1"
+            >
+              <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
+              <p className="font-mono text-sm font-medium text-gray-700 dark:text-gray-300">{from}</p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 font-mono text-[10px] text-gray-400 dark:text-gray-600">
+          {t('pricing.note')}
+        </p>
       </motion.section>
 
       {/* — CTA — */}

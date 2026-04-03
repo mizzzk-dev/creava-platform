@@ -11,6 +11,7 @@ const NAV_LINKS = [
   { key: 'nav.events',  to: ROUTES.EVENTS  },
   { key: 'nav.fanclub', to: ROUTES.FANCLUB },
   { key: 'nav.pricing', to: ROUTES.PRICING },
+  { key: 'nav.faq',     to: ROUTES.FAQ     },
   { key: 'nav.contact', to: ROUTES.CONTACT },
 ] as const
 

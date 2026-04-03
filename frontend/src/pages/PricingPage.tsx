@@ -2,7 +2,9 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import PageHead from '@/components/seo/PageHead'
+import StructuredData from '@/components/seo/StructuredData'
 import { ROUTES } from '@/lib/routeConstants'
+import { SITE_URL } from '@/lib/seo'
 
 interface PlanRow {
   service: string
@@ -45,6 +47,23 @@ const PLANS: PlanRow[] = [
   },
 ]
 
+const PROCESS_STEPS = [
+  { step: '01', label: 'お問い合わせ', desc: 'フォームまたはメールでご連絡ください。' },
+  { step: '02', label: 'ヒアリング', desc: '目的・規模・スケジュールを確認します。' },
+  { step: '03', label: 'お見積もり', desc: '要件をもとに費用・納期をご提案します。' },
+  { step: '04', label: 'ご発注・着手', desc: '合意後、制作を開始します。' },
+  { step: '05', label: '納品・修正', desc: '成果物の確認・修正を経て納品します。' },
+]
+
+const USE_CASES = [
+  { icon: '◈', text: 'SNS・プロモーション用のMVやショートフィルムを作りたい' },
+  { icon: '◉', text: 'ブランドイメージに合う写真素材を一括で制作したい' },
+  { icon: '◎', text: '映像や商業施設向けのオリジナルBGMが必要' },
+  { icon: '◇', text: 'ポートフォリオや作品紹介サイトをゼロから構築したい' },
+  { icon: '◈', text: '映像・写真・音楽をまとめてブランディングに活用したい' },
+  { icon: '◉', text: 'イベント・ライブの撮影と映像編集を一括依頼したい' },
+]
+
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
   visible: (i = 0) => ({
@@ -60,6 +79,15 @@ export default function PricingPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-20">
       <PageHead title={t('nav.pricing')} description={t('seo.pricing')} />
+      <StructuredData
+        schema={{
+          type: 'BreadcrumbList',
+          items: [
+            { name: 'Home', url: SITE_URL },
+            { name: t('nav.pricing'), url: `${SITE_URL}${ROUTES.PRICING}` },
+          ],
+        }}
+      />
 
       {/* — header — */}
       <motion.div initial="hidden" animate="visible" variants={fadeUp}>
@@ -73,6 +101,34 @@ export default function PricingPage() {
           {t('pricing.note')}
         </p>
       </motion.div>
+
+      {/* — use cases — */}
+      <motion.section
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+        variants={fadeUp}
+        className="mt-16 border border-dashed border-gray-200 dark:border-gray-800 p-6"
+      >
+        <p className="font-mono text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-600 mb-5">
+          // こんな方に向いています
+        </p>
+        <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          {USE_CASES.map((uc, i) => (
+            <motion.li
+              key={i}
+              custom={i * 0.4}
+              variants={fadeUp}
+              className="flex items-start gap-3 text-sm text-gray-600 dark:text-gray-400"
+            >
+              <span className="shrink-0 font-mono text-gray-300 dark:text-gray-700 mt-0.5 select-none">
+                {uc.icon}
+              </span>
+              {uc.text}
+            </motion.li>
+          ))}
+        </ul>
+      </motion.section>
 
       {/* — plans — */}
       <div className="mt-16 space-y-14">
@@ -121,6 +177,41 @@ export default function PricingPage() {
         ))}
       </div>
 
+      {/* — process flow — */}
+      <motion.section
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+        variants={fadeUp}
+        className="mt-20"
+      >
+        <p className="font-mono text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-600 mb-8">
+          // 依頼の流れ
+        </p>
+        <div className="relative">
+          {/* connector line (desktop) */}
+          <div className="absolute top-5 left-[2.75rem] right-[2.75rem] h-px bg-gray-100 dark:bg-gray-800 hidden md:block" />
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-5">
+            {PROCESS_STEPS.map(({ step, label, desc }, i) => (
+              <motion.div
+                key={step}
+                custom={i * 0.3}
+                variants={fadeUp}
+                className="relative flex flex-col items-center text-center"
+              >
+                <div className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 font-mono text-[11px] text-gray-400 dark:text-gray-600">
+                  {step}
+                </div>
+                <p className="mt-3 text-xs font-medium text-gray-700 dark:text-gray-300">{label}</p>
+                <p className="mt-1 font-mono text-[10px] leading-relaxed text-gray-400 dark:text-gray-600">
+                  {desc}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </motion.section>
+
       {/* — note — */}
       <motion.div
         initial="hidden"
@@ -150,6 +241,20 @@ export default function PricingPage() {
             消費税は別途申し受けます。
           </li>
         </ul>
+
+        {/* FAQ link */}
+        <div className="mt-5 border-t border-dashed border-gray-100 dark:border-gray-900 pt-4">
+          <p className="text-sm text-gray-400 dark:text-gray-600">
+            料金や契約に関するよくある質問は{' '}
+            <Link
+              to={ROUTES.FAQ}
+              className="text-gray-600 dark:text-gray-400 underline underline-offset-2 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
+            >
+              FAQ
+            </Link>{' '}
+            もご参照ください。
+          </p>
+        </div>
       </motion.div>
 
       {/* — CTA — */}
@@ -173,6 +278,12 @@ export default function PricingPage() {
           >
             お問い合わせ・相談
             <span className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
+          </Link>
+          <Link
+            to={ROUTES.FAQ}
+            className="inline-flex items-center border border-gray-200 dark:border-gray-700 px-5 py-3 text-sm font-medium tracking-wide text-gray-500 dark:text-gray-400 transition-all hover:border-gray-400 dark:hover:border-gray-500"
+          >
+            FAQ
           </Link>
           <Link
             to={ROUTES.ABOUT}

@@ -16,6 +16,7 @@ export const ROUTES = {
   STORE: '/store',
   STORE_DETAIL: '/store/:handle',
   PRICING: '/pricing',
+  FAQ: '/faq',
   PREVIEW: '/preview',
 } as const
 
