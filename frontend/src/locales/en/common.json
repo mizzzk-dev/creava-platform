@@ -169,6 +169,18 @@
       "title": "Media & Awards",
       "viewAll": "View all"
     },
+    "pricing": {
+      "title": "Pricing & Services",
+      "subtitle": "Estimated rates for production & development",
+      "body": "Video, photo, music, and web — handled end-to-end. Feel free to reach out for a free estimate.",
+      "cta": "View full pricing"
+    },
+    "contact": {
+      "title": "Let's build something together",
+      "body": "Whether it's a project idea, a brief, or just a question — I'd love to hear from you.",
+      "cta": "Get in touch",
+      "ctaSub": "Free estimates, no pressure"
+    },
     "fanclub": {
       "title": "Fan Club",
       "description": "Get exclusive content and early access.",
