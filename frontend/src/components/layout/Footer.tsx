@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ROUTES } from '@/lib/routeConstants'
+import SiteLogo from '@/components/layout/SiteLogo'
 
 const NAV_LINKS = [
   { key: 'nav.works',   to: ROUTES.WORKS   },
@@ -15,19 +16,19 @@ export default function Footer() {
   const { t } = useTranslation()
 
   return (
-    <footer className="border-t border-gray-100 bg-white">
+    <footer className="border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950">
       <div className="mx-auto max-w-5xl px-4 py-10">
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           {/* brand */}
           <div>
             <Link
               to={ROUTES.HOME}
-              className="flex items-center gap-2 text-sm font-semibold text-gray-900 transition-opacity hover:opacity-70"
+              className="transition-opacity hover:opacity-70"
+              aria-label="Creava Home"
             >
-              <span className="font-mono text-[10px] text-gray-300 select-none">&gt;_</span>
-              Creava
+              <SiteLogo />
             </Link>
-            <p className="mt-1 font-mono text-[11px] text-gray-400">
+            <p className="mt-1 font-mono text-[11px] text-gray-400 dark:text-gray-600">
               creator portfolio / v2.0
             </p>
           </div>
@@ -39,7 +40,7 @@ export default function Footer() {
                 <li key={to}>
                   <Link
                     to={to}
-                    className="text-xs text-gray-400 transition-colors hover:text-gray-700"
+                    className="text-xs text-gray-400 dark:text-gray-600 transition-colors hover:text-gray-700 dark:hover:text-gray-300"
                   >
                     {t(key)}
                   </Link>
@@ -50,9 +51,9 @@ export default function Footer() {
         </div>
 
         {/* bottom bar */}
-        <div className="mt-8 flex items-center justify-between border-t border-gray-50 pt-6">
-          <p className="font-mono text-[11px] text-gray-300">{t('footer.copyright')}</p>
-          <span className="font-mono text-[10px] text-gray-200 select-none">// EOF</span>
+        <div className="mt-8 flex items-center justify-between border-t border-gray-50 dark:border-gray-900 pt-6">
+          <p className="font-mono text-[11px] text-gray-300 dark:text-gray-700">{t('footer.copyright')}</p>
+          <span className="font-mono text-[10px] text-gray-200 dark:text-gray-800 select-none">// EOF</span>
         </div>
       </div>
     </footer>

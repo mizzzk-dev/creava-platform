@@ -12,7 +12,8 @@
   }
 
   body {
-    @apply bg-white text-gray-900;
+    @apply bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 }
 
@@ -24,15 +25,30 @@
     -webkit-backdrop-filter: blur(12px);
   }
 
+  .dark .glass {
+    background-color: rgba(10, 10, 20, 0.82);
+  }
+
   /* subtle dot-grid background — hero などに使う */
   .dot-grid {
     background-image: radial-gradient(circle, #d1d5db 1px, transparent 1px);
     background-size: 22px 22px;
   }
 
+  .dark .dot-grid {
+    background-image: radial-gradient(circle, #374151 1px, transparent 1px);
+  }
+
   /* gradient text — headline などに使う */
   .text-gradient {
     background: linear-gradient(135deg, #111827 0%, #4b5563 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .dark .text-gradient {
+    background: linear-gradient(135deg, #f9fafb 0%, #9ca3af 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -47,6 +63,10 @@
     background-position: top;
   }
 
+  .dark .border-fade {
+    background-image: linear-gradient(to right, transparent, #374151 20%, #374151 80%, transparent);
+  }
+
   /* ambient glow behind dark section CTAs */
   .ambient-violet {
     background: radial-gradient(ellipse 60% 50% at 50% 100%, rgba(139, 92, 246, 0.12) 0%, transparent 70%);
@@ -57,13 +77,27 @@
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
   }
 
+  .dark .card-ring {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
+  }
+
   .card-ring-hover:hover {
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+
+  .dark .card-ring-hover:hover {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12), 0 2px 8px rgba(0, 0, 0, 0.3);
   }
 
   /* skeleton shimmer — loading placeholders */
   .skeleton {
     background: linear-gradient(90deg, #f3f4f6 25%, #e9ecef 50%, #f3f4f6 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  .dark .skeleton {
+    background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s ease-in-out infinite;
   }
@@ -87,7 +121,16 @@
     transition: box-shadow 0.2s ease;
   }
 
+  .dark .bento-card {
+    background-color: #111827;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 1px 4px rgba(0, 0, 0, 0.2);
+  }
+
   .bento-card:hover {
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 4px 16px rgba(0, 0, 0, 0.07);
+  }
+
+  .dark .bento-card:hover {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4);
   }
 }

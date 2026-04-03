@@ -4,6 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ROUTES } from '@/lib/routeConstants'
 import AuthButton from '@/components/auth/AuthButton'
+import ThemeToggle from '@/components/common/ThemeToggle'
+import LangSwitcher from '@/components/common/LangSwitcher'
+import SiteLogo from '@/components/layout/SiteLogo'
 
 const NAV_ITEMS = [
   { key: 'nav.works',   to: ROUTES.WORKS   },
@@ -27,19 +30,19 @@ export default function Header() {
   }, [isOpen])
 
   return (
-    <header className="glass sticky top-0 z-50 border-b border-gray-100/80">
+    <header className="glass sticky top-0 z-50 border-b border-gray-100/80 dark:border-gray-800/80">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
         {/* logo */}
         <NavLink
           to={ROUTES.HOME}
-          className="flex items-center gap-2 text-sm font-semibold tracking-tight text-gray-900 transition-opacity hover:opacity-70"
+          className="transition-opacity hover:opacity-70"
+          aria-label="Creava Home"
         >
-          <span className="font-mono text-[10px] font-medium text-gray-300 select-none">&gt;_</span>
-          Creava
+          <SiteLogo />
         </NavLink>
 
         {/* desktop nav */}
-        <div className="hidden items-center gap-6 md:flex">
+        <div className="hidden items-center gap-3 md:flex">
           <nav>
             <ul className="flex items-center gap-1">
               {NAV_ITEMS.map(({ key, to }) => (
@@ -49,8 +52,8 @@ export default function Header() {
                     className={({ isActive }) =>
                       `relative rounded px-3 py-1.5 text-sm transition-colors duration-150 ${
                         isActive
-                          ? 'font-medium text-gray-900 bg-gray-50'
-                          : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50/60'
+                          ? 'font-medium text-gray-900 bg-gray-50 dark:text-gray-100 dark:bg-gray-800'
+                          : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50/60 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800/60'
                       }`
                     }
                   >
@@ -60,20 +63,28 @@ export default function Header() {
               ))}
             </ul>
           </nav>
-          <AuthButton />
+          <div className="flex items-center gap-1 border-l border-gray-100 dark:border-gray-800 pl-3">
+            <LangSwitcher />
+            <ThemeToggle />
+            <AuthButton />
+          </div>
         </div>
 
-        {/* hamburger (mobile) */}
-        <button
-          onClick={() => setIsOpen((v) => !v)}
-          className="flex h-8 w-8 flex-col items-center justify-center gap-1.5 md:hidden"
-          aria-label={isOpen ? t('nav.closeMenu') : t('nav.openMenu')}
-          aria-expanded={isOpen}
-        >
-          <span className={`block h-px w-5 bg-gray-700 transition-transform duration-300 ${isOpen ? 'translate-y-[3px] rotate-45' : ''}`} />
-          <span className={`block h-px w-5 bg-gray-700 transition-opacity duration-300 ${isOpen ? 'opacity-0' : ''}`} />
-          <span className={`block h-px w-5 bg-gray-700 transition-transform duration-300 ${isOpen ? '-translate-y-[9px] -rotate-45' : ''}`} />
-        </button>
+        {/* mobile controls */}
+        <div className="flex items-center gap-1 md:hidden">
+          <LangSwitcher />
+          <ThemeToggle />
+          <button
+            onClick={() => setIsOpen((v) => !v)}
+            className="flex h-8 w-8 flex-col items-center justify-center gap-1.5"
+            aria-label={isOpen ? t('nav.closeMenu') : t('nav.openMenu')}
+            aria-expanded={isOpen}
+          >
+            <span className={`block h-px w-5 bg-gray-700 dark:bg-gray-300 transition-transform duration-300 ${isOpen ? 'translate-y-[3px] rotate-45' : ''}`} />
+            <span className={`block h-px w-5 bg-gray-700 dark:bg-gray-300 transition-opacity duration-300 ${isOpen ? 'opacity-0' : ''}`} />
+            <span className={`block h-px w-5 bg-gray-700 dark:bg-gray-300 transition-transform duration-300 ${isOpen ? '-translate-y-[9px] -rotate-45' : ''}`} />
+          </button>
+        </div>
       </div>
 
       {/* mobile drawer */}
@@ -85,10 +96,9 @@ export default function Header() {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.25, ease: 'easeInOut' }}
-            className="overflow-hidden border-t border-gray-100/80 md:hidden"
-            style={{ backgroundColor: 'rgba(255,255,255,0.95)' }}
+            className="overflow-hidden border-t border-gray-100/80 dark:border-gray-800/80 md:hidden"
           >
-            <nav className="px-4 pb-6 pt-4">
+            <nav className="bg-white/95 dark:bg-gray-900/95 px-4 pb-6 pt-4">
               <ul className="flex flex-col">
                 {NAV_ITEMS.map(({ key, to }) => (
                   <li key={to}>
@@ -97,8 +107,8 @@ export default function Header() {
                       className={({ isActive }) =>
                         `block py-3 text-sm transition-colors ${
                           isActive
-                            ? 'font-medium text-gray-900'
-                            : 'text-gray-500 hover:text-gray-900'
+                            ? 'font-medium text-gray-900 dark:text-gray-100'
+                            : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
                         }`
                       }
                     >
@@ -107,7 +117,7 @@ export default function Header() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-4 border-t border-gray-100 pt-4">
+              <div className="mt-4 border-t border-gray-100 dark:border-gray-800 pt-4">
                 <AuthButton />
               </div>
             </nav>

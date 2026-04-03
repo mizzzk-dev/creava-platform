@@ -4,6 +4,7 @@ import LanguageDetector from 'i18next-browser-languagedetector'
 
 import jaCommon from '@/locales/ja/common.json'
 import enCommon from '@/locales/en/common.json'
+import koCommon from '@/locales/ko/common.json'
 
 i18n
   .use(LanguageDetector)
@@ -16,6 +17,9 @@ i18n
       en: {
         common: enCommon,
       },
+      ko: {
+        common: koCommon,
+      },
     },
     fallbackLng: 'ja',
     defaultNS: 'common',
@@ -23,8 +27,9 @@ i18n
       escapeValue: false,
     },
     detection: {
-      order: ['querystring', 'navigator', 'htmlTag'],
-      caches: [],
+      order: ['localStorage', 'querystring', 'navigator', 'htmlTag'],
+      lookupLocalStorage: 'creava_lang',
+      caches: ['localStorage'],
     },
   })
 

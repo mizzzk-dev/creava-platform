@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { ClerkProvider } from '@clerk/clerk-react'
 import { HelmetProvider } from 'react-helmet-async'
+import { ThemeProvider } from '@/lib/theme'
 import App from './App'
 import './lib/i18n'
 import './index.css'
@@ -17,26 +18,22 @@ if (!PUBLISHABLE_KEY && import.meta.env.DEV) {
   )
 }
 
-const app = (
-  <React.StrictMode>
-    <HelmetProvider>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </HelmetProvider>
-  </React.StrictMode>
+const inner = (
+  <ThemeProvider>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </ThemeProvider>
 )
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  PUBLISHABLE_KEY ? (
-    <React.StrictMode>
-      <HelmetProvider>
-        <BrowserRouter>
-          <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-            <App />
-          </ClerkProvider>
-        </BrowserRouter>
-      </HelmetProvider>
-    </React.StrictMode>
-  ) : app,
+  <React.StrictMode>
+    <HelmetProvider>
+      {PUBLISHABLE_KEY ? (
+        <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+          {inner}
+        </ClerkProvider>
+      ) : inner}
+    </HelmetProvider>
+  </React.StrictMode>,
 )
