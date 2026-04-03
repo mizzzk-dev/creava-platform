@@ -19,6 +19,7 @@ const ContactPage = lazy(() => import('@/pages/ContactPage'))
 const StorePage = lazy(() => import('@/pages/StorePage'))
 const StoreDetailPage = lazy(() => import('@/pages/StoreDetailPage'))
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
+const PreviewPage = lazy(() => import('@/pages/PreviewPage'))
 
 // 定数は循環参照を避けるため routeConstants から取得し re-export する
 export { ROUTES, detailPath } from './routeConstants'
@@ -51,6 +52,7 @@ export function AppRoutes() {
           <Route path={ROUTES.CONTACT} element={<ContactPage />} />
           <Route path={ROUTES.STORE} element={<StorePage />} />
           <Route path={ROUTES.STORE_DETAIL} element={<StoreDetailPage />} />
+          <Route path={ROUTES.PREVIEW} element={<PreviewPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>

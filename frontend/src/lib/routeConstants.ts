@@ -14,6 +14,7 @@ export const ROUTES = {
   CONTACT: '/contact',
   STORE: '/store',
   STORE_DETAIL: '/store/:handle',
+  PREVIEW: '/preview',
 } as const
 
 /** 詳細ページへの URL を生成する */

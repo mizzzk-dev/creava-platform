@@ -1,7 +1,18 @@
 import { strapiGet } from './client'
 import { buildQueryString } from './query'
+import { isPreviewMode } from '@/lib/preview'
 import type { StrapiQueryParams } from './query'
 import type { StrapiListResponse, StrapiSingleResponse } from '@/types'
+
+/**
+ * プレビューモード時に status=draft を注入する
+ * 通常アクセスでは何も追加しない（Strapi デフォルトは published のみ）
+ */
+function withPreview(params?: StrapiQueryParams): StrapiQueryParams | undefined {
+  if (!isPreviewMode()) return params
+  // draft モードを要求（明示的な status 指定があれば上書きしない）
+  return { status: 'draft', ...params }
+}
 
 /**
  * Strapi Collection Type の一覧を取得する
@@ -13,7 +24,8 @@ export function fetchCollection<T>(
   endpoint: string,
   params?: StrapiQueryParams,
 ): Promise<StrapiListResponse<T>> {
-  const qs = params ? buildQueryString(params) : ''
+  const merged = withPreview(params)
+  const qs = merged ? buildQueryString(merged) : ''
   return strapiGet<StrapiListResponse<T>>(endpoint, qs)
 }
 
@@ -46,7 +58,9 @@ export async function fetchBySlug<T>(
   slug: string,
   params?: Omit<StrapiQueryParams, 'filters' | 'pagination'>,
 ): Promise<T | null> {
+  const previewParams = isPreviewMode() ? { status: 'draft' as const } : {}
   const qs = buildQueryString({
+    ...previewParams,
     ...params,
     filters: { slug: { $eq: slug } },
     pagination: { pageSize: 1 },

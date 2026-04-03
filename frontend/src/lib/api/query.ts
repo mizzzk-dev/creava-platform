@@ -21,8 +21,12 @@ export interface StrapiQueryParams {
   }
   /** ロケール（多言語対応時） */
   locale?: string
-  /** 公開状態（'live' | 'preview'） */
-  publicationState?: 'live' | 'preview'
+  /**
+   * Strapi v5 コンテンツ公開状態フィルター
+   * - 'published': 公開済みのみ（デフォルト。未指定時も同動作）
+   * - 'draft': 下書き含む（API Token が必要）
+   */
+  status?: 'published' | 'draft'
 }
 
 /**
