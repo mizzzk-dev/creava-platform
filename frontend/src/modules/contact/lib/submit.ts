@@ -20,7 +20,7 @@ export interface RequestPayload {
 const CONTACT_FORM_ID = import.meta.env.VITE_FORMSPREE_CONTACT_ID as string | undefined
 const REQUEST_FORM_ID = import.meta.env.VITE_FORMSPREE_REQUEST_ID as string | undefined
 
-/** ファイル許可拡張子 */
+/** ファイル許可 MIME タイプ */
 const ALLOWED_TYPES = [
   'application/pdf',
   'application/msword',
@@ -42,37 +42,44 @@ export function validateFile(file: File): string | null {
 }
 
 /**
- * Formspree への送信（multipart/form-data）
- * ファイル添付はすべてのプランで利用可能。
+ * Formspree への送信（常に multipart/form-data）
+ *
+ * JSON 送信は Formspree の設定・プランによって 400 になる場合があるため、
+ * Content-Type をブラウザに任せる FormData を常に使用します。
+ * _subject  … メール件名として Formspree が利用
+ * _replyto  … 返信先として Formspree が利用
  */
 async function postToFormspree(
   formId: string,
   data: Record<string, string>,
   file?: File,
 ): Promise<void> {
-  let body: FormData | string
-  const headers: Record<string, string> = { Accept: 'application/json' }
+  const fd = new FormData()
 
-  if (file) {
-    const fd = new FormData()
-    Object.entries(data).forEach(([k, v]) => fd.append(k, v))
-    fd.append('attachment', file, file.name)
-    body = fd
-    // Content-Type は FormData に任せる (boundary を自動設定)
-  } else {
-    body = JSON.stringify(data)
-    headers['Content-Type'] = 'application/json'
-  }
+  // Formspree 特殊フィールド
+  if (data._subject) fd.append('_subject', data._subject)
+  if (data._replyto) fd.append('_replyto', data._replyto)
+
+  // 通常フィールド
+  Object.entries(data).forEach(([k, v]) => {
+    if (!k.startsWith('_')) fd.append(k, v)
+  })
+
+  // ファイル添付（Formspree Gold 以上で受信可能）
+  if (file) fd.append('attachment', file, file.name)
 
   const res = await fetch(`https://formspree.io/f/${formId}`, {
     method: 'POST',
-    headers,
-    body,
+    headers: { Accept: 'application/json' },
+    body: fd,
   })
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    const message = (err as { error?: string }).error ?? `HTTP ${res.status}`
+    let message = `HTTP ${res.status}`
+    try {
+      const err = await res.json() as { error?: string; errors?: { message: string }[] }
+      message = err.errors?.[0]?.message ?? err.error ?? message
+    } catch { /* ignore parse error */ }
     throw new Error(message)
   }
 }
@@ -92,6 +99,8 @@ export async function submitContact(payload: ContactPayload): Promise<void> {
 
   const { file, ...fields } = payload
   await postToFormspree(CONTACT_FORM_ID, {
+    _subject: `[お問い合わせ] ${fields.subject}`,
+    _replyto: fields.email,
     name: fields.name,
     email: fields.email,
     subject: fields.subject,
@@ -114,6 +123,8 @@ export async function submitRequest(payload: RequestPayload): Promise<void> {
 
   const { file, ...fields } = payload
   await postToFormspree(REQUEST_FORM_ID, {
+    _subject: `[仕事依頼] ${fields.requestType} — ${fields.name}`,
+    _replyto: fields.email,
     name: fields.name,
     email: fields.email,
     company: fields.company,
