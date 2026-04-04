@@ -8,6 +8,13 @@ interface PersonSchema {
   sameAs?: string[]
 }
 
+interface WebSiteSchema {
+  type: 'WebSite'
+  name: string
+  url: string
+  description?: string
+}
+
 interface FAQItem {
   question: string
   answer: string
@@ -38,7 +45,22 @@ interface BreadcrumbSchema {
   items: BreadcrumbItem[]
 }
 
-type SchemaProps = PersonSchema | FAQSchema | ArticleSchema | BreadcrumbSchema
+interface ServiceSchema {
+  type: 'Service'
+  name: string
+  description?: string
+  provider?: string
+  providerUrl?: string
+  url?: string
+}
+
+type SchemaProps =
+  | PersonSchema
+  | WebSiteSchema
+  | FAQSchema
+  | ArticleSchema
+  | BreadcrumbSchema
+  | ServiceSchema
 
 function buildJsonLd(schema: SchemaProps): object {
   switch (schema.type) {
@@ -50,6 +72,14 @@ function buildJsonLd(schema: SchemaProps): object {
         url: schema.url,
         ...(schema.description && { description: schema.description }),
         ...(schema.sameAs && schema.sameAs.length > 0 && { sameAs: schema.sameAs }),
+      }
+    case 'WebSite':
+      return {
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: schema.name,
+        url: schema.url,
+        ...(schema.description && { description: schema.description }),
       }
     case 'FAQPage':
       return {
@@ -87,6 +117,21 @@ function buildJsonLd(schema: SchemaProps): object {
           name: item.name,
           item: item.url,
         })),
+      }
+    case 'Service':
+      return {
+        '@context': 'https://schema.org',
+        '@type': 'Service',
+        name: schema.name,
+        ...(schema.description && { description: schema.description }),
+        ...(schema.url && { url: schema.url }),
+        ...(schema.provider && {
+          provider: {
+            '@type': 'Person',
+            name: schema.provider,
+            ...(schema.providerUrl && { url: schema.providerUrl }),
+          },
+        }),
       }
   }
 }

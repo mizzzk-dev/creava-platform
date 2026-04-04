@@ -10,6 +10,7 @@ import StorePreviewSection from '@/modules/home/components/StorePreviewSection'
 import ContactCTASection from '@/modules/home/components/ContactCTASection'
 import FanclubCTASection from '@/modules/home/components/FanclubCTASection'
 import { SITE_URL, SITE_NAME } from '@/lib/seo'
+import { ROUTES } from '@/lib/routeConstants'
 
 export default function HomePage() {
   const { t } = useTranslation()
@@ -19,9 +20,15 @@ export default function HomePage() {
 
       {/* WebSite 構造化データ */}
       <StructuredData
+        schema={{ type: 'WebSite', name: SITE_NAME, url: SITE_URL, description: t('seo.home') }}
+      />
+      {/* サイト運営者 Person スキーマ */}
+      <StructuredData
         schema={{
-          type: 'BreadcrumbList',
-          items: [{ name: SITE_NAME, url: SITE_URL }],
+          type: 'Person',
+          name: SITE_NAME,
+          url: `${SITE_URL}${ROUTES.ABOUT}`,
+          description: t('seo.about'),
         }}
       />
 

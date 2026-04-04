@@ -4,7 +4,9 @@ import { motion } from 'framer-motion'
 import ContactForm from '@/modules/contact/components/ContactForm'
 import RequestForm from '@/modules/contact/components/RequestForm'
 import PageHead from '@/components/seo/PageHead'
+import StructuredData from '@/components/seo/StructuredData'
 import { ROUTES } from '@/lib/routeConstants'
+import { SITE_URL } from '@/lib/seo'
 import { Link } from 'react-router-dom'
 
 type Tab = 'contact' | 'request'
@@ -16,6 +18,15 @@ export default function ContactPage() {
   return (
     <section className="mx-auto max-w-2xl px-4 py-20">
       <PageHead title={t('nav.contact')} description={t('seo.contact')} />
+      <StructuredData
+        schema={{
+          type: 'BreadcrumbList',
+          items: [
+            { name: 'Home', url: SITE_URL },
+            { name: t('nav.contact'), url: `${SITE_URL}${ROUTES.CONTACT}` },
+          ],
+        }}
+      />
 
       <motion.div
         initial={{ opacity: 0, y: 16 }}

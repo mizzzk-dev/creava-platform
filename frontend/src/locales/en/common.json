@@ -41,9 +41,9 @@
   "store": {
     "title": "Store",
     "empty": "No products available",
-    "outOfStock": "Out of stock",
-    "variants": "Variants",
-    "buyOnShopify": "Buy on Shopify",
+    "buyNow": "Buy now",
+    "buyOn": "Buy",
+    "buyOnBase": "Pay via PayPay / Amazon Pay / PayPal",
     "backToStore": "Back to store",
     "soldOut": "Sold out",
     "comingSoon": "Coming soon"

@@ -4,7 +4,10 @@ import { useProductList } from '@/modules/store/hooks/useProductList'
 import { useContentAccess } from '@/hooks'
 import ProductCard from '@/modules/store/components/ProductCard'
 import PageHead from '@/components/seo/PageHead'
+import StructuredData from '@/components/seo/StructuredData'
 import SkeletonProductCard from '@/components/common/SkeletonProductCard'
+import { SITE_URL } from '@/lib/seo'
+import { ROUTES } from '@/lib/routeConstants'
 
 export default function StorePage() {
   const { t } = useTranslation()
@@ -16,6 +19,15 @@ export default function StorePage() {
   return (
     <section className="mx-auto max-w-5xl px-4 py-20">
       <PageHead title={t('store.title')} description={t('seo.store')} />
+      <StructuredData
+        schema={{
+          type: 'BreadcrumbList',
+          items: [
+            { name: 'Home', url: SITE_URL },
+            { name: t('store.title'), url: `${SITE_URL}${ROUTES.STORE}` },
+          ],
+        }}
+      />
 
       <motion.div
         initial={{ opacity: 0, y: 16 }}

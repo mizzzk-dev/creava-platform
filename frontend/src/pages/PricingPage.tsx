@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import PageHead from '@/components/seo/PageHead'
 import StructuredData from '@/components/seo/StructuredData'
 import { ROUTES } from '@/lib/routeConstants'
-import { SITE_URL } from '@/lib/seo'
+import { SITE_URL, SITE_NAME } from '@/lib/seo'
 
 interface PlanRow {
   service: string
@@ -88,6 +88,19 @@ export default function PricingPage() {
           ],
         }}
       />
+      {/* 各サービスの Service スキーマ */}
+      {PLANS.map((plan) => (
+        <StructuredData
+          key={plan.service}
+          schema={{
+            type: 'Service',
+            name: plan.service,
+            provider: SITE_NAME,
+            providerUrl: `${SITE_URL}${ROUTES.ABOUT}`,
+            url: `${SITE_URL}${ROUTES.PRICING}`,
+          }}
+        />
+      ))}
 
       {/* — header — */}
       <motion.div initial="hidden" animate="visible" variants={fadeUp}>

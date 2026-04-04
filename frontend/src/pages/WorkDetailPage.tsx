@@ -4,8 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { useSlugDetail } from '@/hooks'
 import { getWorkDetail } from '@/modules/works/api'
 import { getMediaUrl, formatDate } from '@/utils'
-import { truncateForDescription } from '@/lib/seo'
-import { ROUTES } from '@/lib/routeConstants'
+import { truncateForDescription, SITE_URL, SITE_NAME } from '@/lib/seo'
+import { ROUTES, detailPath } from '@/lib/routeConstants'
+import StructuredData from '@/components/seo/StructuredData'
 import ContentAccessGuard from '@/components/guards/ContentAccessGuard'
 import NotFoundState from '@/components/common/NotFoundState'
 import ErrorState from '@/components/common/ErrorState'
@@ -40,6 +41,27 @@ export default function WorkDetailPage() {
             description={item.description ? truncateForDescription(item.description) : undefined}
             ogImage={getMediaUrl(item.thumbnail) ?? undefined}
             ogType="article"
+          />
+          <StructuredData
+            schema={{
+              type: 'BreadcrumbList',
+              items: [
+                { name: 'Home', url: SITE_URL },
+                { name: 'Works', url: `${SITE_URL}${ROUTES.WORKS}` },
+                { name: item.title, url: `${SITE_URL}${detailPath.work(item.slug)}` },
+              ],
+            }}
+          />
+          <StructuredData
+            schema={{
+              type: 'Article',
+              headline: item.title,
+              url: `${SITE_URL}${detailPath.work(item.slug)}`,
+              description: item.description ? truncateForDescription(item.description) : undefined,
+              datePublished: item.publishAt ?? undefined,
+              image: getMediaUrl(item.thumbnail) ?? undefined,
+              authorName: SITE_NAME,
+            }}
           />
 
           {/* cover image */}
