@@ -13,6 +13,7 @@ import PageHead from '@/components/seo/PageHead'
 import StructuredData from '@/components/seo/StructuredData'
 import SkeletonDetail from '@/components/common/SkeletonDetail'
 import Badge from '@/components/common/Badge'
+import SnsLinks from '@/components/common/SnsLinks'
 import type { NewsItem } from '@/types'
 
 export default function NewsDetailPage() {
@@ -21,11 +22,11 @@ export default function NewsDetailPage() {
   const { item, loading, error, notFound } = useSlugDetail<NewsItem>(getNewsDetail, slug)
 
   return (
-    <section className="mx-auto max-w-5xl px-4 py-20">
+    <section className="mx-auto max-w-3xl px-4 py-20">
       {/* back link */}
       <Link
         to={ROUTES.NEWS}
-        className="mb-8 inline-flex items-center gap-1.5 font-mono text-[11px] text-gray-400 transition-colors hover:text-gray-700"
+        className="mb-8 inline-flex items-center gap-1.5 font-mono text-[11px] text-gray-400 dark:text-gray-600 transition-colors hover:text-gray-700 dark:hover:text-gray-300"
       >
         ← {t('detail.backToList')}
       </Link>
@@ -66,7 +67,7 @@ export default function NewsDetailPage() {
 
           {/* cover image */}
           {item.thumbnail && (
-            <div className="mb-10 overflow-hidden bg-gray-100" style={{ aspectRatio: '16 / 9' }}>
+            <div className="mb-10 overflow-hidden bg-gray-100 dark:bg-gray-800" style={{ aspectRatio: '16 / 9' }}>
               <img
                 src={getMediaUrl(item.thumbnail, 'large') ?? getMediaUrl(item.thumbnail)!}
                 alt={item.thumbnail.alternativeText ?? item.title}
@@ -75,7 +76,7 @@ export default function NewsDetailPage() {
             </div>
           )}
 
-          <article className="max-w-3xl">
+          <article className="max-w-2xl">
             <header>
               {/* status badges */}
               <div className="mb-3 flex flex-wrap items-center gap-1.5">
@@ -83,20 +84,38 @@ export default function NewsDetailPage() {
                 {item.accessStatus === 'limited' && <Badge variant="limited" />}
               </div>
 
-              <h1 className="text-3xl font-semibold tracking-tight text-gray-900">
+              <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 leading-snug">
                 {item.title}
               </h1>
 
+              {/* 公開日 — 主軸として表示 */}
               {item.publishAt && (
-                <p className="mt-2 font-mono text-xs text-gray-400">{formatDate(item.publishAt)}</p>
+                <div className="mt-4 flex items-center gap-2">
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-gray-300 dark:text-gray-700 select-none">
+                    published
+                  </span>
+                  <time
+                    dateTime={item.publishAt}
+                    className="font-mono text-xs text-gray-500 dark:text-gray-400"
+                  >
+                    {formatDate(item.publishAt)}
+                  </time>
+                </div>
               )}
+
+              <div className="mt-6 h-px bg-gray-100 dark:bg-gray-800" />
             </header>
 
             {item.body && (
-              <div className="mt-10 whitespace-pre-wrap text-sm leading-7 text-gray-700">
+              <div className="mt-8 whitespace-pre-wrap text-sm leading-8 text-gray-700 dark:text-gray-300">
                 {item.body}
               </div>
             )}
+
+            {/* SNS share / follow */}
+            <div className="mt-16 pt-8 border-t border-gray-100 dark:border-gray-800">
+              <SnsLinks />
+            </div>
           </article>
         </ContentAccessGuard>
       )}

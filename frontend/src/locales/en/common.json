@@ -41,12 +41,16 @@
   "store": {
     "title": "Store",
     "empty": "No products available",
-    "outOfStock": "Out of stock",
-    "variants": "Variants",
-    "buyOnShopify": "Buy on Shopify",
-    "backToStore": "Back to store",
+    "buyNow": "Buy now",
+    "buyOn": "Purchase",
+    "buyOnBase": "Pay via PayPay / Amazon Pay / PayPal",
     "soldOut": "Sold out",
-    "comingSoon": "Coming soon"
+    "comingSoon": "Coming soon",
+    "backToStore": "Back to store",
+    "related": "More products",
+    "fcOnlyNote": "This product is available to fan club members only.",
+    "purchaseNote": "Please review our terms before purchasing. Returns and exchanges may not be available depending on the product.",
+    "fcNote": "Some products are exclusive to fan club members."
   },
   "form": {
     "required": "Required",

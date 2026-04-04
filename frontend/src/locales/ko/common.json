@@ -46,7 +46,11 @@
     "buyOnBase": "PayPay / Amazon Pay / PayPal 결제",
     "soldOut": "품절",
     "comingSoon": "출시 예정",
-    "backToStore": "스토어로 돌아가기"
+    "backToStore": "스토어로 돌아가기",
+    "related": "다른 상품",
+    "fcOnlyNote": "이 상품은 팬클럽 회원 전용입니다.",
+    "purchaseNote": "구매 전 이용약관을 확인해 주세요. 상품 특성상 반품·교환이 불가한 경우가 있습니다.",
+    "fcNote": "팬클럽 회원 한정 상품도 있습니다."
   },
   "form": {
     "required": "필수",

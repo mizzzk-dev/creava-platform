@@ -1,10 +1,14 @@
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { useProductList } from '@/modules/store/hooks/useProductList'
 import { useContentAccess } from '@/hooks'
 import ProductCard from '@/modules/store/components/ProductCard'
 import PageHead from '@/components/seo/PageHead'
+import StructuredData from '@/components/seo/StructuredData'
 import SkeletonProductCard from '@/components/common/SkeletonProductCard'
+import { ROUTES } from '@/lib/routeConstants'
+import { SITE_URL } from '@/lib/seo'
 
 export default function StorePage() {
   const { t } = useTranslation()
@@ -16,6 +20,15 @@ export default function StorePage() {
   return (
     <section className="mx-auto max-w-5xl px-4 py-20">
       <PageHead title={t('store.title')} description={t('seo.store')} />
+      <StructuredData
+        schema={{
+          type: 'BreadcrumbList',
+          items: [
+            { name: 'Home', url: SITE_URL },
+            { name: t('store.title'), url: `${SITE_URL}${ROUTES.STORE}` },
+          ],
+        }}
+      />
 
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -61,6 +74,22 @@ export default function StorePage() {
           {visibleProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
+        </div>
+      )}
+
+      {/* FC 誘導 */}
+      {!loading && (
+        <div className="mt-16 border-t border-gray-100 dark:border-gray-800 pt-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <p className="text-sm text-gray-400 dark:text-gray-600">
+            {t('store.fcNote')}
+          </p>
+          <Link
+            to={ROUTES.FANCLUB}
+            className="shrink-0 inline-flex items-center gap-2 border border-gray-200 dark:border-gray-800 px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 transition-all hover:border-gray-400 dark:hover:border-gray-600"
+          >
+            {t('home.fanclub.joinButton')}
+            <span>→</span>
+          </Link>
         </div>
       )}
     </section>

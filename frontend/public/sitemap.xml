@@ -2,60 +2,105 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
 
+  <!-- ホーム -->
   <url>
     <loc>https://mizzz.jp/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <xhtml:link rel="alternate" hreflang="ja" href="https://mizzz.jp/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://mizzz.jp/?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://mizzz.jp/?lng=ko"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://mizzz.jp/"/>
   </url>
 
+  <!-- About -->
   <url>
     <loc>https://mizzz.jp/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://mizzz.jp/about"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mizzz.jp/about?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://mizzz.jp/about"/>
   </url>
 
+  <!-- Works -->
   <url>
     <loc>https://mizzz.jp/works</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://mizzz.jp/works"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mizzz.jp/works?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://mizzz.jp/works"/>
   </url>
 
+  <!-- News -->
   <url>
     <loc>https://mizzz.jp/news</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://mizzz.jp/news"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mizzz.jp/news?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://mizzz.jp/news"/>
   </url>
 
+  <!-- Blog -->
   <url>
     <loc>https://mizzz.jp/blog</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://mizzz.jp/blog"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mizzz.jp/blog?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://mizzz.jp/blog"/>
   </url>
 
+  <!-- Events -->
   <url>
     <loc>https://mizzz.jp/events</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://mizzz.jp/events"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mizzz.jp/events?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://mizzz.jp/events"/>
   </url>
 
+  <!-- Store -->
   <url>
     <loc>https://mizzz.jp/store</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://mizzz.jp/store"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mizzz.jp/store?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://mizzz.jp/store"/>
   </url>
 
+  <!-- Pricing -->
   <url>
     <loc>https://mizzz.jp/pricing</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://mizzz.jp/pricing"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mizzz.jp/pricing?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://mizzz.jp/pricing"/>
   </url>
 
+  <!-- FAQ -->
+  <url>
+    <loc>https://mizzz.jp/faq</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://mizzz.jp/faq"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mizzz.jp/faq?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://mizzz.jp/faq"/>
+  </url>
+
+  <!-- Contact -->
   <url>
     <loc>https://mizzz.jp/contact</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://mizzz.jp/contact"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mizzz.jp/contact?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://mizzz.jp/contact"/>
   </url>
 
 </urlset>

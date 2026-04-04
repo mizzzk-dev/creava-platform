@@ -63,8 +63,50 @@ export default {
     },
   },
 
-  bootstrap(_app: StrapiApp) {
-    // 必要に応じてカスタムメニューリンクやコンポーネントを追加できます
-    // 例: app.addMenuLink({ ... })
+  bootstrap(app: StrapiApp) {
+    // ──────────────────────────────────────────────────
+    // Quick Actions — サイドバーにショートカットを追加
+    // Strapi v5 の addMenuLink API を利用
+    // ──────────────────────────────────────────────────
+    const quickLinks: Parameters<typeof app.addMenuLink>[0][] = [
+      {
+        intlLabel: { id: 'creava.menu.news', defaultMessage: '📰 ニュース追加' },
+        to: '/content-manager/collection-types/api::news-item.news-item/create',
+        icon: () => null,
+      },
+      {
+        intlLabel: { id: 'creava.menu.blog', defaultMessage: '✍️ ブログ追加' },
+        to: '/content-manager/collection-types/api::blog-post.blog-post/create',
+        icon: () => null,
+      },
+      {
+        intlLabel: { id: 'creava.menu.works', defaultMessage: '🎬 作品追加' },
+        to: '/content-manager/collection-types/api::work.work/create',
+        icon: () => null,
+      },
+      {
+        intlLabel: { id: 'creava.menu.events', defaultMessage: '📅 イベント追加' },
+        to: '/content-manager/collection-types/api::event.event/create',
+        icon: () => null,
+      },
+      {
+        intlLabel: { id: 'creava.menu.store', defaultMessage: '🛍️ 商品追加' },
+        to: '/content-manager/collection-types/api::store-product.store-product/create',
+        icon: () => null,
+      },
+      {
+        intlLabel: { id: 'creava.menu.fanclub', defaultMessage: '⭐ FC記事追加' },
+        to: '/content-manager/collection-types/api::fanclub-content.fanclub-content/create',
+        icon: () => null,
+      },
+    ]
+
+    quickLinks.forEach((link) => {
+      try {
+        app.addMenuLink(link)
+      } catch {
+        // addMenuLink が利用できないバージョンでは無視
+      }
+    })
   },
 }

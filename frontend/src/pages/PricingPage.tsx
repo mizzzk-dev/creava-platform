@@ -88,6 +88,21 @@ export default function PricingPage() {
           ],
         }}
       />
+      {/* 各サービスの構造化データ */}
+      {PLANS.map((plan) => (
+        <StructuredData
+          key={plan.service}
+          schema={{
+            type: 'Service',
+            name: plan.service,
+            description: plan.items.map((i) => i.name).join(' / '),
+            providerName: 'Creava',
+            providerUrl: SITE_URL,
+            areaServed: 'JP',
+            serviceType: plan.service,
+          }}
+        />
+      ))}
 
       {/* — header — */}
       <motion.div initial="hidden" animate="visible" variants={fadeUp}>

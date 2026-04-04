@@ -46,7 +46,11 @@
     "buyOnBase": "PayPay / Amazon Pay / PayPal はこちら",
     "soldOut": "完売",
     "comingSoon": "販売準備中",
-    "backToStore": "ストアへ戻る"
+    "backToStore": "ストアへ戻る",
+    "related": "その他の商品",
+    "fcOnlyNote": "この商品はファンクラブ会員限定です。",
+    "purchaseNote": "ご購入前に利用規約をご確認ください。返品・交換は商品の特性上、対応できない場合があります。",
+    "fcNote": "ファンクラブ会員限定の商品もあります。"
   },
   "form": {
     "required": "必須",

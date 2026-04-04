@@ -20,6 +20,14 @@ export default function HomePage() {
       {/* WebSite 構造化データ */}
       <StructuredData
         schema={{
+          type: 'WebSite',
+          name: SITE_NAME,
+          url: SITE_URL,
+          description: t('seo.home'),
+        }}
+      />
+      <StructuredData
+        schema={{
           type: 'BreadcrumbList',
           items: [{ name: SITE_NAME, url: SITE_URL }],
         }}
