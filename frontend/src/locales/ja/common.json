@@ -128,7 +128,10 @@
     "limitedText": "現在は小規模案件のみ受付可能な状況です。",
     "unavailableText": "現在は新規案件のご対応が難しい状況です。しばらくお待ちください。",
     "tools": "主な使用技術・ツール",
-    "toolsDesc": "制作・開発で日常的に使用しているスタック"
+    "toolsDesc": "制作・開発で日常的に使用しているスタック",
+    "socialProof": "メディア掲載・受賞",
+    "selectedWorks": "ピックアップ作品",
+    "featuredWriting": "最近の記事"
   },
   "pricing": {
     "title": "料金のご案内",
