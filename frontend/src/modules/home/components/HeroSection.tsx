@@ -3,6 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { ROUTES } from '@/lib/routeConstants'
 
+type AvailabilityStatus = 'available' | 'limited' | 'unavailable'
+const AVAILABILITY = import.meta.env.VITE_AVAILABILITY_STATUS as AvailabilityStatus | undefined
+
 export default function HeroSection() {
   const { t } = useTranslation()
 
@@ -26,20 +29,43 @@ export default function HeroSection() {
         <div className="grid grid-cols-1 gap-16 md:grid-cols-[1fr_auto]">
           {/* left: main content */}
           <div>
-            {/* system status badge */}
+            {/* status badges */}
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.45 }}
-              className="mb-8 flex items-center gap-2"
+              className="mb-8 flex flex-wrap items-center gap-3"
             >
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-              </span>
-              <span className="font-mono text-[11px] uppercase tracking-widest text-gray-400">
-                portfolio / v2.0
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                </span>
+                <span className="font-mono text-[11px] uppercase tracking-widest text-gray-400">
+                  portfolio / v2.0
+                </span>
+              </div>
+
+              {/* availability — shown only when env var is set */}
+              {AVAILABILITY === 'available' && (
+                <span className="flex items-center gap-1.5 rounded-sm border border-emerald-100 dark:border-emerald-900/40 bg-emerald-50/50 dark:bg-emerald-950/20 px-2 py-0.5">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  </span>
+                  <span className="font-mono text-[10px] text-emerald-600 dark:text-emerald-500">
+                    {t('about.availability')}
+                  </span>
+                </span>
+              )}
+              {AVAILABILITY === 'limited' && (
+                <span className="flex items-center gap-1.5 rounded-sm border border-amber-100 dark:border-amber-900/40 bg-amber-50/50 dark:bg-amber-950/20 px-2 py-0.5">
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-400" />
+                  <span className="font-mono text-[10px] text-amber-600 dark:text-amber-500">
+                    {t('about.availability')}
+                  </span>
+                </span>
+              )}
             </motion.div>
 
             {/* headline */}

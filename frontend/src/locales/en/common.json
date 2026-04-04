@@ -10,6 +10,7 @@
     "contact": "Contact",
     "pricing": "Pricing",
     "faq": "FAQ",
+    "store": "Store",
     "openMenu": "Open menu",
     "closeMenu": "Close menu"
   },
@@ -115,7 +116,15 @@
     "ctaPricing": "Pricing & Services",
     "experience": "Experience",
     "approach": "My Approach",
-    "approachText": "Rather than just fulfilling a brief, I start by clarifying what you want to communicate. I propose the most fitting expression for the goal, and care about building something we're both proud of."
+    "approachText": "Rather than just fulfilling a brief, I start by clarifying what you want to communicate. I propose the most fitting expression for the goal, and care about building something we're both proud of.",
+    "now": "What I'm working on",
+    "nowText": "Currently focused on a new video series and ongoing web application maintenance & development projects.",
+    "availability": "Availability",
+    "availableText": "Open to new projects and consultations.",
+    "limitedText": "Currently available for small-scope projects only.",
+    "unavailableText": "Not taking on new projects at this time. Please check back soon.",
+    "tools": "Selected tools & stack",
+    "toolsDesc": "Technologies I use day-to-day for production and development"
   },
   "pricing": {
     "title": "Pricing",

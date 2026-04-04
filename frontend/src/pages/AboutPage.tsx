@@ -7,6 +7,9 @@ import GitHubActivityCard from '@/components/common/GitHubActivityCard'
 import { ROUTES } from '@/lib/routeConstants'
 import { SITE_URL, SITE_NAME } from '@/lib/seo'
 
+type AvailabilityStatus = 'available' | 'limited' | 'unavailable'
+const AVAILABILITY = import.meta.env.VITE_AVAILABILITY_STATUS as AvailabilityStatus | undefined
+
 const SKILLS = [
   { label: 'Video', items: ['MV / CM / Short Film', 'Documentary', 'Editing / Color Grading'] },
   { label: 'Photo', items: ['Portrait / Lifestyle', 'Product / Commercial', 'Event / Live'] },
@@ -18,6 +21,21 @@ const SERVICES = [
   { icon: '◉', title: '写真撮影', desc: 'ポートレート・商品・イベント。ブランドイメージに合わせたビジュアルを提供します。' },
   { icon: '◎', title: '音楽制作', desc: '楽曲制作・編曲・MIX。映像や空間に合わせたオリジナルサウンドを制作します。' },
   { icon: '◇', title: 'ブランディング支援', desc: 'ビジュアルアイデンティティの設計から世界観の一貫した表現まで。' },
+]
+
+const TOOLS = [
+  {
+    category: 'Film / Photo',
+    items: ['DaVinci Resolve', 'Adobe Premiere', 'Lightroom', 'Capture One'],
+  },
+  {
+    category: 'Music',
+    items: ['Logic Pro', 'Ableton Live', 'Pro Tools'],
+  },
+  {
+    category: 'Web / Dev',
+    items: ['React', 'TypeScript', 'Tailwind CSS', 'Node.js', 'Strapi', 'Clerk', 'Stripe'],
+  },
 ]
 
 const PRICING_HIGHLIGHTS = [
@@ -34,6 +52,15 @@ const SNS_SAME_AS: string[] = [
   import.meta.env.VITE_SNS_YOUTUBE_URL,
 ].filter(Boolean) as string[]
 
+const AVAILABILITY_CONFIG: Record<
+  AvailabilityStatus,
+  { dot: string; label: string; key: string }
+> = {
+  available:   { dot: 'bg-emerald-400', label: 'text-emerald-600 dark:text-emerald-500', key: 'about.availableText' },
+  limited:     { dot: 'bg-amber-400',   label: 'text-amber-600 dark:text-amber-500',     key: 'about.limitedText'    },
+  unavailable: { dot: 'bg-red-400',     label: 'text-red-500 dark:text-red-500',         key: 'about.unavailableText' },
+}
+
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
   visible: (i = 0) => ({
@@ -45,6 +72,7 @@ const fadeUp = {
 
 export default function AboutPage() {
   const { t } = useTranslation()
+  const avail = AVAILABILITY ? AVAILABILITY_CONFIG[AVAILABILITY] : null
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-20">
@@ -85,8 +113,7 @@ export default function AboutPage() {
           {t('about.subHeadline')}
         </p>
 
-        {/* genre tags */}
-        <div className="mt-6 flex flex-wrap gap-2">
+        <div className="mt-6 flex flex-wrap items-center gap-3">
           {['film', 'photo', 'music'].map((g) => (
             <span
               key={g}
@@ -95,6 +122,21 @@ export default function AboutPage() {
               {g}
             </span>
           ))}
+
+          {/* availability badge */}
+          {avail && (
+            <span className="flex items-center gap-1.5 rounded-sm border border-gray-100 dark:border-gray-800 px-2.5 py-1">
+              <span className="relative flex h-1.5 w-1.5">
+                {AVAILABILITY === 'available' && (
+                  <span className={`absolute inline-flex h-full w-full animate-ping rounded-full ${avail.dot} opacity-60`} />
+                )}
+                <span className={`relative inline-flex h-1.5 w-1.5 rounded-full ${avail.dot}`} />
+              </span>
+              <span className={`font-mono text-[10px] tracking-wide ${avail.label}`}>
+                {t('about.availability')}
+              </span>
+            </span>
+          )}
         </div>
       </motion.div>
 
@@ -109,14 +151,11 @@ export default function AboutPage() {
         <div className="grid grid-cols-1 gap-10 md:grid-cols-[1fr_1.6fr]">
           {/* left: profile image + GitHub card */}
           <div className="flex flex-col gap-4">
-            {/* profile image placeholder */}
             <div className="aspect-square w-full max-w-[260px] overflow-hidden bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
               <div className="dot-grid flex h-full w-full items-center justify-center opacity-30">
                 <span className="font-mono text-[11px] text-gray-400 dark:text-gray-600">photo</span>
               </div>
             </div>
-
-            {/* GitHub activity */}
             <div className="max-w-[260px]">
               <GitHubActivityCard />
             </div>
@@ -130,13 +169,36 @@ export default function AboutPage() {
             <p className="text-base leading-loose text-gray-600 dark:text-gray-400">
               {t('about.bio2')}
             </p>
-
-            {/* approach */}
             <blockquote className="border-l-2 border-violet-300 dark:border-violet-700 pl-4">
               <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400 italic">
                 {t('about.approachText')}
               </p>
             </blockquote>
+          </div>
+        </div>
+      </motion.section>
+
+      {/* — now — */}
+      <motion.section
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+        variants={fadeUp}
+        className="py-16 border-b border-gray-100 dark:border-gray-800"
+      >
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-[auto_1fr] md:gap-10">
+          <p className="font-mono text-[11px] uppercase tracking-widest text-gray-400 dark:text-gray-600 whitespace-nowrap">
+            {t('about.now')}
+          </p>
+          <div className="space-y-3">
+            <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+              {t('about.nowText')}
+            </p>
+            {avail && (
+              <p className={`font-mono text-[11px] ${avail.label}`}>
+                — {t(avail.key)}
+              </p>
+            )}
           </div>
         </div>
       </motion.section>
@@ -166,15 +228,55 @@ export default function AboutPage() {
               </h3>
               <ul className="space-y-1.5">
                 {skill.items.map((item) => (
-                  <li
-                    key={item}
-                    className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300"
-                  >
+                  <li key={item} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
                     <span className="mt-1 font-mono text-[9px] text-gray-300 dark:text-gray-700 select-none">—</span>
                     {item}
                   </li>
                 ))}
               </ul>
+            </motion.div>
+          ))}
+        </div>
+      </motion.section>
+
+      {/* — selected tools — */}
+      <motion.section
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+        variants={fadeUp}
+        className="py-16 border-b border-gray-100 dark:border-gray-800"
+      >
+        <div className="flex flex-col gap-1 mb-8">
+          <p className="font-mono text-[11px] uppercase tracking-widest text-gray-400 dark:text-gray-600">
+            {t('about.tools')}
+          </p>
+          <p className="font-mono text-[10px] text-gray-300 dark:text-gray-700">
+            {t('about.toolsDesc')}
+          </p>
+        </div>
+
+        <div className="space-y-6">
+          {TOOLS.map((group, i) => (
+            <motion.div
+              key={group.category}
+              custom={i}
+              variants={fadeUp}
+              className="grid grid-cols-[80px_1fr] gap-4 items-start md:grid-cols-[120px_1fr]"
+            >
+              <span className="font-mono text-[9px] uppercase tracking-widest text-gray-300 dark:text-gray-700 pt-0.5">
+                {group.category}
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {group.items.map((tool) => (
+                  <span
+                    key={tool}
+                    className="rounded-sm border border-gray-100 dark:border-gray-800 px-2.5 py-1 font-mono text-[11px] text-gray-500 dark:text-gray-400"
+                  >
+                    {tool}
+                  </span>
+                ))}
+              </div>
             </motion.div>
           ))}
         </div>
@@ -234,10 +336,7 @@ export default function AboutPage() {
 
         <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
           {PRICING_HIGHLIGHTS.map(({ label, from }) => (
-            <div
-              key={label}
-              className="border border-gray-100 dark:border-gray-800 p-4 space-y-1"
-            >
+            <div key={label} className="border border-gray-100 dark:border-gray-800 p-4 space-y-1">
               <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
               <p className="font-mono text-sm font-medium text-gray-700 dark:text-gray-300">{from}</p>
             </div>

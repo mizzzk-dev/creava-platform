@@ -9,10 +9,10 @@ import LangSwitcher from '@/components/common/LangSwitcher'
 import SiteLogo from '@/components/layout/SiteLogo'
 
 const NAV_ITEMS = [
-  { key: 'nav.works',   to: ROUTES.WORKS   },
   { key: 'nav.news',    to: ROUTES.NEWS    },
   { key: 'nav.blog',    to: ROUTES.BLOG    },
   { key: 'nav.events',  to: ROUTES.EVENTS  },
+  { key: 'nav.store',   to: ROUTES.STORE   },
   { key: 'nav.about',   to: ROUTES.ABOUT   },
   { key: 'nav.contact', to: ROUTES.CONTACT },
 ] as const
