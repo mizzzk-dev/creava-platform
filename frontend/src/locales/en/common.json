@@ -128,7 +128,10 @@
     "limitedText": "Currently available for small-scope projects only.",
     "unavailableText": "Not taking on new projects at this time. Please check back soon.",
     "tools": "Selected tools & stack",
-    "toolsDesc": "Technologies I use day-to-day for production and development"
+    "toolsDesc": "Technologies I use day-to-day for production and development",
+    "socialProof": "Press & Awards",
+    "selectedWorks": "Selected Works",
+    "featuredWriting": "Recent Writing"
   },
   "pricing": {
     "title": "Pricing",

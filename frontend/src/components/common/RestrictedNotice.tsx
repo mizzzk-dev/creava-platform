@@ -17,8 +17,11 @@ export default function RestrictedNotice({ variant, onSignIn }: Props) {
   const { t } = useTranslation()
 
   return (
-    <div className="rounded border border-gray-200 bg-gray-50 px-6 py-10 text-center">
-      <p className="text-sm text-gray-600">
+    <div className="rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40 px-6 py-10 text-center">
+      <p className="font-mono text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-600 mb-3">
+        {variant === 'not_signed_in' ? '🔒 restricted' : '⭐ members only'}
+      </p>
+      <p className="text-sm text-gray-600 dark:text-gray-400">
         {variant === 'not_signed_in'
           ? t('access.notSignedIn')
           : t('access.notMember')}
@@ -27,7 +30,7 @@ export default function RestrictedNotice({ variant, onSignIn }: Props) {
       {variant === 'not_signed_in' && onSignIn && (
         <button
           onClick={onSignIn}
-          className="mt-4 text-sm text-gray-700 underline underline-offset-4 transition-colors hover:text-gray-900"
+          className="mt-4 text-sm font-medium text-gray-700 dark:text-gray-300 underline underline-offset-4 transition-colors hover:text-gray-900 dark:hover:text-gray-100"
         >
           {t('auth.signIn')}
         </button>

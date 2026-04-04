@@ -1,11 +1,16 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
+import { useStrapiCollection } from '@/hooks'
+import { getWorksList } from '@/modules/works/api'
+import { getBlogList } from '@/modules/blog/api'
+import { getMediaUrl, formatDate } from '@/utils'
 import PageHead from '@/components/seo/PageHead'
 import StructuredData from '@/components/seo/StructuredData'
 import GitHubActivityCard from '@/components/common/GitHubActivityCard'
-import { ROUTES } from '@/lib/routeConstants'
+import { ROUTES, detailPath } from '@/lib/routeConstants'
 import { SITE_URL, SITE_NAME } from '@/lib/seo'
+import type { Work, BlogPost } from '@/types'
 
 type AvailabilityStatus = 'available' | 'limited' | 'unavailable'
 const AVAILABILITY = import.meta.env.VITE_AVAILABILITY_STATUS as AvailabilityStatus | undefined
@@ -36,6 +41,13 @@ const TOOLS = [
     category: 'Web / Dev',
     items: ['React', 'TypeScript', 'Tailwind CSS', 'Node.js', 'Strapi', 'Clerk', 'Stripe'],
   },
+]
+
+// Social proof — メディア掲載・受賞歴
+const SOCIAL_PROOF = [
+  { label: 'Forbes Japan 30 Under 30', year: '2023', category: 'Creator' },
+  { label: 'Photography Award', year: '2023', category: 'Best Portrait' },
+  { label: 'Creative Monthly', year: '2024', category: 'Feature' },
 ]
 
 const PRICING_HIGHLIGHTS = [
@@ -73,6 +85,22 @@ const fadeUp = {
 export default function AboutPage() {
   const { t } = useTranslation()
   const avail = AVAILABILITY ? AVAILABILITY_CONFIG[AVAILABILITY] : null
+
+  // Case study — featured works
+  const { items: works } = useStrapiCollection<Work>(() =>
+    getWorksList({ pagination: { pageSize: 6 } }),
+  )
+  const featuredWorks = works
+    ? works.filter((w) => w.isFeatured && w.accessStatus === 'public').slice(0, 3)
+    : []
+
+  // Featured writing — latest blog posts
+  const { items: blogPosts } = useStrapiCollection<BlogPost>(() =>
+    getBlogList({ pagination: { pageSize: 3 } }),
+  )
+  const featuredBlog = blogPosts
+    ? blogPosts.filter((b) => b.accessStatus === 'public').slice(0, 2)
+    : []
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-20">
@@ -313,6 +341,145 @@ export default function AboutPage() {
           ))}
         </div>
       </motion.section>
+
+      {/* — social proof — */}
+      <motion.section
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+        variants={fadeUp}
+        className="py-16 border-b border-gray-100 dark:border-gray-800"
+      >
+        <p className="font-mono text-[11px] uppercase tracking-widest text-gray-400 dark:text-gray-600 mb-8">
+          {t('about.socialProof')}
+        </p>
+        <div className="space-y-3">
+          {SOCIAL_PROOF.map((item) => (
+            <div
+              key={item.label}
+              className="flex items-center justify-between gap-4 py-3 border-b border-gray-50 dark:border-gray-900 last:border-0"
+            >
+              <div className="flex items-center gap-3">
+                <span className="font-mono text-[10px] text-gray-300 dark:text-gray-700 select-none w-8">{item.year}</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">{item.label}</span>
+              </div>
+              <span className="font-mono text-[10px] uppercase tracking-widest text-gray-300 dark:text-gray-700 shrink-0">
+                {item.category}
+              </span>
+            </div>
+          ))}
+        </div>
+      </motion.section>
+
+      {/* — case study / selected works — */}
+      {featuredWorks.length > 0 && (
+        <motion.section
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={fadeUp}
+          className="py-16 border-b border-gray-100 dark:border-gray-800"
+        >
+          <div className="flex items-center justify-between mb-8">
+            <p className="font-mono text-[11px] uppercase tracking-widest text-gray-400 dark:text-gray-600">
+              {t('about.selectedWorks')}
+            </p>
+            <Link
+              to={ROUTES.WORKS}
+              className="font-mono text-[11px] text-gray-400 dark:text-gray-600 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+            >
+              {t('about.ctaWorks')} →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {featuredWorks.map((work) => (
+              <Link
+                key={work.id}
+                to={detailPath.work(work.slug)}
+                className="group relative overflow-hidden bg-gray-100 dark:bg-gray-800"
+                style={{ aspectRatio: '4/3' }}
+              >
+                {getMediaUrl(work.thumbnail, 'small') ? (
+                  <img
+                    src={getMediaUrl(work.thumbnail, 'small')!}
+                    alt={work.title}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                  />
+                ) : (
+                  <div className="dot-grid flex h-full w-full items-center justify-center opacity-30">
+                    <span className="font-mono text-[10px] text-gray-400">{work.category}</span>
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/70 via-transparent to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-3">
+                  {work.category && (
+                    <span className="block font-mono text-[9px] uppercase tracking-wider text-white/60 mb-0.5">
+                      {work.category}
+                    </span>
+                  )}
+                  <p className="text-sm font-medium text-white leading-tight line-clamp-2">{work.title}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </motion.section>
+      )}
+
+      {/* — featured writing — */}
+      {featuredBlog.length > 0 && (
+        <motion.section
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={fadeUp}
+          className="py-16 border-b border-gray-100 dark:border-gray-800"
+        >
+          <div className="flex items-center justify-between mb-8">
+            <p className="font-mono text-[11px] uppercase tracking-widest text-gray-400 dark:text-gray-600">
+              {t('about.featuredWriting')}
+            </p>
+            <Link
+              to={ROUTES.BLOG}
+              className="font-mono text-[11px] text-gray-400 dark:text-gray-600 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+            >
+              {t('home.latest.viewAll')} →
+            </Link>
+          </div>
+          <div className="space-y-0">
+            {featuredBlog.map((post) => (
+              <Link
+                key={post.id}
+                to={detailPath.blog(post.slug)}
+                className="group flex items-start gap-5 py-5 border-b border-gray-50 dark:border-gray-900 last:border-0"
+              >
+                {post.publishAt && (
+                  <time
+                    dateTime={post.publishAt}
+                    className="hidden sm:block shrink-0 w-20 text-right font-mono text-[11px] text-gray-300 dark:text-gray-700 pt-0.5"
+                  >
+                    {new Date(post.publishAt).toLocaleDateString('ja-JP', {
+                      year: 'numeric', month: '2-digit', day: '2-digit',
+                    })}
+                  </time>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors line-clamp-2">
+                    {post.title}
+                  </p>
+                  {post.publishAt && (
+                    <p className="sm:hidden mt-1 font-mono text-[10px] text-gray-400 dark:text-gray-600">
+                      {formatDate(post.publishAt)}
+                    </p>
+                  )}
+                </div>
+                <span className="shrink-0 font-mono text-[11px] text-gray-200 dark:text-gray-800 group-hover:translate-x-0.5 group-hover:text-gray-400 dark:group-hover:text-gray-600 transition-all duration-150 pt-0.5">
+                  →
+                </span>
+              </Link>
+            ))}
+          </div>
+        </motion.section>
+      )}
 
       {/* — pricing teaser — */}
       <motion.section
