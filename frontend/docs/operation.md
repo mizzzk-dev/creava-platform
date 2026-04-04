@@ -218,4 +218,4 @@ git checkout main          # main に戻す
 | Shopify | https://admin.shopify.com |
 | Formspree | https://formspree.io/forms |
 | ロリポップ管理パネル | https://user.lolipop.jp |
-| GitHub Actions | https://github.com/mizzzk-dev/creava-platform/actions |
+| GitHub Actions | https://github.com/mizzz-dev/creava-platform/actions |

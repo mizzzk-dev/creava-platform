@@ -24,7 +24,7 @@ creava-platform/
 ## 1. リポジトリのクローン
 
 ```bash
-git clone https://github.com/mizzzk-dev/creava-platform.git
+git clone https://github.com/mizzz-dev/creava-platform.git
 cd creava-platform
 ```
 

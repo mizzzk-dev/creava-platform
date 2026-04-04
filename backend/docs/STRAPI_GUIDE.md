@@ -99,10 +99,10 @@ Strapi v5 管理画面の日常運用手順をまとめたガイドです。
 | リンク | URL |
 |--------|-----|
 | 本番サイト | https://mizzz.jp |
-| フロントエンド Repo | https://github.com/mizzzk-dev/creava-platform |
+| フロントエンド Repo | https://github.com/mizzz-dev/creava-platform |
 | Strapi Cloud ダッシュボード | https://cloud.strapi.io |
 | Formspree 受信確認 | https://formspree.io/forms |
-| GitHub Actions | https://github.com/mizzzk-dev/creava-platform/actions |
+| GitHub Actions | https://github.com/mizzz-dev/creava-platform/actions |
 
 ---
 
