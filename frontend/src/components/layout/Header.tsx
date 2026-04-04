@@ -56,7 +56,7 @@ export default function Header() {
         <NavLink
           to={ROUTES.HOME}
           className="transition-opacity hover:opacity-70"
-          aria-label="Creava Home"
+          aria-label="mizzz Home"
         >
           <SiteLogo />
         </NavLink>

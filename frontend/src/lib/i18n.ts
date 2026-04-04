@@ -28,7 +28,7 @@ i18n
     },
     detection: {
       order: ['localStorage', 'querystring', 'navigator', 'htmlTag'],
-      lookupLocalStorage: 'creava_lang',
+      lookupLocalStorage: 'mizzz_lang',
       caches: ['localStorage'],
     },
   })

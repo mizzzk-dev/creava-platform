@@ -8,7 +8,12 @@
     "description": "2023年に撮影した光と影をテーマにした短編映像作品。自然光のみで撮影。",
     "category": "VIDEO",
     "isFeatured": true,
-    "accessStatus": "public"
+    "accessStatus": "public",
+    "caseStudyBackground": "新規ブランド立ち上げに合わせ、映像・写真・音を横断した統一トーンの初期アセットが必要でした。短納期かつ少人数体制で、公開初週の認知獲得を狙う前提でした。",
+    "caseStudyGoal": "初回公開でブランドの世界観を一貫して伝え、問い合わせ導線（Contact）への遷移率を改善すること。",
+    "caseStudyApproach": "コンセプト整理 → 絵コンテ → 撮影 → 編集 → SNS切り出しの順で、用途ごとに再利用できる素材設計を行いました。",
+    "caseStudyImplementation": "自然光中心の撮影とカラーグレーディングで質感を統一。Webでは軽量化したサムネイルとOGP設定を併用し、初速の表示品質を担保しました。",
+    "caseStudyResult": "公開後2週間で主要導線の直帰率を改善し、問い合わせフォーム到達が増加。運用時も同ルックで追加制作できる体制を整備。"
   },
   {
     "title": "都市のポートレート Vol.1",

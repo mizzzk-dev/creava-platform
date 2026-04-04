@@ -82,6 +82,11 @@ export interface Work extends ContentBase {
   category: string | null
   isFeatured?: boolean
   externalUrl?: string | null
+  caseStudyBackground?: string | null
+  caseStudyGoal?: string | null
+  caseStudyApproach?: string | null
+  caseStudyImplementation?: string | null
+  caseStudyResult?: string | null
 }
 
 export interface NewsItem extends ContentBase {
@@ -128,4 +133,5 @@ export interface SiteSettings extends StrapiBase {
   siteName: string
   description: string | null
   logoUrl: string | null
+  ogImage?: StrapiMedia | null
 }

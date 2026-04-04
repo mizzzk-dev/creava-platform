@@ -11,7 +11,9 @@ export default function StorePreviewSection() {
   const { t } = useTranslation()
   const { products, loading } = useProductList(6)
 
-  const previewItems = products.filter((p) => p.accessStatus === 'public').slice(0, 3)
+  const previewItems = products
+    .filter((p) => p.accessStatus !== 'fc_only')
+    .slice(0, 3)
 
   return (
     <motion.section

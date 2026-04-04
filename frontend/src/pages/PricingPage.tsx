@@ -96,7 +96,7 @@ export default function PricingPage() {
             type: 'Service',
             name: plan.service,
             description: plan.items.map((i) => i.name).join(' / '),
-            providerName: 'Creava',
+            providerName: 'mizzz',
             providerUrl: SITE_URL,
             areaServed: 'JP',
             serviceType: plan.service,

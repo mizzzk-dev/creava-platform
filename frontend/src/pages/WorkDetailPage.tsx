@@ -14,6 +14,53 @@ import SkeletonDetail from '@/components/common/SkeletonDetail'
 import Badge from '@/components/common/Badge'
 import type { Work } from '@/types'
 
+function CaseStudySection({ item }: { item: Work }) {
+  const { t } = useTranslation()
+
+  const rows = [
+    { label: t('work.case.background'), value: item.caseStudyBackground },
+    { label: t('work.case.goal'), value: item.caseStudyGoal },
+    { label: t('work.case.approach'), value: item.caseStudyApproach },
+    { label: t('work.case.implementation'), value: item.caseStudyImplementation },
+    { label: t('work.case.result'), value: item.caseStudyResult },
+  ].filter((row) => Boolean(row.value))
+
+  if (rows.length === 0) return null
+
+  return (
+    <section className="mt-12 rounded-sm border border-gray-100 dark:border-gray-800 p-6 md:p-8">
+      <p className="font-mono text-[11px] uppercase tracking-widest text-gray-400 dark:text-gray-600">
+        {t('work.case.label')}
+      </p>
+      <h2 className="mt-2 text-xl font-semibold text-gray-900 dark:text-gray-100">{t('work.case.title')}</h2>
+
+      <div className="mt-6 space-y-4">
+        {rows.map((row) => (
+          <div key={row.label} className="border-t border-gray-100 dark:border-gray-800 pt-4">
+            <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">{row.label}</h3>
+            <p className="mt-1 whitespace-pre-wrap text-sm leading-7 text-gray-600 dark:text-gray-400">{row.value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-7 flex flex-wrap gap-3">
+        <Link
+          to={ROUTES.CONTACT}
+          className="inline-flex items-center bg-gray-900 dark:bg-white px-5 py-2.5 text-sm font-medium text-white dark:text-gray-900 transition-colors hover:bg-gray-700 dark:hover:bg-gray-100"
+        >
+          {t('home.contact.cta')}
+        </Link>
+        <Link
+          to={ROUTES.PRICING}
+          className="inline-flex items-center border border-gray-200 dark:border-gray-700 px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 transition-all hover:border-gray-400 dark:hover:border-gray-500"
+        >
+          {t('about.ctaPricing')}
+        </Link>
+      </div>
+    </section>
+  )
+}
+
 export default function WorkDetailPage() {
   const { slug } = useParams<{ slug: string }>()
   const { t } = useTranslation()
@@ -21,7 +68,6 @@ export default function WorkDetailPage() {
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-20">
-      {/* back link */}
       <Link
         to={ROUTES.WORKS}
         className="mb-8 inline-flex items-center gap-1.5 font-mono text-[11px] text-gray-400 transition-colors hover:text-gray-700"
@@ -42,7 +88,6 @@ export default function WorkDetailPage() {
             ogType="article"
           />
 
-          {/* cover image */}
           {item.thumbnail && (
             <div className="mb-10 overflow-hidden bg-gray-100" style={{ aspectRatio: '16 / 9' }}>
               <img
@@ -55,14 +100,13 @@ export default function WorkDetailPage() {
 
           <article className="max-w-3xl">
             <header>
-              {/* badges */}
               <div className="mb-3 flex flex-wrap items-center gap-1.5">
                 {item.isFeatured && <Badge variant="featured" />}
                 {item.accessStatus === 'fc_only' && <Badge variant="fc" />}
                 {item.accessStatus === 'limited' && <Badge variant="limited" />}
               </div>
 
-              <h1 className="text-3xl font-semibold tracking-tight text-gray-900">
+              <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
                 {item.title}
               </h1>
 
@@ -83,12 +127,11 @@ export default function WorkDetailPage() {
             </header>
 
             {item.description && (
-              <div className="mt-8 whitespace-pre-wrap text-sm leading-7 text-gray-700">
+              <div className="mt-8 whitespace-pre-wrap text-sm leading-7 text-gray-700 dark:text-gray-300">
                 {item.description}
               </div>
             )}
 
-            {/* external link */}
             {item.externalUrl && (
               <div className="mt-8">
                 <a
@@ -103,6 +146,8 @@ export default function WorkDetailPage() {
               </div>
             )}
           </article>
+
+          <CaseStudySection item={item} />
         </ContentAccessGuard>
       )}
     </section>

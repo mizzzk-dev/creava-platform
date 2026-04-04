@@ -14,7 +14,7 @@ export default {
     translations: {
       ja: {
         // ホーム画面
-        'app.components.HomePage.welcome': 'Creava CMS へようこそ',
+        'app.components.HomePage.welcome': 'mizzz CMS へようこそ',
         'app.components.HomePage.welcome.again': 'おかえりなさい',
         'app.components.HomePage.create-your-first-content-type': 'コンテンツを追加する',
         'app.components.HomePage.button.blog': 'ドキュメントを見る',
@@ -70,32 +70,32 @@ export default {
     // ──────────────────────────────────────────────────
     const quickLinks: Parameters<typeof app.addMenuLink>[0][] = [
       {
-        intlLabel: { id: 'creava.menu.news', defaultMessage: '📰 ニュース追加' },
+        intlLabel: { id: 'mizzz.menu.news', defaultMessage: '📰 ニュース追加' },
         to: '/content-manager/collection-types/api::news-item.news-item/create',
         icon: () => null,
       },
       {
-        intlLabel: { id: 'creava.menu.blog', defaultMessage: '✍️ ブログ追加' },
+        intlLabel: { id: 'mizzz.menu.blog', defaultMessage: '✍️ ブログ追加' },
         to: '/content-manager/collection-types/api::blog-post.blog-post/create',
         icon: () => null,
       },
       {
-        intlLabel: { id: 'creava.menu.works', defaultMessage: '🎬 作品追加' },
+        intlLabel: { id: 'mizzz.menu.works', defaultMessage: '🎬 作品追加' },
         to: '/content-manager/collection-types/api::work.work/create',
         icon: () => null,
       },
       {
-        intlLabel: { id: 'creava.menu.events', defaultMessage: '📅 イベント追加' },
+        intlLabel: { id: 'mizzz.menu.events', defaultMessage: '📅 イベント追加' },
         to: '/content-manager/collection-types/api::event.event/create',
         icon: () => null,
       },
       {
-        intlLabel: { id: 'creava.menu.store', defaultMessage: '🛍️ 商品追加' },
+        intlLabel: { id: 'mizzz.menu.store', defaultMessage: '🛍️ 商品追加' },
         to: '/content-manager/collection-types/api::store-product.store-product/create',
         icon: () => null,
       },
       {
-        intlLabel: { id: 'creava.menu.fanclub', defaultMessage: '⭐ FC記事追加' },
+        intlLabel: { id: 'mizzz.menu.fanclub', defaultMessage: '⭐ FC記事追加' },
         to: '/content-manager/collection-types/api::fanclub-content.fanclub-content/create',
         icon: () => null,
       },

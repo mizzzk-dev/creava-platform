@@ -93,7 +93,7 @@ export default function ContactForm() {
       {/* prompt line */}
       <div className="flex items-center gap-2 font-mono text-[11px] text-gray-600 border-b border-gray-800 pb-3">
         <span className="text-emerald-600">$</span>
-        <span>creava --contact</span>
+        <span>mizzz --contact</span>
       </div>
 
       {status === 'error' && (

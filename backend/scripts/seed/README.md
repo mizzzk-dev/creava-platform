@@ -1,62 +1,65 @@
-# Seed Script
+# Seed Script (Strapi)
 
-Populates Strapi with test data from the `fixtures/` directory.
+`backend/scripts/seed/index.ts` は `fixtures/` の JSON を使って、Strapi の初期表示確認用データを投入します。
 
-## Prerequisites
-
-1. **Content types defined** — All collection types must exist in Strapi admin (see `docs/backend-setup.md`).
-2. **Strapi not running** — The script loads Strapi as a library. Stop the dev server first.
-3. **Database initialized** — Run `npm run develop --prefix backend` at least once to create the SQLite database.
-
-## Usage
+## 実行方法
 
 ```bash
-# From repo root
+# repo root
 npm run seed:backend
 
-# From backend/ directory
+# backend/ 直下
 npm run seed
 ```
 
-## Fixtures
+## 前提
 
-| File | Content type UID | Records |
-|------|-----------------|---------|
-| `works.json` | `api::work.work` | 14 |
-| `news.json` | `api::news.news` | 12 |
-| `blog.json` | `api::blog-post.blog-post` | 12 |
-| `events.json` | `api::event.event` | 8 |
-| `fanclub.json` | `api::fanclub-post.fanclub-post` | 12 |
-| `store-products.json` | `api::store-product.store-product` | 12 |
-| `media.json` | `api::medium.medium` | 10 |
-| `faq.json` | `api::faq.faq` | 14 |
+1. Strapi content type が生成済み
+2. Strapi 開発サーバーを停止中（seed が内部で Strapi を起動するため）
+3. DB 初期化済み（`npm run develop --prefix backend` を1回実行）
 
-## Data Variety
+## 対応 content type
 
-Each fixture set covers the following `status` values to test frontend visibility logic:
+### Collection types
+- `api::work.work` ← `works.json`
+- `api::news-item.news-item` ← `news.json`
+- `api::blog-post.blog-post` ← `blog.json`
+- `api::event.event` ← `events.json`
+- `api::store-product.store-product` ← `store-products.json`
+- `api::fanclub-content.fanclub-content` ← `fanclub.json`
+- `api::media-item.media-item` ← `media-items.json`
+- `api::award.award` ← `awards.json`
+- `api::faq.faq` ← `faq.json`
 
-- **`public`** — visible to all visitors
-- **`fc_only`** — visible to fan club members only
-- **`limited`** — visible within `publishAt`–`limitedEndAt` window; `archiveVisibleForFC: true` items remain visible to FC members after expiry
+### Single types
+- `api::profile.profile` ← `profile.json`
+- `api::site-setting.site-setting` ← `site-setting.json`
 
-## Re-seeding
+## フロント表示成立の最小目安
 
-The script skips records that already exist (matched by `slug`). To re-seed from scratch:
+- Works: 3〜4件（public / fc_only / limited を含む）
+- News: 3件
+- Blog: 2件
+- Events: 2件
+- Store: 3件
+- Fanclub: 2件
+- Settings: 1件
+
+> 既存 fixture は上記より多めです。UI確認時は件数を減らした fixture に差し替えて運用可能です。
+
+## 画像フィールド運用
+
+- `thumbnail`, `previewImage`, `ogImage` は media フィールド
+- 画像なしパターンも UI 確認のために一部残す
+- ローカル Strapi (`/uploads/...`) と Strapi Cloud（絶対URL）をどちらも想定
+
+## 再投入
+
+slug / order が一致するデータはスキップされます。フル再投入したい場合:
 
 ```bash
-# Delete the SQLite database
 rm backend/.tmp/data.db
-
-# Restart Strapi to recreate the schema
 npm run develop --prefix backend
-# (Ctrl+C after it finishes initializing)
-
-# Run seed
+# 起動確認後に停止
 npm run seed:backend
 ```
-
-## Adding New Fixtures
-
-1. Add a JSON file to `fixtures/`
-2. Add an entry to `SEED_CONFIGS` in `index.ts`
-3. Ensure the content type is defined in Strapi

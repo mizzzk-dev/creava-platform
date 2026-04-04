@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-const SESSION_KEY = 'creava_loaded'
+const SESSION_KEY = 'mizzz_loaded'
 
 /**
  * ロード種別を判定する

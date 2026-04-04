@@ -106,7 +106,7 @@ export default function RequestForm() {
     <form onSubmit={handleFormSubmit} noValidate className="space-y-6">
       <div className="flex items-center gap-2 font-mono text-[11px] text-gray-600 border-b border-gray-800 pb-3">
         <span className="text-emerald-600">$</span>
-        <span>creava --request</span>
+        <span>mizzz --request</span>
       </div>
 
       {status === 'error' && (

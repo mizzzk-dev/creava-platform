@@ -33,20 +33,18 @@ export default function Footer() {
     <footer className="border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950">
       <div className="mx-auto max-w-5xl px-4 py-12">
         <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
-          {/* brand */}
           <div className="space-y-2">
             <Link
               to={ROUTES.HOME}
               className="transition-opacity hover:opacity-70 inline-block"
-              aria-label="Creava Home"
+              aria-label="mizzz Home"
             >
               <SiteLogo />
             </Link>
             <p className="font-mono text-[11px] text-gray-400 dark:text-gray-600">
-              creator portfolio / v2.0
+              creator homepage / portfolio + request hub
             </p>
 
-            {/* SNS links — only if env vars set */}
             {activeSns.length > 0 && (
               <div className="flex gap-3 pt-1">
                 {activeSns.map(({ label, envKey }) => (
@@ -64,7 +62,6 @@ export default function Footer() {
             )}
           </div>
 
-          {/* nav links */}
           <nav>
             <ul className="flex flex-wrap gap-x-5 gap-y-2">
               {NAV_LINKS.map(({ key, to }) => (
@@ -81,10 +78,9 @@ export default function Footer() {
           </nav>
         </div>
 
-        {/* bottom bar */}
         <div className="mt-10 flex items-center justify-between border-t border-gray-50 dark:border-gray-900 pt-6">
           <p className="font-mono text-[11px] text-gray-300 dark:text-gray-700">{t('footer.copyright')}</p>
-          <span className="font-mono text-[10px] text-gray-200 dark:text-gray-800 select-none">// EOF</span>
+          <span className="font-mono text-[10px] text-gray-200 dark:text-gray-800 select-none">// mizzz</span>
         </div>
       </div>
     </footer>

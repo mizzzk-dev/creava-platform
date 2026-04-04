@@ -37,6 +37,15 @@ export default function StoreDetailPage() {
 
   const productUrl = `${SITE_URL}${detailPath.product(handle ?? '')}`
 
+  const purchaseSummary =
+    product?.purchaseStatus === 'soldout'
+      ? t('store.soldOut')
+      : product?.purchaseStatus === 'coming_soon'
+        ? t('store.comingSoon')
+        : product
+          ? formatPriceNum(product.price, product.currency)
+          : ''
+
   return (
     <section className="mx-auto max-w-5xl px-4 py-20">
       {/* breadcrumb */}
@@ -121,12 +130,10 @@ export default function StoreDetailPage() {
                 {product.title}
               </h1>
 
-              <p className="mt-3 font-mono text-lg text-gray-700 dark:text-gray-300">
-                {product.purchaseStatus === 'soldout'
-                  ? t('store.soldOut')
-                  : product.purchaseStatus === 'coming_soon'
-                    ? t('store.comingSoon')
-                    : formatPriceNum(product.price, product.currency)}
+              <p className="mt-3 font-mono text-lg text-gray-700 dark:text-gray-300">{purchaseSummary}</p>
+
+              <p className="mt-2 text-xs text-gray-400 dark:text-gray-600">
+                {product.purchaseStatus === 'coming_soon' ? t('store.comingSoonDetail') : t('store.stripeNote')}
               </p>
 
               {/* 商品説明 */}
@@ -149,6 +156,12 @@ export default function StoreDetailPage() {
               {product.externalPurchaseNote && (
                 <p className="mt-4 text-xs text-gray-400 dark:text-gray-600">
                   {product.externalPurchaseNote}
+                </p>
+              )}
+
+              {product.accessStatus !== 'fc_only' && (
+                <p className="mt-2 text-xs text-gray-400 dark:text-gray-600">
+                  {t('store.fcBridge')}
                 </p>
               )}
 

@@ -1,4 +1,4 @@
-export const SITE_NAME = 'Creava'
+export const SITE_NAME = 'mizzz'
 
 export const SITE_URL = (import.meta.env.VITE_SITE_URL as string | undefined) ?? ''
 

@@ -44,7 +44,7 @@ export default function ContactPage() {
             <span className="h-2.5 w-2.5 rounded-full bg-gray-300 dark:bg-gray-700" />
             <span className="h-2.5 w-2.5 rounded-full bg-gray-300 dark:bg-gray-700" />
             <span className="ml-3 font-mono text-[10px] text-gray-400 dark:text-gray-600">
-              creava / contact.sh
+              mizzz / contact.sh
             </span>
           </div>
 

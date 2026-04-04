@@ -9,6 +9,8 @@ import PricingTeaserSection from '@/modules/home/components/PricingTeaserSection
 import StorePreviewSection from '@/modules/home/components/StorePreviewSection'
 import ContactCTASection from '@/modules/home/components/ContactCTASection'
 import FanclubCTASection from '@/modules/home/components/FanclubCTASection'
+import GitHubTrustSection from '@/modules/home/components/GitHubTrustSection'
+import CaseStudyTeaserSection from '@/modules/home/components/CaseStudyTeaserSection'
 import { SITE_URL, SITE_NAME } from '@/lib/seo'
 
 export default function HomePage() {
@@ -17,7 +19,6 @@ export default function HomePage() {
     <div>
       <PageHead description={t('seo.home')} />
 
-      {/* WebSite 構造化データ */}
       <StructuredData
         schema={{
           type: 'WebSite',
@@ -33,21 +34,15 @@ export default function HomePage() {
         }}
       />
 
-      {/* 1. Hero — first impression + CTA */}
       <HeroSection />
-      {/* 2. About teaser — who is this person */}
       <AboutTeaserSection />
-      {/* 3. Latest — news/blog/events feed */}
+      <GitHubTrustSection />
       <LatestSection />
-      {/* 4. Featured Works — portfolio showcase */}
       <FeaturedWorksSection />
-      {/* 5. Pricing teaser — trust + lead */}
+      <CaseStudyTeaserSection />
       <PricingTeaserSection />
-      {/* 6. Store Preview — merchandise */}
       <StorePreviewSection />
-      {/* 7. Contact CTA — lead conversion */}
       <ContactCTASection />
-      {/* 8. Fanclub CTA — membership conversion */}
       <FanclubCTASection />
     </div>
   )

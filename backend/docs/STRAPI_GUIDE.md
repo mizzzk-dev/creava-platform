@@ -1,4 +1,4 @@
-# Creava CMS 運用ガイド
+# mizzz CMS 運用ガイド
 
 Strapi v5 管理画面の日常運用手順をまとめたガイドです。
 

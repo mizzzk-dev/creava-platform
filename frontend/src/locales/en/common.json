@@ -15,7 +15,7 @@
     "closeMenu": "Close menu"
   },
   "footer": {
-    "copyright": "© 2025 Creava Platform. All rights reserved."
+    "copyright": "© 2026 mizzz. All rights reserved."
   },
   "common": {
     "loading": "Loading...",
@@ -40,7 +40,7 @@
   },
   "store": {
     "title": "Store",
-    "empty": "No products available",
+    "empty": "No items are on sale right now. New and upcoming products will be added soon.",
     "buyNow": "Buy now",
     "buyOn": "Purchase",
     "buyOnBase": "Pay via PayPay / Amazon Pay / PayPal",
@@ -50,7 +50,12 @@
     "related": "More products",
     "fcOnlyNote": "This product is available to fan club members only.",
     "purchaseNote": "Please review our terms before purchasing. Returns and exchanges may not be available depending on the product.",
-    "fcNote": "Some products are exclusive to fan club members."
+    "fcNote": "Some products are exclusive to fan club members.",
+    "detailCta": "View details",
+    "requestCta": "Request restock / custom project",
+    "stripeNote": "Purchases are guided through a Stripe-first flow.",
+    "comingSoonDetail": "This item is not on sale yet. Launch updates will be posted in News and Fanclub.",
+    "fcBridge": "Early announcements for limited drops are shared in Fanclub."
   },
   "form": {
     "required": "Required",
@@ -96,12 +101,12 @@
     }
   },
   "seo": {
-    "home": "Portfolio, store, and fan club platform for a creator working in film, photography, and music.",
+    "home": "The official website of mizzz—portfolio, latest updates, pricing guidance, store, fanclub, and contact for new projects.",
     "works": "Browse works in film, photography, and music.",
     "news": "Latest news and updates.",
     "blog": "Blog posts and articles.",
     "fanclub": "Exclusive content for fan club members.",
-    "store": "Shop merchandise and photo books.",
+    "store": "mizzz store page with Stripe-first purchase flow for goods, photo books, and limited items.",
     "contact": "Get in touch or submit a work request.",
     "events": "Live shows, exhibitions, and workshops.",
     "about": "About the creator — bio, skills, and experience.",
@@ -177,7 +182,7 @@
     },
     "store": {
       "title": "Store",
-      "description": "Merchandise and photo books coming soon.",
+      "description": "Goods, photo books, and limited drops. Browse naturally from Home.",
       "comingSoon": "Coming Soon",
       "viewAll": "Visit Store"
     },
@@ -205,6 +210,19 @@
       "benefit1": "Access to exclusive videos, photos & music",
       "benefit2": "Early announcements and member-only updates",
       "benefit3": "Priority event invites & ticket pre-sales"
+    },
+    "github": {
+      "label": "tech trust",
+      "title": "Creative direction backed by reliable implementation",
+      "body": "From concept to shipping, mizzz handles both production and web implementation with reproducible workflows."
+    },
+    "caseStudy": {
+      "label": "case study",
+      "title": "More than a gallery: what problem was solved",
+      "body": "Selected works include short case sections with context, goals, implementation points, and outcomes.",
+      "view": "Read case",
+      "fallback": "Case-focused summary is being prepared for this work.",
+      "empty": "Case Study-ready work will appear here."
     }
   },
   "sns": {
@@ -228,8 +246,19 @@
     "404sub": "This page doesn't exist or has moved.",
     "404hint": "Check the URL or navigate home.",
     "500title": "500 — System Error",
-    "500sub": "Something went wrong on our end. Please try again later.",
+    "500sub": "A temporary error occurred on mizzz. Please try again in a few moments.",
     "403title": "403 — Access Restricted",
-    "403sub": "This content is for fan club members only."
+    "403sub": "This content is available to mizzz Fanclub members only."
+  },
+  "work": {
+    "case": {
+      "label": "case study",
+      "title": "How this work was delivered",
+      "background": "Background / challenge",
+      "goal": "Goal",
+      "approach": "Approach",
+      "implementation": "Implementation points",
+      "result": "Outcome"
+    }
   }
 }
