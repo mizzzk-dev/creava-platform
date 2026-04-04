@@ -1,0 +1,120 @@
+name: Deploy Backend (Strapi)
+
+# ─────────────────────────────────────────────
+# トリガー
+# - main ブランチへの push（backend/ 配下のみ）
+# - 手動実行（workflow_dispatch）
+# ─────────────────────────────────────────────
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:
+    inputs:
+      deploy_target:
+        description: 'デプロイ先を選択'
+        required: true
+        default: 'strapi_cloud'
+        type: choice
+        options:
+          - strapi_cloud
+          - vps_ssh
+
+# ─────────────────────────────────────────────
+# 環境変数（共通）
+# ─────────────────────────────────────────────
+env:
+  NODE_VERSION: '20'
+  WORKING_DIR: backend
+
+jobs:
+
+  # ═══════════════════════════════════════════
+  # Job 1: Strapi Cloud デプロイ
+  #   必要 Secret: STRAPI_DEPLOY_TOKEN
+  #   Strapi Cloud に接続済みのプロジェクトが前提
+  # ═══════════════════════════════════════════
+  deploy-strapi-cloud:
+    name: Deploy → Strapi Cloud
+    runs-on: ubuntu-latest
+    # STRAPI_DEPLOY_TOKEN が設定されている場合のみ実行
+    # 手動実行時は strapi_cloud を選んだ場合のみ
+    if: |
+      (github.event_name == 'push' && vars.BACKEND_DEPLOY_TARGET == 'strapi_cloud') ||
+      (github.event_name == 'workflow_dispatch' && inputs.deploy_target == 'strapi_cloud')
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build admin panel
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Deploy to Strapi Cloud
+        run: npm run deploy
+        env:
+          STRAPI_DEPLOY_TOKEN: ${{ secrets.STRAPI_DEPLOY_TOKEN }}
+
+  # ═══════════════════════════════════════════
+  # Job 2: VPS / SSH デプロイ
+  #   必要 Secret:
+  #     VPS_HOST, VPS_USER, VPS_SSH_KEY, VPS_PORT (optional, default 22)
+  #     VPS_APP_DIR: サーバー上のアプリディレクトリ（例: /var/www/creava-backend）
+  #   前提: サーバーに Node.js・PM2・git がインストール済み
+  # ═══════════════════════════════════════════
+  deploy-vps:
+    name: Deploy → VPS (SSH)
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'push' && vars.BACKEND_DEPLOY_TARGET == 'vps_ssh') ||
+      (github.event_name == 'workflow_dispatch' && inputs.deploy_target == 'vps_ssh')
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            set -e
+            cd ${{ secrets.VPS_APP_DIR }}
+
+            echo "=== git pull ==="
+            git pull origin main
+
+            echo "=== install dependencies ==="
+            cd backend
+            npm ci --omit=dev
+
+            echo "=== build admin panel ==="
+            NODE_ENV=production npm run build
+
+            echo "=== restart with PM2 ==="
+            # PM2 プロセス名 "strapi" として起動済みを想定
+            # 初回は: pm2 start npm --name strapi -- run start
+            pm2 reload strapi --update-env || pm2 start npm --name strapi -- run start
+
+            echo "=== wait for health check ==="
+            sleep 5
+            curl -sf http://localhost:1337/_health || (echo "Health check failed" && exit 1)
+
+            echo "=== deploy done ==="

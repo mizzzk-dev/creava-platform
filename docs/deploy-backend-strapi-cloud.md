@@ -134,13 +134,101 @@ origin: [
 
 ---
 
-## 自動デプロイ
+## 自動デプロイ（GitHub Actions）
 
-`main` ブランチにプッシュすると Strapi Cloud が自動でビルド・デプロイします。
+`.github/workflows/deploy-backend.yml` により、`main` ブランチへの push 時に  
+`backend/` 配下の変更が検出された場合に自動でデプロイが実行されます。
 
-GitHub 連携の設定:
-1. Strapi Cloud Dashboard → Settings → GitHub
-2. 対象ブランチとルートディレクトリを確認
+### 方式 A: Strapi Cloud（推奨）
+
+#### 必要な GitHub Secrets
+
+| Secret 名 | 取得場所 |
+|---|---|
+| `STRAPI_DEPLOY_TOKEN` | Strapi Cloud → Settings → Deploy Token |
+
+#### 必要な GitHub Variables
+
+| Variable 名 | 値 |
+|---|---|
+| `BACKEND_DEPLOY_TARGET` | `strapi_cloud` |
+
+設定場所: GitHub リポジトリ → **Settings → Secrets and variables → Actions**
+
+#### Strapi Cloud Deploy Token の取得手順
+
+1. [cloud.strapi.io](https://cloud.strapi.io) にログイン
+2. プロジェクト → **Settings → Deploy**
+3. 「Generate Deploy Token」をクリック
+4. 表示されたトークンを GitHub Secret `STRAPI_DEPLOY_TOKEN` に登録
+
+---
+
+### 方式 B: VPS / SSH
+
+#### 必要な GitHub Secrets
+
+| Secret 名 | 説明 |
+|---|---|
+| `VPS_HOST` | サーバーの IP またはドメイン |
+| `VPS_USER` | SSH ユーザー名（例: `ubuntu`） |
+| `VPS_SSH_KEY` | SSH 秘密鍵（`~/.ssh/id_rsa` の中身） |
+| `VPS_PORT` | SSH ポート（省略時: 22） |
+| `VPS_APP_DIR` | サーバー上のリポジトリパス（例: `/var/www/creava-platform`） |
+
+#### 必要な GitHub Variables
+
+| Variable 名 | 値 |
+|---|---|
+| `BACKEND_DEPLOY_TARGET` | `vps_ssh` |
+
+#### サーバー事前準備
+
+```bash
+# Node.js 20.x インストール
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# PM2 インストール
+npm install -g pm2
+
+# リポジトリをクローン
+git clone https://github.com/mizzz-dev/creava-platform.git /var/www/creava-platform
+cd /var/www/creava-platform/backend
+
+# 環境変数を設定
+cp .env.local.example .env
+# .env を編集（DATABASE_CLIENT=postgres など）
+
+# 初回起動
+npm ci && npm run build && npm run start &
+pm2 start npm --name strapi -- run start
+pm2 save
+pm2 startup
+```
+
+---
+
+### 手動デプロイ（workflow_dispatch）
+
+GitHub Actions の画面から任意のタイミングでデプロイを実行できます:
+
+1. GitHub → **Actions → Deploy Backend (Strapi)**
+2. 「Run workflow」をクリック
+3. デプロイ先（`strapi_cloud` / `vps_ssh`）を選択して実行
+
+---
+
+### Strapi Cloud の GitHub 連携（別途）
+
+Strapi Cloud 側でも GitHub 連携すると、push 時に Strapi Cloud 自身がビルドを実行します。  
+GitHub Actions と Strapi Cloud の両方をオンにすると二重デプロイになるため、  
+**どちらか一方のみを使用**してください。
+
+| 方式 | 推奨シーン |
+|---|---|
+| GitHub Actions（本ワークフロー） | CI と統合して管理したい場合 |
+| Strapi Cloud 自動デプロイ | シンプルに運用したい場合 |
 
 ---
 
