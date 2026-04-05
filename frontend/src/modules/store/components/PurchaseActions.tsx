@@ -5,20 +5,10 @@ import type { StoreProductSummary } from '../types'
 interface Props {
   product: Pick<StoreProductSummary, 'stripeLink' | 'baseLink' | 'purchaseStatus'>
   className?: string
+  onAddToCart?: () => void
 }
 
-/**
- * 商品ごとの購入導線ボタン群
- *
- * 表示ルール:
- * - stripe_and_base : 「今すぐ購入（Stripe）」+ 「PayPay/Amazon Pay はこちら（BASE）」
- * - stripe_only     : 「今すぐ購入」のみ
- * - base_only       : 「購入する」のみ
- * - unavailable     : 「完売」or「販売準備中」テキスト
- *
- * 将来 Shopify に移行する場合は getPurchaseMode と本コンポーネントを差し替える
- */
-export default function PurchaseActions({ product, className = '' }: Props) {
+export default function PurchaseActions({ product, className = '', onAddToCart }: Props) {
   const { t } = useTranslation()
   const mode = getPurchaseMode(product)
 
@@ -30,7 +20,6 @@ export default function PurchaseActions({ product, className = '' }: Props) {
 
   return (
     <div className={`flex flex-col gap-3 ${className}`}>
-      {/* メイン購入ボタン（Stripe 優先） */}
       {(mode === 'stripe_and_base' || mode === 'stripe_only') && (
         <a
           href={product.stripeLink!}
@@ -42,7 +31,6 @@ export default function PurchaseActions({ product, className = '' }: Props) {
         </a>
       )}
 
-      {/* BASE のみの場合のメインボタン */}
       {mode === 'base_only' && (
         <a
           href={product.baseLink!}
@@ -54,7 +42,16 @@ export default function PurchaseActions({ product, className = '' }: Props) {
         </a>
       )}
 
-      {/* サブ導線：BASE（Stripe + BASE 両方ある場合のみ） */}
+      {onAddToCart && (
+        <button
+          type="button"
+          onClick={onAddToCart}
+          className="inline-flex items-center justify-center border border-gray-200 dark:border-gray-700 px-6 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500"
+        >
+          {t('cart.add', { defaultValue: 'カートに追加' })}
+        </button>
+      )}
+
       {mode === 'stripe_and_base' && (
         <a
           href={product.baseLink!}

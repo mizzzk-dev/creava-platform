@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { useStrapiCollection, useContentAccess } from '@/hooks'
@@ -18,6 +19,7 @@ import type { NewsItem } from '@/types'
 export default function NewsPage() {
   const { t } = useTranslation()
   const { filterVisible } = useContentAccess()
+  const softRetried = useRef(false)
 
   const { items, loading, error, refetch } = useStrapiCollection<NewsItem>(
     () => getNewsList({ pagination: { pageSize: 16, withCount: false } }),
@@ -25,6 +27,15 @@ export default function NewsPage() {
 
   // 閲覧不可コンテンツを除外（fc_only / 期限切れ limited）
   const visibleItems = items ? filterVisible(items) : null
+
+  useEffect(() => {
+    if (!error || softRetried.current) return
+    softRetried.current = true
+    const timer = setTimeout(() => {
+      refetch()
+    }, 1200)
+    return () => clearTimeout(timer)
+  }, [error, refetch])
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-20">

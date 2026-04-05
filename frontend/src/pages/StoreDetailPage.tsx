@@ -17,6 +17,7 @@ import StructuredData from '@/components/seo/StructuredData'
 import SkeletonProductDetail from '@/components/common/SkeletonProductDetail'
 import Badge from '@/components/common/Badge'
 import type { PurchaseStatus } from '@/modules/store/types'
+import { useCart } from '@/modules/cart/context'
 
 function purchaseStatusToAvailability(status: PurchaseStatus): 'InStock' | 'OutOfStock' | 'PreOrder' {
   if (status === 'available') return 'InStock'
@@ -29,6 +30,7 @@ export default function StoreDetailPage() {
   const { t } = useTranslation()
   const { product, loading, error, notFound } = useProductDetail(handle)
   const { products } = useProductList(8)
+  const { addItem } = useCart()
 
   // 関連商品: 同一 accessStatus で現在商品を除く最大4件
   const related = products
@@ -166,7 +168,18 @@ export default function StoreDetailPage() {
               )}
 
               {/* 購入導線 */}
-              <PurchaseActions product={product} className="mt-8" />
+              <PurchaseActions
+                product={product}
+                className="mt-8"
+                onAddToCart={product.purchaseStatus === 'available' ? () => addItem(product, 1) : undefined}
+              />
+
+              <Link
+                to={ROUTES.CART}
+                className="mt-3 inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+              >
+                {t('cart.goToCart', { defaultValue: 'カートへ進む' })} →
+              </Link>
 
               {/* 注意事項 */}
               <p className="mt-6 text-xs text-gray-300 dark:text-gray-700">

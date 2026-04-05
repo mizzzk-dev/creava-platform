@@ -5,6 +5,7 @@ import { ClerkProvider } from '@clerk/clerk-react'
 import { HelmetProvider } from 'react-helmet-async'
 import { ThemeProvider } from '@/lib/theme'
 import App from './App'
+import { CartProvider } from '@/modules/cart/context'
 import './lib/i18n'
 import './index.css'
 
@@ -20,9 +21,11 @@ if (!PUBLISHABLE_KEY && import.meta.env.DEV) {
 
 const inner = (
   <ThemeProvider>
+    <CartProvider>
     <BrowserRouter>
       <App />
     </BrowserRouter>
+    </CartProvider>
   </ThemeProvider>
 )
 
