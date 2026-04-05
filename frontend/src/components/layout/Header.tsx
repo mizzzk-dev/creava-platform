@@ -30,6 +30,7 @@ function useShowAuth() {
 export default function Header() {
   const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
+  const [showFloatingCart, setShowFloatingCart] = useState(true)
   const [scrolled, setScrolled] = useState(false)
   const { pathname } = useLocation()
   const showAuth = useShowAuth()
@@ -37,6 +38,7 @@ export default function Header() {
 
   useEffect(() => {
     setIsOpen(false)
+    setShowFloatingCart(true)
   }, [pathname])
 
   useEffect(() => {
@@ -89,21 +91,6 @@ export default function Header() {
 
           <div className="ml-2 flex items-center gap-2 border-l border-gray-200/70 dark:border-gray-700/50 pl-3">
             <Link
-              to={ROUTES.CART}
-              className={`relative rounded px-1.5 py-1 text-xs transition-colors ${
-                pathname.startsWith(ROUTES.CART)
-                  ? 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100'
-                  : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
-              }`}
-            >
-              {t('footer.cart', { defaultValue: 'カート' })}
-              {itemCount > 0 && (
-                <span className="ml-1 inline-flex min-w-4 justify-center rounded-full bg-gray-900 px-1 text-[10px] text-white dark:bg-gray-100 dark:text-gray-900">
-                  {itemCount}
-                </span>
-              )}
-            </Link>
-            <Link
               to={ROUTES.MEMBER}
               className={`rounded px-1.5 py-1 text-xs transition-colors ${
                 pathname.startsWith(ROUTES.MEMBER)
@@ -120,9 +107,6 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-1 md:hidden">
-          <Link to={ROUTES.CART} className="rounded px-1 text-[11px] font-mono text-gray-500 dark:text-gray-400">
-            {t('footer.cart', { defaultValue: 'カート' })}{itemCount > 0 ? `(${itemCount})` : ''}
-          </Link>
           <LangSwitcher />
           <ThemeToggle />
           <button
@@ -186,6 +170,37 @@ export default function Header() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {showFloatingCart && !pathname.startsWith(ROUTES.CART) && (
+        <div className="pointer-events-none fixed bottom-5 right-5 z-[60]">
+          <div className="pointer-events-auto relative">
+            <button
+              type="button"
+              onClick={() => setShowFloatingCart(false)}
+              aria-label={t('cart.hideFloating', { defaultValue: 'カートアイコンを閉じる' })}
+              className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border border-gray-200 bg-white text-[10px] leading-none text-gray-500 shadow-sm transition hover:text-gray-800 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+            >
+              ×
+            </button>
+            <Link
+              to={ROUTES.CART}
+              className="relative flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-md transition hover:scale-[1.03] hover:text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:text-white"
+              aria-label={t('cart.goToCart', { defaultValue: 'カートを見る' })}
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
+                <path d="M3 5h2l2 11h10l2-8H7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="10" cy="19" r="1.5" fill="currentColor" />
+                <circle cx="17" cy="19" r="1.5" fill="currentColor" />
+              </svg>
+              {itemCount > 0 && (
+                <span className="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-gray-900 px-1 text-[10px] text-white dark:bg-gray-100 dark:text-gray-900">
+                  {itemCount}
+                </span>
+              )}
+            </Link>
+          </div>
+        </div>
+      )}
     </header>
   )
 }

@@ -1,5 +1,6 @@
 import { fetchCollection, fetchBySlug } from '@/lib/api/strapi'
 import { getMockStoreProducts, getMockStoreProduct } from '@/lib/mock/store-products'
+import { isStrapiForbiddenError } from '@/lib/api/fallback'
 import type { StrapiQueryParams } from '@/lib/api/strapi'
 import type { StrapiListResponse } from '@/types'
 import type { StoreProduct, StoreProductSummary } from './types'
@@ -35,10 +36,16 @@ export function getProducts(
     const pageSize = params?.pagination?.pageSize ?? 12
     return Promise.resolve(getMockStoreProducts(pageSize))
   }
-  return fetchCollection<StoreProductSummary>(ENDPOINT, {
+  const merged = {
     populate: ['previewImage'],
     sort: ['publishAt:desc'],
     ...params,
+  }
+  return fetchCollection<StoreProductSummary>(ENDPOINT, merged).catch((error) => {
+    if (isStrapiForbiddenError(error)) {
+      return getMockStoreProducts(merged.pagination?.pageSize ?? 12)
+    }
+    throw error
   })
 }
 
@@ -52,7 +59,15 @@ export async function getProduct(slug: string): Promise<StoreProduct | null> {
     const res = getMockStoreProduct(slug)
     return res?.data ?? null
   }
-  return fetchBySlug<StoreProduct>(ENDPOINT, slug, {
-    populate: ['previewImage'],
-  })
+  try {
+    return await fetchBySlug<StoreProduct>(ENDPOINT, slug, {
+      populate: ['previewImage'],
+    })
+  } catch (error) {
+    if (isStrapiForbiddenError(error)) {
+      const res = getMockStoreProduct(slug)
+      return res?.data ?? null
+    }
+    throw error
+  }
 }

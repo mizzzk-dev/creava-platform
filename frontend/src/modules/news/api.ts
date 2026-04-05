@@ -1,5 +1,6 @@
 import { fetchCollection, fetchBySlug } from '@/lib/api/strapi'
 import type { StrapiQueryParams } from '@/lib/api/strapi'
+import { buildEmptyListResponse, isStrapiForbiddenError } from '@/lib/api/fallback'
 import type { NewsItem, StrapiListResponse } from '@/types'
 import { API_ENDPOINTS } from '@/lib/api/endpoints'
 
@@ -8,7 +9,7 @@ const ENDPOINT = API_ENDPOINTS.news
 export function getNewsList(
   params?: StrapiQueryParams,
 ): Promise<StrapiListResponse<NewsItem>> {
-  return fetchCollection<NewsItem>(ENDPOINT, {
+  const merged = {
     fields: ['title', 'slug', 'publishAt', 'accessStatus', 'limitedEndAt', 'archiveVisibleForFC'],
     sort: ['publishAt:desc'],
     populate: {
@@ -16,6 +17,13 @@ export function getNewsList(
     },
     pagination: { pageSize: 16, withCount: false },
     ...params,
+  }
+
+  return fetchCollection<NewsItem>(ENDPOINT, merged).catch((error) => {
+    if (isStrapiForbiddenError(error)) {
+      return buildEmptyListResponse<NewsItem>(merged.pagination?.pageSize ?? 16)
+    }
+    throw error
   })
 }
 

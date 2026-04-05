@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useEffect, useRef } from 'react'
 import { useStrapiCollection, useContentAccess } from '@/hooks'
 import { getBlogList } from '@/modules/blog/api'
 import { formatDate } from '@/utils'
@@ -13,20 +12,10 @@ import type { BlogPost } from '@/types'
 export default function BlogPage() {
   const { t } = useTranslation()
   const { filterVisible } = useContentAccess()
-  const softRetried = useRef(false)
 
   const { items, loading, error, refetch } = useStrapiCollection<BlogPost>(
     () => getBlogList({ pagination: { pageSize: 12, withCount: false } }),
   )
-
-  useEffect(() => {
-    if (!error || softRetried.current) return
-    softRetried.current = true
-    const timer = setTimeout(() => {
-      refetch()
-    }, 1200)
-    return () => clearTimeout(timer)
-  }, [error, refetch])
 
   const visibleItems = items ? filterVisible(items) : null
 
