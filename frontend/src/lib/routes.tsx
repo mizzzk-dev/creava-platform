@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom'
 import MainLayout from '@/components/layout/MainLayout'
 import HomePage from '@/pages/HomePage'
 import SkeletonDetail from '@/components/common/SkeletonDetail'
+import { ROUTES } from './routeConstants'
 
 // Lazy-loaded pages — excluded from the initial bundle
 const WorksPage = lazy(() => import('@/pages/WorksPage'))
@@ -32,7 +33,6 @@ const FAQPage = lazy(() => import('@/pages/FAQPage'))
 
 // 定数は循環参照を避けるため routeConstants から取得し re-export する
 export { ROUTES, detailPath } from './routeConstants'
-import { ROUTES } from './routeConstants'
 
 function PageLoader() {
   return (

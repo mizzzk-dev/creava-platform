@@ -4,7 +4,7 @@ import FanclubGuard from '@/components/guards/FanclubGuard'
 import { useStrapiCollection, useContentAccess } from '@/hooks'
 import { getFanclubList } from '@/modules/fanclub/api'
 import { formatDate } from '@/utils'
-import { detailPath } from '@/lib/routeConstants'
+import { detailPath, ROUTES } from '@/lib/routeConstants'
 import PageHead from '@/components/seo/PageHead'
 import SkeletonListItem from '@/components/common/SkeletonListItem'
 import type { FanclubContent } from '@/types'
@@ -18,6 +18,9 @@ export default function FanclubPage() {
       <h1 className="text-3xl font-semibold tracking-tight text-gray-900">
         {t('nav.fanclub')}
       </h1>
+      <Link to={ROUTES.MEMBER} className="mt-3 inline-flex text-xs font-mono text-violet-500 hover:text-violet-400">
+        {t('nav.member', { defaultValue: 'member' })} →
+      </Link>
 
       <div className="mt-10">
         <FanclubGuard>

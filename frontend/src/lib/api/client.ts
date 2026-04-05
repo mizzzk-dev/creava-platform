@@ -22,6 +22,10 @@ export class StrapiApiError extends Error {
 const DEFAULT_TIMEOUT_MS = Number(import.meta.env.VITE_STRAPI_TIMEOUT_MS ?? 15000)
 const MAX_RETRIES = Number(import.meta.env.VITE_STRAPI_RETRY_COUNT ?? 2)
 const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504])
+const RESPONSE_CACHE_TTL_MS = Number(import.meta.env.VITE_STRAPI_RESPONSE_CACHE_TTL_MS ?? 60_000)
+
+const responseCache = new Map<string, { expiresAt: number; value: unknown }>()
+const inFlightRequests = new Map<string, Promise<unknown>>()
 
 export interface StrapiRequestOptions {
   auth?: 'none' | 'required' | 'auto'
@@ -147,6 +151,17 @@ export async function strapiGet<T>(
   const authMode = options.auth ?? 'auto'
 
   const url = `${baseUrl}/api${path}${queryString}`
+  const cacheKey = `${authMode}:${url}`
+  const now = Date.now()
+  const cached = responseCache.get(cacheKey)
+  if (cached && cached.expiresAt > now) {
+    return cached.value as T
+  }
+
+  const pending = inFlightRequests.get(cacheKey)
+  if (pending) {
+    return pending as Promise<T>
+  }
 
   const headers: Record<string, string> = { Accept: 'application/json' }
 
@@ -158,57 +173,72 @@ export async function strapiGet<T>(
     headers['Authorization'] = `Bearer ${token}`
   }
 
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS)
+  const requestPromise = (async () => {
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS)
 
-    try {
-      const res = await fetch(url, {
-        headers,
-        signal: controller.signal,
-      })
+      try {
+        const res = await fetch(url, {
+          headers,
+          signal: controller.signal,
+        })
 
-      clearTimeout(timeout)
+        clearTimeout(timeout)
 
-      if (!res.ok) {
-        if (attempt < MAX_RETRIES && RETRYABLE_STATUS.has(res.status)) {
+        if (!res.ok) {
+          if (attempt < MAX_RETRIES && RETRYABLE_STATUS.has(res.status)) {
+            await wait(getBackoffMs(attempt + 1))
+            continue
+          }
+          return parseErrorResponse(res, url, attempt)
+        }
+
+        const json = await parseJsonOrThrow<T>(res, url, attempt)
+        if (RESPONSE_CACHE_TTL_MS > 0) {
+          responseCache.set(cacheKey, {
+            value: json,
+            expiresAt: Date.now() + RESPONSE_CACHE_TTL_MS,
+          })
+        }
+        return json
+      } catch (err) {
+        clearTimeout(timeout)
+
+        const isTimeout = err instanceof DOMException && err.name === 'AbortError'
+
+        // タイムアウト時のみ自動再試行し、403/CORS 等の恒久エラーで待たされないようにする
+        if (attempt < MAX_RETRIES && isTimeout) {
           await wait(getBackoffMs(attempt + 1))
           continue
         }
-        return parseErrorResponse(res, url, attempt)
-      }
 
-      return await parseJsonOrThrow<T>(res, url, attempt)
-    } catch (err) {
-      clearTimeout(timeout)
+        if (err instanceof StrapiApiError) throw err
 
-      const isTimeout = err instanceof DOMException && err.name === 'AbortError'
+        if (isTimeout) {
+          throw new StrapiApiError(
+            408,
+            'Request Timeout',
+            `[Strapi] リクエストがタイムアウトしました (${DEFAULT_TIMEOUT_MS}ms): ${url}`,
+            { url, contentType: 'unknown', retried: attempt },
+          )
+        }
 
-      // タイムアウト時のみ自動再試行し、403/CORS 等の恒久エラーで待たされないようにする
-      if (attempt < MAX_RETRIES && isTimeout) {
-        await wait(getBackoffMs(attempt + 1))
-        continue
-      }
-
-      if (err instanceof StrapiApiError) throw err
-
-      if (isTimeout) {
         throw new StrapiApiError(
-          408,
-          'Request Timeout',
-          `[Strapi] リクエストがタイムアウトしました (${DEFAULT_TIMEOUT_MS}ms): ${url}`,
+          0,
+          'Network Error',
+          `[Strapi] 通信に失敗しました。ネットワーク断、CORS、または Strapi 起動遅延の可能性があります: ${url}`,
           { url, contentType: 'unknown', retried: attempt },
         )
       }
-
-      throw new StrapiApiError(
-        0,
-        'Network Error',
-        `[Strapi] 通信に失敗しました。ネットワーク断、CORS、または Strapi 起動遅延の可能性があります: ${url}`,
-        { url, contentType: 'unknown', retried: attempt },
-      )
     }
-  }
+    throw new StrapiApiError(0, 'Unknown Error', '[Strapi] 不明なエラーが発生しました。')
+  })()
 
-  throw new StrapiApiError(0, 'Unknown Error', '[Strapi] 不明なエラーが発生しました。')
+  inFlightRequests.set(cacheKey, requestPromise)
+  try {
+    return await requestPromise
+  } finally {
+    inFlightRequests.delete(cacheKey)
+  }
 }

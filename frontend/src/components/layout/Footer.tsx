@@ -7,7 +7,6 @@ import { resetCookieConsent } from '@/modules/cookie/consent'
 const PRIMARY_LINKS = [
   { key: 'nav.store', to: ROUTES.STORE },
   { key: 'nav.fanclub', to: ROUTES.FANCLUB },
-  { key: 'nav.member', to: ROUTES.MEMBER },
   { key: 'nav.contact', to: ROUTES.CONTACT },
 ] as const
 

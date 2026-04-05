@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type PointerEvent as ReactPointerEvent } from 'react'
 import { NavLink, useLocation, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -8,6 +8,7 @@ import ThemeToggle from '@/components/common/ThemeToggle'
 import LangSwitcher from '@/components/common/LangSwitcher'
 import SiteLogo from '@/components/layout/SiteLogo'
 import { useCart } from '@/modules/cart/context'
+import { prefetchRoute } from '@/lib/routePrefetch'
 
 const NAV_ITEMS = [
   { key: 'nav.news', to: ROUTES.NEWS },
@@ -31,6 +32,8 @@ export default function Header() {
   const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const [showFloatingCart, setShowFloatingCart] = useState(true)
+  const [floatingPosition, setFloatingPosition] = useState({ x: 0, y: 0 })
+  const [isDraggingCart, setIsDraggingCart] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const { pathname } = useLocation()
   const showAuth = useShowAuth()
@@ -40,6 +43,29 @@ export default function Header() {
     setIsOpen(false)
     setShowFloatingCart(true)
   }, [pathname])
+
+  useEffect(() => {
+    const fallback = { x: Math.max(window.innerWidth - 68, 16), y: Math.max(window.innerHeight - 68, 16) }
+
+    try {
+      const raw = localStorage.getItem('floating-cart-position')
+      if (!raw) {
+        setFloatingPosition(fallback)
+        return
+      }
+      const parsed = JSON.parse(raw) as { x?: number; y?: number }
+      if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
+        setFloatingPosition({
+          x: Math.min(Math.max(parsed.x, 16), window.innerWidth - 56),
+          y: Math.min(Math.max(parsed.y, 16), window.innerHeight - 56),
+        })
+        return
+      }
+      setFloatingPosition(fallback)
+    } catch {
+      setFloatingPosition(fallback)
+    }
+  }, [])
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : ''
@@ -53,6 +79,53 @@ export default function Header() {
     window.addEventListener('scroll', handler, { passive: true })
     return () => window.removeEventListener('scroll', handler)
   }, [])
+
+  useEffect(() => {
+    if (floatingPosition.x === 0 && floatingPosition.y === 0) {
+      return
+    }
+    localStorage.setItem('floating-cart-position', JSON.stringify(floatingPosition))
+  }, [floatingPosition])
+
+  useEffect(() => {
+    const resizeHandler = () => {
+      setFloatingPosition((prev) => ({
+        x: Math.min(Math.max(prev.x, 16), window.innerWidth - 56),
+        y: Math.min(Math.max(prev.y, 16), window.innerHeight - 56),
+      }))
+    }
+    window.addEventListener('resize', resizeHandler)
+    return () => window.removeEventListener('resize', resizeHandler)
+  }, [])
+
+  const beginCartDrag = (event: ReactPointerEvent<HTMLAnchorElement>) => {
+    event.preventDefault()
+    const startX = event.clientX
+    const startY = event.clientY
+    const originX = floatingPosition.x
+    const originY = floatingPosition.y
+    setIsDraggingCart(false)
+
+    const onMove = (moveEvent: PointerEvent) => {
+      const nextX = Math.min(Math.max(originX + (moveEvent.clientX - startX), 16), window.innerWidth - 56)
+      const nextY = Math.min(Math.max(originY + (moveEvent.clientY - startY), 16), window.innerHeight - 56)
+      setFloatingPosition({ x: nextX, y: nextY })
+
+      if (!isDraggingCart) {
+        const moved = Math.abs(moveEvent.clientX - startX) + Math.abs(moveEvent.clientY - startY) > 8
+        if (moved) setIsDraggingCart(true)
+      }
+    }
+
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      setTimeout(() => setIsDraggingCart(false), 0)
+    }
+
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }
 
   return (
     <header
@@ -74,6 +147,9 @@ export default function Header() {
                 <li key={to}>
                   <NavLink
                     to={to}
+                    onMouseEnter={() => prefetchRoute(to)}
+                    onFocus={() => prefetchRoute(to)}
+                    onTouchStart={() => prefetchRoute(to)}
                     className={({ isActive }) =>
                       `relative rounded-md px-3 py-1.5 text-sm transition-colors duration-150 ${
                         isActive
@@ -90,16 +166,6 @@ export default function Header() {
           </nav>
 
           <div className="ml-2 flex items-center gap-2 border-l border-gray-200/70 dark:border-gray-700/50 pl-3">
-            <Link
-              to={ROUTES.MEMBER}
-              className={`rounded px-1.5 py-1 text-xs transition-colors ${
-                pathname.startsWith(ROUTES.MEMBER)
-                  ? 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100'
-                  : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
-              }`}
-            >
-              {t('nav.member', { defaultValue: 'member' })}
-            </Link>
             <LangSwitcher />
             <ThemeToggle />
             {showAuth && <AuthButton />}
@@ -138,6 +204,9 @@ export default function Header() {
                   <li key={to}>
                     <NavLink
                       to={to}
+                      onMouseEnter={() => prefetchRoute(to)}
+                      onFocus={() => prefetchRoute(to)}
+                      onTouchStart={() => prefetchRoute(to)}
                       className={({ isActive }) =>
                         `block py-3 text-sm transition-colors ${
                           isActive
@@ -150,16 +219,6 @@ export default function Header() {
                     </NavLink>
                   </li>
                 ))}
-                <li>
-                  <NavLink to={ROUTES.MEMBER} className="block py-3 text-sm text-gray-500 dark:text-gray-400">
-                    {t('nav.member', { defaultValue: 'member' })}
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink to={ROUTES.CART} className="block py-3 text-sm text-gray-500 dark:text-gray-400">
-                    {t('footer.cart', { defaultValue: 'カート' })}
-                  </NavLink>
-                </li>
               </ul>
               {showAuth && (
                 <div className="mt-4 border-t border-gray-100 dark:border-gray-800 pt-4">
@@ -172,7 +231,7 @@ export default function Header() {
       </AnimatePresence>
 
       {showFloatingCart && !pathname.startsWith(ROUTES.CART) && (
-        <div className="pointer-events-none fixed bottom-5 right-5 z-[60]">
+        <div className="pointer-events-none fixed z-[60]" style={{ left: floatingPosition.x, top: floatingPosition.y }}>
           <div className="pointer-events-auto relative">
             <button
               type="button"
@@ -184,6 +243,12 @@ export default function Header() {
             </button>
             <Link
               to={ROUTES.CART}
+              onPointerDown={beginCartDrag}
+              onClick={(event) => {
+                if (isDraggingCart) {
+                  event.preventDefault()
+                }
+              }}
               className="relative flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-md transition hover:scale-[1.03] hover:text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:text-white"
               aria-label={t('cart.goToCart', { defaultValue: 'カートを見る' })}
             >
