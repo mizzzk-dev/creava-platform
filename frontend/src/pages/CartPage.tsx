@@ -109,6 +109,17 @@ export default function CartPage() {
             <p className="mt-4 text-xs text-gray-400 dark:text-gray-600">
               {t('cart.checkoutNote', { defaultValue: 'チェックアウトは外部決済ページへ遷移します。内容を確認してから進んでください。' })}
             </p>
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-500">
+              決済前に
+              <Link to={ROUTES.LEGAL_TRADE} className="mx-1 underline hover:text-gray-700 dark:hover:text-gray-300">
+                特定商取引法に基づく表記
+              </Link>
+              と
+              <Link to={ROUTES.LEGAL_TERMS} className="mx-1 underline hover:text-gray-700 dark:hover:text-gray-300">
+                利用規約
+              </Link>
+              をご確認ください。
+            </p>
 
             <div className="mt-4 flex flex-wrap gap-3">
               {checkoutLink ? (

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useAsyncState } from './useAsyncState'
 
+const SAFE_SLUG_PATTERN = /^[a-zA-Z0-9](?:[a-zA-Z0-9_-]{0,79})$/
+
 export interface UseSlugDetailResult<T> {
   /** 取得したアイテム。loading中 / not found は null */
   item: T | null
@@ -27,19 +29,25 @@ export function useSlugDetail<T>(
 ): UseSlugDetailResult<T> {
   const { data, loading, error, execute } = useAsyncState<T | null>()
   const [fetched, setFetched] = useState(false)
+  const hasSlug = Boolean(slug)
+  const isSlugValid = hasSlug && SAFE_SLUG_PATTERN.test(slug ?? '')
 
   useEffect(() => {
-    if (!slug) return
+    setFetched(false)
+    if (!slug || !isSlugValid) {
+      setFetched(true)
+      return
+    }
     void execute(() => fetcher(slug)).then(() => setFetched(true))
     // fetcher は呼び出し元で安定した参照を渡すことを前提とする
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug])
+  }, [slug, isSlugValid])
 
   return {
     item: data ?? null,
     // 初回フェッチ前もローディング扱いにすることで not found の誤表示を防ぐ
-    loading: !fetched || loading,
+    loading: !fetched || (isSlugValid && loading),
     error,
-    notFound: fetched && !loading && !error && data === null,
+    notFound: fetched && (!isSlugValid || (!loading && !error && data === null)),
   }
 }
