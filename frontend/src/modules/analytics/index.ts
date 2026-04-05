@@ -50,3 +50,15 @@ export function trackPageView(pathname: string): void {
     page_title: document.title,
   })
 }
+
+export function trackEvent(eventName: string, params?: Record<string, string | number | boolean>): void {
+  if (typeof window === 'undefined') return
+
+  const measurementId = getMeasurementId()
+  const analyticsAllowed = (window as Window & { __MIZZZ_ANALYTICS_ALLOWED__?: boolean }).__MIZZZ_ANALYTICS_ALLOWED__
+  const gtag = (window as Window & { gtag?: (...args: unknown[]) => void }).gtag
+
+  if (!measurementId || !analyticsAllowed || !gtag) return
+
+  gtag('event', eventName, params ?? {})
+}

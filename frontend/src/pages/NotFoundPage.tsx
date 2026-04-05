@@ -93,19 +93,27 @@ export default function NotFoundPage() {
         </div>
 
         <div className="flex flex-col items-center gap-3 pt-4">
-          <Link
-            to={ROUTES.HOME}
-            className="group inline-flex items-center gap-2 bg-gray-900 dark:bg-white px-7 py-3 text-sm font-medium text-white dark:text-gray-900 transition-all hover:bg-gray-700 dark:hover:bg-gray-100"
-          >
-            {t('common.backToHome')}
-            <span className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
-          </Link>
-          <Link
-            to={ROUTES.WORKS}
-            className="font-mono text-[11px] text-gray-400 dark:text-gray-600 hover:text-gray-700 dark:hover:text-gray-400 transition-colors"
-          >
-            or browse works
-          </Link>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Link
+              to={ROUTES.HOME}
+              className="focus-ring group inline-flex items-center gap-2 bg-gray-900 dark:bg-white px-6 py-3 text-sm font-medium text-white dark:text-gray-900 transition-all hover:bg-gray-700 dark:hover:bg-gray-100"
+            >
+              {t('common.backToHome')}
+              <span className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
+            </Link>
+            <Link
+              to={ROUTES.CONTACT}
+              className="focus-ring inline-flex items-center border border-gray-200 px-5 py-3 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900"
+            >
+              {t('nav.contact')}
+            </Link>
+            <Link
+              to={ROUTES.STORE}
+              className="focus-ring inline-flex items-center border border-gray-200 px-5 py-3 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900"
+            >
+              {t('nav.store')}
+            </Link>
+          </div>
         </div>
       </motion.div>
     </section>

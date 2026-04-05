@@ -2,12 +2,14 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { ROUTES } from '@/lib/routeConstants'
+import { useHomeCtaAnalytics } from '@/modules/analytics/useHomeCtaAnalytics'
 
 type AvailabilityStatus = 'available' | 'limited' | 'unavailable'
 const AVAILABILITY = import.meta.env.VITE_AVAILABILITY_STATUS as AvailabilityStatus | undefined
 
 export default function HeroSection() {
   const { t } = useTranslation()
+  const trackHomeCta = useHomeCtaAnalytics('hero')
 
   return (
     <section className="relative flex min-h-[90vh] items-center overflow-hidden px-4">
@@ -106,32 +108,36 @@ export default function HeroSection() {
               <div className="mt-10 flex flex-wrap items-center gap-3">
                 {/* primary */}
                 <Link
-                  to={ROUTES.WORKS}
-                  className="group inline-flex items-center gap-2 bg-gray-900 px-7 py-3 text-sm font-medium tracking-wide text-white transition-all duration-200 hover:bg-gray-700"
+                  to={`${ROUTES.CONTACT}?tab=request`}
+                  onClick={() => trackHomeCta('request')}
+                  className="focus-ring group inline-flex items-center gap-2 bg-gray-900 px-7 py-3 text-sm font-medium tracking-wide text-white transition-all duration-200 hover:bg-gray-700"
                 >
-                  {t('home.hero.ctaWorks')}
+                  {t('home.hero.ctaRequest')}
                   <span className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
                 </Link>
 
                 {/* secondary */}
                 <Link
                   to={ROUTES.CONTACT}
-                  className="inline-flex items-center border border-gray-200 px-7 py-3 text-sm font-medium tracking-wide text-gray-700 transition-all duration-200 hover:border-gray-400 hover:bg-gray-50"
+                  onClick={() => trackHomeCta('contact')}
+                  className="focus-ring inline-flex items-center border border-gray-200 px-7 py-3 text-sm font-medium tracking-wide text-gray-700 transition-all duration-200 hover:border-gray-400 hover:bg-gray-50"
                 >
                   {t('home.hero.ctaContact')}
                 </Link>
 
                 <Link
-                  to={ROUTES.PRICING}
-                  className="inline-flex items-center border border-gray-200 px-4 py-3 text-sm tracking-wide text-gray-500 transition-all duration-200 hover:border-gray-400 hover:text-gray-700"
+                  to={ROUTES.WORKS}
+                  onClick={() => trackHomeCta('works')}
+                  className="focus-ring inline-flex items-center border border-gray-200 px-4 py-3 text-sm tracking-wide text-gray-500 transition-all duration-200 hover:border-gray-400 hover:text-gray-700"
                 >
-                  {t('home.hero.ctaPricing')}
+                  {t('home.hero.ctaWorks')}
                 </Link>
 
                 {/* fanclub — tertiary */}
                 <Link
                   to={ROUTES.FANCLUB}
-                  className="inline-flex items-center gap-1.5 px-4 py-3 text-sm tracking-wide text-gray-400 transition-colors duration-200 hover:text-gray-900"
+                  onClick={() => trackHomeCta('fanclub')}
+                  className="focus-ring inline-flex items-center gap-1.5 px-4 py-3 text-sm tracking-wide text-gray-400 transition-colors duration-200 hover:text-gray-900"
                 >
                   <span className="font-mono text-[10px] text-gray-300">[ FC ]</span>
                   {t('home.hero.ctaFanclub')}

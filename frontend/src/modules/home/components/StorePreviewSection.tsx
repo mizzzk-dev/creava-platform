@@ -6,9 +6,11 @@ import { ROUTES, detailPath } from '@/lib/routeConstants'
 import SectionHeader from '@/components/common/SectionHeader'
 import Badge from '@/components/common/Badge'
 import { formatPriceNum } from '@/utils'
+import { useHomeCtaAnalytics } from '@/modules/analytics/useHomeCtaAnalytics'
 
 export default function StorePreviewSection() {
   const { t } = useTranslation()
+  const trackHomeCta = useHomeCtaAnalytics('store_preview')
   const { products, loading } = useProductList(6)
 
   const previewItems = products
@@ -132,14 +134,16 @@ export default function StorePreviewSection() {
         <div className="mt-7 flex flex-wrap items-center gap-4">
           <Link
             to={ROUTES.STORE}
-            className="inline-flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+            onClick={() => trackHomeCta('store')}
+            className="focus-ring inline-flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
           >
             {t('home.store.viewAll')}
             <span>→</span>
           </Link>
           <Link
             to={ROUTES.FANCLUB}
-            className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-violet-500 hover:text-violet-400"
+            onClick={() => trackHomeCta('fanclub')}
+            className="focus-ring inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-violet-500 hover:text-violet-400"
           >
             {t('store.fanclubLead')}
             <span>→</span>

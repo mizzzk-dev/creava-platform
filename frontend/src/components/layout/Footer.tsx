@@ -7,6 +7,7 @@ import { resetCookieConsent } from '@/modules/cookie/consent'
 const PRIMARY_LINKS = [
   { key: 'nav.store', to: ROUTES.STORE },
   { key: 'nav.fanclub', to: ROUTES.FANCLUB },
+  { key: 'nav.request', to: `${ROUTES.CONTACT}?tab=request` },
   { key: 'nav.contact', to: ROUTES.CONTACT },
 ] as const
 
@@ -67,7 +68,7 @@ export default function Footer() {
             <ul className="mt-3 space-y-2">
               {PRIMARY_LINKS.map(({ key, to }) => (
                 <li key={to}>
-                  <Link to={to} className="text-sm text-gray-500 dark:text-gray-500 transition-colors hover:text-gray-800 dark:hover:text-gray-200">
+                  <Link to={to} className="focus-ring text-sm text-gray-500 dark:text-gray-500 transition-colors hover:text-gray-800 dark:hover:text-gray-200">
                     {t(key)}
                   </Link>
                 </li>

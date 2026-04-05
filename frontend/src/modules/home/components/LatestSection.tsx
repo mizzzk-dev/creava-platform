@@ -27,6 +27,7 @@ export default function LatestSection() {
     {
       key: 'news',
       label: t('home.latest.news'),
+      emptyMessage: t('home.latest.emptyNews'),
       data: news,
       viewAllTo: ROUTES.NEWS,
       renderCard: (item: { id: number; title: string; slug: string; publishAt: string | null; accessStatus: 'public' | 'fc_only' | 'limited' }) => (
@@ -42,6 +43,7 @@ export default function LatestSection() {
     {
       key: 'blog',
       label: t('home.latest.blog'),
+      emptyMessage: t('home.latest.emptyBlog'),
       data: blog,
       viewAllTo: ROUTES.BLOG,
       renderCard: (item: { id: number; title: string; slug: string; publishAt: string | null; accessStatus: 'public' | 'fc_only' | 'limited' }) => (
@@ -57,6 +59,7 @@ export default function LatestSection() {
     {
       key: 'events',
       label: t('home.latest.events'),
+      emptyMessage: t('home.latest.emptyEvents'),
       data: events,
       viewAllTo: ROUTES.EVENTS,
       renderCard: (item: Event) => (
@@ -83,7 +86,7 @@ export default function LatestSection() {
       <SectionHeader label={t('home.latest.title')} />
 
       <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-0">
-        {categories.map(({ key, label, data, viewAllTo, renderCard }, colIdx) => (
+        {categories.map(({ key, label, emptyMessage, data, viewAllTo, renderCard }, colIdx) => (
           <div
             key={key}
             className={colIdx < 2 ? 'md:border-r md:border-gray-100 md:pr-8' : 'md:pl-8'}
@@ -98,7 +101,7 @@ export default function LatestSection() {
 
             {/* empty */}
             {!data.loading && data.items.length === 0 && (
-              <p className="mt-4 font-mono text-[11px] text-gray-300">{t('home.latest.empty')}</p>
+              <p className="mt-4 font-mono text-[11px] text-gray-300">{emptyMessage}</p>
             )}
 
             {/* items */}
