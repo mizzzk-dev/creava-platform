@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { ROUTES } from '@/lib/routeConstants'
@@ -35,6 +36,7 @@ function Stars() {
 
 export default function NotFoundPage() {
   const { t } = useTranslation()
+  const { pathname } = useLocation()
 
   return (
     <section className="relative mx-auto flex max-w-5xl flex-col items-center px-4 py-40 text-center overflow-hidden">
@@ -70,6 +72,24 @@ export default function NotFoundPage() {
           <p className="font-mono text-xs text-gray-400 dark:text-gray-600">
             {t('error.404hint')}
           </p>
+        </div>
+
+        <div className="mx-auto mt-4 w-full max-w-2xl rounded border border-gray-200 bg-gray-950 p-4 text-left dark:border-gray-700">
+          <p className="font-mono text-[11px] text-emerald-400">$ locate {pathname}</p>
+          <p className="mt-1 font-mono text-[11px] text-red-400">No such file or directory</p>
+          <p className="mt-3 font-mono text-[10px] text-gray-500">shortcut commands:</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Link to={ROUTES.HOME} className="font-mono text-[10px] text-cyan-300 hover:text-cyan-200">home</Link>
+            <Link to={ROUTES.WORKS} className="font-mono text-[10px] text-cyan-300 hover:text-cyan-200">works</Link>
+            <Link to={ROUTES.CONTACT} className="font-mono text-[10px] text-cyan-300 hover:text-cyan-200">contact</Link>
+            <Link to={ROUTES.STORE} className="font-mono text-[10px] text-cyan-300 hover:text-cyan-200">store</Link>
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-gray-500 dark:text-gray-400">
+          <Link to={ROUTES.BLOG} className="hover:text-gray-800 dark:hover:text-gray-200">人気: Blog</Link>
+          <Link to={ROUTES.NEWS} className="hover:text-gray-800 dark:hover:text-gray-200">最新: News</Link>
+          <Link to={ROUTES.EVENTS} className="hover:text-gray-800 dark:hover:text-gray-200">開催情報: Events</Link>
         </div>
 
         <div className="flex flex-col items-center gap-3 pt-4">

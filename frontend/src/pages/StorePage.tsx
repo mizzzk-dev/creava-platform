@@ -22,7 +22,12 @@ export default function StorePage() {
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-20">
-      <PageHead title={t('store.title')} description={t('seo.store')} />
+      <PageHead
+        title={t('store.title')}
+        description={t('seo.store', {
+          defaultValue: '作品販売と制作依頼の両方にアクセスできるストアページ。限定商品と依頼導線をまとめて案内します。',
+        })}
+      />
       <StructuredData
         schema={{
           type: 'BreadcrumbList',
@@ -38,43 +43,64 @@ export default function StorePage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <p className="font-mono text-[11px] uppercase tracking-widest text-gray-400 dark:text-gray-600">
-          store / stripe first
-        </p>
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
-          {t('store.title')}
-        </h1>
-        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-          {t('home.store.description')}
-        </p>
-        <Link to={ROUTES.CART} className="mt-3 inline-flex text-xs font-mono text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
-          {t('cart.goToCart', { defaultValue: 'カートを見る' })} →
-        </Link>
-        <Link to={ROUTES.MEMBER} className="mt-2 ml-4 inline-flex text-xs font-mono text-violet-500 hover:text-violet-400">
-          {t('nav.member', { defaultValue: 'member' })} →
-        </Link>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <span className="rounded-sm border border-gray-200 dark:border-gray-800 px-2 py-1 font-mono text-[10px] text-gray-400 dark:text-gray-600">
-            {t('store.subtitle')}
-          </span>
-          <span className="rounded-sm border border-violet-200/60 dark:border-violet-900/40 px-2 py-1 font-mono text-[10px] text-violet-500">
-            {t('store.fanclubLead')}
-          </span>
+        <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-br from-gray-50 via-white to-violet-50 px-6 py-8 dark:border-gray-800 dark:from-gray-900 dark:via-gray-950 dark:to-violet-950/30 sm:px-8 sm:py-10">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(139,92,246,0.15),transparent_48%)] dark:bg-[radial-gradient(circle_at_top_right,rgba(139,92,246,0.2),transparent_45%)]" />
+          <p className="relative font-mono text-[11px] uppercase tracking-widest text-gray-400 dark:text-gray-600">
+            store / brand-first commerce
+          </p>
+          <h1 className="relative mt-4 text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 sm:text-4xl">
+            {t('store.title')}
+          </h1>
+          <p className="relative mt-3 max-w-2xl text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+            作品販売だけでなく、制作依頼やFanclub導線をつないだ「ホームページ主軸」のストア体験を提供します。
+          </p>
+          <div className="relative mt-5 flex flex-wrap gap-3">
+            <a href="#store-products" className="inline-flex items-center bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100">
+              商品を見る →
+            </a>
+            <Link to={ROUTES.CONTACT} className="inline-flex items-center border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:border-gray-400 hover:text-gray-900 dark:border-gray-700 dark:text-gray-300 dark:hover:border-gray-500 dark:hover:text-gray-100">
+              制作依頼する →
+            </Link>
+            <Link to={ROUTES.CART} className="inline-flex items-center text-xs font-mono text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
+              {t('cart.goToCart', { defaultValue: 'カートを見る' })} →
+            </Link>
+          </div>
+          <div className="relative mt-4 flex flex-wrap gap-2">
+            <span className="rounded-sm border border-gray-200 dark:border-gray-800 px-2 py-1 font-mono text-[10px] text-gray-400 dark:text-gray-600">
+              {t('store.subtitle')}
+            </span>
+            <span className="rounded-sm border border-violet-200/60 dark:border-violet-900/40 px-2 py-1 font-mono text-[10px] text-violet-500">
+              {t('store.fanclubLead')}
+            </span>
+          </div>
+        </div>
+        <div className="mt-4 rounded border border-gray-200 px-3 py-3 dark:border-gray-800">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-600">status guide</p>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
+            <span className="inline-flex items-center rounded-sm border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-mono text-[11px] uppercase tracking-wider text-emerald-600">
+              AVAILABLE
+            </span>
+            <span className="text-gray-500 dark:text-gray-500">購入可能。すぐに購入またはカート追加できます。</span>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
+            <Badge variant="coming_soon" size="sm" />
+            <span className="text-gray-500 dark:text-gray-500">{t('store.statusComingSoon', { defaultValue: '販売準備中。公開通知を待機できます。' })}</span>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
+            <Badge variant="soldout" size="sm" />
+            <span className="text-gray-500 dark:text-gray-500">{t('store.statusSoldout', { defaultValue: '完売。再販情報は News / Fanclub で案内します。' })}</span>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
+            <Badge variant="fc" size="sm" label="MEMBERS" />
+            <span className="text-gray-500 dark:text-gray-500">
+              {t('store.statusMembers', { defaultValue: '会員限定商品。' })}
+              <Link to={ROUTES.MEMBER} className="ml-1 font-mono text-violet-500 hover:text-violet-400">
+                Member status確認 →
+              </Link>
+            </span>
+          </div>
         </div>
       </motion.div>
-        <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px]">
-          <Badge variant="coming_soon" size="sm" />
-          <span className="text-gray-500 dark:text-gray-500">{t('store.statusComingSoon', { defaultValue: '販売準備中。公開通知を待機できます。' })}</span>
-        </div>
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-          <Badge variant="soldout" size="sm" />
-          <span className="text-gray-500 dark:text-gray-500">{t('store.statusSoldout', { defaultValue: '完売。再販情報は News / Fanclub で案内します。' })}</span>
-        </div>
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-          <Badge variant="fc" size="sm" label="MEMBERS" />
-          <span className="text-gray-500 dark:text-gray-500">{t('store.statusMembers', { defaultValue: '会員限定商品。Memberページで状態を確認できます。' })}</span>
-        </div>
-
 
       {loading && (
         <div className="mt-10 grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
@@ -117,7 +143,7 @@ export default function StorePage() {
       )}
 
       {visibleProducts.length > 0 && (
-        <div className="mt-10 grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
+        <div id="store-products" className="mt-10 grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
           {visibleProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

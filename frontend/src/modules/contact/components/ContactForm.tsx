@@ -187,6 +187,18 @@ export default function ContactForm() {
         <span className="text-emerald-700 group-hover:text-emerald-500">$</span>
         {status === 'submitting' ? t('contact.submitting') : `${t('contact.submit')} ↵`}
       </button>
+
+      <p className="text-xs text-gray-500 dark:text-gray-500">
+        送信前に
+        <Link to={ROUTES.LEGAL_PRIVACY} className="mx-1 underline hover:text-gray-700 dark:hover:text-gray-300">
+          プライバシーポリシー
+        </Link>
+        と
+        <Link to={ROUTES.LEGAL_TERMS} className="mx-1 underline hover:text-gray-700 dark:hover:text-gray-300">
+          利用規約
+        </Link>
+        をご確認ください。
+      </p>
     </form>
   )
 }
