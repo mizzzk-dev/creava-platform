@@ -65,6 +65,7 @@ cp frontend/.env.local.example frontend/.env.local
 | `VITE_SHOPIFY_STOREFRONT_TOKEN` | Shopify トークン（将来用） | 任意 |
 | `VITE_FORMSPREE_CONTACT_ID` | Formspree お問い合わせID | 任意 |
 | `VITE_FORMSPREE_REQUEST_ID` | Formspree 仕事依頼ID | 任意 |
+| `VITE_GA_MEASUREMENT_ID` | Google Analytics 4 測定ID（`G-` 形式） | 任意 |
 
 > **最小構成:** 何も設定しなくても起動できます。  
 > - Strapi 未設定 → ストアはモックデータで表示、他ページは空リスト  

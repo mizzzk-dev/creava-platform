@@ -200,6 +200,7 @@ npm run seed:backend
 | `VITE_STRAPI_API_TOKEN` | frontend | Strapi API トークン |
 | `VITE_CLERK_PUBLISHABLE_KEY` | frontend | Clerk 認証キー（未設定で認証無効） |
 | `VITE_SITE_URL` | frontend | 本番サイト URL |
+| `VITE_GA_MEASUREMENT_ID` | frontend | Google Analytics 4 測定ID（`G-` 形式、任意） |
 | `APP_KEYS` | backend | Strapi セッションキー（必須） |
 | `JWT_SECRET` | backend | JWT シークレット（必須） |
 | `FRONTEND_URL` | backend | CORS 許可オリジン（本番） |

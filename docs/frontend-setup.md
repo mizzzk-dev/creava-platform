@@ -65,6 +65,7 @@ cp frontend/.env.production.example frontend/.env.production
 | `VITE_SHOPIFY_STOREFRONT_TOKEN` | Shopify トークン（将来用） | 現在は不使用 |
 | `VITE_FORMSPREE_CONTACT_ID` | Formspree フォーム ID | 送信シミュレーション |
 | `VITE_FORMSPREE_REQUEST_ID` | Formspree フォーム ID | 送信シミュレーション |
+| `VITE_GA_MEASUREMENT_ID` | Google Analytics 4 の測定ID（`G-` 形式） | 計測無効（未送信） |
 
 ---
 
