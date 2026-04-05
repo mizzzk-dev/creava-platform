@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next'
-import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useStrapiCollection } from '@/hooks'
 import { getEventsList } from '@/modules/events/api'
@@ -38,20 +37,10 @@ function EventStatusBadge({ event }: { event: Event }) {
 
 export default function EventsPage() {
   const { t } = useTranslation()
-  const softRetried = useRef(false)
 
   const { items, loading, error, refetch } = useStrapiCollection<Event>(
     () => getEventsList({ pagination: { pageSize: 16, withCount: false } }),
   )
-
-  useEffect(() => {
-    if (!error || softRetried.current) return
-    softRetried.current = true
-    const timer = setTimeout(() => {
-      refetch()
-    }, 1200)
-    return () => clearTimeout(timer)
-  }, [error, refetch])
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-20">

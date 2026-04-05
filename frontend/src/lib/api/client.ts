@@ -182,14 +182,17 @@ export async function strapiGet<T>(
     } catch (err) {
       clearTimeout(timeout)
 
-      if (attempt < MAX_RETRIES) {
+      const isTimeout = err instanceof DOMException && err.name === 'AbortError'
+
+      // タイムアウト時のみ自動再試行し、403/CORS 等の恒久エラーで待たされないようにする
+      if (attempt < MAX_RETRIES && isTimeout) {
         await wait(getBackoffMs(attempt + 1))
         continue
       }
 
       if (err instanceof StrapiApiError) throw err
 
-      if (err instanceof DOMException && err.name === 'AbortError') {
+      if (isTimeout) {
         throw new StrapiApiError(
           408,
           'Request Timeout',
