@@ -23,6 +23,10 @@ const DEFAULT_TIMEOUT_MS = Number(import.meta.env.VITE_STRAPI_TIMEOUT_MS ?? 1500
 const MAX_RETRIES = Number(import.meta.env.VITE_STRAPI_RETRY_COUNT ?? 2)
 const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504])
 
+export interface StrapiRequestOptions {
+  auth?: 'none' | 'required' | 'auto'
+}
+
 /**
  * 環境変数から Strapi の接続情報を取得する
  */
@@ -34,7 +38,7 @@ function getStrapiConfig(): { baseUrl: string; token: string | undefined } {
     )
   }
   return {
-    baseUrl: baseUrl.replace(/\/$/, ''), // 末尾スラッシュを除去
+    baseUrl: baseUrl.replace(/\/$/, ''),
     token: import.meta.env.VITE_STRAPI_API_TOKEN || undefined,
   }
 }
@@ -46,7 +50,6 @@ function wait(ms: number): Promise<void> {
 }
 
 function getBackoffMs(attempt: number): number {
-  // 400ms, 800ms ... (軽量リトライ)
   return 400 * 2 ** (attempt - 1)
 }
 
@@ -134,23 +137,24 @@ async function parseJsonOrThrow<T>(
 
 /**
  * Strapi API への GET リクエスト共通クライアント
- *
- * @param path      - `/api` 以降のパス（例: `/news-items`）
- * @param queryString - buildQueryString() で生成したクエリ文字列（例: `?populate=*`）
  */
 export async function strapiGet<T>(
   path: string,
   queryString: string = '',
+  options: StrapiRequestOptions = { auth: 'auto' },
 ): Promise<T> {
   const { baseUrl, token } = getStrapiConfig()
+  const authMode = options.auth ?? 'auto'
 
   const url = `${baseUrl}/api${path}${queryString}`
 
-  const headers: Record<string, string> = {
-    Accept: 'application/json',
-  }
+  const headers: Record<string, string> = { Accept: 'application/json' }
 
-  if (token) {
+  // public GET は Authorization を送らない（不要 preflight 回避）
+  if (
+    authMode === 'required' ||
+    (authMode === 'auto' && token && import.meta.env.VITE_STRAPI_USE_TOKEN_FOR_PUBLIC === 'true')
+  ) {
     headers['Authorization'] = `Bearer ${token}`
   }
 
@@ -183,20 +187,14 @@ export async function strapiGet<T>(
         continue
       }
 
-      if (err instanceof StrapiApiError) {
-        throw err
-      }
+      if (err instanceof StrapiApiError) throw err
 
       if (err instanceof DOMException && err.name === 'AbortError') {
         throw new StrapiApiError(
           408,
           'Request Timeout',
           `[Strapi] リクエストがタイムアウトしました (${DEFAULT_TIMEOUT_MS}ms): ${url}`,
-          {
-            url,
-            contentType: 'unknown',
-            retried: attempt,
-          },
+          { url, contentType: 'unknown', retried: attempt },
         )
       }
 
@@ -204,11 +202,7 @@ export async function strapiGet<T>(
         0,
         'Network Error',
         `[Strapi] 通信に失敗しました。ネットワーク断、CORS、または Strapi 起動遅延の可能性があります: ${url}`,
-        {
-          url,
-          contentType: 'unknown',
-          retried: attempt,
-        },
+        { url, contentType: 'unknown', retried: attempt },
       )
     }
   }

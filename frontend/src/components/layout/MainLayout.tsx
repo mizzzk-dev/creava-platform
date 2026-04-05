@@ -3,6 +3,7 @@ import Header from './Header'
 import Footer from './Footer'
 import PreviewBanner from '@/components/common/PreviewBanner'
 import LoadingScreen from '@/components/common/LoadingScreen'
+import CookieConsentBanner from '@/components/common/CookieConsentBanner'
 
 export default function MainLayout() {
   return (
@@ -16,6 +17,7 @@ export default function MainLayout() {
           <Outlet />
         </main>
         <Footer />
+        <CookieConsentBanner />
       </div>
     </>
   )

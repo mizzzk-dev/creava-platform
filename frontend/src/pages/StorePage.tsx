@@ -44,6 +44,9 @@ export default function StorePage() {
         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
           {t('home.store.description')}
         </p>
+        <Link to={ROUTES.CART} className="mt-3 inline-flex text-xs font-mono text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
+          {t('cart.goToCart', { defaultValue: 'カートを見る' })} →
+        </Link>
         <div className="mt-4 flex flex-wrap gap-2">
           <span className="rounded-sm border border-gray-200 dark:border-gray-800 px-2 py-1 font-mono text-[10px] text-gray-400 dark:text-gray-600">
             {t('store.subtitle')}

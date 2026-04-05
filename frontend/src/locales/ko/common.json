@@ -12,7 +12,8 @@
     "faq": "FAQ",
     "store": "스토어",
     "openMenu": "메뉴 열기",
-    "closeMenu": "메뉴 닫기"
+    "closeMenu": "메뉴 닫기",
+    "member": "Member"
   },
   "footer": {
     "copyright": "© 2026 mizzz. All rights reserved."
@@ -21,7 +22,8 @@
     "loading": "로딩 중...",
     "error": "오류가 발생했습니다",
     "notFound": "페이지를 찾을 수 없습니다",
-    "backToHome": "홈으로 돌아가기"
+    "backToHome": "홈으로 돌아가기",
+    "retry": "Retry"
   },
   "auth": {
     "signIn": "로그인",
@@ -266,5 +268,28 @@
       "implementation": "구현 포인트",
       "result": "결과"
     }
+  },
+  "cart": {
+    "title": "Cart",
+    "description": "Review selected items.",
+    "add": "Add to cart",
+    "goToCart": "View cart",
+    "empty": "Your cart is empty.",
+    "goStore": "Go to store",
+    "remove": "Remove",
+    "subtotal": "Subtotal",
+    "checkout": "Checkout",
+    "clear": "Clear cart",
+    "fcRestricted": "Fanclub members only.",
+    "selectCheckout": "Select an item to checkout"
+  },
+  "member": {
+    "title": "My Page",
+    "description": "View your membership status and benefits.",
+    "signInPrompt": "Please sign in to view member info.",
+    "memberLabel": "Fanclub member",
+    "guestLabel": "Standard user",
+    "memberDesc": "You can access members-only content and products.",
+    "guestDesc": "Some content becomes available after joining Fanclub."
   }
 }

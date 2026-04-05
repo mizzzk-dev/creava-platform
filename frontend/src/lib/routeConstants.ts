@@ -15,8 +15,14 @@ export const ROUTES = {
   CONTACT: '/contact',
   STORE: '/store',
   STORE_DETAIL: '/store/:handle',
+  CART: '/store/cart',
+  MEMBER: '/member',
   PRICING: '/pricing',
   FAQ: '/faq',
+  LEGAL_PRIVACY: '/legal/privacy-policy',
+  LEGAL_TERMS: '/legal/terms',
+  LEGAL_COOKIE: '/legal/cookie-policy',
+  LEGAL_TRADE: '/legal/tokushoho',
   PREVIEW: '/preview',
 } as const
 

@@ -36,7 +36,7 @@ export default function ProductCard({ product }: Props) {
         </div>
 
         <div className="absolute bottom-2 left-2 flex items-center gap-1">
-          {product.accessStatus === 'fc_only' && <Badge variant="fc" size="sm" />}
+          {product.accessStatus === 'fc_only' && <Badge variant="fc" size="sm" label="MEMBERS" />}
           {product.accessStatus === 'limited' && <Badge variant="limited" size="sm" />}
         </div>
       </div>

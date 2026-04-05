@@ -18,6 +18,12 @@ const EventDetailPage = lazy(() => import('@/pages/EventDetailPage'))
 const ContactPage = lazy(() => import('@/pages/ContactPage'))
 const StorePage = lazy(() => import('@/pages/StorePage'))
 const StoreDetailPage = lazy(() => import('@/pages/StoreDetailPage'))
+const CartPage = lazy(() => import('@/pages/CartPage'))
+const MemberPage = lazy(() => import('@/pages/MemberPage'))
+const PrivacyPolicyPage = lazy(() => import('@/pages/legal/PrivacyPolicyPage'))
+const TermsPage = lazy(() => import('@/pages/legal/TermsPage'))
+const CookiePolicyPage = lazy(() => import('@/pages/legal/CookiePolicyPage'))
+const TokushohoPage = lazy(() => import('@/pages/legal/TokushohoPage'))
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
 const PreviewPage = lazy(() => import('@/pages/PreviewPage'))
 const AboutPage = lazy(() => import('@/pages/AboutPage'))
@@ -55,9 +61,15 @@ export function AppRoutes() {
           <Route path={ROUTES.CONTACT} element={<ContactPage />} />
           <Route path={ROUTES.STORE} element={<StorePage />} />
           <Route path={ROUTES.STORE_DETAIL} element={<StoreDetailPage />} />
+          <Route path={ROUTES.CART} element={<CartPage />} />
+          <Route path={ROUTES.MEMBER} element={<MemberPage />} />
           <Route path={ROUTES.ABOUT} element={<AboutPage />} />
           <Route path={ROUTES.PRICING} element={<PricingPage />} />
           <Route path={ROUTES.FAQ} element={<FAQPage />} />
+          <Route path={ROUTES.LEGAL_PRIVACY} element={<PrivacyPolicyPage />} />
+          <Route path={ROUTES.LEGAL_TERMS} element={<TermsPage />} />
+          <Route path={ROUTES.LEGAL_COOKIE} element={<CookiePolicyPage />} />
+          <Route path={ROUTES.LEGAL_TRADE} element={<TokushohoPage />} />
           <Route path={ROUTES.PREVIEW} element={<PreviewPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>

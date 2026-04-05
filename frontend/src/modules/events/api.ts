@@ -9,7 +9,18 @@ export function getEventsList(
   params?: StrapiQueryParams,
 ): Promise<StrapiListResponse<Event>> {
   return fetchCollection<Event>(ENDPOINT, {
+    fields: [
+      'title',
+      'slug',
+      'startAt',
+      'endAt',
+      'venue',
+      'accessStatus',
+      'limitedEndAt',
+      'archiveVisibleForFC',
+    ],
     sort: ['startAt:asc'],
+    pagination: { pageSize: 16, withCount: false },
     ...params,
   })
 }

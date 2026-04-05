@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, useLocation, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ROUTES } from '@/lib/routeConstants'
@@ -7,20 +7,24 @@ import AuthButton from '@/components/auth/AuthButton'
 import ThemeToggle from '@/components/common/ThemeToggle'
 import LangSwitcher from '@/components/common/LangSwitcher'
 import SiteLogo from '@/components/layout/SiteLogo'
+import { useCart } from '@/modules/cart/context'
 
 const NAV_ITEMS = [
-  { key: 'nav.news',    to: ROUTES.NEWS    },
-  { key: 'nav.blog',    to: ROUTES.BLOG    },
-  { key: 'nav.events',  to: ROUTES.EVENTS  },
-  { key: 'nav.store',   to: ROUTES.STORE   },
-  { key: 'nav.about',   to: ROUTES.ABOUT   },
+  { key: 'nav.news', to: ROUTES.NEWS },
+  { key: 'nav.blog', to: ROUTES.BLOG },
+  { key: 'nav.events', to: ROUTES.EVENTS },
+  { key: 'nav.store', to: ROUTES.STORE },
+  { key: 'nav.fanclub', to: ROUTES.FANCLUB },
   { key: 'nav.contact', to: ROUTES.CONTACT },
 ] as const
 
-/** AuthButton は Fanclub・Store ページのみ表示 */
 function useShowAuth() {
   const { pathname } = useLocation()
-  return pathname.startsWith(ROUTES.FANCLUB) || pathname.startsWith(ROUTES.STORE)
+  return (
+    pathname.startsWith(ROUTES.FANCLUB) ||
+    pathname.startsWith(ROUTES.STORE) ||
+    pathname.startsWith(ROUTES.MEMBER)
+  )
 }
 
 export default function Header() {
@@ -29,12 +33,17 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false)
   const { pathname } = useLocation()
   const showAuth = useShowAuth()
+  const { itemCount } = useCart()
 
-  useEffect(() => { setIsOpen(false) }, [pathname])
+  useEffect(() => {
+    setIsOpen(false)
+  }, [pathname])
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
+    return () => {
+      document.body.style.overflow = ''
+    }
   }, [isOpen])
 
   useEffect(() => {
@@ -45,23 +54,17 @@ export default function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-shadow duration-300 ${
+      className={`sticky top-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'shadow-[0_1px_12px_rgba(0,0,0,0.07)] dark:shadow-[0_1px_12px_rgba(0,0,0,0.4)]'
+          ? 'shadow-[0_1px_12px_rgba(0,0,0,0.07)] dark:shadow-[0_1px_12px_rgba(0,0,0,0.4)] backdrop-blur-md'
           : ''
       } glass dark:border-b dark:border-gray-800/60 border-b border-gray-100/80`}
     >
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3.5">
-        {/* logo */}
-        <NavLink
-          to={ROUTES.HOME}
-          className="transition-opacity hover:opacity-70"
-          aria-label="mizzz Home"
-        >
+        <NavLink to={ROUTES.HOME} className="transition-opacity hover:opacity-70" aria-label="mizzz Home">
           <SiteLogo />
         </NavLink>
 
-        {/* desktop nav */}
         <div className="hidden items-center gap-2 md:flex">
           <nav>
             <ul className="flex items-center gap-0.5">
@@ -84,15 +87,28 @@ export default function Header() {
             </ul>
           </nav>
 
-          <div className="ml-2 flex items-center gap-1 border-l border-gray-200/70 dark:border-gray-700/50 pl-3">
+          <div className="ml-2 flex items-center gap-2 border-l border-gray-200/70 dark:border-gray-700/50 pl-3">
+            <Link to={ROUTES.CART} className="relative text-xs text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">
+              cart
+              {itemCount > 0 && (
+                <span className="ml-1 inline-flex min-w-4 justify-center rounded-full bg-gray-900 px-1 text-[10px] text-white dark:bg-gray-100 dark:text-gray-900">
+                  {itemCount}
+                </span>
+              )}
+            </Link>
+            <Link to={ROUTES.MEMBER} className="text-xs text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">
+              {t('nav.member', { defaultValue: 'member' })}
+            </Link>
             <LangSwitcher />
             <ThemeToggle />
             {showAuth && <AuthButton />}
           </div>
         </div>
 
-        {/* mobile controls */}
         <div className="flex items-center gap-1 md:hidden">
+          <Link to={ROUTES.CART} className="text-[11px] font-mono text-gray-500 dark:text-gray-400">
+            cart{itemCount > 0 ? `(${itemCount})` : ''}
+          </Link>
           <LangSwitcher />
           <ThemeToggle />
           <button
@@ -108,7 +124,6 @@ export default function Header() {
         </div>
       </div>
 
-      {/* mobile drawer */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -137,6 +152,7 @@ export default function Header() {
                     </NavLink>
                   </li>
                 ))}
+                <li><NavLink to={ROUTES.MEMBER} className="block py-3 text-sm text-gray-500 dark:text-gray-400">{t('nav.member', { defaultValue: 'member' })}</NavLink></li>
               </ul>
               {showAuth && (
                 <div className="mt-4 border-t border-gray-100 dark:border-gray-800 pt-4">
