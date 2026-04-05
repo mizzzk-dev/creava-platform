@@ -32,6 +32,8 @@ export default function StoreDetailPage() {
   const { products } = useProductList(8)
   const { addItem } = useCart()
 
+  const canAddCart = product?.purchaseStatus === 'available' && product?.accessStatus !== 'fc_only'
+
   // 関連商品: 同一 accessStatus で現在商品を除く最大4件
   const related = products
     .filter((p) => p.slug !== handle && p.accessStatus === 'public')
@@ -171,7 +173,7 @@ export default function StoreDetailPage() {
               <PurchaseActions
                 product={product}
                 className="mt-8"
-                onAddToCart={product.purchaseStatus === 'available' ? () => addItem(product, 1) : undefined}
+                onAddToCart={canAddCart ? () => addItem(product, 1) : undefined}
               />
 
               <Link
@@ -180,6 +182,15 @@ export default function StoreDetailPage() {
               >
                 {t('cart.goToCart', { defaultValue: 'カートへ進む' })} →
               </Link>
+
+              {product.accessStatus === 'fc_only' && (
+                <Link
+                  to={ROUTES.MEMBER}
+                  className="mt-2 inline-flex items-center gap-1 text-xs font-mono text-violet-500 hover:text-violet-400"
+                >
+                  {t('store.fcMemberCheck', { defaultValue: '会員状態を確認する' })} →
+                </Link>
+              )}
 
               {/* 注意事項 */}
               <p className="mt-6 text-xs text-gray-300 dark:text-gray-700">

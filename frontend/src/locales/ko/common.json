@@ -16,7 +16,14 @@
     "member": "Member"
   },
   "footer": {
-    "copyright": "© 2026 mizzz. All rights reserved."
+    "copyright": "© 2026 mizzz. All rights reserved.",
+    "brandCopy": "홈페이지 중심 경험을 유지하며 Store/Fanclub/Contact로 자연스럽게 연결합니다.",
+    "privacy": "개인정보처리방침",
+    "terms": "이용약관",
+    "cookie": "쿠키 정책",
+    "trade": "특정상거래법 표기",
+    "cookieSettings": "쿠키 설정",
+    "cart": "카트"
   },
   "common": {
     "loading": "로딩 중...",
@@ -61,7 +68,13 @@
     "subtitle": "Stripe 중심 구매 동선 운영중",
     "stripeLead": "stripe-first / limited drops / fanclub bridge",
     "fanclubLead": "팬클럽 선공개 있음",
-    "emptySubCta": "팬클럽에서 선공개 소식 받기"
+    "emptySubCta": "팬클럽에서 선공개 소식 받기",
+    "detailHint": "구매 조건 확인",
+    "statusComingSoon": "판매 준비 중입니다. 공개 알림을 기다려 주세요.",
+    "statusSoldout": "품절 상태입니다. 재입고 소식은 News/Fanclub에서 안내됩니다.",
+    "statusMembers": "회원 전용 상품입니다. Member 페이지에서 상태를 확인하세요.",
+    "emptySupport": "공개 전 상품은 멤버 전용 안내에서 먼저 공지됩니다.",
+    "fcMemberCheck": "회원 상태 확인"
   },
   "form": {
     "required": "필수",
@@ -281,7 +294,17 @@
     "checkout": "Checkout",
     "clear": "Clear cart",
     "fcRestricted": "Fanclub members only.",
-    "selectCheckout": "Select an item to checkout"
+    "selectCheckout": "Select an item to checkout",
+    "helper": "수량과 구매 조건을 확인한 후 외부 결제로 이동합니다.",
+    "emptySub": "Store에서 상품을 추가해 결제를 시작하세요.",
+    "seeFanclub": "Fanclub 혜택 보기",
+    "itemSubtotal": "상품 소계",
+    "increase": "수량 늘리기",
+    "decrease": "수량 줄이기",
+    "totalItems": "상품 수",
+    "fcBlockedDetail": "장바구니에 회원 전용 상품이 포함되어 있습니다. 결제 전에 회원 상태를 확인하세요.",
+    "checkoutNote": "체크아웃 시 외부 결제 페이지로 이동합니다. 내용을 확인 후 진행해 주세요.",
+    "continueShopping": "쇼핑 계속하기"
   },
   "member": {
     "title": "My Page",
@@ -290,6 +313,16 @@
     "memberLabel": "Fanclub member",
     "guestLabel": "Standard user",
     "memberDesc": "You can access members-only content and products.",
-    "guestDesc": "Some content becomes available after joining Fanclub."
+    "guestDesc": "Some content becomes available after joining Fanclub.",
+    "pageLead": "회원 상태와 이용 가능한 동선을 한 번에 확인할 수 있습니다.",
+    "adminLabel": "관리자",
+    "adminDesc": "회원 전용 동선을 포함한 전체 콘텐츠 확인이 가능합니다.",
+    "benefitEarly": "회원 전용 콘텐츠 선공개",
+    "benefitStore": "Store 회원 전용 상품 안내",
+    "benefitEvent": "이벤트 선안내",
+    "actionStore": "Store 보기",
+    "actionFanclub": "Fanclub 확인",
+    "actionNews": "News 확인",
+    "joinHint": "FC 한정 상품과 선공개 정보는 Fanclub 가입 후 이용할 수 있습니다."
   }
 }

@@ -2,19 +2,25 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ROUTES } from '@/lib/routeConstants'
 import SiteLogo from '@/components/layout/SiteLogo'
+import { resetCookieConsent } from '@/modules/cookie/consent'
 
-const NAV_LINKS = [
+const PRIMARY_LINKS = [
   { key: 'nav.store', to: ROUTES.STORE },
   { key: 'nav.fanclub', to: ROUTES.FANCLUB },
+  { key: 'nav.member', to: ROUTES.MEMBER },
   { key: 'nav.contact', to: ROUTES.CONTACT },
+] as const
+
+const SUPPORT_LINKS = [
   { key: 'nav.faq', to: ROUTES.FAQ },
+  { key: 'footer.cart', to: ROUTES.CART },
 ] as const
 
 const LEGAL_LINKS = [
-  { label: 'プライバシーポリシー', to: ROUTES.LEGAL_PRIVACY },
-  { label: '利用規約', to: ROUTES.LEGAL_TERMS },
-  { label: 'Cookieポリシー', to: ROUTES.LEGAL_COOKIE },
-  { label: '特定商取引法', to: ROUTES.LEGAL_TRADE },
+  { key: 'footer.privacy', to: ROUTES.LEGAL_PRIVACY },
+  { key: 'footer.terms', to: ROUTES.LEGAL_TERMS },
+  { key: 'footer.cookie', to: ROUTES.LEGAL_COOKIE },
+  { key: 'footer.trade', to: ROUTES.LEGAL_TRADE },
 ] as const
 
 const SNS_LINKS = [
@@ -31,30 +37,24 @@ export default function Footer() {
     Boolean((import.meta.env as Record<string, string>)[envKey]),
   )
 
-  const reopenCookieBanner = () => {
-    localStorage.removeItem('mizzz_cookie_consent_v1')
-    window.location.reload()
-  }
-
   return (
     <footer className="border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950">
       <div className="mx-auto max-w-5xl px-4 py-12">
-        <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
-          <div className="space-y-2">
+        <div className="grid gap-10 md:grid-cols-[1.2fr_1fr_1fr_1fr]">
+          <div className="space-y-3">
             <Link to={ROUTES.HOME} className="transition-opacity hover:opacity-70 inline-block" aria-label="mizzz Home">
               <SiteLogo />
             </Link>
-            <p className="font-mono text-[11px] text-gray-400 dark:text-gray-600">creator homepage / portfolio + request hub + fanclub bridge</p>
-
+            <p className="text-xs text-gray-500 dark:text-gray-500">{t('footer.brandCopy')}</p>
             {activeSns.length > 0 && (
-              <div className="flex gap-3 pt-1">
+              <div className="flex flex-wrap gap-x-3 gap-y-2 pt-1">
                 {activeSns.map(({ label, envKey }) => (
                   <a
                     key={label}
                     href={(import.meta.env as Record<string, string>)[envKey]}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-mono text-[10px] text-gray-400 dark:text-gray-600 hover:text-gray-700 dark:hover:text-gray-400 transition-colors"
+                    className="font-mono text-[11px] text-gray-500 dark:text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
                   >
                     {label}
                   </a>
@@ -63,41 +63,54 @@ export default function Footer() {
             )}
           </div>
 
-          <div className="space-y-5">
-            <nav>
-              <ul className="flex flex-wrap gap-x-5 gap-y-2">
-                {NAV_LINKS.map(({ key, to }) => (
-                  <li key={to}>
-                    <Link to={to} className="text-xs text-gray-400 dark:text-gray-600 transition-colors hover:text-gray-700 dark:hover:text-gray-300">
-                      {t(key)}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-
-            <nav>
-              <ul className="flex flex-wrap gap-x-4 gap-y-2">
-                {LEGAL_LINKS.map(({ label, to }) => (
-                  <li key={to}>
-                    <Link to={to} className="text-[11px] text-gray-400 dark:text-gray-600 transition-colors hover:text-gray-700 dark:hover:text-gray-300">
-                      {label}
-                    </Link>
-                  </li>
-                ))}
-                <li>
-                  <button onClick={reopenCookieBanner} className="text-[11px] text-gray-400 dark:text-gray-600 hover:text-gray-700 dark:hover:text-gray-300">
-                    Cookie設定
-                  </button>
+          <nav aria-label="Primary footer navigation">
+            <p className="font-mono text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-600">Explore</p>
+            <ul className="mt-3 space-y-2">
+              {PRIMARY_LINKS.map(({ key, to }) => (
+                <li key={to}>
+                  <Link to={to} className="text-sm text-gray-500 dark:text-gray-500 transition-colors hover:text-gray-800 dark:hover:text-gray-200">
+                    {t(key)}
+                  </Link>
                 </li>
-              </ul>
-            </nav>
-          </div>
+              ))}
+            </ul>
+          </nav>
+
+          <nav aria-label="Support footer navigation">
+            <p className="font-mono text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-600">Support</p>
+            <ul className="mt-3 space-y-2">
+              {SUPPORT_LINKS.map(({ key, to }) => (
+                <li key={to}>
+                  <Link to={to} className="text-sm text-gray-500 dark:text-gray-500 transition-colors hover:text-gray-800 dark:hover:text-gray-200">
+                    {t(key)}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <nav aria-label="Legal footer navigation">
+            <p className="font-mono text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-600">Legal</p>
+            <ul className="mt-3 space-y-2">
+              {LEGAL_LINKS.map(({ key, to }) => (
+                <li key={to}>
+                  <Link to={to} className="text-sm text-gray-500 dark:text-gray-500 transition-colors hover:text-gray-800 dark:hover:text-gray-200">
+                    {t(key)}
+                  </Link>
+                </li>
+              ))}
+              <li>
+                <button onClick={resetCookieConsent} className="text-left text-sm text-gray-500 dark:text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
+                  {t('footer.cookieSettings')}
+                </button>
+              </li>
+            </ul>
+          </nav>
         </div>
 
-        <div className="mt-10 flex items-center justify-between border-t border-gray-50 dark:border-gray-900 pt-6">
-          <p className="font-mono text-[11px] text-gray-300 dark:text-gray-700">{t('footer.copyright')}</p>
-          <span className="font-mono text-[10px] text-gray-200 dark:text-gray-800 select-none">// mizzz</span>
+        <div className="mt-10 flex flex-col gap-3 border-t border-gray-50 dark:border-gray-900 pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <p className="font-mono text-[11px] text-gray-400 dark:text-gray-600">{t('footer.copyright')}</p>
+          <span className="font-mono text-[10px] text-gray-300 dark:text-gray-700 select-none">// mizzz</span>
         </div>
       </div>
     </footer>

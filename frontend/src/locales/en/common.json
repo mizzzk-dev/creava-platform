@@ -16,7 +16,14 @@
     "member": "Member"
   },
   "footer": {
-    "copyright": "© 2026 mizzz. All rights reserved."
+    "copyright": "© 2026 mizzz. All rights reserved.",
+    "brandCopy": "Homepage-first experience with natural paths to Store, Fanclub, and Contact.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Use",
+    "cookie": "Cookie Policy",
+    "trade": "Commercial Disclosure",
+    "cookieSettings": "Cookie settings",
+    "cart": "Cart"
   },
   "common": {
     "loading": "Loading...",
@@ -61,7 +68,13 @@
     "subtitle": "Now live with Stripe-first flow",
     "stripeLead": "stripe-first / limited drops / fanclub bridge",
     "fanclubLead": "fanclub early access",
-    "emptySubCta": "Get early drops via Fanclub"
+    "emptySubCta": "Get early drops via Fanclub",
+    "detailHint": "Check purchase terms",
+    "statusComingSoon": "Coming soon. We will announce launch timing.",
+    "statusSoldout": "Sold out. Restock updates will be posted in News/Fanclub.",
+    "statusMembers": "Members-only item. Check your status on Member page.",
+    "emptySupport": "Upcoming drops are announced first through member channels.",
+    "fcMemberCheck": "Check member status"
   },
   "form": {
     "required": "Required",
@@ -281,7 +294,17 @@
     "checkout": "Checkout",
     "clear": "Clear cart",
     "fcRestricted": "Fanclub members only.",
-    "selectCheckout": "Select an item to checkout"
+    "selectCheckout": "Select an item to checkout",
+    "helper": "Confirm quantity and purchase conditions before external checkout.",
+    "emptySub": "Add items from Store to start checkout.",
+    "seeFanclub": "See Fanclub perks",
+    "itemSubtotal": "Item subtotal",
+    "increase": "Increase quantity",
+    "decrease": "Decrease quantity",
+    "totalItems": "Items",
+    "fcBlockedDetail": "Members-only items are in your cart. Please verify membership before checkout.",
+    "checkoutNote": "Checkout redirects to an external payment page. Please review details first.",
+    "continueShopping": "Continue shopping"
   },
   "member": {
     "title": "My Page",
@@ -290,6 +313,16 @@
     "memberLabel": "Fanclub member",
     "guestLabel": "Standard user",
     "memberDesc": "You can access members-only content and products.",
-    "guestDesc": "Some content becomes available after joining Fanclub."
+    "guestDesc": "Some content becomes available after joining Fanclub.",
+    "pageLead": "See your membership status and available paths in one place.",
+    "adminLabel": "Admin",
+    "adminDesc": "You can review all content including member-only paths.",
+    "benefitEarly": "Early access to member-only content",
+    "benefitStore": "Members-only Store item access",
+    "benefitEvent": "Priority event announcements",
+    "actionStore": "Go to Store",
+    "actionFanclub": "Check Fanclub",
+    "actionNews": "Check News",
+    "joinHint": "Members-only items and early drops become available after joining Fanclub."
   }
 }

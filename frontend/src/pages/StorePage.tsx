@@ -8,6 +8,7 @@ import PageHead from '@/components/seo/PageHead'
 import StructuredData from '@/components/seo/StructuredData'
 import SkeletonProductCard from '@/components/common/SkeletonProductCard'
 import { ROUTES } from '@/lib/routeConstants'
+import Badge from '@/components/common/Badge'
 import { SITE_URL } from '@/lib/seo'
 
 export default function StorePage() {
@@ -56,6 +57,19 @@ export default function StorePage() {
           </span>
         </div>
       </motion.div>
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px]">
+          <Badge variant="coming_soon" size="sm" />
+          <span className="text-gray-500 dark:text-gray-500">{t('store.statusComingSoon', { defaultValue: '販売準備中。公開通知を待機できます。' })}</span>
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
+          <Badge variant="soldout" size="sm" />
+          <span className="text-gray-500 dark:text-gray-500">{t('store.statusSoldout', { defaultValue: '完売。再販情報は News / Fanclub で案内します。' })}</span>
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
+          <Badge variant="fc" size="sm" label="MEMBERS" />
+          <span className="text-gray-500 dark:text-gray-500">{t('store.statusMembers', { defaultValue: '会員限定商品。Memberページで状態を確認できます。' })}</span>
+        </div>
+
 
       {loading && (
         <div className="mt-10 grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
@@ -76,6 +90,9 @@ export default function StorePage() {
           </p>
           <p className="mt-2 text-xs text-gray-400 dark:text-gray-600">
             {t('store.empty')}
+          </p>
+          <p className="mt-2 text-xs text-gray-400 dark:text-gray-600">
+            {t('store.emptySupport', { defaultValue: '公開前アイテムは限定案内で先行告知します。' })}
           </p>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-4">
             <Link

@@ -16,7 +16,14 @@
     "member": "マイページ"
   },
   "footer": {
-    "copyright": "© 2026 mizzz. All rights reserved."
+    "copyright": "© 2026 mizzz. All rights reserved.",
+    "brandCopy": "ホームページを軸に、Store / Fanclub / Contact へ自然につながる導線を提供します。",
+    "privacy": "プライバシーポリシー",
+    "terms": "利用規約",
+    "cookie": "Cookieポリシー",
+    "trade": "特定商取引法",
+    "cookieSettings": "Cookie設定",
+    "cart": "カート"
   },
   "common": {
     "loading": "読み込み中...",
@@ -61,7 +68,13 @@
     "subtitle": "Stripe 主軸で公開中",
     "stripeLead": "stripe-first / limited drops / fanclub bridge",
     "fanclubLead": "fanclub先行あり",
-    "emptySubCta": "Fanclubで先行案内を受け取る"
+    "emptySubCta": "Fanclubで先行案内を受け取る",
+    "detailHint": "購入条件を確認",
+    "statusComingSoon": "販売準備中。公開通知を待機できます。",
+    "statusSoldout": "完売。再販情報は News / Fanclub で案内します。",
+    "statusMembers": "会員限定商品。Memberページで状態を確認できます。",
+    "emptySupport": "公開前アイテムは限定案内で先行告知します。",
+    "fcMemberCheck": "会員状態を確認する"
   },
   "form": {
     "required": "必須",
@@ -281,7 +294,17 @@
     "checkout": "チェックアウトへ",
     "clear": "カートを空にする",
     "fcRestricted": "FC会員のみ購入できます。",
-    "selectCheckout": "購入商品を選んでください"
+    "selectCheckout": "購入商品を選んでください",
+    "helper": "数量・購入条件を確認して、外部決済へ進みます。",
+    "emptySub": "Store から気になる商品を追加してください。",
+    "seeFanclub": "Fanclub特典を見る",
+    "itemSubtotal": "小計",
+    "increase": "数量を増やす",
+    "decrease": "数量を減らす",
+    "totalItems": "商品点数",
+    "fcBlockedDetail": "FC限定商品が含まれています。決済前に会員ステータスをご確認ください。",
+    "checkoutNote": "チェックアウトは外部決済ページへ遷移します。内容を確認してから進んでください。",
+    "continueShopping": "買い物を続ける"
   },
   "member": {
     "title": "マイページ",
@@ -290,6 +313,16 @@
     "memberLabel": "FC会員",
     "guestLabel": "一般ユーザー",
     "memberDesc": "限定コンテンツ・商品の閲覧/購入が可能です。",
-    "guestDesc": "一部コンテンツは Fanclub 参加後に閲覧できます。"
+    "guestDesc": "一部コンテンツは Fanclub 参加後に閲覧できます。",
+    "pageLead": "会員状態と利用できる導線をまとめて確認できます。",
+    "adminLabel": "管理者",
+    "adminDesc": "会員限定導線を含む全コンテンツの確認が可能です。",
+    "benefitEarly": "限定コンテンツ先行公開",
+    "benefitStore": "Store の会員限定商品案内",
+    "benefitEvent": "イベント先行案内",
+    "actionStore": "Storeを見る",
+    "actionFanclub": "Fanclubを確認",
+    "actionNews": "Newsを確認",
+    "joinHint": "FC限定商品や先行情報は Fanclub 参加後に利用できます。"
   }
 }

@@ -47,7 +47,7 @@ export default function Header() {
   }, [isOpen])
 
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 12)
+    const handler = () => setScrolled(window.scrollY > 10)
     window.addEventListener('scroll', handler, { passive: true })
     return () => window.removeEventListener('scroll', handler)
   }, [])
@@ -56,9 +56,9 @@ export default function Header() {
     <header
       className={`sticky top-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'shadow-[0_1px_12px_rgba(0,0,0,0.07)] dark:shadow-[0_1px_12px_rgba(0,0,0,0.4)] backdrop-blur-md'
-          : ''
-      } glass dark:border-b dark:border-gray-800/60 border-b border-gray-100/80`}
+          ? 'border-gray-200/90 bg-white/92 shadow-[0_6px_28px_rgba(0,0,0,0.08)] backdrop-blur-lg dark:border-gray-800/85 dark:bg-gray-950/92 dark:shadow-[0_6px_28px_rgba(0,0,0,0.45)]'
+          : 'border-gray-100/80 bg-white/86 backdrop-blur-md dark:border-gray-800/60 dark:bg-gray-950/80'
+      } border-b`}
     >
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3.5">
         <NavLink to={ROUTES.HOME} className="transition-opacity hover:opacity-70" aria-label="mizzz Home">
@@ -75,8 +75,8 @@ export default function Header() {
                     className={({ isActive }) =>
                       `relative rounded-md px-3 py-1.5 text-sm transition-colors duration-150 ${
                         isActive
-                          ? 'font-medium text-gray-900 bg-gray-100/80 dark:text-gray-100 dark:bg-gray-800/80'
-                          : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100/50 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800/50'
+                          ? 'bg-gray-100/80 font-medium text-gray-900 dark:bg-gray-800/80 dark:text-gray-100'
+                          : 'text-gray-500 hover:bg-gray-100/50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/50 dark:hover:text-gray-100'
                       }`
                     }
                   >
@@ -88,15 +88,29 @@ export default function Header() {
           </nav>
 
           <div className="ml-2 flex items-center gap-2 border-l border-gray-200/70 dark:border-gray-700/50 pl-3">
-            <Link to={ROUTES.CART} className="relative text-xs text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">
-              cart
+            <Link
+              to={ROUTES.CART}
+              className={`relative rounded px-1.5 py-1 text-xs transition-colors ${
+                pathname.startsWith(ROUTES.CART)
+                  ? 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100'
+                  : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+              }`}
+            >
+              {t('footer.cart', { defaultValue: 'カート' })}
               {itemCount > 0 && (
                 <span className="ml-1 inline-flex min-w-4 justify-center rounded-full bg-gray-900 px-1 text-[10px] text-white dark:bg-gray-100 dark:text-gray-900">
                   {itemCount}
                 </span>
               )}
             </Link>
-            <Link to={ROUTES.MEMBER} className="text-xs text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">
+            <Link
+              to={ROUTES.MEMBER}
+              className={`rounded px-1.5 py-1 text-xs transition-colors ${
+                pathname.startsWith(ROUTES.MEMBER)
+                  ? 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100'
+                  : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+              }`}
+            >
               {t('nav.member', { defaultValue: 'member' })}
             </Link>
             <LangSwitcher />
@@ -106,8 +120,8 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-1 md:hidden">
-          <Link to={ROUTES.CART} className="text-[11px] font-mono text-gray-500 dark:text-gray-400">
-            cart{itemCount > 0 ? `(${itemCount})` : ''}
+          <Link to={ROUTES.CART} className="rounded px-1 text-[11px] font-mono text-gray-500 dark:text-gray-400">
+            {t('footer.cart', { defaultValue: 'カート' })}{itemCount > 0 ? `(${itemCount})` : ''}
           </Link>
           <LangSwitcher />
           <ThemeToggle />
@@ -152,7 +166,16 @@ export default function Header() {
                     </NavLink>
                   </li>
                 ))}
-                <li><NavLink to={ROUTES.MEMBER} className="block py-3 text-sm text-gray-500 dark:text-gray-400">{t('nav.member', { defaultValue: 'member' })}</NavLink></li>
+                <li>
+                  <NavLink to={ROUTES.MEMBER} className="block py-3 text-sm text-gray-500 dark:text-gray-400">
+                    {t('nav.member', { defaultValue: 'member' })}
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to={ROUTES.CART} className="block py-3 text-sm text-gray-500 dark:text-gray-400">
+                    {t('footer.cart', { defaultValue: 'カート' })}
+                  </NavLink>
+                </li>
               </ul>
               {showAuth && (
                 <div className="mt-4 border-t border-gray-100 dark:border-gray-800 pt-4">

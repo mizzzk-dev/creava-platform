@@ -6,11 +6,12 @@ export interface CookieConsentState {
   updatedAt: string
 }
 
-const KEY = 'mizzz_cookie_consent_v1'
+export const COOKIE_CONSENT_KEY = 'mizzz_cookie_consent_v1'
+export const COOKIE_CONSENT_EVENT = 'mizzz:cookie-consent-updated'
 
 export function loadCookieConsent(): CookieConsentState | null {
   if (typeof window === 'undefined') return null
-  const raw = localStorage.getItem(KEY)
+  const raw = localStorage.getItem(COOKIE_CONSENT_KEY)
   if (!raw) return null
 
   try {
@@ -28,8 +29,14 @@ export function loadCookieConsent(): CookieConsentState | null {
 
 export function saveCookieConsent(state: CookieConsentState): void {
   if (typeof window === 'undefined') return
-  localStorage.setItem(KEY, JSON.stringify(state))
-  window.dispatchEvent(new CustomEvent('mizzz:cookie-consent-updated', { detail: state }))
+  localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(state))
+  window.dispatchEvent(new CustomEvent(COOKIE_CONSENT_EVENT, { detail: state }))
+}
+
+export function resetCookieConsent(): void {
+  if (typeof window === 'undefined') return
+  localStorage.removeItem(COOKIE_CONSENT_KEY)
+  window.dispatchEvent(new CustomEvent(COOKIE_CONSENT_EVENT, { detail: null }))
 }
 
 export function setAnalyticsEnabled(enabled: boolean): void {

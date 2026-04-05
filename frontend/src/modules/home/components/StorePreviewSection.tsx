@@ -62,6 +62,7 @@ export default function StorePreviewSection() {
                       src={product.previewImage.url}
                       alt={product.previewImage.alt ?? product.title}
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                      loading="lazy"
                     />
                   ) : (
                     <div className="dot-grid flex h-full w-full flex-col items-center justify-center gap-2 opacity-40">
