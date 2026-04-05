@@ -14,7 +14,8 @@
     "openMenu": "メニューを開く",
     "closeMenu": "メニューを閉じる",
     "member": "マイページ",
-    "skipToContent": "コンテンツへスキップ"
+    "skipToContent": "コンテンツへスキップ",
+    "request": "仕事依頼"
   },
   "footer": {
     "copyright": "© 2026 mizzz. All rights reserved.",
@@ -176,13 +177,14 @@
   },
   "home": {
     "hero": {
-      "headline": "クリエイティブな作品を",
-      "subCopy": "映像・写真・音楽を中心に活動しています。",
+      "headline": "ブランドの世界観を、成果につながる体験へ。",
+      "subCopy": "映像・写真・音楽・Webを横断し、訴求と導線を設計します。",
       "ctaWorks": "作品を見る",
       "ctaContact": "お問い合わせ",
       "ctaFanclub": "ファンクラブ",
-      "hubLine": "works / latest / pricing / contact",
-      "ctaPricing": "料金を見る"
+      "hubLine": "request / contact / works / latest",
+      "ctaPricing": "料金を見る",
+      "ctaRequest": "仕事依頼をする"
     },
     "latest": {
       "title": "最新情報",
@@ -190,11 +192,16 @@
       "blog": "ブログ",
       "events": "イベント",
       "viewAll": "すべて見る",
-      "empty": "コンテンツがありません"
+      "empty": "コンテンツがありません",
+      "emptyNews": "ニュースは準備中です。公開までしばらくお待ちください。",
+      "emptyBlog": "ブログ記事は準備中です。公開後に更新情報をお届けします。",
+      "emptyEvents": "現在告知中のイベントはありません。次回開催をお待ちください。"
     },
     "works": {
       "title": "作品",
-      "viewAll": "作品一覧へ"
+      "viewAll": "作品一覧へ",
+      "empty": "掲載中の注目作品はありません。要件に合わせた実績紹介が可能です。",
+      "emptyCta": "制作相談をする"
     },
     "about": {
       "title": "About",

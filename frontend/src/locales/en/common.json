@@ -14,7 +14,8 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "member": "Member",
-    "skipToContent": "Skip to main content"
+    "skipToContent": "Skip to main content",
+    "request": "Request"
   },
   "footer": {
     "copyright": "© 2026 mizzz. All rights reserved.",
@@ -176,13 +177,14 @@
   },
   "home": {
     "hero": {
-      "headline": "Creative Works",
-      "subCopy": "Creating across film, photography, and music.",
+      "headline": "Build a brand story that converts into real requests.",
+      "subCopy": "Film, photo, music, and web—planned as one consistent experience.",
       "ctaWorks": "View Works",
       "ctaContact": "Contact",
       "ctaFanclub": "Fan Club",
-      "hubLine": "works / latest / pricing / contact",
-      "ctaPricing": "View pricing"
+      "hubLine": "request / contact / works / latest",
+      "ctaPricing": "View pricing",
+      "ctaRequest": "Start a Request"
     },
     "latest": {
       "title": "Latest",
@@ -190,11 +192,16 @@
       "blog": "Blog",
       "events": "Events",
       "viewAll": "View all",
-      "empty": "No content available"
+      "empty": "No content available",
+      "emptyNews": "News updates are being prepared. Please check back soon.",
+      "emptyBlog": "New blog posts are in preparation. Updates will be posted here.",
+      "emptyEvents": "No announced events at the moment. Upcoming schedules will be posted soon."
     },
     "works": {
       "title": "Works",
-      "viewAll": "View all works"
+      "viewAll": "View all works",
+      "empty": "No featured works are published yet. We can share relevant case examples for your brief.",
+      "emptyCta": "Discuss your project"
     },
     "about": {
       "title": "About",

@@ -133,4 +133,9 @@
   .dark .bento-card:hover {
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4);
   }
+
+  /* shared focus ring for interactive components */
+  .focus-ring {
+    @apply rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/80 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-950;
+  }
 }

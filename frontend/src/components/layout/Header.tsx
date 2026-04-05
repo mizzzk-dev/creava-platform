@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { key: 'nav.events', to: ROUTES.EVENTS },
   { key: 'nav.store', to: ROUTES.STORE },
   { key: 'nav.fanclub', to: ROUTES.FANCLUB },
+  { key: 'nav.request', to: `${ROUTES.CONTACT}?tab=request` },
   { key: 'nav.contact', to: ROUTES.CONTACT },
 ] as const
 
@@ -220,7 +221,7 @@ export default function Header() {
                     onFocus={() => prefetchRoute(to)}
                     onTouchStart={() => prefetchRoute(to)}
                     className={({ isActive }) =>
-                      `relative rounded-md px-3 py-1.5 text-sm transition-colors duration-150 ${
+                      `focus-ring relative rounded-md px-3 py-1.5 text-sm transition-colors duration-150 ${
                         isActive
                           ? 'bg-gray-100/80 font-medium text-gray-900 dark:bg-gray-800/80 dark:text-gray-100'
                           : 'text-gray-500 hover:bg-gray-100/50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/50 dark:hover:text-gray-100'

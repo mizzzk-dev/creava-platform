@@ -95,6 +95,23 @@ function BentoGrid({ items }: { items: Work[] }) {
   )
 }
 
+function WorksPlaceholder({ count }: { count: number }) {
+  return (
+    <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4">
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          className="dot-grid flex aspect-square items-center justify-center rounded-sm border border-dashed border-gray-200 bg-gray-50/60 dark:border-gray-800 dark:bg-gray-900/40"
+        >
+          <span className="font-mono text-[10px] text-gray-400 dark:text-gray-600">
+            slot_{String(i + 1).padStart(2, '0')}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function FeaturedWorksSection() {
   const { t } = useTranslation()
   const { items, loading } = useStrapiCollection<Work>(() =>
@@ -132,10 +149,21 @@ export default function FeaturedWorksSection() {
       )}
 
       {!loading && featured.length === 0 && (
-        <p className="mt-8 font-mono text-[11px] text-gray-300">{t('access.noContent')}</p>
+        <div className="mt-8 rounded-sm border border-dashed border-gray-200 p-6 dark:border-gray-800">
+          <p className="font-mono text-[11px] text-gray-400 dark:text-gray-500">
+            {t('home.works.empty')}
+          </p>
+          <Link
+            to={ROUTES.CONTACT}
+            className="focus-ring mt-3 inline-flex items-center gap-1 text-sm text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
+          >
+            {t('home.works.emptyCta')} →
+          </Link>
+        </div>
       )}
 
       {!loading && featured.length > 0 && <BentoGrid items={featured} />}
+      {!loading && featured.length > 0 && featured.length < 4 && <WorksPlaceholder count={4 - featured.length} />}
 
       {/* view all link */}
       {!loading && featured.length > 0 && (

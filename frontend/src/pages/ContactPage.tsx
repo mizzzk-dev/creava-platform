@@ -1,17 +1,30 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import ContactForm from '@/modules/contact/components/ContactForm'
 import RequestForm from '@/modules/contact/components/RequestForm'
 import PageHead from '@/components/seo/PageHead'
 import { ROUTES } from '@/lib/routeConstants'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 type Tab = 'contact' | 'request'
 
 export default function ContactPage() {
   const { t } = useTranslation()
-  const [activeTab, setActiveTab] = useState<Tab>('contact')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const initialTab = useMemo<Tab>(() => (
+    searchParams.get('tab') === 'request' ? 'request' : 'contact'
+  ), [searchParams])
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab)
+
+  useEffect(() => {
+    setActiveTab(initialTab)
+  }, [initialTab])
+
+  const onTabClick = (tab: Tab) => {
+    setActiveTab(tab)
+    setSearchParams(tab === 'request' ? { tab: 'request' } : {})
+  }
 
   return (
     <section className="mx-auto max-w-2xl px-4 py-20">
@@ -53,7 +66,7 @@ export default function ContactPage() {
             {(['contact', 'request'] as Tab[]).map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => onTabClick(tab)}
                 className={`px-5 py-3 font-mono text-[11px] uppercase tracking-widest transition-colors ${
                   activeTab === tab
                     ? 'text-emerald-400 border-b-2 border-emerald-600 bg-gray-900'

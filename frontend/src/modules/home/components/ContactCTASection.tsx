@@ -2,9 +2,11 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { ROUTES } from '@/lib/routeConstants'
+import { useHomeCtaAnalytics } from '@/modules/analytics/useHomeCtaAnalytics'
 
 export default function ContactCTASection() {
   const { t } = useTranslation()
+  const trackHomeCta = useHomeCtaAnalytics('contact_cta')
 
   return (
     <motion.section
@@ -30,7 +32,8 @@ export default function ContactCTASection() {
         <div className="flex shrink-0 flex-col items-start gap-2">
           <Link
             to={ROUTES.CONTACT}
-            className="group inline-flex items-center gap-2 bg-gray-900 dark:bg-white px-7 py-3 text-sm font-medium tracking-wide text-white dark:text-gray-900 transition-all hover:bg-gray-700 dark:hover:bg-gray-100"
+            onClick={() => trackHomeCta('contact')}
+            className="focus-ring group inline-flex items-center gap-2 bg-gray-900 dark:bg-white px-7 py-3 text-sm font-medium tracking-wide text-white dark:text-gray-900 transition-all hover:bg-gray-700 dark:hover:bg-gray-100"
           >
             {t('home.contact.cta')}
             <span className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
