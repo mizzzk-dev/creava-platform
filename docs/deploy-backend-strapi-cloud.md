@@ -261,8 +261,13 @@ npx strapi export --no-encrypt -f backup-$(date +%Y%m%d)
 
 ### API が 403 を返す
 
-Public Role の権限設定が未完了です。  
-`Settings > Roles > Public` で `find` / `findOne` を有効化してください。
+次の順で確認してください。
+
+1. `Settings > Roles > Public` で対象コンテンツタイプの `find` / `findOne` を有効化
+2. 記事が `Published` 状態であることを確認（Draft は公開 API に出ません）
+3. `news-item` は `backend/src/api/news-item/routes/news-items.ts` で `find` / `findOne` を `auth: false` にしているため、Cloud 側権限差分の影響を受けにくい構成です
+
+> それでも 403 が続く場合は、Strapi Cloud の再デプロイ後に `/api/news-items` を直接叩いて挙動を確認してください。
 
 ### CORS エラー
 
