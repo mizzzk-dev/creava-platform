@@ -325,7 +325,14 @@
     "fcBlockedDetail": "장바구니에 회원 전용 상품이 포함되어 있습니다. 결제 전에 회원 상태를 확인하세요.",
     "checkoutNote": "체크아웃 시 외부 결제 페이지로 이동합니다. 내용을 확인 후 진행해 주세요.",
     "continueShopping": "쇼핑 계속하기",
-    "dragHint": "길게 눌러 드래그"
+    "dragHint": "길게 눌러 드래그",
+    "savedPaymentTitle": "저장된 결제 정보",
+    "savedShippingTitle": "저장된 배송지",
+    "manageAccountInfo": "마이페이지에서 회원정보 관리",
+    "guestCheckoutTitle": "게스트 구매 정보",
+    "guestCheckoutLead": "게스트 사용자는 결제 시 결제/배송 정보를 입력해 주세요.",
+    "guestPaymentPlaceholder": "결제 정보 (예: Visa **** 4242)",
+    "guestShippingPlaceholder": "배송지 주소"
   },
   "member": {
     "title": "My Page",
@@ -380,6 +387,10 @@
     "accountShippingTitle": "배송지 정보",
     "accountShippingDesc": "배송지 주소 및 수령 설정 변경 동선을 확인합니다.",
     "accountShippingAction": "배송지 문의하기",
+    "accountDisplayNamePlaceholder": "표시 이름",
+    "accountEmailPlaceholder": "이메일 주소",
+    "accountSaveAction": "회원정보 저장",
+    "accountSaveError": "회원정보 저장에 실패했습니다.",
     "authLead": "소셜 로그인 연동 지원 상태를 확인할 수 있습니다.",
     "authGoogle": "Google 로그인",
     "authApple": "Apple 로그인",

@@ -1,19 +1,41 @@
 import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import PageHead from '@/components/seo/PageHead'
 import { useCart } from '@/modules/cart/context'
 import { ROUTES, detailPath } from '@/lib/routeConstants'
 import { formatPriceNum } from '@/utils'
 import { useCurrentUser } from '@/hooks'
+import { getMemberAccountSettings } from '@/modules/member/api'
+import type { MemberAccountSettings } from '@/modules/member/types'
 
 export default function CartPage() {
   const { t } = useTranslation()
   const { items, subtotal, itemCount, updateQuantity, removeItem, clearCart } = useCart()
   const { user, isSignedIn } = useCurrentUser()
+  const [accountSettings, setAccountSettings] = useState<MemberAccountSettings | null>(null)
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string>('')
+  const [selectedShippingId, setSelectedShippingId] = useState<string>('')
+  const [guestPayment, setGuestPayment] = useState('')
+  const [guestShipping, setGuestShipping] = useState('')
 
   const canPurchaseFc = isSignedIn && (user?.role === 'member' || user?.role === 'admin')
   const hasFcOnlyBlocked = items.some((item) => item.accessStatus === 'fc_only' && !canPurchaseFc)
   const checkoutLink = items.find((item) => item.stripeLink)?.stripeLink
+
+  useEffect(() => {
+    if (!isSignedIn) {
+      setAccountSettings(null)
+      return
+    }
+    getMemberAccountSettings({ email: user?.email ?? null }).then((settings) => {
+      setAccountSettings(settings)
+      setSelectedPaymentId(settings.payments[0]?.id ?? '')
+      setSelectedShippingId(settings.shippings[0]?.id ?? '')
+    }).catch(() => {
+      setAccountSettings(null)
+    })
+  }, [isSignedIn, user?.email])
 
   return (
     <section className="mx-auto max-w-4xl px-4 py-20">
@@ -109,6 +131,48 @@ export default function CartPage() {
             <p className="mt-4 text-xs text-gray-400 dark:text-gray-600">
               {t('cart.checkoutNote', { defaultValue: 'チェックアウトは外部決済ページへ遷移します。内容を確認してから進んでください。' })}
             </p>
+            {isSignedIn && accountSettings ? (
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="rounded border border-gray-200 p-3 text-xs dark:border-gray-700">
+                  <p className="font-medium text-gray-800 dark:text-gray-200">{t('cart.savedPaymentTitle', { defaultValue: '登録済み支払い情報' })}</p>
+                  <ul className="mt-2 space-y-1">
+                    {accountSettings.payments.map((payment) => (
+                      <li key={payment.id}>
+                        <label className="flex items-start gap-2">
+                          <input type="radio" name="saved-payment" checked={selectedPaymentId === payment.id} onChange={() => setSelectedPaymentId(payment.id)} />
+                          <span>{payment.label} / {payment.summary}</span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="rounded border border-gray-200 p-3 text-xs dark:border-gray-700">
+                  <p className="font-medium text-gray-800 dark:text-gray-200">{t('cart.savedShippingTitle', { defaultValue: '登録済み配送先' })}</p>
+                  <ul className="mt-2 space-y-1">
+                    {accountSettings.shippings.map((shipping) => (
+                      <li key={shipping.id}>
+                        <label className="flex items-start gap-2">
+                          <input type="radio" name="saved-shipping" checked={selectedShippingId === shipping.id} onChange={() => setSelectedShippingId(shipping.id)} />
+                          <span>{shipping.label} / {shipping.summary}</span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link to={ROUTES.MEMBER} className="mt-2 inline-flex text-[11px] text-violet-500 hover:text-violet-400">
+                    {t('cart.manageAccountInfo', { defaultValue: 'マイページで会員情報を変更' })} →
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4 rounded border border-gray-200 p-3 text-xs dark:border-gray-700">
+                <p className="font-medium text-gray-800 dark:text-gray-200">{t('cart.guestCheckoutTitle', { defaultValue: 'ゲスト購入情報' })}</p>
+                <p className="mt-1 text-gray-500 dark:text-gray-400">{t('cart.guestCheckoutLead', { defaultValue: 'ゲストユーザーは購入時に支払い先と配送先を入力してください。' })}</p>
+                <div className="mt-2 grid gap-2">
+                  <input value={guestPayment} onChange={(event) => setGuestPayment(event.target.value)} placeholder={t('cart.guestPaymentPlaceholder', { defaultValue: '支払い情報（例: Visa **** 4242）' })} className="rounded border border-gray-200 bg-white px-2 py-1.5 dark:border-gray-700 dark:bg-gray-900" />
+                  <input value={guestShipping} onChange={(event) => setGuestShipping(event.target.value)} placeholder={t('cart.guestShippingPlaceholder', { defaultValue: '配送先住所' })} className="rounded border border-gray-200 bg-white px-2 py-1.5 dark:border-gray-700 dark:bg-gray-900" />
+                </div>
+              </div>
+            )}
             <p className="mt-2 text-xs text-gray-500 dark:text-gray-500">
               決済前に
               <Link to={ROUTES.LEGAL_TRADE} className="mx-1 underline hover:text-gray-700 dark:hover:text-gray-300">

@@ -325,7 +325,14 @@
     "fcBlockedDetail": "FC限定商品が含まれています。決済前に会員ステータスをご確認ください。",
     "checkoutNote": "チェックアウトは外部決済ページへ遷移します。内容を確認してから進んでください。",
     "continueShopping": "買い物を続ける",
-    "dragHint": "長押しでドラッグ"
+    "dragHint": "長押しでドラッグ",
+    "savedPaymentTitle": "登録済み支払い情報",
+    "savedShippingTitle": "登録済み配送先",
+    "manageAccountInfo": "マイページで会員情報を変更",
+    "guestCheckoutTitle": "ゲスト購入情報",
+    "guestCheckoutLead": "ゲストユーザーは購入時に支払い先と配送先を入力してください。",
+    "guestPaymentPlaceholder": "支払い情報（例: Visa **** 4242）",
+    "guestShippingPlaceholder": "配送先住所"
   },
   "member": {
     "title": "マイページ",
@@ -380,6 +387,10 @@
     "accountShippingTitle": "配送先情報",
     "accountShippingDesc": "配送先住所や受け取り設定の変更導線を確認します。",
     "accountShippingAction": "配送先を相談する",
+    "accountDisplayNamePlaceholder": "表示名",
+    "accountEmailPlaceholder": "メールアドレス",
+    "accountSaveAction": "会員情報を保存する",
+    "accountSaveError": "会員情報の保存に失敗しました。",
     "authLead": "ソーシャルログイン連携の対応状況を確認できます。",
     "authGoogle": "Google ログイン",
     "authApple": "Apple ログイン",

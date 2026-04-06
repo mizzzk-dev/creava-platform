@@ -58,3 +58,26 @@ export interface MemberDashboardData {
   auditLogs: AuditLog[]
   withdrawRequested: boolean
 }
+
+export interface MemberProfileSettings {
+  displayName: string
+  email: string
+}
+
+export interface MemberPaymentSettings {
+  id: string
+  label: string
+  summary: string
+}
+
+export interface MemberShippingSettings {
+  id: string
+  label: string
+  summary: string
+}
+
+export interface MemberAccountSettings {
+  profile: MemberProfileSettings
+  payments: MemberPaymentSettings[]
+  shippings: MemberShippingSettings[]
+}

@@ -1,6 +1,6 @@
 import { createMockMemberDashboardData } from './mock'
-import { loadMemberPreferences, loadWithdrawRequested, saveMemberPreferences, saveWithdrawRequested } from './storage'
-import type { MemberDashboardData, MemberPreferences } from './types'
+import { loadMemberAccountSettings, loadMemberPreferences, loadWithdrawRequested, saveMemberAccountSettings, saveMemberPreferences, saveWithdrawRequested } from './storage'
+import type { MemberAccountSettings, MemberDashboardData, MemberPreferences } from './types'
 import { fetchCollection } from '@/lib/api/strapi'
 import { isStrapiForbiddenError } from '@/lib/api/fallback'
 import { API_ENDPOINTS } from '@/lib/api/endpoints'
@@ -76,4 +76,25 @@ export async function clearWithdrawRequest(): Promise<boolean> {
 export async function updateMemberPreferences(preferences: MemberPreferences): Promise<MemberPreferences> {
   saveMemberPreferences(preferences)
   return preferences
+}
+
+export async function getMemberAccountSettings(user: { email: string | null } | null): Promise<MemberAccountSettings> {
+  const settings = loadMemberAccountSettings()
+  if (!settings.profile.email && user?.email) {
+    const seeded = {
+      ...settings,
+      profile: {
+        ...settings.profile,
+        email: user.email,
+      },
+    }
+    saveMemberAccountSettings(seeded)
+    return seeded
+  }
+  return settings
+}
+
+export async function updateMemberAccountSettings(settings: MemberAccountSettings): Promise<MemberAccountSettings> {
+  saveMemberAccountSettings(settings)
+  return settings
 }

@@ -5,8 +5,8 @@ import PageHead from '@/components/seo/PageHead'
 import SocialAuthProviderStatus from '@/components/auth/SocialAuthProviderStatus'
 import { useCurrentUser } from '@/hooks'
 import { ROUTES } from '@/lib/routeConstants'
-import { clearWithdrawRequest, getMemberDashboard, requestWithdraw, updateMemberPreferences } from '@/modules/member/api'
-import type { MemberDashboardData, MemberOrderStatus, ShipmentStatus } from '@/modules/member/types'
+import { clearWithdrawRequest, getMemberAccountSettings, getMemberDashboard, requestWithdraw, updateMemberAccountSettings, updateMemberPreferences } from '@/modules/member/api'
+import type { MemberAccountSettings, MemberDashboardData, MemberOrderStatus, ShipmentStatus } from '@/modules/member/types'
 import { buildCrmSegments, buildLtvDashboard, buildSupportTemplates } from '@/modules/store/lib/commerceOptimization'
 
 const MEMBER_BENEFITS = [
@@ -73,27 +73,6 @@ const ACCESS_ITEMS = [
   },
 ]
 
-const ACCOUNT_MANAGEMENT_ITEMS = [
-  {
-    titleKey: 'member.accountProfileTitle',
-    descKey: 'member.accountProfileDesc',
-    actionKey: 'member.accountProfileAction',
-    to: ROUTES.CONTACT,
-  },
-  {
-    titleKey: 'member.accountPaymentTitle',
-    descKey: 'member.accountPaymentDesc',
-    actionKey: 'member.accountPaymentAction',
-    to: ROUTES.STORE,
-  },
-  {
-    titleKey: 'member.accountShippingTitle',
-    descKey: 'member.accountShippingDesc',
-    actionKey: 'member.accountShippingAction',
-    to: ROUTES.CONTACT,
-  },
-]
-
 
 function maskUserId(userId: string): string {
   if (userId.length <= 8) return userId
@@ -104,6 +83,7 @@ export default function MemberPage() {
   const { t } = useTranslation()
   const { user, isLoaded, isSignedIn } = useCurrentUser()
   const [dashboardData, setDashboardData] = useState<MemberDashboardData | null>(null)
+  const [accountSettings, setAccountSettings] = useState<MemberAccountSettings | null>(null)
   const [dashboardLoading, setDashboardLoading] = useState(false)
   const [dashboardError, setDashboardError] = useState<string | null>(null)
   const role = user?.role ?? 'guest'
@@ -147,6 +127,21 @@ export default function MemberPage() {
     }
   }, [canViewMemberNotices, isLoaded, isSignedIn, t])
 
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) {
+      setAccountSettings(null)
+      return
+    }
+
+    getMemberAccountSettings({ email: user?.email ?? null })
+      .then((settings) => {
+        setAccountSettings(settings)
+      })
+      .catch(() => {
+        setDashboardError(t('member.accountSaveError', { defaultValue: '会員情報の読み込みに失敗しました。' }))
+      })
+  }, [isLoaded, isSignedIn, t, user?.email])
+
   const visibleNotices = useMemo(() => {
     if (!dashboardData) return []
     return dashboardData.notices.filter((notice) => notice.audience === 'all' || canViewMemberNotices)
@@ -173,6 +168,40 @@ export default function MemberPage() {
     if (!dashboardData || !dashboardData.withdrawRequested) return
     const requested = await clearWithdrawRequest()
     setDashboardData({ ...dashboardData, withdrawRequested: requested })
+  }
+
+  const handleAccountProfileChange = (key: 'displayName' | 'email', value: string) => {
+    if (!accountSettings) return
+    setAccountSettings({
+      ...accountSettings,
+      profile: {
+        ...accountSettings.profile,
+        [key]: value,
+      },
+    })
+  }
+
+  const handleAccountFieldChange = (
+    section: 'payments' | 'shippings',
+    id: string,
+    key: 'label' | 'summary',
+    value: string,
+  ) => {
+    if (!accountSettings) return
+    setAccountSettings({
+      ...accountSettings,
+      [section]: accountSettings[section].map((item) => (item.id === id ? { ...item, [key]: value } : item)),
+    })
+  }
+
+  const handleSaveAccountSettings = async () => {
+    if (!accountSettings) return
+    try {
+      const saved = await updateMemberAccountSettings(accountSettings)
+      setAccountSettings(saved)
+    } catch {
+      setDashboardError(t('member.accountSaveError', { defaultValue: '会員情報の保存に失敗しました。' }))
+    }
   }
 
   const orderStatusLabel = (status: MemberOrderStatus) => t(`member.orderStatus.${status}`, { defaultValue: status })
@@ -345,17 +374,44 @@ export default function MemberPage() {
             <div className="rounded border border-gray-200 p-5 dark:border-gray-800">
               <p className="font-mono text-[11px] text-gray-400">account</p>
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{t('member.accountLead', { defaultValue: '会員情報・支払い先・配送先に関する管理導線です。' })}</p>
-              <ul className="mt-4 space-y-3">
-                {ACCOUNT_MANAGEMENT_ITEMS.map((item) => (
-                  <li key={item.titleKey} className="rounded border border-gray-200 p-3 dark:border-gray-700">
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{t(item.titleKey, { defaultValue: item.titleKey })}</p>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t(item.descKey, { defaultValue: item.descKey })}</p>
-                    <Link to={item.to} className="mt-3 inline-flex text-xs text-violet-500 hover:text-violet-400">
-                      {t(item.actionKey, { defaultValue: item.actionKey })} →
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              {accountSettings && (
+                <div className="mt-4 space-y-3 text-xs">
+                  <div className="rounded border border-gray-200 p-3 dark:border-gray-700">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{t('member.accountProfileTitle', { defaultValue: '会員情報を更新' })}</p>
+                    <div className="mt-2 grid gap-2">
+                      <input value={accountSettings.profile.displayName} onChange={(event) => handleAccountProfileChange('displayName', event.target.value)} placeholder={t('member.accountDisplayNamePlaceholder', { defaultValue: '表示名' })} className="rounded border border-gray-200 bg-white px-2 py-1.5 dark:border-gray-700 dark:bg-gray-900" />
+                      <input value={accountSettings.profile.email} onChange={(event) => handleAccountProfileChange('email', event.target.value)} placeholder={t('member.accountEmailPlaceholder', { defaultValue: 'メールアドレス' })} className="rounded border border-gray-200 bg-white px-2 py-1.5 dark:border-gray-700 dark:bg-gray-900" />
+                    </div>
+                  </div>
+
+                  <div className="rounded border border-gray-200 p-3 dark:border-gray-700">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{t('member.accountPaymentTitle', { defaultValue: '支払い先情報' })}</p>
+                    <div className="mt-2 space-y-2">
+                      {accountSettings.payments.map((payment) => (
+                        <div key={payment.id} className="rounded bg-gray-50 p-2 dark:bg-gray-900/40">
+                          <input value={payment.label} onChange={(event) => handleAccountFieldChange('payments', payment.id, 'label', event.target.value)} className="w-full rounded border border-gray-200 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-900" />
+                          <input value={payment.summary} onChange={(event) => handleAccountFieldChange('payments', payment.id, 'summary', event.target.value)} className="mt-1 w-full rounded border border-gray-200 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-900" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded border border-gray-200 p-3 dark:border-gray-700">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{t('member.accountShippingTitle', { defaultValue: '配送先情報' })}</p>
+                    <div className="mt-2 space-y-2">
+                      {accountSettings.shippings.map((shipping) => (
+                        <div key={shipping.id} className="rounded bg-gray-50 p-2 dark:bg-gray-900/40">
+                          <input value={shipping.label} onChange={(event) => handleAccountFieldChange('shippings', shipping.id, 'label', event.target.value)} className="w-full rounded border border-gray-200 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-900" />
+                          <input value={shipping.summary} onChange={(event) => handleAccountFieldChange('shippings', shipping.id, 'summary', event.target.value)} className="mt-1 w-full rounded border border-gray-200 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-900" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <button type="button" onClick={() => { void handleSaveAccountSettings() }} className="inline-flex items-center rounded border border-violet-300 px-3 py-1.5 text-xs text-violet-600 hover:bg-violet-50 dark:border-violet-800 dark:hover:bg-violet-900/20">
+                    {t('member.accountSaveAction', { defaultValue: '会員情報を保存する' })}
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="rounded border border-gray-200 p-5 dark:border-gray-800">

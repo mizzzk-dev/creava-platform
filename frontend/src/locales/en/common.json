@@ -325,7 +325,14 @@
     "fcBlockedDetail": "Members-only items are in your cart. Please verify membership before checkout.",
     "checkoutNote": "Checkout redirects to an external payment page. Please review details first.",
     "continueShopping": "Continue shopping",
-    "dragHint": "Hold to drag"
+    "dragHint": "Hold to drag",
+    "savedPaymentTitle": "Saved payment methods",
+    "savedShippingTitle": "Saved shipping addresses",
+    "manageAccountInfo": "Manage account info on My Page",
+    "guestCheckoutTitle": "Guest checkout details",
+    "guestCheckoutLead": "Guest users need to enter billing and shipping details at checkout.",
+    "guestPaymentPlaceholder": "Payment info (e.g. Visa **** 4242)",
+    "guestShippingPlaceholder": "Shipping address"
   },
   "member": {
     "title": "My Page",
@@ -380,6 +387,10 @@
     "accountShippingTitle": "Shipping information",
     "accountShippingDesc": "Review routes for updating delivery address and receiving preferences.",
     "accountShippingAction": "Request shipping update",
+    "accountDisplayNamePlaceholder": "Display name",
+    "accountEmailPlaceholder": "Email address",
+    "accountSaveAction": "Save account settings",
+    "accountSaveError": "Failed to save account settings.",
     "authLead": "Review the current social login provider support.",
     "authGoogle": "Google sign-in",
     "authApple": "Apple sign-in",
