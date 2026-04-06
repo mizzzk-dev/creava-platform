@@ -86,6 +86,9 @@ export default function MemberPage() {
   const [accountSettings, setAccountSettings] = useState<MemberAccountSettings | null>(null)
   const [dashboardLoading, setDashboardLoading] = useState(false)
   const [dashboardError, setDashboardError] = useState<string | null>(null)
+  const [accountSaving, setAccountSaving] = useState(false)
+  const [accountSaveError, setAccountSaveError] = useState<string | null>(null)
+  const [accountSavedAt, setAccountSavedAt] = useState<string | null>(null)
   const role = user?.role ?? 'guest'
   const isMember = role === 'member'
   const isAdmin = role === 'admin'
@@ -172,6 +175,7 @@ export default function MemberPage() {
 
   const handleAccountProfileChange = (key: 'displayName' | 'email', value: string) => {
     if (!accountSettings) return
+    setAccountSaveError(null)
     setAccountSettings({
       ...accountSettings,
       profile: {
@@ -188,6 +192,7 @@ export default function MemberPage() {
     value: string,
   ) => {
     if (!accountSettings) return
+    setAccountSaveError(null)
     setAccountSettings({
       ...accountSettings,
       [section]: accountSettings[section].map((item) => (item.id === id ? { ...item, [key]: value } : item)),
@@ -196,11 +201,16 @@ export default function MemberPage() {
 
   const handleSaveAccountSettings = async () => {
     if (!accountSettings) return
+    setAccountSaving(true)
+    setAccountSaveError(null)
     try {
       const saved = await updateMemberAccountSettings(accountSettings)
       setAccountSettings(saved)
+      setAccountSavedAt(new Date().toISOString())
     } catch {
-      setDashboardError(t('member.accountSaveError', { defaultValue: '会員情報の保存に失敗しました。' }))
+      setAccountSaveError(t('member.accountSaveError', { defaultValue: '会員情報の保存に失敗しました。' }))
+    } finally {
+      setAccountSaving(false)
     }
   }
 
@@ -210,6 +220,7 @@ export default function MemberPage() {
     const date = new Date(value)
     return Number.isNaN(date.getTime()) ? value : date.toLocaleString()
   }
+  const accountSavedAtLabel = accountSavedAt ? formatDateTime(accountSavedAt) : null
 
   const crmSegments = dashboardData ? buildCrmSegments([
     { memberId: user?.id ?? 'current', favoritesCount: 2, restockRequests: 1, orderCount: dashboardData.orders.length, lastOrderAt: dashboardData.orders[0]?.orderedAt ?? null },
@@ -407,9 +418,21 @@ export default function MemberPage() {
                       ))}
                     </div>
                   </div>
-                  <button type="button" onClick={() => { void handleSaveAccountSettings() }} className="inline-flex items-center rounded border border-violet-300 px-3 py-1.5 text-xs text-violet-600 hover:bg-violet-50 dark:border-violet-800 dark:hover:bg-violet-900/20">
-                    {t('member.accountSaveAction', { defaultValue: '会員情報を保存する' })}
+                  <button
+                    type="button"
+                    disabled={accountSaving}
+                    onClick={() => { void handleSaveAccountSettings() }}
+                    className="inline-flex items-center rounded border border-violet-300 px-3 py-1.5 text-xs text-violet-600 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-violet-800 dark:hover:bg-violet-900/20"
+                  >
+                    {accountSaving
+                      ? t('member.accountSaving', { defaultValue: '保存中…' })
+                      : t('member.accountSaveAction', { defaultValue: '会員情報を保存する' })}
                   </button>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400" role="status" aria-live="polite">
+                    {accountSaveError && <span className="text-rose-600 dark:text-rose-300">{accountSaveError}</span>}
+                    {!accountSaveError && accountSavedAtLabel && t('member.accountSavedAt', { savedAt: accountSavedAtLabel, defaultValue: '最終保存: {{savedAt}}' })}
+                    {!accountSaveError && !accountSavedAtLabel && t('member.accountSaveHint', { defaultValue: '保存後に最終更新時刻が表示されます。' })}
+                  </p>
                 </div>
               )}
             </div>
