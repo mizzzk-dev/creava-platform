@@ -68,6 +68,32 @@ const ACCESS_ITEMS = [
   },
 ]
 
+const ACCOUNT_MANAGEMENT_ITEMS = [
+  {
+    titleKey: 'member.accountProfileTitle',
+    descKey: 'member.accountProfileDesc',
+    actionKey: 'member.accountProfileAction',
+    to: ROUTES.CONTACT,
+  },
+  {
+    titleKey: 'member.accountPaymentTitle',
+    descKey: 'member.accountPaymentDesc',
+    actionKey: 'member.accountPaymentAction',
+    to: ROUTES.STORE,
+  },
+  {
+    titleKey: 'member.accountShippingTitle',
+    descKey: 'member.accountShippingDesc',
+    actionKey: 'member.accountShippingAction',
+    to: ROUTES.CONTACT,
+  },
+]
+
+const SOCIAL_AUTH_PROVIDERS = [
+  { key: 'member.authGoogle' },
+  { key: 'member.authApple' },
+]
+
 function maskUserId(userId: string): string {
   if (userId.length <= 8) return userId
   return `${userId.slice(0, 5)}...${userId.slice(-3)}`
@@ -226,6 +252,40 @@ export default function MemberPage() {
                 </li>
               ))}
             </ul>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded border border-gray-200 p-5 dark:border-gray-800">
+              <p className="font-mono text-[11px] text-gray-400">account</p>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{t('member.accountLead', { defaultValue: '会員情報・支払い先・配送先に関する管理導線です。' })}</p>
+              <ul className="mt-4 space-y-3">
+                {ACCOUNT_MANAGEMENT_ITEMS.map((item) => (
+                  <li key={item.titleKey} className="rounded border border-gray-200 p-3 dark:border-gray-700">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{t(item.titleKey, { defaultValue: item.titleKey })}</p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t(item.descKey, { defaultValue: item.descKey })}</p>
+                    <Link to={item.to} className="mt-3 inline-flex text-xs text-violet-500 hover:text-violet-400">
+                      {t(item.actionKey, { defaultValue: item.actionKey })} →
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="rounded border border-gray-200 p-5 dark:border-gray-800">
+              <p className="font-mono text-[11px] text-gray-400">auth</p>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{t('member.authLead', { defaultValue: 'ソーシャルログイン連携の対応状況を確認できます。' })}</p>
+              <ul className="mt-4 space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                {SOCIAL_AUTH_PROVIDERS.map((provider) => (
+                  <li key={provider.key} className="flex items-center justify-between rounded border border-gray-200 px-3 py-2 dark:border-gray-700">
+                    <span>{t(provider.key, { defaultValue: provider.key })}</span>
+                    <span className="rounded-full bg-emerald-50 px-2 py-1 text-[11px] text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                      {t('member.authAvailable', { defaultValue: '対応' })}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{t('member.authHelp', { defaultValue: '実際のログイン方式は、Clerk ダイアログで表示される有効なプロバイダー設定に従います。' })}</p>
+            </div>
           </div>
         </div>
       )}
