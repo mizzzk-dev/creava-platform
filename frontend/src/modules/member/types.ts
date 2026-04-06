@@ -60,6 +60,7 @@ export interface MemberDashboardData {
 }
 
 export interface MemberProfileSettings {
+  userId: string
   displayName: string
   email: string
 }
@@ -67,13 +68,20 @@ export interface MemberProfileSettings {
 export interface MemberPaymentSettings {
   id: string
   label: string
-  summary: string
+  cardholderName: string
+  cardNumber: string
+  expiryMonth: string
+  expiryYear: string
 }
 
 export interface MemberShippingSettings {
   id: string
   label: string
-  summary: string
+  postalCode: string
+  prefecture: string
+  city: string
+  addressLine: string
+  building: string
 }
 
 export interface MemberAccountSettings {
