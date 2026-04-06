@@ -1,4 +1,4 @@
-import { useClerk } from '@clerk/clerk-react'
+import { useClerk, useUser } from '@clerk/clerk-react'
 import { useTranslation } from 'react-i18next'
 import { ROUTES } from '@/lib/routeConstants'
 
@@ -40,6 +40,12 @@ interface SocialAuthProviderStatusProps {
 function SocialAuthProviderStatusWithClerk({ isSignedIn }: SocialAuthProviderStatusProps) {
   const { t } = useTranslation()
   const { openSignIn } = useClerk()
+  const { user } = useUser()
+  const linkedProviders = new Set(
+    (user?.externalAccounts ?? [])
+      .map((account) => account.provider.replace(/^oauth_/, ''))
+      .map((provider) => (provider === 'twitter' ? 'x' : provider)),
+  )
 
   const handleSocialSignIn = async () => {
     await openSignIn({
@@ -54,7 +60,11 @@ function SocialAuthProviderStatusWithClerk({ isSignedIn }: SocialAuthProviderSta
         <li key={provider.id} className="rounded border border-gray-200 px-3 py-2 dark:border-gray-700">
           <div className="flex items-center justify-between gap-2">
             <span>{t(provider.key, { defaultValue: provider.key })}</span>
-            {provider.enabled ? (
+            {isSignedIn && linkedProviders.has(provider.id) ? (
+              <span className="rounded-full bg-violet-50 px-2 py-1 text-[11px] text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+                {t('member.authLinked', { defaultValue: '連携済み' })}
+              </span>
+            ) : provider.enabled ? (
               <span className="rounded-full bg-emerald-50 px-2 py-1 text-[11px] text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
                 {t('member.authAvailable', { defaultValue: '対応' })}
               </span>
