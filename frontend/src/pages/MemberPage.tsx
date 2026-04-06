@@ -6,7 +6,7 @@ import SocialAuthProviderStatus from '@/components/auth/SocialAuthProviderStatus
 import { useCurrentUser } from '@/hooks'
 import { ROUTES } from '@/lib/routeConstants'
 import { clearWithdrawRequest, getMemberAccountSettings, getMemberDashboard, requestWithdraw, updateMemberAccountSettings, updateMemberPreferences } from '@/modules/member/api'
-import type { MemberAccountSettings, MemberDashboardData, MemberOrderStatus, ShipmentStatus } from '@/modules/member/types'
+import type { MemberAccountSettings, MemberDashboardData, MemberOrderStatus, MemberPaymentSettings, MemberShippingSettings, ShipmentStatus } from '@/modules/member/types'
 import { buildCrmSegments, buildLtvDashboard, buildSupportTemplates } from '@/modules/store/lib/commerceOptimization'
 
 const MEMBER_BENEFITS = [
@@ -74,6 +74,12 @@ const ACCESS_ITEMS = [
 ]
 
 
+const POSTAL_CODE_PRESETS: Record<string, Pick<MemberShippingSettings, 'prefecture' | 'city' | 'addressLine'>> = {
+  '1500001': { prefecture: '東京都', city: '渋谷区', addressLine: '神宮前1-1-1' },
+  '1070001': { prefecture: '東京都', city: '港区', addressLine: '北青山2-2-2' },
+  '5300001': { prefecture: '大阪府', city: '大阪市北区', addressLine: '梅田1-1-1' },
+}
+
 function maskUserId(userId: string): string {
   if (userId.length <= 8) return userId
   return `${userId.slice(0, 5)}...${userId.slice(-3)}`
@@ -89,6 +95,7 @@ export default function MemberPage() {
   const [accountSaving, setAccountSaving] = useState(false)
   const [accountSaveError, setAccountSaveError] = useState<string | null>(null)
   const [accountSavedAt, setAccountSavedAt] = useState<string | null>(null)
+  const [cardValidationErrors, setCardValidationErrors] = useState<Record<string, string>>({})
   const role = user?.role ?? 'guest'
   const isMember = role === 'member'
   const isAdmin = role === 'admin'
@@ -136,7 +143,7 @@ export default function MemberPage() {
       return
     }
 
-    getMemberAccountSettings({ email: user?.email ?? null })
+    getMemberAccountSettings({ id: user?.id ?? null, email: user?.email ?? null })
       .then((settings) => {
         setAccountSettings(settings)
       })
@@ -173,7 +180,7 @@ export default function MemberPage() {
     setDashboardData({ ...dashboardData, withdrawRequested: requested })
   }
 
-  const handleAccountProfileChange = (key: 'displayName' | 'email', value: string) => {
+  const handleAccountProfileChange = (key: 'userId' | 'displayName' | 'email', value: string) => {
     if (!accountSettings) return
     setAccountSaveError(null)
     setAccountSettings({
@@ -186,9 +193,9 @@ export default function MemberPage() {
   }
 
   const handleAccountFieldChange = (
-    section: 'payments' | 'shippings',
+    section: 'payments',
     id: string,
-    key: 'label' | 'summary',
+    key: keyof MemberPaymentSettings,
     value: string,
   ) => {
     if (!accountSettings) return
@@ -197,10 +204,93 @@ export default function MemberPage() {
       ...accountSettings,
       [section]: accountSettings[section].map((item) => (item.id === id ? { ...item, [key]: value } : item)),
     })
+    setCardValidationErrors((prev) => {
+      if (!prev[id]) return prev
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+  }
+
+  const handleShippingFieldChange = (id: string, key: keyof MemberShippingSettings, value: string) => {
+    if (!accountSettings) return
+    setAccountSaveError(null)
+    setAccountSettings({
+      ...accountSettings,
+      shippings: accountSettings.shippings.map((item) => (item.id === id ? { ...item, [key]: value } : item)),
+    })
+  }
+
+  const handleShippingAutoFillByPostalCode = (shippingId: string) => {
+    if (!accountSettings) return
+    const current = accountSettings.shippings.find((shipping) => shipping.id === shippingId)
+    if (!current) return
+    const postalCode = current.postalCode.replace(/\D/g, '').slice(0, 7)
+    const preset = POSTAL_CODE_PRESETS[postalCode]
+    if (!preset) {
+      setAccountSaveError(t('member.postalCodeNotFound', { defaultValue: '郵便番号に一致する住所候補が見つかりませんでした。都道府県・市区町村・番地を直接入力してください。' }))
+      return
+    }
+
+    setAccountSaveError(null)
+    setAccountSettings({
+      ...accountSettings,
+      shippings: accountSettings.shippings.map((shipping) => (shipping.id === shippingId ? { ...shipping, ...preset } : shipping)),
+    })
+  }
+
+  const validateCardNumber = (cardNumber: string): boolean => {
+    const digits = cardNumber.replace(/\D/g, '')
+    if (digits.length < 12 || digits.length > 19) return false
+    let sum = 0
+    let shouldDouble = false
+    for (let i = digits.length - 1; i >= 0; i -= 1) {
+      let digit = Number(digits[i])
+      if (shouldDouble) {
+        digit *= 2
+        if (digit > 9) digit -= 9
+      }
+      sum += digit
+      shouldDouble = !shouldDouble
+    }
+    return sum % 10 === 0
+  }
+
+  const validatePaymentCard = (payment: MemberPaymentSettings): string | null => {
+    if (!payment.cardholderName.trim()) {
+      return t('member.cardholderRequired', { defaultValue: 'カード名義を入力してください。' })
+    }
+    if (!validateCardNumber(payment.cardNumber)) {
+      return t('member.cardNumberInvalid', { defaultValue: 'カード番号が無効です。' })
+    }
+    const month = Number(payment.expiryMonth)
+    const year = Number(payment.expiryYear)
+    if (!Number.isFinite(month) || month < 1 || month > 12 || !Number.isFinite(year) || year < 0 || year > 99) {
+      return t('member.cardExpiryInvalid', { defaultValue: '有効期限を MM / YY 形式で入力してください。' })
+    }
+    const now = new Date()
+    const currentYear = now.getFullYear() % 100
+    const currentMonth = now.getMonth() + 1
+    if (year < currentYear || (year === currentYear && month < currentMonth)) {
+      return t('member.cardExpired', { defaultValue: 'カードの有効期限が切れています。' })
+    }
+    return null
   }
 
   const handleSaveAccountSettings = async () => {
     if (!accountSettings) return
+    const cardErrors = accountSettings.payments.reduce<Record<string, string>>((acc, payment) => {
+      const message = validatePaymentCard(payment)
+      if (message) {
+        acc[payment.id] = message
+      }
+      return acc
+    }, {})
+    setCardValidationErrors(cardErrors)
+    if (Object.keys(cardErrors).length > 0) {
+      setAccountSaveError(t('member.accountPaymentValidationError', { defaultValue: '無効なクレジットカード情報があります。内容を修正してください。' }))
+      return
+    }
     setAccountSaving(true)
     setAccountSaveError(null)
     try {
@@ -277,7 +367,9 @@ export default function MemberPage() {
               <dl className="mt-4 space-y-2 rounded bg-gray-50 p-3 text-xs dark:bg-gray-900/50">
                 <div className="flex items-start justify-between gap-2">
                   <dt className="text-gray-500 dark:text-gray-400">{t('member.accountId', { defaultValue: 'アカウントID' })}</dt>
-                  <dd className="font-mono text-gray-700 dark:text-gray-200">{user ? maskUserId(user.id) : '-'}</dd>
+                  <dd className="font-mono text-gray-700 dark:text-gray-200">
+                    {accountSettings?.profile.userId ? maskUserId(accountSettings.profile.userId) : user ? maskUserId(user.id) : '-'}
+                  </dd>
                 </div>
                 <div className="flex items-start justify-between gap-2">
                   <dt className="text-gray-500 dark:text-gray-400">{t('member.accountEmail', { defaultValue: 'メールアドレス' })}</dt>
@@ -391,6 +483,7 @@ export default function MemberPage() {
                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{t('member.accountProfileTitle', { defaultValue: '会員情報を更新' })}</p>
                     <div className="mt-2 grid gap-2">
                       <input value={accountSettings.profile.displayName} onChange={(event) => handleAccountProfileChange('displayName', event.target.value)} placeholder={t('member.accountDisplayNamePlaceholder', { defaultValue: '表示名' })} className="rounded border border-gray-200 bg-white px-2 py-1.5 dark:border-gray-700 dark:bg-gray-900" />
+                      <input value={accountSettings.profile.userId} onChange={(event) => handleAccountProfileChange('userId', event.target.value)} placeholder={t('member.accountUserIdPlaceholder', { defaultValue: 'ユーザーID' })} className="rounded border border-gray-200 bg-white px-2 py-1.5 dark:border-gray-700 dark:bg-gray-900" />
                       <input value={accountSettings.profile.email} onChange={(event) => handleAccountProfileChange('email', event.target.value)} placeholder={t('member.accountEmailPlaceholder', { defaultValue: 'メールアドレス' })} className="rounded border border-gray-200 bg-white px-2 py-1.5 dark:border-gray-700 dark:bg-gray-900" />
                     </div>
                   </div>
@@ -400,8 +493,18 @@ export default function MemberPage() {
                     <div className="mt-2 space-y-2">
                       {accountSettings.payments.map((payment) => (
                         <div key={payment.id} className="rounded bg-gray-50 p-2 dark:bg-gray-900/40">
-                          <input value={payment.label} onChange={(event) => handleAccountFieldChange('payments', payment.id, 'label', event.target.value)} className="w-full rounded border border-gray-200 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-900" />
-                          <input value={payment.summary} onChange={(event) => handleAccountFieldChange('payments', payment.id, 'summary', event.target.value)} className="mt-1 w-full rounded border border-gray-200 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-900" />
+                          <input value={payment.label} onChange={(event) => handleAccountFieldChange('payments', payment.id, 'label', event.target.value)} placeholder={t('member.cardLabelPlaceholder', { defaultValue: 'カードラベル' })} className="w-full rounded border border-gray-200 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-900" />
+                          <input value={payment.cardholderName} onChange={(event) => handleAccountFieldChange('payments', payment.id, 'cardholderName', event.target.value)} placeholder={t('member.cardholderPlaceholder', { defaultValue: 'カード名義 (例: TARO YAMADA)' })} className="mt-1 w-full rounded border border-gray-200 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-900" />
+                          <div className="mt-1 grid gap-2 sm:grid-cols-3">
+                            <input value={payment.cardNumber} onChange={(event) => handleAccountFieldChange('payments', payment.id, 'cardNumber', event.target.value.replace(/\D/g, '').slice(0, 16))} inputMode="numeric" placeholder={t('member.cardNumberPlaceholder', { defaultValue: 'カード番号' })} className="rounded border border-gray-200 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-900 sm:col-span-2" />
+                            <div className="flex gap-2">
+                              <input value={payment.expiryMonth} onChange={(event) => handleAccountFieldChange('payments', payment.id, 'expiryMonth', event.target.value.replace(/\D/g, '').slice(0, 2))} inputMode="numeric" placeholder="MM" className="w-full rounded border border-gray-200 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-900" />
+                              <input value={payment.expiryYear} onChange={(event) => handleAccountFieldChange('payments', payment.id, 'expiryYear', event.target.value.replace(/\D/g, '').slice(0, 2))} inputMode="numeric" placeholder="YY" className="w-full rounded border border-gray-200 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-900" />
+                            </div>
+                          </div>
+                          {cardValidationErrors[payment.id] && (
+                            <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-300">{cardValidationErrors[payment.id]}</p>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -412,8 +515,19 @@ export default function MemberPage() {
                     <div className="mt-2 space-y-2">
                       {accountSettings.shippings.map((shipping) => (
                         <div key={shipping.id} className="rounded bg-gray-50 p-2 dark:bg-gray-900/40">
-                          <input value={shipping.label} onChange={(event) => handleAccountFieldChange('shippings', shipping.id, 'label', event.target.value)} className="w-full rounded border border-gray-200 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-900" />
-                          <input value={shipping.summary} onChange={(event) => handleAccountFieldChange('shippings', shipping.id, 'summary', event.target.value)} className="mt-1 w-full rounded border border-gray-200 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-900" />
+                          <input value={shipping.label} onChange={(event) => handleShippingFieldChange(shipping.id, 'label', event.target.value)} placeholder={t('member.shippingLabelPlaceholder', { defaultValue: '配送先ラベル' })} className="w-full rounded border border-gray-200 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-900" />
+                          <div className="mt-1 flex items-center gap-2">
+                            <input value={shipping.postalCode} onChange={(event) => handleShippingFieldChange(shipping.id, 'postalCode', event.target.value.replace(/\D/g, '').slice(0, 7))} inputMode="numeric" placeholder={t('member.shippingPostalPlaceholder', { defaultValue: '郵便番号 (例: 1500001)' })} className="w-full rounded border border-gray-200 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-900" />
+                            <button type="button" onClick={() => handleShippingAutoFillByPostalCode(shipping.id)} className="rounded border border-gray-200 px-2 py-1 text-[11px] text-gray-600 hover:border-gray-400 dark:border-gray-700 dark:text-gray-300">
+                              {t('member.shippingLookupPostal', { defaultValue: '郵便番号で入力' })}
+                            </button>
+                          </div>
+                          <div className="mt-1 grid gap-2 sm:grid-cols-2">
+                            <input value={shipping.prefecture} onChange={(event) => handleShippingFieldChange(shipping.id, 'prefecture', event.target.value)} placeholder={t('member.shippingPrefecturePlaceholder', { defaultValue: '都道府県' })} className="rounded border border-gray-200 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-900" />
+                            <input value={shipping.city} onChange={(event) => handleShippingFieldChange(shipping.id, 'city', event.target.value)} placeholder={t('member.shippingCityPlaceholder', { defaultValue: '市区町村' })} className="rounded border border-gray-200 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-900" />
+                          </div>
+                          <input value={shipping.addressLine} onChange={(event) => handleShippingFieldChange(shipping.id, 'addressLine', event.target.value)} placeholder={t('member.shippingAddressLinePlaceholder', { defaultValue: '番地' })} className="mt-1 w-full rounded border border-gray-200 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-900" />
+                          <input value={shipping.building} onChange={(event) => handleShippingFieldChange(shipping.id, 'building', event.target.value)} placeholder={t('member.shippingBuildingPlaceholder', { defaultValue: 'ビル名・部屋番号' })} className="mt-1 w-full rounded border border-gray-200 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-900" />
                         </div>
                       ))}
                     </div>

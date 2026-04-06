@@ -16,8 +16,15 @@ export default function CartPage() {
   const [accountSettings, setAccountSettings] = useState<MemberAccountSettings | null>(null)
   const [selectedPaymentId, setSelectedPaymentId] = useState<string>('')
   const [selectedShippingId, setSelectedShippingId] = useState<string>('')
-  const [guestPayment, setGuestPayment] = useState('')
-  const [guestShipping, setGuestShipping] = useState('')
+  const [guestCardNumber, setGuestCardNumber] = useState('')
+  const [guestCardExpiry, setGuestCardExpiry] = useState('')
+  const [guestCardholderName, setGuestCardholderName] = useState('')
+  const [guestPostalCode, setGuestPostalCode] = useState('')
+  const [guestPrefecture, setGuestPrefecture] = useState('')
+  const [guestCity, setGuestCity] = useState('')
+  const [guestAddressLine, setGuestAddressLine] = useState('')
+  const [guestBuilding, setGuestBuilding] = useState('')
+  const [guestCardError, setGuestCardError] = useState<string | null>(null)
 
   const canPurchaseFc = isSignedIn && (user?.role === 'member' || user?.role === 'admin')
   const hasFcOnlyBlocked = items.some((item) => item.accessStatus === 'fc_only' && !canPurchaseFc)
@@ -28,14 +35,43 @@ export default function CartPage() {
       setAccountSettings(null)
       return
     }
-    getMemberAccountSettings({ email: user?.email ?? null }).then((settings) => {
+    getMemberAccountSettings({ id: user?.id ?? null, email: user?.email ?? null }).then((settings) => {
       setAccountSettings(settings)
       setSelectedPaymentId(settings.payments[0]?.id ?? '')
       setSelectedShippingId(settings.shippings[0]?.id ?? '')
     }).catch(() => {
       setAccountSettings(null)
     })
-  }, [isSignedIn, user?.email])
+  }, [isSignedIn, user?.email, user?.id])
+
+  const validateCardNumber = (cardNumber: string): boolean => {
+    const digits = cardNumber.replace(/\D/g, '')
+    if (digits.length < 12 || digits.length > 19) return false
+    let sum = 0
+    let shouldDouble = false
+    for (let i = digits.length - 1; i >= 0; i -= 1) {
+      let digit = Number(digits[i])
+      if (shouldDouble) {
+        digit *= 2
+        if (digit > 9) digit -= 9
+      }
+      sum += digit
+      shouldDouble = !shouldDouble
+    }
+    return sum % 10 === 0
+  }
+
+  const guestCardValid = (() => {
+    const match = guestCardExpiry.match(/^(\d{2})\s*\/\s*(\d{2})$/)
+    if (!match || !validateCardNumber(guestCardNumber) || !guestCardholderName.trim()) return false
+    const month = Number(match[1])
+    const year = Number(match[2])
+    if (month < 1 || month > 12) return false
+    const now = new Date()
+    const currentYear = now.getFullYear() % 100
+    const currentMonth = now.getMonth() + 1
+    return year > currentYear || (year === currentYear && month >= currentMonth)
+  })()
 
   return (
     <section className="mx-auto max-w-4xl px-4 py-20">
@@ -140,7 +176,7 @@ export default function CartPage() {
                       <li key={payment.id}>
                         <label className="flex items-start gap-2">
                           <input type="radio" name="saved-payment" checked={selectedPaymentId === payment.id} onChange={() => setSelectedPaymentId(payment.id)} />
-                          <span>{payment.label} / {payment.summary}</span>
+                          <span>{payment.label} / **** {payment.cardNumber.slice(-4)} / exp {payment.expiryMonth}/{payment.expiryYear}</span>
                         </label>
                       </li>
                     ))}
@@ -153,7 +189,7 @@ export default function CartPage() {
                       <li key={shipping.id}>
                         <label className="flex items-start gap-2">
                           <input type="radio" name="saved-shipping" checked={selectedShippingId === shipping.id} onChange={() => setSelectedShippingId(shipping.id)} />
-                          <span>{shipping.label} / {shipping.summary}</span>
+                          <span>{shipping.label} / {shipping.prefecture}{shipping.city}{shipping.addressLine} {shipping.building} / {shipping.postalCode}</span>
                         </label>
                       </li>
                     ))}
@@ -168,8 +204,30 @@ export default function CartPage() {
                 <p className="font-medium text-gray-800 dark:text-gray-200">{t('cart.guestCheckoutTitle', { defaultValue: 'ゲスト購入情報' })}</p>
                 <p className="mt-1 text-gray-500 dark:text-gray-400">{t('cart.guestCheckoutLead', { defaultValue: 'ゲストユーザーは購入時に支払い先と配送先を入力してください。' })}</p>
                 <div className="mt-2 grid gap-2">
-                  <input value={guestPayment} onChange={(event) => setGuestPayment(event.target.value)} placeholder={t('cart.guestPaymentPlaceholder', { defaultValue: '支払い情報（例: Visa **** 4242）' })} className="rounded border border-gray-200 bg-white px-2 py-1.5 dark:border-gray-700 dark:bg-gray-900" />
-                  <input value={guestShipping} onChange={(event) => setGuestShipping(event.target.value)} placeholder={t('cart.guestShippingPlaceholder', { defaultValue: '配送先住所' })} className="rounded border border-gray-200 bg-white px-2 py-1.5 dark:border-gray-700 dark:bg-gray-900" />
+                  <input
+                    value={guestCardNumber}
+                    onChange={(event) => {
+                      setGuestCardNumber(event.target.value.replace(/\D/g, '').slice(0, 16))
+                      setGuestCardError(null)
+                    }}
+                    placeholder={t('cart.guestCardNumberPlaceholder', { defaultValue: 'カード番号' })}
+                    inputMode="numeric"
+                    className="rounded border border-gray-200 bg-white px-2 py-1.5 dark:border-gray-700 dark:bg-gray-900"
+                  />
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <input value={guestCardExpiry} onChange={(event) => setGuestCardExpiry(event.target.value)} placeholder={t('cart.guestCardExpiryPlaceholder', { defaultValue: '有効期限 (MM/YY)' })} className="rounded border border-gray-200 bg-white px-2 py-1.5 dark:border-gray-700 dark:bg-gray-900" />
+                    <input value={guestCardholderName} onChange={(event) => setGuestCardholderName(event.target.value)} placeholder={t('cart.guestCardholderPlaceholder', { defaultValue: 'カード名義' })} className="rounded border border-gray-200 bg-white px-2 py-1.5 dark:border-gray-700 dark:bg-gray-900" />
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <input value={guestPostalCode} onChange={(event) => setGuestPostalCode(event.target.value.replace(/\D/g, '').slice(0, 7))} placeholder={t('cart.guestPostalPlaceholder', { defaultValue: '郵便番号' })} className="rounded border border-gray-200 bg-white px-2 py-1.5 dark:border-gray-700 dark:bg-gray-900" />
+                    <input value={guestPrefecture} onChange={(event) => setGuestPrefecture(event.target.value)} placeholder={t('cart.guestPrefecturePlaceholder', { defaultValue: '都道府県' })} className="rounded border border-gray-200 bg-white px-2 py-1.5 dark:border-gray-700 dark:bg-gray-900" />
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <input value={guestCity} onChange={(event) => setGuestCity(event.target.value)} placeholder={t('cart.guestCityPlaceholder', { defaultValue: '市区町村' })} className="rounded border border-gray-200 bg-white px-2 py-1.5 dark:border-gray-700 dark:bg-gray-900" />
+                    <input value={guestAddressLine} onChange={(event) => setGuestAddressLine(event.target.value)} placeholder={t('cart.guestAddressLinePlaceholder', { defaultValue: '番地' })} className="rounded border border-gray-200 bg-white px-2 py-1.5 dark:border-gray-700 dark:bg-gray-900" />
+                  </div>
+                  <input value={guestBuilding} onChange={(event) => setGuestBuilding(event.target.value)} placeholder={t('cart.guestBuildingPlaceholder', { defaultValue: 'ビル名・部屋番号' })} className="rounded border border-gray-200 bg-white px-2 py-1.5 dark:border-gray-700 dark:bg-gray-900" />
+                  {guestCardError && <p className="text-[11px] text-rose-600 dark:text-rose-300">{guestCardError}</p>}
                 </div>
               </div>
             )}
@@ -191,6 +249,13 @@ export default function CartPage() {
                   href={checkoutLink}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={(event) => {
+                    if (isSignedIn) return
+                    if (!guestCardValid) {
+                      event.preventDefault()
+                      setGuestCardError(t('cart.guestCardInvalid', { defaultValue: 'カード情報が無効です。カード番号・有効期限・名義を確認してください。' }))
+                    }
+                  }}
                   className="inline-flex items-center justify-center bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700"
                 >
                   {t('cart.checkout', { defaultValue: 'チェックアウトへ' })}

@@ -78,20 +78,25 @@ export async function updateMemberPreferences(preferences: MemberPreferences): P
   return preferences
 }
 
-export async function getMemberAccountSettings(user: { email: string | null } | null): Promise<MemberAccountSettings> {
+export async function getMemberAccountSettings(user: { id: string | null; email: string | null } | null): Promise<MemberAccountSettings> {
   const settings = loadMemberAccountSettings()
-  if (!settings.profile.email && user?.email) {
-    const seeded = {
-      ...settings,
-      profile: {
-        ...settings.profile,
-        email: user.email,
-      },
-    }
-    saveMemberAccountSettings(seeded)
-    return seeded
+  const seeded = {
+    ...settings,
+    profile: {
+      ...settings.profile,
+      userId: settings.profile.userId || user?.id || 'guest-user',
+      email: settings.profile.email || user?.email || '',
+    },
   }
-  return settings
+
+  if (
+    seeded.profile.userId !== settings.profile.userId
+    || seeded.profile.email !== settings.profile.email
+  ) {
+    saveMemberAccountSettings(seeded)
+  }
+
+  return seeded
 }
 
 export async function updateMemberAccountSettings(settings: MemberAccountSettings): Promise<MemberAccountSettings> {

@@ -1,6 +1,7 @@
 import { fetchCollection, fetchBySlug } from '@/lib/api/strapi'
 import type { StrapiQueryParams } from '@/lib/api/strapi'
 import { buildEmptyListResponse, isStrapiForbiddenError } from '@/lib/api/fallback'
+import { StrapiApiError } from '@/lib/api/client'
 import type { Event, StrapiListResponse } from '@/types'
 import { API_ENDPOINTS } from '@/lib/api/endpoints'
 
@@ -26,7 +27,7 @@ export function getEventsList(
   }
 
   return fetchCollection<Event>(ENDPOINT, merged).catch((error) => {
-    if (isStrapiForbiddenError(error)) {
+    if (isStrapiForbiddenError(error) || (error instanceof StrapiApiError && (error.status === 0 || error.status === 408))) {
       return buildEmptyListResponse<Event>(merged.pagination?.pageSize ?? 16)
     }
     throw error

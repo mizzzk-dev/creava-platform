@@ -5,6 +5,7 @@ import type { StrapiQueryParams } from '@/lib/api/strapi'
 import type { StrapiListResponse } from '@/types'
 import type { StoreProduct, StoreProductSummary } from './types'
 import { API_ENDPOINTS } from '@/lib/api/endpoints'
+import { StrapiApiError } from '@/lib/api/client'
 
 /**
  * Strapi コレクションエンドポイント名
@@ -42,7 +43,7 @@ export function getProducts(
     ...params,
   }
   return fetchCollection<StoreProductSummary>(ENDPOINT, merged).catch((error) => {
-    if (isStrapiForbiddenError(error)) {
+    if (isStrapiForbiddenError(error) || (error instanceof StrapiApiError && (error.status === 0 || error.status === 408))) {
       return getMockStoreProducts(merged.pagination?.pageSize ?? 12)
     }
     throw error
@@ -64,7 +65,7 @@ export async function getProduct(slug: string): Promise<StoreProduct | null> {
       populate: ['previewImage'],
     })
   } catch (error) {
-    if (isStrapiForbiddenError(error)) {
+    if (isStrapiForbiddenError(error) || (error instanceof StrapiApiError && (error.status === 0 || error.status === 408))) {
       const res = getMockStoreProduct(slug)
       return res?.data ?? null
     }

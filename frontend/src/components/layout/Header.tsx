@@ -151,6 +151,7 @@ export default function Header() {
   }, [])
 
   const beginCartDrag = (event: ReactPointerEvent<HTMLAnchorElement>) => {
+    event.currentTarget.setPointerCapture(event.pointerId)
     pointerStateRef.current = {
       startX: event.clientX,
       startY: event.clientY,
@@ -174,6 +175,11 @@ export default function Header() {
 
     const onUp = () => {
       pointerStateRef.current = null
+      try {
+        event.currentTarget.releasePointerCapture(event.pointerId)
+      } catch {
+        // noop
+      }
       if (dragStartTimerRef.current) {
         window.clearTimeout(dragStartTimerRef.current)
         dragStartTimerRef.current = null
@@ -324,6 +330,7 @@ export default function Header() {
                 }
               }}
               className="relative flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-md transition hover:scale-[1.03] hover:text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:text-white"
+              style={{ touchAction: 'none' }}
               aria-label={t('cart.goToCart', { defaultValue: 'カートを見る' })}
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
