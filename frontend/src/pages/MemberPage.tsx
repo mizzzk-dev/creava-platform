@@ -20,6 +20,7 @@ const QUICK_LINKS = [
   { key: 'member.quickContact', to: ROUTES.CONTACT },
   { key: 'member.quickFaq', to: ROUTES.FAQ },
   { key: 'member.quickEvents', to: ROUTES.EVENTS },
+  { key: 'member.quickCart', to: ROUTES.CART },
 ]
 
 const GUEST_TODO = [
@@ -40,6 +41,33 @@ const ADMIN_TODO = [
   'member.todoAdminSupport',
 ]
 
+const ACCESS_ITEMS = [
+  {
+    titleKey: 'member.accessFanclubTitle',
+    descKey: 'member.accessFanclubDesc',
+    signedInStatusKey: 'member.accessStatusFanclubSignedIn',
+    guestStatusKey: 'member.accessStatusFanclubGuest',
+    to: ROUTES.FANCLUB,
+    actionKey: 'member.actionFanclub',
+  },
+  {
+    titleKey: 'member.accessStoreTitle',
+    descKey: 'member.accessStoreDesc',
+    signedInStatusKey: 'member.accessStatusStoreSignedIn',
+    guestStatusKey: 'member.accessStatusStoreGuest',
+    to: ROUTES.STORE,
+    actionKey: 'member.actionStore',
+  },
+  {
+    titleKey: 'member.accessSupportTitle',
+    descKey: 'member.accessSupportDesc',
+    signedInStatusKey: 'member.accessStatusSupportSignedIn',
+    guestStatusKey: 'member.accessStatusSupportGuest',
+    to: ROUTES.CONTACT,
+    actionKey: 'member.quickContact',
+  },
+]
+
 function maskUserId(userId: string): string {
   if (userId.length <= 8) return userId
   return `${userId.slice(0, 5)}...${userId.slice(-3)}`
@@ -51,8 +79,10 @@ export default function MemberPage() {
   const role = user?.role ?? 'guest'
   const isMember = role === 'member'
   const isAdmin = role === 'admin'
-
   const roleTodo = isAdmin ? ADMIN_TODO : isMember ? MEMBER_TODO : GUEST_TODO
+  const progressTotal = roleTodo.length
+  const progressDone = isAdmin ? progressTotal : isMember ? 2 : isSignedIn ? 1 : 0
+  const progressPercent = Math.round((progressDone / progressTotal) * 100)
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-20">
@@ -116,6 +146,18 @@ export default function MemberPage() {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded border border-gray-200 p-5 dark:border-gray-800">
+              <p className="font-mono text-[11px] text-gray-400">progress</p>
+              <div className="mt-3 flex items-end justify-between gap-3">
+                <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{progressPercent}%</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{t('member.progressMeta', { done: progressDone, total: progressTotal, defaultValue: `${progressDone}/${progressTotal} completed` })}</p>
+              </div>
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progressPercent} aria-label={t('member.progressLabel', { defaultValue: 'My page readiness progress' })}>
+                <div className="h-full rounded-full bg-violet-500 transition-all" style={{ width: `${progressPercent}%` }} />
+              </div>
+              <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{t('member.progressHelp', { defaultValue: '次のアクションを進めることで、限定導線や運用確認の抜け漏れを減らせます。' })}</p>
+            </div>
+
+            <div className="rounded border border-gray-200 p-5 dark:border-gray-800">
               <p className="font-mono text-[11px] text-gray-400">next</p>
               <div className="mt-3 grid gap-2 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3">
                 {NEXT_ACTIONS.map((action) => (
@@ -148,6 +190,29 @@ export default function MemberPage() {
               </div>
               <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">{t('member.quickLinksHelp', { defaultValue: '不明点があれば FAQ を確認し、依頼相談は Contact から送信してください。' })}</p>
             </div>
+          </div>
+
+          <div className="rounded border border-gray-200 p-5 dark:border-gray-800">
+            <p className="font-mono text-[11px] text-gray-400">access overview</p>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{t('member.accessLead', { defaultValue: '利用頻度の高い導線について、現在のアクセス状態をまとめています。' })}</p>
+            <ul className="mt-4 space-y-3">
+              {ACCESS_ITEMS.map((item) => (
+                <li key={item.titleKey} className="rounded border border-gray-200 p-3 dark:border-gray-700">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{t(item.titleKey, { defaultValue: item.titleKey })}</p>
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t(item.descKey, { defaultValue: item.descKey })}</p>
+                    </div>
+                    <span className="rounded-full bg-violet-50 px-2 py-1 text-[11px] text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+                      {t(isSignedIn ? item.signedInStatusKey : item.guestStatusKey, { defaultValue: isSignedIn ? item.signedInStatusKey : item.guestStatusKey })}
+                    </span>
+                  </div>
+                  <Link to={item.to} className="mt-3 inline-flex text-xs text-violet-500 hover:text-violet-400">
+                    {t(item.actionKey, { defaultValue: item.actionKey })} →
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
 
           <div className="rounded border border-gray-200 p-5 dark:border-gray-800">
