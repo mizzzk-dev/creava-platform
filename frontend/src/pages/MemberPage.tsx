@@ -16,6 +16,35 @@ const NEXT_ACTIONS = [
   { key: 'member.actionNews', to: ROUTES.NEWS },
 ]
 
+const QUICK_LINKS = [
+  { key: 'member.quickContact', to: ROUTES.CONTACT },
+  { key: 'member.quickFaq', to: ROUTES.FAQ },
+  { key: 'member.quickEvents', to: ROUTES.EVENTS },
+]
+
+const GUEST_TODO = [
+  'member.todoGuestSignIn',
+  'member.todoGuestFanclub',
+  'member.todoGuestContact',
+]
+
+const MEMBER_TODO = [
+  'member.todoMemberNews',
+  'member.todoMemberStore',
+  'member.todoMemberEvent',
+]
+
+const ADMIN_TODO = [
+  'member.todoAdminPublish',
+  'member.todoAdminFanclub',
+  'member.todoAdminSupport',
+]
+
+function maskUserId(userId: string): string {
+  if (userId.length <= 8) return userId
+  return `${userId.slice(0, 5)}...${userId.slice(-3)}`
+}
+
 export default function MemberPage() {
   const { t } = useTranslation()
   const { user, isLoaded, isSignedIn } = useCurrentUser()
@@ -23,8 +52,10 @@ export default function MemberPage() {
   const isMember = role === 'member'
   const isAdmin = role === 'admin'
 
+  const roleTodo = isAdmin ? ADMIN_TODO : isMember ? MEMBER_TODO : GUEST_TODO
+
   return (
-    <section className="mx-auto max-w-4xl px-4 py-20">
+    <section className="mx-auto max-w-5xl px-4 py-20">
       <PageHead title={t('member.title', { defaultValue: 'マイページ' })} description={t('member.description', { defaultValue: '会員状態と特典を確認できます。' })} />
       <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">{t('member.title', { defaultValue: 'マイページ' })}</h1>
       <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t('member.pageLead', { defaultValue: '会員状態と利用できる導線をまとめて確認できます。' })}</p>
@@ -32,7 +63,7 @@ export default function MemberPage() {
       {!isLoaded && <p className="mt-4 text-sm text-gray-500">{t('common.loading')}</p>}
 
       {isLoaded && !isSignedIn && (
-        <div className="mt-6 rounded border border-gray-200 dark:border-gray-800 p-5">
+        <div className="mt-6 rounded border border-gray-200 p-5 dark:border-gray-800">
           <p className="text-sm text-gray-600 dark:text-gray-400">{t('member.signInPrompt', { defaultValue: '会員情報を見るにはログインしてください。' })}</p>
           <div className="mt-3 flex gap-4">
             <Link to={ROUTES.FANCLUB} className="inline-flex text-sm text-violet-500 hover:text-violet-400">{t('home.fanclub.joinButton')} →</Link>
@@ -44,7 +75,7 @@ export default function MemberPage() {
       {isLoaded && isSignedIn && (
         <div className="mt-6 space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded border border-gray-200 dark:border-gray-800 p-5">
+            <div className="rounded border border-gray-200 p-5 dark:border-gray-800">
               <p className="font-mono text-[11px] text-gray-400">status</p>
               <p className="mt-2 text-xl font-medium text-gray-900 dark:text-gray-100">
                 {isAdmin
@@ -60,34 +91,76 @@ export default function MemberPage() {
                     ? t('member.memberDesc', { defaultValue: '限定コンテンツ・商品の閲覧/購入が可能です。' })
                     : t('member.guestDesc', { defaultValue: '一部コンテンツは Fanclub 参加後に閲覧できます。' })}
               </p>
+              <dl className="mt-4 space-y-2 rounded bg-gray-50 p-3 text-xs dark:bg-gray-900/50">
+                <div className="flex items-start justify-between gap-2">
+                  <dt className="text-gray-500 dark:text-gray-400">{t('member.accountId', { defaultValue: 'アカウントID' })}</dt>
+                  <dd className="font-mono text-gray-700 dark:text-gray-200">{user ? maskUserId(user.id) : '-'}</dd>
+                </div>
+                <div className="flex items-start justify-between gap-2">
+                  <dt className="text-gray-500 dark:text-gray-400">{t('member.accountEmail', { defaultValue: 'メールアドレス' })}</dt>
+                  <dd className="text-gray-700 dark:text-gray-200">{user?.email ?? t('member.emailMissing', { defaultValue: '未設定' })}</dd>
+                </div>
+              </dl>
             </div>
 
-            <div className="rounded border border-gray-200 dark:border-gray-800 p-5">
+            <div className="rounded border border-gray-200 p-5 dark:border-gray-800">
               <p className="font-mono text-[11px] text-gray-400">benefits</p>
               <ul className="mt-2 space-y-2 text-sm text-gray-600 dark:text-gray-400">
                 {MEMBER_BENEFITS.map((benefit) => (
                   <li key={benefit}>• {t(benefit, { defaultValue: benefit })}</li>
                 ))}
               </ul>
+              <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">{t('member.benefitNote', { defaultValue: '最新の会員特典・公開状態は Fanclub / Store の各ページで確認できます。' })}</p>
             </div>
           </div>
 
-          <div className="rounded border border-gray-200 dark:border-gray-800 p-5">
-            <p className="font-mono text-[11px] text-gray-400">next</p>
-            <div className="mt-3 grid gap-2 sm:grid-cols-3">
-              {NEXT_ACTIONS.map((action) => (
-                <Link
-                  key={action.to}
-                  to={action.to}
-                  className="rounded border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500"
-                >
-                  {t(action.key, { defaultValue: action.key })} →
-                </Link>
-              ))}
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded border border-gray-200 p-5 dark:border-gray-800">
+              <p className="font-mono text-[11px] text-gray-400">next</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3">
+                {NEXT_ACTIONS.map((action) => (
+                  <Link
+                    key={action.to}
+                    to={action.to}
+                    className="rounded border border-gray-200 px-3 py-2 text-sm text-gray-600 hover:border-gray-400 dark:border-gray-700 dark:text-gray-300 dark:hover:border-gray-500"
+                  >
+                    {t(action.key, { defaultValue: action.key })} →
+                  </Link>
+                ))}
+              </div>
+              {!isMember && !isAdmin && (
+                <p className="mt-3 text-xs text-violet-500">{t('member.joinHint', { defaultValue: 'FC限定商品や先行情報は Fanclub 参加後に利用できます。' })}</p>
+              )}
             </div>
-            {!isMember && !isAdmin && (
-              <p className="mt-3 text-xs text-violet-500">{t('member.joinHint', { defaultValue: 'FC限定商品や先行情報は Fanclub 参加後に利用できます。' })}</p>
-            )}
+
+            <div className="rounded border border-gray-200 p-5 dark:border-gray-800">
+              <p className="font-mono text-[11px] text-gray-400">quick links</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {QUICK_LINKS.map((link) => (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    className="rounded-full border border-gray-200 px-3 py-1 text-xs text-gray-600 hover:border-gray-400 dark:border-gray-700 dark:text-gray-300 dark:hover:border-gray-500"
+                  >
+                    {t(link.key, { defaultValue: link.key })}
+                  </Link>
+                ))}
+              </div>
+              <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">{t('member.quickLinksHelp', { defaultValue: '不明点があれば FAQ を確認し、依頼相談は Contact から送信してください。' })}</p>
+            </div>
+          </div>
+
+          <div className="rounded border border-gray-200 p-5 dark:border-gray-800">
+            <p className="font-mono text-[11px] text-gray-400">checklist</p>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{t('member.checklistLead', { defaultValue: '次のアクションを進めると、マイページの活用がスムーズになります。' })}</p>
+            <ul className="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-400">
+              {roleTodo.map((todo) => (
+                <li key={todo} className="flex gap-2">
+                  <span aria-hidden className="text-violet-500">✓</span>
+                  <span>{t(todo, { defaultValue: todo })}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       )}
