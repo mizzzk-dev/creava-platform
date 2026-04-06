@@ -20,7 +20,6 @@ const config: Core.Config.Middlewares = [
         useDefaults: true,
         directives: {
           'frame-ancestors': ["'none'"],
-          'upgrade-insecure-requests': null,
         },
       },
       frameguard: {
