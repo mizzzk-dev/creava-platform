@@ -7,6 +7,7 @@ import { useCurrentUser } from '@/hooks'
 import { ROUTES } from '@/lib/routeConstants'
 import { clearWithdrawRequest, getMemberDashboard, requestWithdraw, updateMemberPreferences } from '@/modules/member/api'
 import type { MemberDashboardData, MemberOrderStatus, ShipmentStatus } from '@/modules/member/types'
+import { buildCrmSegments, buildLtvDashboard, buildSupportTemplates } from '@/modules/store/lib/commerceOptimization'
 
 const MEMBER_BENEFITS = [
   'member.benefitEarly',
@@ -180,6 +181,21 @@ export default function MemberPage() {
     const date = new Date(value)
     return Number.isNaN(date.getTime()) ? value : date.toLocaleString()
   }
+
+  const crmSegments = dashboardData ? buildCrmSegments([
+    { memberId: user?.id ?? 'current', favoritesCount: 2, restockRequests: 1, orderCount: dashboardData.orders.length, lastOrderAt: dashboardData.orders[0]?.orderedAt ?? null },
+    { memberId: 'seed-loyal', favoritesCount: 4, restockRequests: 2, orderCount: 5, lastOrderAt: '2026-03-20T09:00:00.000Z' },
+    { memberId: 'seed-reactivation', favoritesCount: 1, restockRequests: 0, orderCount: 1, lastOrderAt: '2025-12-10T09:00:00.000Z' },
+  ]) : null
+
+  const ltvDashboard = dashboardData ? buildLtvDashboard([
+    { memberId: user?.id ?? 'current', firstOrderAt: dashboardData.orders[0]?.orderedAt ?? '2026-01-15T00:00:00.000Z', latestOrderAt: dashboardData.orders[0]?.orderedAt ?? '2026-03-30T00:00:00.000Z', totalOrderCount: dashboardData.orders.length || 1, acquisition: 'organic' },
+    { memberId: 'seed-1', firstOrderAt: '2026-01-10T00:00:00.000Z', latestOrderAt: '2026-03-30T00:00:00.000Z', totalOrderCount: 4, acquisition: 'social' },
+    { memberId: 'seed-2', firstOrderAt: '2026-02-01T00:00:00.000Z', latestOrderAt: '2026-02-10T00:00:00.000Z', totalOrderCount: 1, acquisition: 'ads' },
+    { memberId: 'seed-3', firstOrderAt: '2026-01-04T00:00:00.000Z', latestOrderAt: '2026-03-02T00:00:00.000Z', totalOrderCount: 2, acquisition: 'direct' },
+  ]) : null
+
+  const supportTemplates = dashboardData ? buildSupportTemplates(dashboardData.orders) : []
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-20">
@@ -445,6 +461,49 @@ export default function MemberPage() {
                     </ul>
                   ) : (
                     <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{t('member.auditLogsEmpty', { defaultValue: 'ログ履歴はありません。' })}</p>
+                  )}
+                </section>
+
+
+                <section className="rounded border border-gray-200 p-4 dark:border-gray-700">
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('member.crmTitle', { defaultValue: 'CRMセグメント' })}</h2>
+                  {crmSegments ? (
+                    <ul className="mt-3 space-y-1 text-xs text-gray-600 dark:text-gray-300">
+                      <li>{t('member.crmHighIntent', { defaultValue: '高関心層' })}: {crmSegments.highIntent.length}</li>
+                      <li>{t('member.crmLoyal', { defaultValue: 'ロイヤル層' })}: {crmSegments.loyal.length}</li>
+                      <li>{t('member.crmReactivation', { defaultValue: '再活性候補' })}: {crmSegments.reactivation.length}</li>
+                    </ul>
+                  ) : (
+                    <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{t('common.loading')}</p>
+                  )}
+                </section>
+
+                <section className="rounded border border-gray-200 p-4 dark:border-gray-700">
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('member.ltvTitle', { defaultValue: 'LTVダッシュボード' })}</h2>
+                  {ltvDashboard ? (
+                    <div className="mt-3 space-y-1 text-xs text-gray-600 dark:text-gray-300">
+                      <p>{t('member.ltvRetention', { defaultValue: '会員継続率' })}: {ltvDashboard.retentionRate}%</p>
+                      <p>{t('member.ltvRepurchase', { defaultValue: '再購入率' })}: {ltvDashboard.repurchaseRate}%</p>
+                      <p>{t('member.ltvCvrBySource', { defaultValue: '流入別CVR' })}: O {ltvDashboard.cvrByAcquisition.organic}% / S {ltvDashboard.cvrByAcquisition.social}% / A {ltvDashboard.cvrByAcquisition.ads}% / D {ltvDashboard.cvrByAcquisition.direct}%</p>
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{t('common.loading')}</p>
+                  )}
+                </section>
+
+                <section className="rounded border border-gray-200 p-4 dark:border-gray-700 lg:col-span-2">
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('member.supportTemplatesTitle', { defaultValue: '問い合わせテンプレート' })}</h2>
+                  {supportTemplates.length > 0 ? (
+                    <ul className="mt-3 grid gap-2 md:grid-cols-3">
+                      {supportTemplates.map((template) => (
+                        <li key={template.id} className="rounded bg-gray-50 p-2 text-xs text-gray-600 dark:bg-gray-900/40 dark:text-gray-300">
+                          <p className="font-medium text-gray-900 dark:text-gray-100">{template.label}</p>
+                          <p className="mt-1">{template.body}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{t('member.supportTemplatesEmpty', { defaultValue: 'テンプレート作成には注文履歴が必要です。' })}</p>
                   )}
                 </section>
 

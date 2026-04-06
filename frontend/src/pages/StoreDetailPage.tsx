@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
@@ -22,6 +23,7 @@ import { useCart } from '@/modules/cart/context'
 import { convertPrice, DISPLAY_CURRENCIES } from '@/modules/store/lib/currency'
 import { useDisplayCurrency } from '@/modules/store/hooks/useDisplayCurrency'
 import RestockNotifyForm from '@/modules/store/components/RestockNotifyForm'
+import { trackViewHistory } from '@/modules/store/lib/commerceOptimization'
 
 function purchaseStatusToAvailability(status: PurchaseStatus): 'InStock' | 'OutOfStock' | 'PreOrder' {
   if (status === 'available') return 'InStock'
@@ -45,6 +47,12 @@ export default function StoreDetailPage() {
     .slice(0, 4)
 
   const productUrl = `${SITE_URL}${detailPath.product(handle ?? '')}`
+
+
+  useEffect(() => {
+    if (!product) return
+    trackViewHistory('product', product.slug)
+  }, [product])
 
   const purchaseSummary =
     product?.purchaseStatus === 'soldout'

@@ -5,6 +5,7 @@ import StructuredData from '@/components/seo/StructuredData'
 import HeroSection from '@/modules/home/components/HeroSection'
 import AboutTeaserSection from '@/modules/home/components/AboutTeaserSection'
 import LatestSection from '@/modules/home/components/LatestSection'
+import PersonalizedHubSection from '@/modules/home/components/PersonalizedHubSection'
 import FeaturedWorksSection from '@/modules/home/components/FeaturedWorksSection'
 import PricingTeaserSection from '@/modules/home/components/PricingTeaserSection'
 import StorePreviewSection from '@/modules/home/components/StorePreviewSection'
@@ -69,6 +70,7 @@ export default function HomePage() {
       <AboutTeaserSection />
       <GitHubTrustSection />
       <LatestSection />
+      <PersonalizedHubSection />
       <FeaturedWorksSection />
       <CaseStudyTeaserSection />
       <PricingTeaserSection />

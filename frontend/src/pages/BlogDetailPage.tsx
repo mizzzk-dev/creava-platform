@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useSlugDetail } from '@/hooks'
@@ -14,11 +15,18 @@ import StructuredData from '@/components/seo/StructuredData'
 import SkeletonDetail from '@/components/common/SkeletonDetail'
 import Badge from '@/components/common/Badge'
 import type { BlogPost } from '@/types'
+import { trackViewHistory } from '@/modules/store/lib/commerceOptimization'
 
 export default function BlogDetailPage() {
   const { slug } = useParams<{ slug: string }>()
   const { t } = useTranslation()
   const { item, loading, error, notFound } = useSlugDetail<BlogPost>(getBlogDetail, slug)
+
+
+  useEffect(() => {
+    if (!item) return
+    trackViewHistory('blog', item.slug)
+  }, [item])
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-20">

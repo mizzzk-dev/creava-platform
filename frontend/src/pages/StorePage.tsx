@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
@@ -15,6 +15,7 @@ import { useListPageWebVitals } from '@/modules/analytics/webVitals'
 import { DISPLAY_CURRENCIES } from '@/modules/store/lib/currency'
 import { useDisplayCurrency } from '@/modules/store/hooks/useDisplayCurrency'
 import { getRankedProducts, type RankingRange } from '@/modules/store/lib/ranking'
+import { forecastStockout, getAbVariant, getRegionCommercePolicy } from '@/modules/store/lib/commerceOptimization'
 
 export default function StorePage() {
   const { t } = useTranslation()
@@ -23,9 +24,22 @@ export default function StorePage() {
   const { filterVisible } = useContentAccess()
   const { currency, updateCurrency } = useDisplayCurrency('JPY')
   const [rankingRange, setRankingRange] = useState<RankingRange>('7d')
+  const [region, setRegion] = useState<'JP' | 'US' | 'EU' | 'ROW'>('JP')
 
   const visibleProducts = filterVisible(products)
   const rankingProducts = getRankedProducts(visibleProducts, rankingRange, 3)
+  const heroVariant = useMemo(() => getAbVariant('storeHero'), [])
+  const rankingVariant = useMemo(() => getAbVariant('storeRanking'), [])
+  const ctaVariant = useMemo(() => getAbVariant('storeCta'), [])
+  const regionPolicy = getRegionCommercePolicy(region)
+  const stockoutForecast = forecastStockout(visibleProducts.slice(0, 3).map((product, index) => ({
+    productId: product.id,
+    productTitle: product.title,
+    stockUnits: 30 - index * 8,
+    soldUnitsLast7d: 10 + index * 4,
+    restockLeadDays: 14,
+    notifyWaitlist: 12 + index * 3,
+  })))
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-20">
@@ -59,14 +73,16 @@ export default function StorePage() {
             {t('store.title')}
           </h1>
           <p className="relative mt-3 max-w-2xl text-sm leading-relaxed text-gray-600 dark:text-gray-400">
-            作品販売だけでなく、制作依頼やFanclub導線をつないだ「ホームページ主軸」のストア体験を提供します。
+            {heroVariant === 'A'
+              ? '作品販売だけでなく、制作依頼やFanclub導線をつないだ「ホームページ主軸」のストア体験を提供します。'
+              : 'ブランド体験と購入導線を両立し、継続的に改善するストア体験を提供します。'}
           </p>
           <div className="relative mt-5 flex flex-wrap gap-3">
             <a href="#store-products" className="inline-flex items-center bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100">
-              商品を見る →
+              {ctaVariant === 'A' ? '商品を見る →' : 'おすすめ商品へ →'}
             </a>
             <Link to={ROUTES.CONTACT} className="inline-flex items-center border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:border-gray-400 hover:text-gray-900 dark:border-gray-700 dark:text-gray-300 dark:hover:border-gray-500 dark:hover:text-gray-100">
-              制作依頼する →
+              {ctaVariant === 'A' ? '制作依頼する →' : '相談して選ぶ →'}
             </Link>
             <Link to={ROUTES.CART} className="inline-flex items-center text-xs font-mono text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
               {t('cart.goToCart', { defaultValue: 'カートを見る' })} →
@@ -102,11 +118,35 @@ export default function StorePage() {
             </p>
           </div>
         </div>
+
+        <div className="mt-4 rounded border border-gray-200 px-3 py-3 dark:border-gray-800">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <label className="text-xs text-gray-500 dark:text-gray-400">
+              {t('store.regionLabel', { defaultValue: '配送地域' })}
+              <select
+                value={region}
+                onChange={(event) => setRegion(event.target.value as typeof region)}
+                className="ml-2 rounded border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+              >
+                <option value="JP">JP</option>
+                <option value="US">US</option>
+                <option value="EU">EU</option>
+                <option value="ROW">ROW</option>
+              </select>
+            </label>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400">
+              {t('store.regionNotice', {
+                defaultValue: `通貨:${regionPolicy.currency} / 送料:${regionPolicy.shippingFee} / 税率:${Math.round(regionPolicy.taxRate * 100)}% / 配送:${regionPolicy.canShip ? '可' : '不可'}`,
+              })}
+            </p>
+          </div>
+        </div>
+
         {rankingProducts.length > 0 && (
           <div className="mt-4 rounded border border-gray-200 px-3 py-3 dark:border-gray-800">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="font-mono text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-600">
-                {t('store.rankingTitle', { defaultValue: '売上ランキング' })}
+{rankingVariant === 'A' ? t('store.rankingTitle', { defaultValue: '売上ランキング' }) : t('store.rankingTitleB', { defaultValue: '人気トレンド' })}
               </p>
               <div className="inline-flex rounded border border-gray-200 dark:border-gray-800 p-0.5">
                 {(['7d', '30d'] as const).map((range) => (
@@ -131,6 +171,23 @@ export default function StorePage() {
             </div>
           </div>
         )}
+
+        {stockoutForecast.length > 0 && (
+          <div className="mt-4 rounded border border-amber-200/70 bg-amber-50/50 px-3 py-3 dark:border-amber-900/40 dark:bg-amber-950/20">
+            <p className="font-mono text-[10px] uppercase tracking-wider text-amber-700 dark:text-amber-300">
+              {t('store.stockoutTitle', { defaultValue: '在庫予測 / 欠品予防' })}
+            </p>
+            <ul className="mt-2 space-y-1 text-xs text-amber-800 dark:text-amber-200">
+              {stockoutForecast.map((row) => (
+                <li key={row.productId}>
+                  {row.productTitle}: {t('store.stockoutSummary', { defaultValue: `${row.daysUntilStockout}日で欠品予測 (${row.estimatedStockoutDate})` })}
+                  {row.shouldAlert && ` / 通知候補 ${row.suggestedNotifyAudience}名`}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="mt-4 rounded border border-gray-200 px-3 py-3 dark:border-gray-800">
           <p className="font-mono text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-600">status guide</p>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">

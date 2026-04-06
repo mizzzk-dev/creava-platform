@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useSlugDetail } from '@/hooks'
@@ -15,11 +16,18 @@ import SkeletonDetail from '@/components/common/SkeletonDetail'
 import Badge from '@/components/common/Badge'
 import SnsLinks from '@/components/common/SnsLinks'
 import type { NewsItem } from '@/types'
+import { trackViewHistory } from '@/modules/store/lib/commerceOptimization'
 
 export default function NewsDetailPage() {
   const { slug } = useParams<{ slug: string }>()
   const { t } = useTranslation()
   const { item, loading, error, notFound } = useSlugDetail<NewsItem>(getNewsDetail, slug)
+
+
+  useEffect(() => {
+    if (!item) return
+    trackViewHistory('news', item.slug)
+  }, [item])
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-20">
