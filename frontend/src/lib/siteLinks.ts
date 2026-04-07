@@ -9,8 +9,8 @@ const toAbsoluteUrl = (baseUrl: string, path: string): string => {
 export const SITE_TYPE = (import.meta.env.VITE_SITE_TYPE as 'main' | 'store' | 'fanclub' | undefined) ?? 'main'
 
 export const MAIN_SITE_URL = trimTrailingSlash((import.meta.env.VITE_MAIN_SITE_URL as string | undefined) ?? 'https://mizzz.jp')
-export const STORE_SITE_URL = trimTrailingSlash((import.meta.env.VITE_STORE_SITE_URL as string | undefined) ?? 'https://store.mizzz.jp')
-export const FANCLUB_SITE_URL = trimTrailingSlash((import.meta.env.VITE_FANCLUB_SITE_URL as string | undefined) ?? 'https://fc.mizzz.jp')
+export const STORE_SITE_URL = trimTrailingSlash((import.meta.env.VITE_STORE_SITE_URL as string | undefined) ?? MAIN_SITE_URL)
+export const FANCLUB_SITE_URL = trimTrailingSlash((import.meta.env.VITE_FANCLUB_SITE_URL as string | undefined) ?? MAIN_SITE_URL)
 
 export const isMainSite = SITE_TYPE === 'main'
 export const isStoreSite = SITE_TYPE === 'store'
