@@ -18,22 +18,10 @@ jobs:
         include:
           - site: main
             site_url: https://mizzz.jp
-            ftp_server: ${{ secrets.FTP_SERVER_MAIN }}
-            ftp_username: ${{ secrets.FTP_USERNAME_MAIN }}
-            ftp_password: ${{ secrets.FTP_PASSWORD_MAIN }}
-            ftp_dir: ${{ secrets.FTP_SERVER_DIR_MAIN }}
           - site: store
             site_url: https://store.mizzz.jp
-            ftp_server: ${{ secrets.FTP_SERVER_STORE }}
-            ftp_username: ${{ secrets.FTP_USERNAME_STORE }}
-            ftp_password: ${{ secrets.FTP_PASSWORD_STORE }}
-            ftp_dir: ${{ secrets.FTP_SERVER_DIR_STORE }}
           - site: fanclub
             site_url: https://fc.mizzz.jp
-            ftp_server: ${{ secrets.FTP_SERVER_FC }}
-            ftp_username: ${{ secrets.FTP_USERNAME_FC }}
-            ftp_password: ${{ secrets.FTP_PASSWORD_FC }}
-            ftp_dir: ${{ secrets.FTP_SERVER_DIR_FC }}
 
     defaults:
       run:
@@ -79,11 +67,11 @@ jobs:
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ matrix.ftp_server }}
-          username: ${{ matrix.ftp_username }}
-          password: ${{ matrix.ftp_password }}
+          server: ${{ matrix.site == 'main' && secrets.FTP_SERVER_MAIN || matrix.site == 'store' && secrets.FTP_SERVER_STORE || secrets.FTP_SERVER_FC }}
+          username: ${{ matrix.site == 'main' && secrets.FTP_USERNAME_MAIN || matrix.site == 'store' && secrets.FTP_USERNAME_STORE || secrets.FTP_USERNAME_FC }}
+          password: ${{ matrix.site == 'main' && secrets.FTP_PASSWORD_MAIN || matrix.site == 'store' && secrets.FTP_PASSWORD_STORE || secrets.FTP_PASSWORD_FC }}
           local-dir: ./frontend/dist/
-          server-dir: ${{ matrix.ftp_dir }}
+          server-dir: ${{ matrix.site == 'main' && secrets.FTP_SERVER_DIR_MAIN || matrix.site == 'store' && secrets.FTP_SERVER_DIR_STORE || secrets.FTP_SERVER_DIR_FC }}
           dangerous-clean-slate: false
           exclude: |
             **/.git*
