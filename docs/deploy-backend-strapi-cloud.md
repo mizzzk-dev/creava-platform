@@ -289,3 +289,33 @@ AWS RDS + EC2/ECS での運用も同じ環境変数で対応可能です。
 - frontend は `main/store/fanclub` の 3 デプロイに分離されても、backend は Strapi Cloud 1系統のままで運用します。
 - CORS の許可元は `FRONTEND_URL` で一元管理し、追加・削除時はカンマ区切りを更新して再デプロイしてください。
 - Clerk / Formspree / Shopify 側の Allowed Origins も 3 ドメインを登録してください。
+
+#### Allowed Origins に登録する値（3サービス共通）
+
+以下の 3 つを **同じ値で** Clerk / Formspree / Shopify に登録します。
+
+- `https://mizzz.jp`
+- `https://store.mizzz.jp`
+- `https://fc.mizzz.jp`
+
+> `http://` ではなく `https://` を登録してください。末尾の `/` は付けない運用で統一します。
+
+#### Clerk（アカウント管理）の運用方針
+
+- ユーザー管理は `main / store / fc` で分割せず、**1つの Clerk Production インスタンスに統一**します。
+- 3ドメインで同じ `VITE_CLERK_PUBLISHABLE_KEY`（`pk_live_...`）を使用します。
+- これにより、同一ユーザーで main/store/fc を横断したログイン状態を運用できます。
+
+#### Formspree（問い合わせ）の運用方針
+
+- `store.mizzz.jp` 上の「お問い合わせ」導線は、store 専用フォームを新設せず、**main の Contact/Request ページへ遷移**させます。
+- Formspree は main 側フォーム（`VITE_FORMSPREE_CONTACT_ID` / `VITE_FORMSPREE_REQUEST_ID`）を正本として管理します。
+
+#### DNS（store / fc サブドメイン）で設定するもの
+
+`store.mizzz.jp` / `fc.mizzz.jp` は、運用するホスティングの仕様に合わせて次のどちらかを設定します。
+
+1. **A レコード運用**: サーバーの IPv4 アドレスを直接指定
+2. **CNAME 運用**: ホスティング事業者が指定するホスト名を指定
+
+実務上は、同一ホスティングへ向ける場合は CNAME 指定が保守しやすいです。最終的な値（IP / CNAME 先）は利用中のホスティング管理画面に表示される指定値を採用してください。

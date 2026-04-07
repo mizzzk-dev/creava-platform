@@ -112,6 +112,27 @@ npm run build:prod
 - [ ] Clerk Dashboard でドメインを登録
 - [ ] Production インスタンスに切替（`pk_live_...` キー使用）
 - [ ] Allowed Origins に本番ドメインを追加
+- [ ] アカウント管理は main/store/fc で分割せず、1つの Clerk Production インスタンスに統一
+
+### 5.1 Allowed Origins（Clerk / Formspree / Shopify 共通）
+
+- [ ] `https://mizzz.jp`
+- [ ] `https://store.mizzz.jp`
+- [ ] `https://fc.mizzz.jp`
+
+> 3サービスとも同じ 3ドメインを登録する。`https://` 固定・末尾 `/` なしで統一。
+
+### 5.2 Store の問い合わせ導線
+
+- [ ] Store の「お問い合わせ」は store 専用フォームではなく、main の Contact/Request ページへ遷移させる
+- [ ] Formspree の本番フォームは main 側（`VITE_FORMSPREE_CONTACT_ID` / `VITE_FORMSPREE_REQUEST_ID`）で管理する
+
+### 5.3 DNS（`store.mizzz.jp` / `fc.mizzz.jp`）
+
+- [ ] ホスティング指定に従い、A または CNAME のどちらかで設定する
+  - A: 事業者指定の IPv4 アドレスを設定
+  - CNAME: 事業者指定のホスト名を設定
+- [ ] 反映後、`https://store.mizzz.jp` / `https://fc.mizzz.jp` が正しいデプロイ先を表示することを確認
 
 ### 6. 公開後確認
 
