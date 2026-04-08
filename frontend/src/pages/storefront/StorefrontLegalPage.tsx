@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import PageHead from '@/components/seo/PageHead'
+import { MAIN_SITE_URL } from '@/lib/siteLinks'
 
 const LEGAL_LINKS = [
   {
@@ -34,6 +35,9 @@ export default function StorefrontLegalPage() {
           </Link>
         ))}
       </div>
+      <a href={`${MAIN_SITE_URL}/contact`} className="mt-5 inline-flex text-sm text-gray-600 underline-offset-2 hover:underline dark:text-gray-300">
+        ストアに関するお問い合わせは mizzz.jp のお問い合わせページをご利用ください
+      </a>
     </section>
   )
 }

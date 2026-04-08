@@ -1,4 +1,5 @@
 import PageHead from '@/components/seo/PageHead'
+import { MAIN_SITE_URL } from '@/lib/siteLinks'
 
 export default function StorefrontReturnsPage() {
   return (
@@ -10,6 +11,9 @@ export default function StorefrontReturnsPage() {
         <li>不良品・誤配送の場合は、商品到着後 7 日以内にお問い合わせください。</li>
         <li>デジタル商品は性質上、購入完了後の返品はできません。</li>
       </ul>
+      <p className="mt-5 text-xs text-gray-500 dark:text-gray-400">
+        お問い合わせは <a href={`${MAIN_SITE_URL}/contact`} className="underline-offset-2 hover:underline">mizzz.jp お問い合わせページ</a> から受け付けています。
+      </p>
     </section>
   )
 }

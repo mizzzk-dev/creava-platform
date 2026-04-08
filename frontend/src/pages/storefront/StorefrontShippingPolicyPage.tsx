@@ -1,4 +1,5 @@
 import PageHead from '@/components/seo/PageHead'
+import { MAIN_SITE_URL } from '@/lib/siteLinks'
 
 export default function StorefrontShippingPolicyPage() {
   return (
@@ -10,6 +11,9 @@ export default function StorefrontShippingPolicyPage() {
         <li>予約商品・受注生産品は商品ページ記載の日程を優先します。</li>
         <li>配送先は日本国内（JST基準）を標準とし、海外配送は段階的に対応予定です。</li>
       </ul>
+      <p className="mt-5 text-xs text-gray-500 dark:text-gray-400">
+        お問い合わせは <a href={`${MAIN_SITE_URL}/contact`} className="underline-offset-2 hover:underline">mizzz.jp お問い合わせページ</a> から受け付けています。
+      </p>
     </section>
   )
 }

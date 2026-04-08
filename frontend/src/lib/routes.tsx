@@ -15,6 +15,7 @@ import StorefrontGuidePage from '@/pages/storefront/StorefrontGuidePage'
 import StorefrontShippingPolicyPage from '@/pages/storefront/StorefrontShippingPolicyPage'
 import StorefrontReturnsPage from '@/pages/storefront/StorefrontReturnsPage'
 import StorefrontLegalPage from '@/pages/storefront/StorefrontLegalPage'
+import StorefrontContactRedirectPage from '@/pages/storefront/StorefrontContactRedirectPage'
 import {
   FanclubAboutSitePage,
   FanclubGalleryDetailPage,
@@ -93,7 +94,7 @@ export function AppRoutes() {
             <Route path={ROUTES.STORE_GUIDE} element={<StorefrontGuidePage />} />
             <Route path={ROUTES.STORE_SHIPPING_POLICY} element={<StorefrontShippingPolicyPage />} />
             <Route path={ROUTES.STORE_RETURNS} element={<StorefrontReturnsPage />} />
-            <Route path={ROUTES.STORE_CONTACT} element={<ContactPage />} />
+            <Route path={ROUTES.STORE_CONTACT} element={<StorefrontContactRedirectPage />} />
             <Route path={ROUTES.STORE_LEGAL} element={<StorefrontLegalPage />} />
             <Route path={ROUTES.STORE_TERMS} element={<TermsPage />} />
             <Route path={ROUTES.STORE_PRIVACY} element={<PrivacyPolicyPage />} />
