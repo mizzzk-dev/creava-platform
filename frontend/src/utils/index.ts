@@ -22,7 +22,7 @@ export function canViewContent({
   if (status === 'public') return true
 
   if (status === 'fc_only') {
-    return role === 'member' || role === 'admin'
+    return role === 'member' || role === 'premium' || role === 'admin'
   }
 
   if (status === 'limited') {
@@ -36,7 +36,7 @@ export function canViewContent({
 
     // 期限後
     if (archiveVisibleForFC) {
-      return role === 'member' || role === 'admin'
+      return role === 'member' || role === 'premium' || role === 'admin'
     }
 
     return false

@@ -44,6 +44,8 @@ export const ROUTES = {
   FC_ABOUT: '/about',
   FC_JOIN: '/join',
   FC_LOGIN: '/login',
+  FC_LOGIN_RESET_PASSWORD: '/login/reset-password',
+  FC_LOGIN_VERIFY_EMAIL: '/login/verify-email',
   FC_MYPAGE: '/mypage',
   FC_MOVIES: '/movies',
   FC_MOVIE_DETAIL: '/movies/:slug',
@@ -55,6 +57,8 @@ export const ROUTES = {
   FC_MEMBER_STORE: '/member-store',
   FC_GUIDE: '/guide',
   FC_LEGAL: '/legal',
+  FC_TERMS: '/terms',
+  FC_PRIVACY: '/privacy',
   FC_COMMERCE_LAW: '/commerce-law',
   FC_SUBSCRIPTION_POLICY: '/subscription-policy',
 } as const

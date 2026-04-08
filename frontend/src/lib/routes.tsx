@@ -28,11 +28,14 @@ import {
   FanclubMoviesDetailPage,
   FanclubMoviesPage,
   FanclubMyPageSite,
+  FanclubResetPasswordPage,
   FanclubSchedulePage,
   FanclubSubscriptionPolicyPage,
   FanclubTicketsDetailPage,
   FanclubTicketsPage,
+  FanclubVerifyEmailPage,
 } from '@/pages/fc/FanclubSitePages'
+import FanclubAuthGuard from '@/components/guards/FanclubAuthGuard'
 
 // Lazy-loaded pages — excluded from the initial bundle
 const WorksPage = lazy(() => import('@/pages/WorksPage'))
@@ -113,8 +116,10 @@ export function AppRoutes() {
             <Route path={ROUTES.FC_ABOUT} element={<FanclubAboutSitePage />} />
             <Route path={ROUTES.FC_JOIN} element={<FanclubJoinPage />} />
             <Route path={ROUTES.FC_LOGIN} element={<FanclubLoginPage />} />
-            <Route path={ROUTES.FC_MYPAGE} element={<FanclubMyPageSite />} />
-            <Route path={ROUTES.MEMBER} element={<MemberPage />} />
+            <Route path={ROUTES.FC_LOGIN_RESET_PASSWORD} element={<FanclubResetPasswordPage />} />
+            <Route path={ROUTES.FC_LOGIN_VERIFY_EMAIL} element={<FanclubVerifyEmailPage />} />
+            <Route path={ROUTES.FC_MYPAGE} element={<FanclubAuthGuard><FanclubMyPageSite /></FanclubAuthGuard>} />
+            <Route path={ROUTES.MEMBER} element={<FanclubAuthGuard><MemberPage /></FanclubAuthGuard>} />
             <Route path={ROUTES.NEWS} element={<NewsPage />} />
             <Route path={ROUTES.NEWS_DETAIL} element={<NewsDetailPage />} />
             <Route path={ROUTES.BLOG} element={<BlogPage />} />
@@ -133,6 +138,8 @@ export function AppRoutes() {
             <Route path={ROUTES.FC_GUIDE} element={<FanclubGuidePage />} />
             <Route path={ROUTES.CONTACT} element={<ContactPage />} />
             <Route path={ROUTES.FC_LEGAL} element={<FanclubLegalIndexPage />} />
+            <Route path={ROUTES.FC_TERMS} element={<TermsPage />} />
+            <Route path={ROUTES.FC_PRIVACY} element={<PrivacyPolicyPage />} />
             <Route path={ROUTES.LEGAL_PRIVACY} element={<PrivacyPolicyPage />} />
             <Route path={ROUTES.LEGAL_TERMS} element={<TermsPage />} />
             <Route path={ROUTES.FC_COMMERCE_LAW} element={<TokushohoPage />} />

@@ -51,8 +51,8 @@ export default function FanclubLayout() {
           <p>© mizzz official fanclub</p>
           <div className="flex gap-4">
             <NavLink to={ROUTES.FC_GUIDE}>GUIDE</NavLink>
-            <NavLink to={ROUTES.LEGAL_TERMS}>TERMS</NavLink>
-            <NavLink to={ROUTES.LEGAL_PRIVACY}>PRIVACY</NavLink>
+            <NavLink to={ROUTES.FC_TERMS}>TERMS</NavLink>
+            <NavLink to={ROUTES.FC_PRIVACY}>PRIVACY</NavLink>
             <NavLink to={ROUTES.CONTACT}>CONTACT</NavLink>
           </div>
         </div>

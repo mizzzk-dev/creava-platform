@@ -22,7 +22,9 @@ interface ClerkUserLike {
  */
 export function resolveRole(raw: unknown): UserRole {
   if (raw === 'admin') return 'admin'
+  if (raw === 'premium') return 'premium'
   if (raw === 'member') return 'member'
+  if (raw === 'free') return 'free'
   return 'guest'
 }
 
@@ -33,9 +35,22 @@ export function resolveRole(raw: unknown): UserRole {
  * 各ページ・フックは AppUser だけを参照すること。
  */
 export function toAppUser(clerkUser: ClerkUserLike): AppUser {
+  const role = resolveRole(clerkUser.publicMetadata.role)
+  const rawPlan = clerkUser.publicMetadata.memberPlan
+  const rawStatus = clerkUser.publicMetadata.contractStatus
+
   return {
     id: clerkUser.id,
     email: clerkUser.primaryEmailAddress?.emailAddress ?? null,
-    role: resolveRole(clerkUser.publicMetadata.role),
+    role,
+    memberPlan: rawPlan === 'premium' ? 'premium' : rawPlan === 'free' ? 'free' : 'paid',
+    contractStatus:
+      rawStatus === 'grace' ||
+      rawStatus === 'cancel_scheduled' ||
+      rawStatus === 'canceled' ||
+      rawStatus === 'expired'
+        ? rawStatus
+        : 'active',
+    emailVerified: Boolean(clerkUser.primaryEmailAddress?.emailAddress),
   }
 }

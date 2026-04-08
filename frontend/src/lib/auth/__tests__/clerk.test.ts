@@ -4,6 +4,8 @@ import { resolveRole, toAppUser } from '../clerk'
 describe('resolveRole', () => {
   it('"admin" → admin', () => expect(resolveRole('admin')).toBe('admin'))
   it('"member" → member', () => expect(resolveRole('member')).toBe('member'))
+  it('"premium" → premium', () => expect(resolveRole('premium')).toBe('premium'))
+  it('"free" → free', () => expect(resolveRole('free')).toBe('free'))
   it('"guest" → guest', () => expect(resolveRole('guest')).toBe('guest'))
   it('未設定 (undefined) → guest', () => expect(resolveRole(undefined)).toBe('guest'))
   it('null → guest', () => expect(resolveRole(null)).toBe('guest'))
@@ -18,7 +20,14 @@ describe('toAppUser', () => {
       primaryEmailAddress: { emailAddress: 'test@example.com' },
       publicMetadata: { role: 'member' },
     })
-    expect(result).toEqual({ id: 'user_123', email: 'test@example.com', role: 'member' })
+    expect(result).toEqual({
+      id: 'user_123',
+      email: 'test@example.com',
+      role: 'member',
+      memberPlan: 'paid',
+      contractStatus: 'active',
+      emailVerified: true,
+    })
   })
 
   it('メールアドレスが null の場合 email: null になる', () => {
@@ -28,6 +37,7 @@ describe('toAppUser', () => {
       publicMetadata: {},
     })
     expect(result.email).toBeNull()
+    expect(result.emailVerified).toBe(false)
   })
 
   it('publicMetadata.role が未設定の場合 role: guest になる', () => {

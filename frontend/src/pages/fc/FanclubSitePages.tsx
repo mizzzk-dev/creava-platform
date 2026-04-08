@@ -4,8 +4,9 @@ import { useTranslation } from 'react-i18next'
 import PageHead from '@/components/seo/PageHead'
 import { ROUTES } from '@/lib/routeConstants'
 import { useCurrentUser } from '@/hooks'
+import { canAccessByRole, type VisibilityScope } from '@/lib/auth/membership'
 
-type Visibility = 'public' | 'member' | 'premium'
+type Visibility = VisibilityScope
 
 interface FcItem {
   slug: string
@@ -16,29 +17,23 @@ interface FcItem {
 }
 
 const MOVIES: FcItem[] = [
-  { slug: 'studio-session-01', title: 'Studio Session 01', description: '制作中の断片を収めた会員限定クリップ。', publishAt: '2026-04-01', visibility: 'member' },
+  { slug: 'studio-session-01', title: 'Studio Session 01', description: '制作中の断片を収めた会員限定クリップ。', publishAt: '2026-04-01', visibility: 'members' },
   { slug: 'letter-to-members', title: 'Letter to Members', description: '今月のメッセージ動画。', publishAt: '2026-03-20', visibility: 'public' },
 ]
 
 const GALLERIES: FcItem[] = [
-  { slug: 'offshot-2026-spring', title: 'Offshot / Spring 2026', description: '制作現場のオフショット。', publishAt: '2026-03-30', visibility: 'member' },
+  { slug: 'offshot-2026-spring', title: 'Offshot / Spring 2026', description: '制作現場のオフショット。', publishAt: '2026-03-30', visibility: 'members' },
   { slug: 'artwork-select', title: 'Artwork Select', description: '公開アートワークギャラリー。', publishAt: '2026-02-18', visibility: 'public' },
 ]
 
 const TICKETS: FcItem[] = [
-  { slug: 'live-2026-tokyo-preorder', title: 'LIVE 2026 TOKYO 先行受付', description: '会員先行チケットの受付情報。', publishAt: '2026-04-04', visibility: 'member' },
+  { slug: 'live-2026-tokyo-preorder', title: 'LIVE 2026 TOKYO 先行受付', description: '会員先行チケットの受付情報。', publishAt: '2026-04-04', visibility: 'members' },
 ]
 
 const ACCESS_LABEL: Record<Visibility, string> = {
   public: '一般公開',
-  member: '会員限定',
+  members: '会員限定',
   premium: 'プレミアム限定',
-}
-
-function canAccess(role: 'guest' | 'member' | 'admin', visibility: Visibility): boolean {
-  if (visibility === 'public') return true
-  if (visibility === 'member') return role === 'member' || role === 'admin'
-  return role === 'admin'
 }
 
 function FcSectionTemplate({
@@ -62,7 +57,7 @@ function FcSectionTemplate({
       <p className="mt-3 max-w-2xl text-sm leading-7 text-gray-600 dark:text-gray-300">{description}</p>
       <div className="mt-8 grid gap-4 md:grid-cols-2">
         {items.map((item) => {
-          const isLocked = !canAccess(role, item.visibility)
+          const isLocked = !canAccessByRole(role, item.visibility)
           return (
             <article key={item.slug} className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
               <div className="flex items-center justify-between gap-3">
@@ -177,17 +172,65 @@ export function FanclubLoginPage() {
         <p className="text-sm text-gray-700 dark:text-gray-200">認証基盤は Clerk を使用します。メール認証・パスワード再設定・セッション管理に対応。</p>
         <p className="mt-2 text-xs text-gray-500">※ Clerk 未設定環境ではログインUIは無効化されます。</p>
       </div>
+      <div className="mt-6 flex flex-wrap gap-4 text-sm">
+        <Link to={ROUTES.FC_LOGIN_RESET_PASSWORD} className="text-gray-600 underline hover:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100">パスワード再設定</Link>
+        <Link to={ROUTES.FC_LOGIN_VERIFY_EMAIL} className="text-gray-600 underline hover:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100">メール認証を再確認</Link>
+      </div>
       <Link to={ROUTES.FC_MYPAGE} className="mt-8 inline-flex text-sm font-medium text-violet-600 hover:text-violet-500">{t('nav.member', { defaultValue: 'マイページ' })}へ →</Link>
     </section>
   )
 }
 
-export function FanclubMyPageSite() {
+export function FanclubResetPasswordPage() {
   return (
-    <section>
+    <section className="mx-auto max-w-xl px-4 py-14">
+      <PageHead title="パスワード再設定 | mizzz official fanclub" description="パスワード再設定の案内。" noindex />
+      <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">パスワード再設定</h1>
+      <p className="mt-4 text-sm text-gray-600 dark:text-gray-300">メールアドレス宛に再設定リンクを送信します。リンクは一定時間で失効します。</p>
+      <Link to={ROUTES.FC_LOGIN} className="mt-7 inline-flex text-sm font-medium text-violet-600 hover:text-violet-500">ログインへ戻る →</Link>
+    </section>
+  )
+}
+
+export function FanclubVerifyEmailPage() {
+  return (
+    <section className="mx-auto max-w-xl px-4 py-14">
+      <PageHead title="メール認証 | mizzz official fanclub" description="メール認証の案内。" noindex />
+      <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">メール認証</h1>
+      <p className="mt-4 text-sm text-gray-600 dark:text-gray-300">登録メールへ送信された確認リンクを開いて認証を完了してください。認証後に会員限定ページへアクセスできます。</p>
+      <Link to={ROUTES.FC_MYPAGE} className="mt-7 inline-flex text-sm font-medium text-violet-600 hover:text-violet-500">マイページを開く →</Link>
+    </section>
+  )
+}
+
+export function FanclubMyPageSite() {
+  const { user } = useCurrentUser()
+
+  return (
+    <section className="mx-auto max-w-5xl px-4 py-10">
       <PageHead title="マイページ | mizzz official fanclub" description="会員ステータス、契約プラン、次回更新日、退会導線。" noindex />
-      <div className="mx-auto max-w-5xl px-4 pt-10">
-        <p className="font-mono text-xs text-gray-500">MY PAGE</p>
+      <p className="font-mono text-xs text-gray-500">MY PAGE</p>
+      <h1 className="mt-2 text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">会員ダッシュボード</h1>
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
+        <article className="rounded-2xl border border-gray-200 p-5 dark:border-gray-800">
+          <p className="text-xs text-gray-500">会員ステータス</p>
+          <p className="mt-2 text-sm text-gray-800 dark:text-gray-100">{user?.contractStatus ?? 'active'}</p>
+          <p className="mt-1 text-xs text-gray-500">契約プラン: {user?.memberPlan ?? 'paid'}</p>
+        </article>
+        <article className="rounded-2xl border border-gray-200 p-5 dark:border-gray-800">
+          <p className="text-xs text-gray-500">次回更新日</p>
+          <p className="mt-2 text-sm text-gray-800 dark:text-gray-100">2026-05-01（仮）</p>
+          <p className="mt-1 text-xs text-gray-500">解約 / 退会はポリシーに沿って手続きできます。</p>
+          <Link to={ROUTES.FC_SUBSCRIPTION_POLICY} className="mt-3 inline-flex text-xs text-violet-600 hover:text-violet-500">継続課金ポリシーを確認</Link>
+        </article>
+      </div>
+      <div className="mt-8">
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">最近の更新</h2>
+        <ul className="mt-3 space-y-2 text-sm text-gray-700 dark:text-gray-200">
+          <li>・限定ブログを1件更新しました</li>
+          <li>・次回イベント情報を公開しました</li>
+          <li>・会員限定動画を追加しました</li>
+        </ul>
       </div>
     </section>
   )
@@ -229,7 +272,7 @@ export function FanclubTicketsDetailPage() {
 function FcDetailTemplate({ item, title }: { item: FcItem; title: string }) {
   const { user } = useCurrentUser()
   const role = user?.role ?? 'guest'
-  const locked = !canAccess(role, item.visibility)
+  const locked = !canAccessByRole(role, item.visibility)
   return (
     <section className="mx-auto max-w-3xl px-4 py-14">
       <PageHead title={`${item.title} | ${title}`} description={item.description} noindex />
@@ -272,8 +315,8 @@ export function FanclubGuidePage() {
 export function FanclubLegalIndexPage() {
   const links = useMemo(
     () => [
-      { to: ROUTES.LEGAL_TERMS, label: '利用規約' },
-      { to: ROUTES.LEGAL_PRIVACY, label: 'プライバシーポリシー' },
+      { to: ROUTES.FC_TERMS, label: '利用規約' },
+      { to: ROUTES.FC_PRIVACY, label: 'プライバシーポリシー' },
       { to: ROUTES.FC_COMMERCE_LAW, label: '特商法表記' },
       { to: ROUTES.FC_SUBSCRIPTION_POLICY, label: '継続課金 / 解約ポリシー' },
       { to: ROUTES.CONTACT, label: 'お問い合わせ' },

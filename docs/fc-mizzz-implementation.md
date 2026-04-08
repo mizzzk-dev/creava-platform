@@ -1,147 +1,218 @@
-# fc.mizzz.jp 実装メモ（Phase 1）
+# fc.mizzz.jp 実装計画 / 現状調査（Phase 2）
 
-## 1. 実装方針の要約
-- `VITE_SITE_TYPE=fanclub` 時に専用ルーティング・専用レイアウトを使用。
-- 既存の `News / Blog / Events / FAQ / 法務ページ / Contact / Member` を再利用し、最小変更で立ち上げ。
-- ファンクラブ専用ページ（`/join`, `/login`, `/movies`, `/gallery`, `/tickets`, `/member-store`, `/guide`, `/subscription-policy` など）を新設。
-- 限定公開の見せ分けは `guest/member/admin` の既存ロールを活用し、将来 `premium` を拡張可能な構造で実装。
-- 既存 API の防御的クライアント（timeout/retry/content-type検証）を継続利用。
+## 1. 現状調査結果
 
-## 2. ページ一覧
-- `/` トップ
-- `/about` ファンクラブ紹介
-- `/join` プラン/入会
-- `/login` ログイン導線
-- `/mypage` マイページ導線
-- `/member` 既存会員ダッシュボード
-- `/news`, `/news/:slug`
-- `/blog`, `/blog/:slug`
-- `/movies`, `/movies/:slug`
-- `/gallery`, `/gallery/:slug`
-- `/schedule`
-- `/events`, `/events/:slug`
-- `/tickets`, `/tickets/:slug`
+### frontend / backend 構成
+- frontend は React + Vite + TypeScript、backend は Strapi v5 構成。
+- `VITE_SITE_TYPE` で `main / store / fanclub` を切り替えるマルチサイト構成。
+- fanclub サイト専用の `FanclubLayout` と fanclub ルート群が既に存在。
+
+### 既存認証基盤
+- 認証は Clerk を利用。
+- `VITE_CLERK_PUBLISHABLE_KEY` 未設定時はゲストフォールバック。
+- `useCurrentUser` でアプリ内ユーザーへ正規化。
+
+### 既存 content type（Strapi）
+- 既存: `news-item`, `blog-post`, `event`, `fanclub-content`, `faq`, `site-setting`, `store-product`, `work` など。
+- すでに `accessStatus / limitedEndAt / archiveVisibleForFC / publishAt / slug` を持つモデルが複数存在。
+
+### 会員限定公開の仕組み
+- frontend 側で `accessStatus` をもとに表示可否制御あり。
+- API クライアントは timeout/retry/レスポンス検証を実装済み。
+
+### 既存 API クライアント
+- `strapiGet` が `content-type` 検証、`response.ok` 判定、HTML 応答検知、JSON パース失敗の専用エラー、AbortController、retry を実装。
+- `useAsyncState` が開発時詳細ログ / 本番向け安全メッセージを分離。
+
+### News / Blog / Event / Gallery など
+- `News / Blog / Event` は既存モデル + ページあり。
+- `Movie / Gallery / Ticket Info / Member Plan` は本格運用モデルを今後追加する想定。
+
+### サブドメイン `fc.mizzz.jp` の受け先
+- frontend 側で `VITE_FANCLUB_SITE_URL` を使用。
+- ドキュメントに `fc.mizzz.jp` を fanclub 配信先に向ける手順あり。
+- backend CORS は `https://fc.mizzz.jp` を許可済み。
+
+### 課金・会員管理基盤
+- 認証は Clerk あり。
+- 課金同期は未実装で、現状は会員状態を metadata/表示ロジックで保持する段階。
+
+### 環境変数 / API URL / CORS / Cookie-Session
+- frontend: `VITE_STRAPI_API_URL`, `VITE_STRAPI_API_TOKEN`, `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_FANCLUB_SITE_URL` 等。
+- backend: `FRONTEND_URL`（CORS origin 追加）、DB は sqlite/postgres 切替。
+- CORS は `credentials: false`。Cookie セッションより Authorization ベースを主軸。
+
+### デプロイ方法
+- frontend: 静的ビルドを FTP/GitHub Actions。
+- backend: Strapi Cloud（または VPS）デプロイ手順あり。
+
+### 使い回せる基盤
+- fanclub ルーティング切替・レイアウト
+- Clerk 連携（ログイン状態取得）
+- Strapi の公開/限定向けフィールド群
+- API 防御クライアント + ErrorState/Retry UI
+
+### 新規実装が必要な箇所（本フェーズ）
+- 認証導線補強（メール認証・パスワード再設定導線ページ）
+- 保護ページ直アクセス時の安全リダイレクト
+- 会員状態（plan/status）を将来課金連携に耐える型へ拡張
+- fanclub 必須URLの同居 (`/terms`, `/privacy`) 明示
+
+### 会員機能実装上のリスク
+- Clerk metadata と実課金状態の不一致リスク
+- premium 判定を frontend のみで行う期間の権限ギャップ
+- Movie/Gallery/Ticket の CMS 運用モデル未確定
+- サブドメイン間 SSO / Store 連携仕様未確定
+
+---
+
+## 2. 実装優先順位（今回反映）
+1. 認証・保護ページ制御
+2. 限定公開ロジックの拡張可能化（members/premium）
+3. fanclub 必須ルート補完（法務/認証補助）
+4. マイページ最低限UI（会員状態表示）
+5. ドキュメント化（運用・残課題）
+
+---
+
+## 3. 会員導線フロー
+1. `/` で特典と価値を確認
+2. `/join` で会費/注意事項/同意情報を確認
+3. `/login` からログイン
+4. 未認証メールユーザーは `/login/verify-email` へ
+5. 認証後 `/mypage` へ遷移し会員状態確認
+6. `news/blog/movies/gallery/events/tickets` を visibility に応じて閲覧
+7. `/member-store` から将来 `store.mizzz.jp` 連携導線へ
+
+---
+
+## 4. 追加 / 修正ファイル一覧
+- 追加: `frontend/src/components/guards/FanclubAuthGuard.tsx`
+- 追加: `frontend/src/lib/auth/membership.ts`
+- 修正: `frontend/src/types/user.ts`
+- 修正: `frontend/src/lib/auth/clerk.ts`
+- 修正: `frontend/src/lib/routeConstants.ts`
+- 修正: `frontend/src/lib/routes.tsx`
+- 修正: `frontend/src/pages/fc/FanclubSitePages.tsx`
+- 修正: `frontend/src/components/layout/FanclubLayout.tsx`
+- 修正: `docs/fc-mizzz-implementation.md`
+
+---
+
+## 5. ルーティング一覧（fanclub）
+- `/`
+- `/about`
+- `/join`
+- `/login`
+- `/login/reset-password`
+- `/login/verify-email`
+- `/mypage`（保護）
+- `/news` `/news/:slug`
+- `/blog` `/blog/:slug`
+- `/movies` `/movies/:slug`
+- `/gallery` `/gallery/:slug`
+- `/events` `/events/:slug`
+- `/tickets` `/tickets/:slug`
 - `/member-store`
 - `/faq`
-- `/guide`
 - `/contact`
+- `/guide`
 - `/legal`
 - `/terms`
 - `/privacy`
 - `/commerce-law`
 - `/subscription-policy`
 
-## 3. 会員導線フロー
-1. 非会員が `/` で価値と特典を理解
-2. `/join` でプランと規約同意を確認
-3. `/login` から認証
-4. `/mypage` / `/member` で契約状態・通知を確認
-5. `/movies`, `/gallery`, `/tickets` で限定コンテンツへ到達
-6. `/member-store` から将来の `store.mizzz.jp` 連携へ遷移
+---
 
-## 4. コンポーネント一覧
-- `FanclubLayout`（専用ヘッダー/フッター）
-- `FanclubHomeHubPage`
-- `FanclubAboutSitePage`
-- `FanclubJoinPage`
-- `FanclubLoginPage`
-- `FanclubMyPageSite`
-- `FanclubMoviesPage` / `FanclubMoviesDetailPage`
-- `FanclubGalleryPage` / `FanclubGalleryDetailPage`
-- `FanclubTicketsPage` / `FanclubTicketsDetailPage`
-- `FanclubSchedulePage`
-- `FanclubMemberStorePage`
-- `FanclubGuidePage`
-- `FanclubLegalIndexPage`
-- `FanclubSubscriptionPolicyPage`
+## 6. CMS モデル一覧（最低運用）
+- 既存で利用可能: News, Blog Post, Event, FAQ, Site Settings
+- 追加推奨: Member Plan, Movie, Gallery, Ticket Info
+- visibility は `public / members / premium` の3段階を推奨
 
-## 5. CMS モデル一覧
-運用モデル（既存 + 追加候補）:
-- Member Plan
-- News
-- Blog Post
-- Movie
-- Gallery
-- Event
-- Ticket Info
-- FAQ
-- Site Settings
+---
 
-## 6. API 一覧
-- 既存利用:
-  - `GET /api/news-items`
-  - `GET /api/blog-posts`
-  - `GET /api/events`
-  - `GET /api/faqs`
-  - `GET /api/site-setting`
-- 追加候補:
-  - `GET /api/movies`
-  - `GET /api/galleries`
-  - `GET /api/ticket-infos`
-  - `GET /api/member-plans`
+## 7. API 一覧
+### 既存
+- `GET /api/news-items`
+- `GET /api/blog-posts`
+- `GET /api/events`
+- `GET /api/faqs`
+- `GET /api/site-setting`
 
-## 7. 認証・権限制御方針
-- 認証: Clerk（未設定環境ではゲストフォールバック）
-- ロール: `guest / member / admin`
-- 表示制御: `public / member / premium`（premium は将来拡張）
-- 保護ページは未ログイン時に入会/ログイン導線へ誘導
+### 追加推奨
+- `GET /api/member-plans`
+- `GET /api/movies`
+- `GET /api/galleries`
+- `GET /api/ticket-infos`
+- `GET /api/member-status`
 
-## 8. エラー処理方針
-- `strapiGet` で content-type 検証、`response.ok` 判定、HTML混入検知、JSONパース失敗専用エラー化。
-- timeout + retry + AbortController に対応。
-- UI では Error/Empty を分離し、再試行導線を維持。
+---
 
-## 9. SEO 方針
-- index 対象: `/`, `/about`, `/join`, 公開ニュース/イベント、FAQ一部、法務ページ
-- noindex 対象: `/mypage`, `/member`, 会員限定詳細、`/subscription-policy`（必要に応じて公開切替）
+## 8. 認証 / 権限制御方針
+- 認証: Clerk
+- ロール: `guest / free / member / premium / admin`
+- 会員契約状態: `active / grace / cancel_scheduled / canceled / expired`
+- 表示可視性: `public / members / premium`
+- 保護ページ（`/mypage`, `/member`）は未ログイン時に `/login?redirect=...` へ安全リダイレクト
+- メール未認証時は `/login/verify-email` に誘導
 
-## 10. 計測方針
-- `fc_lp_view`
-- `fc_join_click`
-- `fc_signup_start`
-- `fc_signup_complete`
-- `fc_login_success`
-- `fc_member_content_view`
-- `fc_movie_play`
-- `fc_event_detail_view`
-- `fc_ticket_click`
-- `fc_member_store_click`
-- `fc_cancel_flow_view`
-- `fc_faq_view`
+---
 
-## 11. 環境変数一覧
+## 9. エラー処理方針
+- API層で response/content-type/JSON パースを防御
+- timeout + retry + AbortController を標準化
+- UIは ErrorState と EmptyState を分離
+- Retry ボタンを表示
+- 開発: 詳細エラー / 本番: 汎用安全メッセージ
+
+---
+
+## 10. 法務対応一覧
+- `/terms`（利用規約）
+- `/privacy`（プライバシーポリシー）
+- `/commerce-law`（特商法）
+- `/subscription-policy`（継続課金/解約）
+- `/contact`（問い合わせ）
+
+---
+
+## 11. 環境変数一覧（fanclub 運用で重要）
 - `VITE_SITE_TYPE=fanclub`
+- `VITE_SITE_URL=https://fc.mizzz.jp`
+- `VITE_FANCLUB_SITE_URL=https://fc.mizzz.jp`
 - `VITE_MAIN_SITE_URL`
 - `VITE_STORE_SITE_URL`
-- `VITE_FANCLUB_SITE_URL`
 - `VITE_STRAPI_API_URL`
-- `VITE_STRAPI_API_TOKEN`（必要時）
+- `VITE_STRAPI_API_TOKEN`
 - `VITE_STRAPI_TIMEOUT_MS`
 - `VITE_STRAPI_RETRY_COUNT`
 - `VITE_CLERK_PUBLISHABLE_KEY`
+- `FRONTEND_URL`（backend 側。`fc.mizzz.jp` を含める）
 
-## 12. デプロイ手順
-1. `VITE_SITE_TYPE=fanclub` を設定
-2. `fc.mizzz.jp` をフロント配信先へ向ける
-3. Strapi CORS に `https://fc.mizzz.jp` を追加
-4. 必要APIトークンを設定
-5. build/deploy 後に認証導線と限定公開を確認
+---
 
-## 13. 確認手順
-- ルート遷移確認（トップ〜法務）
-- 非会員で限定詳細にアクセスし、ロック表示されること
-- 会員で限定詳細が閲覧可能であること
-- モバイル幅でヘッダー/カード崩れがないこと
-- API障害時にエラーUIへフォールバックすること
+## 12. デプロイ確認項目
+- 未ログイン時に `/mypage` が `/login?redirect=...` へ遷移
+- 認証後に保護ページへ復帰可能
+- `news/blog/movies/gallery/events` 一覧/詳細遷移確認
+- ErrorState + Retry 挙動確認
+- 法務ページ導線確認（footer / legal index）
+- モバイル幅でヘッダーとカード崩れなし
+- frontend build / backend build 通過
 
-## 14. 残課題一覧
-- premium ロールの実データ運用（Clerk metadata + backend連携）
-- Movie/Gallery/Ticket の Strapi 本実装
-- 決済状態と契約状態のサーバー同期
-- 会員限定ストア連携（SSO or token bridge）
-- チケット応募外部連携と監査ログ整備
-- 退会・解約の完全な自動化フロー
+---
+
+## 13. 残課題
+- Clerk metadata と課金プロバイダ（Stripe等）のサーバー同期
+- premium 専用コンテンツの backend 強制制御
+- Movie / Gallery / TicketInfo の Strapi 本モデル追加
+- Store（`store.mizzz.jp`）との会員先行販売連携
+- 解約/失効の自動反映ジョブ整備
+
+---
 
 ## 仮定
-- 現時点の会員ロールは `member/admin` が中心で、`premium` は将来追加前提。
-- Phase 1 は既存コンテンツモデルを活かし、Movie/Gallery/Ticket は最小 UI/導線先行。
+- 本フェーズでは課金バックエンド未接続のため、会員状態は Clerk metadata 主体で扱う。
+- `Movie / Gallery / Ticket` はまずルート・導線を先行し、CMS モデル本実装は次フェーズ。
+- `fc.mizzz.jp` の DNS/SSL は運用手順書どおりに準備済みである前提。
