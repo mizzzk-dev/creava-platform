@@ -39,10 +39,59 @@
       "required": true,
       "min": 0
     },
+    "stock": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
     "currency": {
       "type": "string",
       "default": "JPY",
       "required": true
+    },
+    "sku": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "default": "other"
+    },
+    "tags": {
+      "type": "json"
+    },
+    "sortOrder": {
+      "type": "integer",
+      "default": 0
+    },
+    "featured": {
+      "type": "boolean",
+      "default": false
+    },
+    "isNewArrival": {
+      "type": "boolean",
+      "default": false
+    },
+    "seoTitle": {
+      "type": "string"
+    },
+    "seoDescription": {
+      "type": "text"
+    },
+    "ogImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "cautionNotes": {
+      "type": "text"
+    },
+    "shippingNotes": {
+      "type": "text"
+    },
+    "digitalDeliveryNotes": {
+      "type": "text"
     },
     "stripeLink": {
       "type": "string"

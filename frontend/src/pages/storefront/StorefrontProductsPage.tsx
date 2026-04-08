@@ -11,14 +11,26 @@ export default function StorefrontProductsPage() {
   const { products, loading, error, refetch } = useProductList(120)
   const [status, setStatus] = useState<'all' | 'available' | 'soldout' | 'coming_soon'>('all')
   const [collection, setCollection] = useState<string>('all')
+  const [tag, setTag] = useState<string>('all')
+  const [sort, setSort] = useState<'recommended' | 'price_asc' | 'price_desc' | 'newest'>('recommended')
+
+  const availableTags = useMemo(
+    () => Array.from(new Set(products.flatMap((product) => product.tags))).sort((a, b) => a.localeCompare(b, 'ja')),
+    [products],
+  )
 
   const filtered = useMemo(() => {
-    return products.filter((product) => {
+    const base = products.filter((product) => {
       if (status !== 'all' && product.purchaseStatus !== status) return false
       if (collection !== 'all' && inferCollectionSlug(product) !== collection) return false
+      if (tag !== 'all' && !product.tags.includes(tag)) return false
       return true
     })
-  }, [collection, products, status])
+    if (sort === 'price_asc') return [...base].sort((a, b) => a.price - b.price)
+    if (sort === 'price_desc') return [...base].sort((a, b) => b.price - a.price)
+    if (sort === 'newest') return [...base].sort((a, b) => Number(b.isNewArrival) - Number(a.isNewArrival))
+    return [...base].sort((a, b) => a.sortOrder - b.sortOrder)
+  }, [collection, products, sort, status, tag])
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
@@ -34,7 +46,7 @@ export default function StorefrontProductsPage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950 sm:grid-cols-2">
+      <div className="mt-6 grid gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950 sm:grid-cols-2 lg:grid-cols-4">
         <label className="text-xs text-gray-500 dark:text-gray-400">
           在庫状態
           <select value={status} onChange={(event) => setStatus(event.target.value as typeof status)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
@@ -49,6 +61,22 @@ export default function StorefrontProductsPage() {
           <select value={collection} onChange={(event) => setCollection(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
             <option value="all">すべて</option>
             {DEFAULT_COLLECTIONS.map((item) => <option key={item.slug} value={item.slug}>{item.name}</option>)}
+          </select>
+        </label>
+        <label className="text-xs text-gray-500 dark:text-gray-400">
+          タグ
+          <select value={tag} onChange={(event) => setTag(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+            <option value="all">すべて</option>
+            {availableTags.map((item) => <option key={item} value={item}>{item}</option>)}
+          </select>
+        </label>
+        <label className="text-xs text-gray-500 dark:text-gray-400">
+          並び順
+          <select value={sort} onChange={(event) => setSort(event.target.value as typeof sort)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+            <option value="recommended">おすすめ順</option>
+            <option value="newest">新着優先</option>
+            <option value="price_asc">価格が安い順</option>
+            <option value="price_desc">価格が高い順</option>
           </select>
         </label>
       </div>
