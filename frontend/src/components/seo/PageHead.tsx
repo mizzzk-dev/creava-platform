@@ -16,6 +16,14 @@ interface Props {
   noindex?: boolean
 }
 
+const ALT_LANGS = ['ja', 'en', 'ko'] as const
+
+function resolveOgLocale(language: string): 'ja_JP' | 'en_US' | 'ko_KR' {
+  if (language.startsWith('ja')) return 'ja_JP'
+  if (language.startsWith('ko')) return 'ko_KR'
+  return 'en_US'
+}
+
 export default function PageHead({
   title,
   description,
@@ -28,7 +36,11 @@ export default function PageHead({
 
   const pageTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME
   const canonicalUrl = `${SITE_URL}${pathname}`
-  const ogLocale = i18n.language.startsWith('ja') ? 'ja_JP' : 'en_US'
+  const ogLocale = resolveOgLocale(i18n.language)
+  const alternateLinks = ALT_LANGS.map((lang) => ({
+    lang,
+    href: `${canonicalUrl}?lng=${lang}`,
+  }))
 
   return (
     <Helmet>
@@ -36,6 +48,10 @@ export default function PageHead({
       {description && <meta name="description" content={description} />}
       {noindex && <meta name="robots" content="noindex,nofollow" />}
       {SITE_URL && <link rel="canonical" href={canonicalUrl} />}
+      {SITE_URL && alternateLinks.map(({ lang, href }) => (
+        <link key={lang} rel="alternate" hrefLang={lang} href={href} />
+      ))}
+      {SITE_URL && <link rel="alternate" hrefLang="x-default" href={canonicalUrl} />}
 
       {/* Open Graph */}
       <meta property="og:title" content={pageTitle} />
@@ -45,6 +61,9 @@ export default function PageHead({
       <meta property="og:image" content={ogImage} />
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:locale" content={ogLocale} />
+      <meta property="og:locale:alternate" content="ja_JP" />
+      <meta property="og:locale:alternate" content="en_US" />
+      <meta property="og:locale:alternate" content="ko_KR" />
 
       {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />

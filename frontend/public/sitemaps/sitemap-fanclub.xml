@@ -2,11 +2,66 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://fc.mizzz.jp/fanclub</loc>
+    <loc>https://fc.mizzz.jp/</loc>
     <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-    <xhtml:link rel="alternate" hreflang="ja" href="https://fc.mizzz.jp/fanclub"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://fc.mizzz.jp/fanclub?lng=en"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://fc.mizzz.jp/fanclub"/>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://fc.mizzz.jp/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fc.mizzz.jp/?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://fc.mizzz.jp/?lng=ko"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fc.mizzz.jp/"/>
+  </url>
+  <url>
+    <loc>https://fc.mizzz.jp/about</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://fc.mizzz.jp/about"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fc.mizzz.jp/about?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://fc.mizzz.jp/about?lng=ko"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fc.mizzz.jp/about"/>
+  </url>
+  <url>
+    <loc>https://fc.mizzz.jp/join</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://fc.mizzz.jp/join"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fc.mizzz.jp/join?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://fc.mizzz.jp/join?lng=ko"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fc.mizzz.jp/join"/>
+  </url>
+  <url>
+    <loc>https://fc.mizzz.jp/news</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://fc.mizzz.jp/news"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fc.mizzz.jp/news?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://fc.mizzz.jp/news?lng=ko"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fc.mizzz.jp/news"/>
+  </url>
+  <url>
+    <loc>https://fc.mizzz.jp/blog</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://fc.mizzz.jp/blog"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fc.mizzz.jp/blog?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://fc.mizzz.jp/blog?lng=ko"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fc.mizzz.jp/blog"/>
+  </url>
+  <url>
+    <loc>https://fc.mizzz.jp/events</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://fc.mizzz.jp/events"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fc.mizzz.jp/events?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://fc.mizzz.jp/events?lng=ko"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fc.mizzz.jp/events"/>
+  </url>
+  <url>
+    <loc>https://fc.mizzz.jp/faq</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://fc.mizzz.jp/faq"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fc.mizzz.jp/faq?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://fc.mizzz.jp/faq?lng=ko"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fc.mizzz.jp/faq"/>
   </url>
 </urlset>

@@ -1,6 +1,8 @@
 User-agent: *
 Allow: /
 Disallow: /preview
-Disallow: /fanclub/
+Disallow: /login
+Disallow: /mypage
+Disallow: /member
 
-Sitemap: https://mizzz.jp/sitemap.xml
+Sitemap: /sitemap.xml
