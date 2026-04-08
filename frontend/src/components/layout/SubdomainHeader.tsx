@@ -8,6 +8,7 @@ import SiteLogo from '@/components/layout/SiteLogo'
 import { ROUTES } from '@/lib/routeConstants'
 import { mainLink, storeLink, fanclubLink } from '@/lib/siteLinks'
 import AuthButton from '@/components/auth/AuthButton'
+import SubdomainAnnouncementBar from '@/components/common/SubdomainAnnouncementBar'
 
 interface NavItem {
   to: string
@@ -26,6 +27,7 @@ export default function SubdomainHeader({ site, navItems, showAuth = false }: Su
 
   return (
     <header className="sticky top-0 z-50 border-b border-gray-200/70 bg-white/85 backdrop-blur-xl dark:border-gray-800/70 dark:bg-gray-950/85">
+      <SubdomainAnnouncementBar site={site} />
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3.5">
         <SmartLink to={site === 'store' ? storeLink('/') : fanclubLink('/')} className="inline-flex items-center gap-2.5" aria-label="mizzz top">
           <SiteLogo />

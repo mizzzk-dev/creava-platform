@@ -143,4 +143,7 @@ export interface SiteSettings extends StrapiBase {
   description: string | null
   logoUrl: string | null
   ogImage?: StrapiMedia | null
+  announcementText?: string | null
+  announcementUrl?: string | null
+  announcementLevel?: 'info' | 'urgent' | null
 }
