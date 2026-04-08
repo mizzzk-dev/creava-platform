@@ -128,12 +128,12 @@ export function AppRoutes() {
             <Route path={ROUTES.FC_MOVIE_DETAIL} element={<FanclubMoviesDetailPage />} />
             <Route path={ROUTES.FC_GALLERY} element={<FanclubGalleryPage />} />
             <Route path={ROUTES.FC_GALLERY_DETAIL} element={<FanclubGalleryDetailPage />} />
-            <Route path={ROUTES.FC_SCHEDULE} element={<FanclubSchedulePage />} />
+            <Route path={ROUTES.FC_SCHEDULE} element={<FanclubAuthGuard><FanclubSchedulePage /></FanclubAuthGuard>} />
             <Route path={ROUTES.EVENTS} element={<EventsPage />} />
             <Route path={ROUTES.EVENT_DETAIL} element={<EventDetailPage />} />
-            <Route path={ROUTES.FC_TICKETS} element={<FanclubTicketsPage />} />
-            <Route path={ROUTES.FC_TICKET_DETAIL} element={<FanclubTicketsDetailPage />} />
-            <Route path={ROUTES.FC_MEMBER_STORE} element={<FanclubMemberStorePage />} />
+            <Route path={ROUTES.FC_TICKETS} element={<FanclubAuthGuard><FanclubTicketsPage /></FanclubAuthGuard>} />
+            <Route path={ROUTES.FC_TICKET_DETAIL} element={<FanclubAuthGuard><FanclubTicketsDetailPage /></FanclubAuthGuard>} />
+            <Route path={ROUTES.FC_MEMBER_STORE} element={<FanclubAuthGuard><FanclubMemberStorePage /></FanclubAuthGuard>} />
             <Route path={ROUTES.FAQ} element={<FAQPage />} />
             <Route path={ROUTES.FC_GUIDE} element={<FanclubGuidePage />} />
             <Route path={ROUTES.CONTACT} element={<ContactPage />} />

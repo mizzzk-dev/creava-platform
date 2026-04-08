@@ -1,4 +1,4 @@
-# fc.mizzz.jp 実装計画 / 現状調査（Phase 2）
+# fc.mizzz.jp 実装計画 / 現状調査（Phase 3）
 
 ## 1. 現状調査結果
 
@@ -52,11 +52,11 @@
 - Strapi の公開/限定向けフィールド群
 - API 防御クライアント + ErrorState/Retry UI
 
-### 新規実装が必要な箇所（本フェーズ）
-- 認証導線補強（メール認証・パスワード再設定導線ページ）
-- 保護ページ直アクセス時の安全リダイレクト
-- 会員状態（plan/status）を将来課金連携に耐える型へ拡張
-- fanclub 必須URLの同居 (`/terms`, `/privacy`) 明示
+### 新規実装が必要な箇所（次フェーズ）
+- Clerk と課金プロバイダ（Stripe 等）のサーバー同期
+- Movie / Gallery / Ticket Info の Strapi モデル本実装
+- マイページ契約情報の API 実データ接続
+- premium 専用配信の backend 強制制御
 
 ### 会員機能実装上のリスク
 - Clerk metadata と実課金状態の不一致リスク
@@ -66,7 +66,7 @@
 
 ---
 
-## 2. 実装優先順位（今回反映）
+## 2. 実装優先順位
 1. 認証・保護ページ制御
 2. 限定公開ロジックの拡張可能化（members/premium）
 3. fanclub 必須ルート補完（法務/認証補助）
@@ -86,15 +86,9 @@
 
 ---
 
-## 4. 追加 / 修正ファイル一覧
-- 追加: `frontend/src/components/guards/FanclubAuthGuard.tsx`
-- 追加: `frontend/src/lib/auth/membership.ts`
-- 修正: `frontend/src/types/user.ts`
-- 修正: `frontend/src/lib/auth/clerk.ts`
-- 修正: `frontend/src/lib/routeConstants.ts`
+## 4. 追加 / 修正ファイル一覧（今回差分）
 - 修正: `frontend/src/lib/routes.tsx`
 - 修正: `frontend/src/pages/fc/FanclubSitePages.tsx`
-- 修正: `frontend/src/components/layout/FanclubLayout.tsx`
 - 修正: `docs/fc-mizzz-implementation.md`
 
 ---
@@ -218,8 +212,7 @@
 ---
 
 ## 15. コミット一覧（このブランチで作成）
-- ファンクラブ認証ガードを会員状態まで検証するよう強化（予定）
-- Clerk のメール認証判定を verification.status ベースへ修正（予定）
+- ファンクラブ保護ルートとログイン導線を強化
 
 ---
 
@@ -233,9 +226,9 @@
 - 未ログイン / 未認証 / 会員状態不備の各ケースで安全な導線を統一
 
 ## 変更内容
-- FanclubAuthGuard に会員契約状態・可視性要件チェックを追加
-- Clerk ユーザー正規化時のメール認証判定を厳密化
-- 現状調査ドキュメントにブランチ情報と運用向け PR テンプレートを追記
+- FC ルートの一部（`/schedule` `/tickets` `/tickets/:slug` `/member-store`）を認証ガード対象に変更
+- ログインページに Clerk サインイン / サインアップ導線を追加し、`redirect` クエリを安全に処理
+- 現状調査ドキュメントを Phase 3 として更新し、未対応事項を整理
 
 ## 確認手順
 - `npm run lint --prefix frontend`
@@ -244,7 +237,7 @@
 - `npm run test:frontend`
 
 ## 影響範囲
-- frontend: 認証ガード、ユーザー正規化
+- frontend: fanclub ルーティング、ログイン導線
 - docs: fc 実装計画
 
 ## 破壊的変更

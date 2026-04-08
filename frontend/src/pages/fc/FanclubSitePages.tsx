@@ -1,6 +1,7 @@
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useClerk } from '@clerk/clerk-react'
 import PageHead from '@/components/seo/PageHead'
 import { ROUTES } from '@/lib/routeConstants'
 import { useCurrentUser } from '@/hooks'
@@ -163,6 +164,9 @@ export function FanclubJoinPage() {
 
 export function FanclubLoginPage() {
   const { t } = useTranslation()
+  const [searchParams] = useSearchParams()
+  const redirectPath = normalizeRedirectPath(searchParams.get('redirect'))
+
   return (
     <section className="mx-auto max-w-xl px-4 py-14">
       <PageHead title="ログイン | mizzz official fanclub" description="ログイン、メール認証、パスワード再設定。" noindex />
@@ -176,10 +180,52 @@ export function FanclubLoginPage() {
         <Link to={ROUTES.FC_LOGIN_RESET_PASSWORD} className="text-gray-600 underline hover:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100">パスワード再設定</Link>
         <Link to={ROUTES.FC_LOGIN_VERIFY_EMAIL} className="text-gray-600 underline hover:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100">メール認証を再確認</Link>
       </div>
+      <FanclubLoginActions redirectPath={redirectPath} />
       <Link to={ROUTES.FC_MYPAGE} className="mt-8 inline-flex text-sm font-medium text-violet-600 hover:text-violet-500">{t('nav.member', { defaultValue: 'マイページ' })}へ →</Link>
     </section>
   )
 }
+
+function normalizeRedirectPath(raw: string | null): string {
+  if (!raw) return ROUTES.FC_MYPAGE
+  if (!raw.startsWith('/')) return ROUTES.FC_MYPAGE
+  if (raw.startsWith('//')) return ROUTES.FC_MYPAGE
+  return raw
+}
+
+function FanclubLoginActionsWithClerk({ redirectPath }: { redirectPath: string }) {
+  const { openSignIn, openSignUp } = useClerk()
+  return (
+    <div className="mt-8 flex flex-wrap gap-3">
+      <button
+        type="button"
+        onClick={() => void openSignIn({ afterSignInUrl: redirectPath })}
+        className="rounded-full bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900"
+      >
+        ログインを開く
+      </button>
+      <button
+        type="button"
+        onClick={() => void openSignUp({ afterSignUpUrl: redirectPath })}
+        className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:border-gray-500 dark:border-gray-700 dark:text-gray-200"
+      >
+        新規登録
+      </button>
+    </div>
+  )
+}
+
+function FanclubLoginActionsNoClerk() {
+  return (
+    <p className="mt-6 text-xs text-gray-500">
+      Clerk 未設定のため、この環境ではログインフローを実行できません。
+    </p>
+  )
+}
+
+const FanclubLoginActions = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+  ? FanclubLoginActionsWithClerk
+  : FanclubLoginActionsNoClerk
 
 export function FanclubResetPasswordPage() {
   return (
