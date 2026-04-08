@@ -7,7 +7,7 @@
 import type { StoreProductSummary, StoreProduct } from '@/modules/store/types'
 import type { StrapiListResponse, StrapiSingleResponse } from '@/types'
 
-const MOCK_PRODUCTS: StoreProduct[] = [
+const BASE_PRODUCTS: Omit<StoreProduct, 'stock' | 'category' | 'tags' | 'sortOrder' | 'featured' | 'isNewArrival'>[] = [
   {
     id: 1,
     documentId: 'mock-001',
@@ -179,6 +179,22 @@ const MOCK_PRODUCTS: StoreProduct[] = [
     externalPurchaseNote: '2025年末まで販売',
   },
 ]
+
+const MOCK_PRODUCTS: StoreProduct[] = BASE_PRODUCTS.map((item, index) => ({
+  ...item,
+  stock: item.purchaseStatus === 'soldout' ? 0 : 10,
+  category: item.slug.includes('digital')
+    ? 'digital'
+    : item.slug.includes('shirt') || item.slug.includes('bag')
+      ? 'apparel'
+      : item.slug.includes('print')
+        ? 'print'
+        : 'other',
+  tags: item.slug.includes('digital') ? ['digital'] : ['standard'],
+  sortOrder: index,
+  featured: index < 4,
+  isNewArrival: index < 4,
+}))
 
 export function getMockStoreProducts(
   pageSize = 12,

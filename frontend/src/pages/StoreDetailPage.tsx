@@ -151,6 +151,9 @@ export default function StoreDetailPage() {
               </h1>
 
               <p className="mt-3 font-mono text-lg text-gray-700 dark:text-gray-300">{purchaseSummary}</p>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {product.stock > 0 ? `在庫: ${product.stock}` : '在庫なし'}
+              </p>
               <div className="mt-2">
                 <label className="text-xs text-gray-500 dark:text-gray-400">
                   {t('store.currencyLabel', { defaultValue: '表示通貨' })}
@@ -195,6 +198,17 @@ export default function StoreDetailPage() {
                 <p className="mt-4 text-xs text-gray-400 dark:text-gray-600">
                   {product.externalPurchaseNote}
                 </p>
+              )}
+              {product.cautionNotes && (
+                <div className="mt-3 rounded border border-amber-200/70 bg-amber-50/70 px-3 py-2 text-xs text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
+                  注意事項: {product.cautionNotes}
+                </div>
+              )}
+              {product.shippingNotes && (
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">配送情報: {product.shippingNotes}</p>
+              )}
+              {product.digitalDeliveryNotes && (
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">デジタル商品案内: {product.digitalDeliveryNotes}</p>
               )}
 
               {product.accessStatus !== 'fc_only' && (

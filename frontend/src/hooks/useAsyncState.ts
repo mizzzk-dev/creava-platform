@@ -24,11 +24,13 @@ export function useAsyncState<T>(initialData: T | null = null) {
       }
 
       const isProd = import.meta.env.PROD
+      const rawMessage = err instanceof Error ? err.message : 'Unknown error'
+      const hasUnexpectedTokenHtml = /unexpected token\s*</i.test(rawMessage)
       const error = isProd
         ? 'データの取得に失敗しました。時間をおいて再試行してください。'
-        : err instanceof Error
-          ? err.message
-          : 'Unknown error'
+        : hasUnexpectedTokenHtml
+          ? 'API レスポンスの形式が不正です。設定またはサーバー状態を確認してください。'
+          : rawMessage
 
       // 開発時の診断情報（本番ユーザー向け UI には出さない）
       if (import.meta.env.DEV && err instanceof StrapiApiError && err.details) {

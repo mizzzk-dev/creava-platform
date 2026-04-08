@@ -1,44 +1,34 @@
 import type { ContentStatus } from '@/types'
 
-/** 購入ステータス */
 export type PurchaseStatus = 'available' | 'soldout' | 'coming_soon'
+export type StoreCategory = 'other' | 'digital' | 'photo' | 'apparel' | 'print'
 
-/**
- * 商品サマリー（一覧ページ用）
- *
- * Strapi collection: store-products
- * 必要フィールド: title, slug, price, currency, previewImage,
- *                status, limitedEndAt, archiveVisibleForFC,
- *                stripeLink, baseLink, purchaseStatus
- */
 export interface StoreProductSummary {
   id: number
   documentId: string
   slug: string
   title: string
-  /** 価格（整数、日本円なら税込み円単位） */
   price: number
-  /** 通貨コード（デフォルト: 'JPY'） */
   currency: string
   previewImage: { url: string; alt: string | null } | null
-  /** FC 表示制御（Strapi v5 では status はシステム予約のため accessStatus を使用） */
   accessStatus: ContentStatus
   limitedEndAt: string | null
   archiveVisibleForFC: boolean
-  /** Stripe Checkout / Payment Link URL */
   stripeLink: string | null
-  /** BASE 商品ページ URL */
   baseLink: string | null
   purchaseStatus: PurchaseStatus
+  stock: number
+  category: StoreCategory | string
+  tags: string[]
+  sortOrder: number
+  featured: boolean
+  isNewArrival: boolean
 }
 
-/**
- * 商品詳細（詳細ページ用）
- *
- * 追加フィールド: description, externalPurchaseNote
- */
 export interface StoreProduct extends StoreProductSummary {
   description: string | null
-  /** 購入時の補足説明（「送料別途」「受注生産」など） */
   externalPurchaseNote: string | null
+  cautionNotes?: string | null
+  shippingNotes?: string | null
+  digitalDeliveryNotes?: string | null
 }

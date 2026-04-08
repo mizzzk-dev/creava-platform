@@ -62,7 +62,9 @@ export default function ProductCard({ product, displayCurrency = "JPY" }: Props)
               ? t('store.fcOnlyNote')
               : t('store.detailHint', { defaultValue: '購入条件を確認' })}
           </span>
-          <span className="font-mono text-[10px] text-gray-300 dark:text-gray-700">{t('store.detailCta')} →</span>
+          <span className="font-mono text-[10px] text-gray-300 dark:text-gray-700">
+            {product.stock > 0 ? `在庫 ${product.stock}` : '在庫なし'}
+          </span>
         </div>
       </div>
     </Link>
