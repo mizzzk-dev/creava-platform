@@ -67,7 +67,7 @@ export default function StoreDetailPage() {
           : ''
 
   return (
-    <section className="mx-auto max-w-5xl px-4 py-20">
+    <section className="mx-auto max-w-6xl px-4 py-12 sm:py-16">
       {/* breadcrumb */}
       <nav className="mb-8 flex items-center gap-1.5 font-mono text-[11px] text-gray-400 dark:text-gray-600">
         <Link to={storeListPath} className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
@@ -121,10 +121,10 @@ export default function StoreDetailPage() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="grid grid-cols-1 gap-12 md:grid-cols-2"
+            className="grid grid-cols-1 gap-10 lg:grid-cols-[1.15fr_0.95fr]"
           >
             {/* 画像 */}
-            <div className="aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800">
+            <div className="sticky top-24 aspect-square overflow-hidden rounded-2xl border border-gray-200 bg-gray-100 dark:border-gray-800 dark:bg-gray-800">
               {product.previewImage ? (
                 <img
                   src={product.previewImage.url}
@@ -139,18 +139,18 @@ export default function StoreDetailPage() {
             </div>
 
             {/* 情報 */}
-            <div className="flex flex-col">
+            <div className="flex flex-col rounded-2xl border border-gray-200/70 bg-white/80 p-5 dark:border-gray-800 dark:bg-gray-900/60 sm:p-7">
               {/* アクセスバッジ */}
               <div className="mb-3 flex items-center gap-1.5">
                 {product.accessStatus === 'fc_only' && <Badge variant="fc" />}
                 {product.accessStatus === 'limited' && <Badge variant="limited" />}
               </div>
 
-              <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 leading-snug">
+              <h1 className="text-2xl font-semibold leading-snug text-gray-900 dark:text-gray-100 sm:text-3xl">
                 {product.title}
               </h1>
 
-              <p className="mt-3 font-mono text-lg text-gray-700 dark:text-gray-300">{purchaseSummary}</p>
+              <p className="mt-4 font-mono text-xl text-gray-700 dark:text-gray-200">{purchaseSummary}</p>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 {product.stock > 0 ? `在庫: ${product.stock}` : '在庫なし'}
               </p>
@@ -191,7 +191,9 @@ export default function StoreDetailPage() {
                 </div>
               )}
 
-              <MemberGuideCard />
+              <div className="mt-5">
+                <MemberGuideCard />
+              </div>
 
               {/* 補足説明 */}
               {product.externalPurchaseNote && (
@@ -218,11 +220,13 @@ export default function StoreDetailPage() {
               )}
 
               {/* 購入導線 */}
-              <PurchaseActions
-                product={product}
-                className="mt-8"
-                onAddToCart={canAddCart ? () => addItem(product, 1) : undefined}
-              />
+              <div className="sticky bottom-4 mt-8 rounded-2xl border border-gray-200 bg-white/95 p-3 shadow-lg shadow-gray-200/70 backdrop-blur dark:border-gray-700 dark:bg-gray-900/95 dark:shadow-black/30">
+                <PurchaseActions
+                  product={product}
+                  className="mt-0"
+                  onAddToCart={canAddCart ? () => addItem(product, 1) : undefined}
+                />
+              </div>
               {product.purchaseStatus === 'soldout' && (
                 <RestockNotifyForm
                   productId={product.id}
@@ -255,7 +259,7 @@ export default function StoreDetailPage() {
               {/* ストアへ戻る */}
               <Link
                 to={storeListPath}
-                className="mt-6 inline-flex items-center gap-1 font-mono text-[11px] text-gray-400 dark:text-gray-600 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                className="mt-8 inline-flex items-center gap-1 font-mono text-[11px] text-gray-400 transition-colors hover:text-gray-700 dark:text-gray-600 dark:hover:text-gray-300"
               >
                 ← {t('store.backToStore')}
               </Link>

@@ -52,15 +52,16 @@ function FcSectionTemplate({
   const role = user?.role ?? 'guest'
 
   return (
-    <section className="mx-auto max-w-5xl px-4 py-14">
+    <section className="mx-auto max-w-6xl px-4 py-12 sm:py-16">
       <PageHead title={`${title} | mizzz official fanclub`} description={description} noindex />
-      <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">{title}</h1>
+      <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-gray-500">fanclub archive</p>
+      <h1 className="mt-2 text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">{title}</h1>
       <p className="mt-3 max-w-2xl text-sm leading-7 text-gray-600 dark:text-gray-300">{description}</p>
       <div className="mt-8 grid gap-4 md:grid-cols-2">
         {items.map((item) => {
           const isLocked = !canAccessByRole(role, item.visibility)
           return (
-            <article key={item.slug} className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+            <article key={item.slug} className="rounded-2xl border border-gray-200/80 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md dark:border-gray-800 dark:bg-gray-900/70">
               <div className="flex items-center justify-between gap-3">
                 <p className="font-mono text-xs text-gray-500 dark:text-gray-400">{item.publishAt}</p>
                 <span className={`rounded-full px-2.5 py-1 text-[11px] ${isLocked ? 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-300' : 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300'}`}>
@@ -86,34 +87,41 @@ function FcSectionTemplate({
 
 export function FanclubHomeHubPage() {
   return (
-    <section className="mx-auto max-w-6xl px-4 py-14 md:py-20">
+    <section className="mx-auto max-w-6xl px-4 py-10 md:py-16">
       <PageHead
         title="mizzz official fanclub"
         description="mizzz の公式ファンクラブ。ニュース、ブログ、動画、ギャラリー、チケット先行情報を会員向けに配信。"
       />
-      <p className="font-mono text-xs tracking-[0.18em] text-gray-500">OFFICIAL FANCLUB</p>
-      <h1 className="mt-4 text-4xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 md:text-5xl">mizzz official fanclub</h1>
-      <p className="mt-6 max-w-2xl text-sm leading-7 text-gray-600 dark:text-gray-300">会員限定ニュース、ブログ、動画、ギャラリー、チケット先行、限定販売導線を集約した公式メンバーシップサイトです。</p>
+      <header className="overflow-hidden rounded-3xl border border-gray-200/80 bg-white p-6 shadow-sm shadow-gray-200/50 dark:border-gray-800 dark:bg-gray-900/70 dark:shadow-black/20 md:p-10">
+        <p className="font-mono text-xs tracking-[0.18em] text-gray-500">OFFICIAL FANCLUB</p>
+        <h1 className="mt-4 text-4xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 md:text-6xl">mizzz official fanclub</h1>
+        <p className="mt-6 max-w-2xl text-sm leading-7 text-gray-600 dark:text-gray-300">限定ニュース、ブログ、動画、ギャラリー、イベント先行情報を、余白と静けさを保ちながら届けるメンバーシップサイトです。</p>
 
-      <div className="mt-8 grid gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl border border-gray-200 p-4 dark:border-gray-800">
-          <p className="font-mono text-xs text-gray-500">料金</p>
-          <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">月額 880円（税込） / 年額 8,800円（税込）</p>
+        <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-2xl border border-gray-200 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-950/50">
+            <p className="font-mono text-xs text-gray-500">料金</p>
+            <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">月額 880円 / 年額 8,800円</p>
+          </div>
+          <div className="rounded-2xl border border-gray-200 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-950/50">
+            <p className="font-mono text-xs text-gray-500">今週の更新</p>
+            <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">動画・ブログ・イベント情報を順次公開</p>
+          </div>
+          <div className="rounded-2xl border border-gray-200 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-950/50">
+            <p className="font-mono text-xs text-gray-500">限定特典</p>
+            <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">先行案内 / FC限定公開 / 会員向け販売導線</p>
+          </div>
+          <div className="rounded-2xl border border-gray-200 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-950/50">
+            <p className="font-mono text-xs text-gray-500">FAQ</p>
+            <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">入会・解約・公開範囲の案内を常設</p>
+          </div>
         </div>
-        <div className="rounded-2xl border border-gray-200 p-4 dark:border-gray-800">
-          <p className="font-mono text-xs text-gray-500">入会方法</p>
-          <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">メール認証 → プラン選択 → 決済登録</p>
-        </div>
-        <div className="rounded-2xl border border-gray-200 p-4 dark:border-gray-800">
-          <p className="font-mono text-xs text-gray-500">視聴できる内容</p>
-          <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">限定ニュース / 動画 / ギャラリー / 先行案内</p>
-        </div>
-      </div>
 
-      <div className="mt-10 flex flex-wrap gap-3">
-        <Link to={ROUTES.FC_JOIN} className="rounded-full bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900">入会する</Link>
-        <Link to={ROUTES.FC_LOGIN} className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-800 hover:border-gray-500 dark:border-gray-700 dark:text-gray-100">ログイン</Link>
-      </div>
+        <div className="mt-10 flex flex-wrap gap-3">
+          <Link to={ROUTES.FC_JOIN} className="rounded-full bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900">入会する</Link>
+          <Link to={ROUTES.FC_LOGIN} className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-800 hover:border-gray-500 dark:border-gray-700 dark:text-gray-100">ログイン</Link>
+          <Link to={ROUTES.FAQ} className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-gray-200">FAQ</Link>
+        </div>
+      </header>
     </section>
   )
 }
@@ -253,30 +261,54 @@ export function FanclubMyPageSite() {
   const { user } = useCurrentUser()
 
   return (
-    <section className="mx-auto max-w-5xl px-4 py-10">
+    <section className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
       <PageHead title="マイページ | mizzz official fanclub" description="会員ステータス、契約プラン、次回更新日、退会導線。" noindex />
-      <p className="font-mono text-xs text-gray-500">MY PAGE</p>
+      <p className="font-mono text-xs tracking-[0.14em] text-gray-500">MY PAGE</p>
       <h1 className="mt-2 text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">会員ダッシュボード</h1>
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <article className="rounded-2xl border border-gray-200 p-5 dark:border-gray-800">
+
+      <div className="mt-7 grid gap-4 lg:grid-cols-3">
+        <article className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900/70 lg:col-span-2">
           <p className="text-xs text-gray-500">会員ステータス</p>
-          <p className="mt-2 text-sm text-gray-800 dark:text-gray-100">{user?.contractStatus ?? 'active'}</p>
+          <p className="mt-2 text-base font-medium text-gray-900 dark:text-gray-100">{user?.contractStatus ?? 'active'}</p>
           <p className="mt-1 text-xs text-gray-500">契約プラン: {user?.memberPlan ?? 'paid'}</p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-950/50">
+              <p className="text-[11px] text-gray-500">最近の更新</p>
+              <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">限定ブログを1件追加</p>
+            </div>
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-950/50">
+              <p className="text-[11px] text-gray-500">ショートカット</p>
+              <Link to={ROUTES.FC_MOVIES} className="mt-1 inline-flex text-sm text-violet-600 hover:text-violet-500">Moviesへ →</Link>
+            </div>
+          </div>
         </article>
-        <article className="rounded-2xl border border-gray-200 p-5 dark:border-gray-800">
+
+        <article className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900/70">
           <p className="text-xs text-gray-500">次回更新日</p>
           <p className="mt-2 text-sm text-gray-800 dark:text-gray-100">2026-05-01（仮）</p>
-          <p className="mt-1 text-xs text-gray-500">解約 / 退会はポリシーに沿って手続きできます。</p>
+          <p className="mt-2 text-xs text-gray-500">解約 / 退会はポリシーに沿って手続きできます。</p>
           <Link to={ROUTES.FC_SUBSCRIPTION_POLICY} className="mt-3 inline-flex text-xs text-violet-600 hover:text-violet-500">継続課金ポリシーを確認</Link>
+          <Link to={ROUTES.STORE_HOME} className="mt-2 block text-xs text-gray-500 underline">ストア連携導線へ</Link>
         </article>
       </div>
-      <div className="mt-8">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">最近の更新</h2>
-        <ul className="mt-3 space-y-2 text-sm text-gray-700 dark:text-gray-200">
-          <li>・限定ブログを1件更新しました</li>
-          <li>・次回イベント情報を公開しました</li>
-          <li>・会員限定動画を追加しました</li>
-        </ul>
+
+      <div className="mt-8 grid gap-4 md:grid-cols-2">
+        <article className="rounded-2xl border border-gray-200 p-5 dark:border-gray-800">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">最近の更新</h2>
+          <ul className="mt-3 space-y-2 text-sm text-gray-700 dark:text-gray-200">
+            <li>・限定ブログを1件更新しました</li>
+            <li>・次回イベント情報を公開しました</li>
+            <li>・会員限定動画を追加しました</li>
+          </ul>
+        </article>
+        <article className="rounded-2xl border border-gray-200 p-5 dark:border-gray-800">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">おすすめ導線</h2>
+          <div className="mt-3 flex flex-wrap gap-2 text-sm">
+            <Link to={ROUTES.FC_GALLERY} className="rounded-full border border-gray-300 px-3 py-1.5 dark:border-gray-700">Gallery</Link>
+            <Link to={ROUTES.EVENTS} className="rounded-full border border-gray-300 px-3 py-1.5 dark:border-gray-700">Events</Link>
+            <Link to={ROUTES.FC_TICKETS} className="rounded-full border border-gray-300 px-3 py-1.5 dark:border-gray-700">Tickets</Link>
+          </div>
+        </article>
       </div>
     </section>
   )

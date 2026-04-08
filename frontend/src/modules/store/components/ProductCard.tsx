@@ -11,7 +11,7 @@ interface Props {
   displayCurrency?: DisplayCurrency
 }
 
-export default function ProductCard({ product, displayCurrency = "JPY" }: Props) {
+export default function ProductCard({ product, displayCurrency = 'JPY' }: Props) {
   const { t } = useTranslation()
   const isUnavailable = product.purchaseStatus !== 'available'
 
@@ -24,49 +24,52 @@ export default function ProductCard({ product, displayCurrency = "JPY" }: Props)
 
   return (
     <Link to={detailPath.product(product.slug)} className="group block" aria-label={`${product.title} ${t('store.detailCta')}`}>
-      <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800">
-        {product.previewImage ? (
-          <img
-            src={product.previewImage.url}
-            alt={product.previewImage.alt ?? product.title}
-            className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 ${
-              isUnavailable ? 'opacity-50 grayscale' : ''
-            }`}
-            loading="lazy"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <span className="font-mono text-[10px] text-gray-300 dark:text-gray-700">no image</span>
+      <article className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white/90 shadow-sm shadow-gray-200/40 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-lg dark:border-gray-800 dark:bg-gray-900/80 dark:shadow-black/20">
+        <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800">
+          {product.previewImage ? (
+            <img
+              src={product.previewImage.url}
+              alt={product.previewImage.alt ?? product.title}
+              className={`h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 ${isUnavailable ? 'opacity-60 grayscale' : ''}`}
+              loading="lazy"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <span className="font-mono text-[10px] text-gray-300 dark:text-gray-700">no image</span>
+            </div>
+          )}
+
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-950/35 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+          <div className="absolute right-2 top-2 flex flex-col items-end gap-1">
+            {product.purchaseStatus === 'soldout' && <Badge variant="soldout" size="sm" />}
+            {product.purchaseStatus === 'coming_soon' && <Badge variant="coming_soon" size="sm" />}
+            {product.isNewArrival && <Badge variant="new" size="sm" />}
           </div>
-        )}
 
-        <div className="absolute right-2 top-2 flex flex-col items-end gap-1">
-          {product.purchaseStatus === 'soldout' && <Badge variant="soldout" size="sm" />}
-          {product.purchaseStatus === 'coming_soon' && <Badge variant="coming_soon" size="sm" />}
+          <div className="absolute bottom-2 left-2 flex items-center gap-1">
+            {product.accessStatus === 'fc_only' && <Badge variant="fc" size="sm" label="MEMBERS" />}
+            {product.accessStatus === 'limited' && <Badge variant="limited" size="sm" />}
+          </div>
         </div>
 
-        <div className="absolute bottom-2 left-2 flex items-center gap-1">
-          {product.accessStatus === 'fc_only' && <Badge variant="fc" size="sm" label="MEMBERS" />}
-          {product.accessStatus === 'limited' && <Badge variant="limited" size="sm" />}
+        <div className="space-y-1.5 px-3.5 py-3.5">
+          <h3 className="line-clamp-2 text-sm font-medium leading-relaxed text-gray-900 transition-colors group-hover:text-gray-600 dark:text-gray-100 dark:group-hover:text-gray-300">
+            {product.title}
+          </h3>
+          <p className="font-mono text-xs text-gray-500 dark:text-gray-400">{statusLabel}</p>
+          <div className="flex items-center justify-between gap-3">
+            <span className="line-clamp-1 text-[11px] text-gray-500 dark:text-gray-500">
+              {product.accessStatus === 'fc_only'
+                ? t('store.fcOnlyNote')
+                : t('store.detailHint', { defaultValue: '購入条件を確認' })}
+            </span>
+            <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 font-mono text-[10px] text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+              {product.stock > 0 ? `在庫 ${product.stock}` : '在庫なし'}
+            </span>
+          </div>
         </div>
-      </div>
-
-      <div className="mt-3 space-y-1">
-        <h3 className="line-clamp-2 text-sm font-medium text-gray-900 transition-colors group-hover:text-gray-500 dark:text-gray-100 dark:group-hover:text-gray-400">
-          {product.title}
-        </h3>
-        <p className="font-mono text-xs text-gray-400 dark:text-gray-600">{statusLabel}</p>
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] text-gray-500 dark:text-gray-500">
-            {product.accessStatus === 'fc_only'
-              ? t('store.fcOnlyNote')
-              : t('store.detailHint', { defaultValue: '購入条件を確認' })}
-          </span>
-          <span className="font-mono text-[10px] text-gray-300 dark:text-gray-700">
-            {product.stock > 0 ? `在庫 ${product.stock}` : '在庫なし'}
-          </span>
-        </div>
-      </div>
+      </article>
     </Link>
   )
 }

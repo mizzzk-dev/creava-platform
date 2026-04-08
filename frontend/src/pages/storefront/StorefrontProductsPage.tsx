@@ -37,8 +37,9 @@ export default function StorefrontProductsPage() {
       <PageHead title="全商品 | mizzz Official Store" description="mizzz Official Store の全商品一覧。カテゴリ・在庫状態で絞り込みできます。" />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">All Products</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">カテゴリ / 在庫状態で絞り込みできます。</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-gray-500">Store catalog</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">All Products</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">新着 / 在庫状況 / カテゴリで絞り込みできます。</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link to="/cart" className="rounded-full border border-gray-300 px-4 py-2 text-sm text-gray-700 dark:border-gray-700 dark:text-gray-200">カート</Link>
@@ -46,40 +47,44 @@ export default function StorefrontProductsPage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950 sm:grid-cols-2 lg:grid-cols-4">
-        <label className="text-xs text-gray-500 dark:text-gray-400">
-          在庫状態
-          <select value={status} onChange={(event) => setStatus(event.target.value as typeof status)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
-            <option value="all">すべて</option>
-            <option value="available">販売中</option>
-            <option value="coming_soon">販売準備中</option>
-            <option value="soldout">売り切れ</option>
-          </select>
-        </label>
-        <label className="text-xs text-gray-500 dark:text-gray-400">
-          カテゴリ
-          <select value={collection} onChange={(event) => setCollection(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
-            <option value="all">すべて</option>
-            {DEFAULT_COLLECTIONS.map((item) => <option key={item.slug} value={item.slug}>{item.name}</option>)}
-          </select>
-        </label>
-        <label className="text-xs text-gray-500 dark:text-gray-400">
-          タグ
-          <select value={tag} onChange={(event) => setTag(event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
-            <option value="all">すべて</option>
-            {availableTags.map((item) => <option key={item} value={item}>{item}</option>)}
-          </select>
-        </label>
-        <label className="text-xs text-gray-500 dark:text-gray-400">
-          並び順
-          <select value={sort} onChange={(event) => setSort(event.target.value as typeof sort)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
-            <option value="recommended">おすすめ順</option>
-            <option value="newest">新着優先</option>
-            <option value="price_asc">価格が安い順</option>
-            <option value="price_desc">価格が高い順</option>
-          </select>
-        </label>
+      <div className="sticky top-20 z-20 mt-6 rounded-2xl border border-gray-200/80 bg-white/95 p-4 backdrop-blur dark:border-gray-800 dark:bg-gray-900/95">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <label className="text-xs text-gray-500 dark:text-gray-400">
+            在庫状態
+            <select value={status} onChange={(event) => setStatus(event.target.value as typeof status)} className="mt-1 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+              <option value="all">すべて</option>
+              <option value="available">販売中</option>
+              <option value="coming_soon">販売準備中</option>
+              <option value="soldout">売り切れ</option>
+            </select>
+          </label>
+          <label className="text-xs text-gray-500 dark:text-gray-400">
+            カテゴリ
+            <select value={collection} onChange={(event) => setCollection(event.target.value)} className="mt-1 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+              <option value="all">すべて</option>
+              {DEFAULT_COLLECTIONS.map((item) => <option key={item.slug} value={item.slug}>{item.name}</option>)}
+            </select>
+          </label>
+          <label className="text-xs text-gray-500 dark:text-gray-400">
+            タグ
+            <select value={tag} onChange={(event) => setTag(event.target.value)} className="mt-1 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+              <option value="all">すべて</option>
+              {availableTags.map((item) => <option key={item} value={item}>{item}</option>)}
+            </select>
+          </label>
+          <label className="text-xs text-gray-500 dark:text-gray-400">
+            並び順
+            <select value={sort} onChange={(event) => setSort(event.target.value as typeof sort)} className="mt-1 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+              <option value="recommended">おすすめ順</option>
+              <option value="newest">新着優先</option>
+              <option value="price_asc">価格が安い順</option>
+              <option value="price_desc">価格が高い順</option>
+            </select>
+          </label>
+        </div>
       </div>
+
+      <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">表示件数: {loading ? '...' : filtered.length}件</p>
 
       {loading && <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">{Array.from({ length: 8 }).map((_, idx) => <SkeletonProductCard key={idx} />)}</div>}
       {error && <div className="mt-8"><ErrorState message={error} onRetry={refetch} /></div>}
