@@ -137,7 +137,7 @@ export function AppRoutes() {
             <Route path={ROUTES.FC_MEMBER_STORE} element={<FanclubAuthGuard><FanclubMemberStorePage /></FanclubAuthGuard>} />
             <Route path={ROUTES.FAQ} element={<FAQPage />} />
             <Route path={ROUTES.FC_GUIDE} element={<FanclubGuidePage />} />
-            <Route path={ROUTES.CONTACT} element={<ContactPage />} />
+            <Route path={ROUTES.CONTACT} element={<StorefrontContactRedirectPage />} />
             <Route path={ROUTES.FC_LEGAL} element={<FanclubLegalIndexPage />} />
             <Route path={ROUTES.FC_TERMS} element={<TermsPage />} />
             <Route path={ROUTES.FC_PRIVACY} element={<PrivacyPolicyPage />} />
