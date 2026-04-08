@@ -9,6 +9,7 @@ import PurchaseActions from '@/modules/store/components/PurchaseActions'
 import ProductCard from '@/modules/store/components/ProductCard'
 import { formatPriceNum } from '@/utils'
 import { ROUTES, detailPath } from '@/lib/routeConstants'
+import { isStoreSite } from '@/lib/siteLinks'
 import { SITE_URL, SITE_NAME } from '@/lib/seo'
 import ContentAccessGuard from '@/components/guards/ContentAccessGuard'
 import NotFoundState from '@/components/common/NotFoundState'
@@ -47,6 +48,8 @@ export default function StoreDetailPage() {
     .slice(0, 4)
 
   const productUrl = `${SITE_URL}${detailPath.product(handle ?? '')}`
+  const storeListPath = isStoreSite ? ROUTES.STORE_PRODUCTS : ROUTES.STORE
+  const cartPath = isStoreSite ? ROUTES.STORE_CART : ROUTES.CART
 
 
   useEffect(() => {
@@ -67,7 +70,7 @@ export default function StoreDetailPage() {
     <section className="mx-auto max-w-5xl px-4 py-20">
       {/* breadcrumb */}
       <nav className="mb-8 flex items-center gap-1.5 font-mono text-[11px] text-gray-400 dark:text-gray-600">
-        <Link to={ROUTES.STORE} className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+        <Link to={storeListPath} className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
           {t('store.title')}
         </Link>
         <span className="select-none">/</span>
@@ -93,7 +96,7 @@ export default function StoreDetailPage() {
               type: 'BreadcrumbList',
               items: [
                 { name: 'Home', url: SITE_URL },
-                { name: t('store.title'), url: `${SITE_URL}${ROUTES.STORE}` },
+                { name: t('store.title'), url: `${SITE_URL}${storeListPath}` },
                 { name: product.title, url: productUrl },
               ],
             }}
@@ -215,7 +218,7 @@ export default function StoreDetailPage() {
               )}
 
               <Link
-                to={ROUTES.CART}
+                to={cartPath}
                 className="mt-3 inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
               >
                 {t('cart.goToCart', { defaultValue: 'カートへ進む' })} →
@@ -237,7 +240,7 @@ export default function StoreDetailPage() {
 
               {/* ストアへ戻る */}
               <Link
-                to={ROUTES.STORE}
+                to={storeListPath}
                 className="mt-6 inline-flex items-center gap-1 font-mono text-[11px] text-gray-400 dark:text-gray-600 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
               >
                 ← {t('store.backToStore')}

@@ -5,6 +5,14 @@ import HomePage from '@/pages/HomePage'
 import SkeletonDetail from '@/components/common/SkeletonDetail'
 import { ROUTES } from './routeConstants'
 import { isMainSite } from './siteLinks'
+import { isStoreSite } from './siteLinks'
+import StoreLayout from '@/components/layout/StoreLayout'
+import StorefrontHomePage from '@/pages/storefront/StorefrontHomePage'
+import StorefrontProductsPage from '@/pages/storefront/StorefrontProductsPage'
+import StorefrontCollectionPage from '@/pages/storefront/StorefrontCollectionPage'
+import StorefrontGuidePage from '@/pages/storefront/StorefrontGuidePage'
+import StorefrontShippingPolicyPage from '@/pages/storefront/StorefrontShippingPolicyPage'
+import StorefrontReturnsPage from '@/pages/storefront/StorefrontReturnsPage'
 
 // Lazy-loaded pages — excluded from the initial bundle
 const WorksPage = lazy(() => import('@/pages/WorksPage'))
@@ -45,6 +53,34 @@ function PageLoader() {
 }
 
 export function AppRoutes() {
+  if (isStoreSite) {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route element={<StoreLayout />}>
+            <Route path={ROUTES.STORE_HOME} element={<StorefrontHomePage />} />
+            <Route path={ROUTES.STORE_PRODUCTS} element={<StorefrontProductsPage />} />
+            <Route path={ROUTES.STORE_PRODUCT_DETAIL} element={<StoreDetailPage />} />
+            <Route path={ROUTES.STORE_CART} element={<CartPage />} />
+            <Route path={ROUTES.CART} element={<CartPage />} />
+            <Route path={ROUTES.STORE_COLLECTION} element={<StorefrontCollectionPage />} />
+            <Route path={ROUTES.NEWS} element={<NewsPage />} />
+            <Route path={ROUTES.NEWS_DETAIL} element={<NewsDetailPage />} />
+            <Route path={ROUTES.FAQ} element={<FAQPage />} />
+            <Route path={ROUTES.STORE_GUIDE} element={<StorefrontGuidePage />} />
+            <Route path={ROUTES.STORE_SHIPPING_POLICY} element={<StorefrontShippingPolicyPage />} />
+            <Route path={ROUTES.STORE_RETURNS} element={<StorefrontReturnsPage />} />
+            <Route path={ROUTES.STORE_CONTACT} element={<ContactPage />} />
+            <Route path={ROUTES.LEGAL_PRIVACY} element={<PrivacyPolicyPage />} />
+            <Route path={ROUTES.LEGAL_TERMS} element={<TermsPage />} />
+            <Route path={ROUTES.LEGAL_TRADE} element={<TokushohoPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
+        </Routes>
+      </Suspense>
+    )
+  }
+
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>

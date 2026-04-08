@@ -1,4 +1,4 @@
-import { fanclubLink, storeLink } from '@/lib/siteLinks'
+import { fanclubLink, storeLink, isStoreSite } from '@/lib/siteLinks'
 
 /** ルートパスの定数 */
 export const ROUTES = {
@@ -26,6 +26,18 @@ export const ROUTES = {
   LEGAL_COOKIE: '/legal/cookie-policy',
   LEGAL_TRADE: '/legal/tokushoho',
   PREVIEW: '/preview',
+  STORE_HOME: '/',
+  STORE_PRODUCTS: '/products',
+  STORE_PRODUCT_DETAIL: '/products/:handle',
+  STORE_COLLECTION: '/collections/:slug',
+  STORE_ARTIST: '/artists/:slug',
+  STORE_SERIES: '/series/:slug',
+  STORE_GUIDE: '/guide',
+  STORE_SHIPPING_POLICY: '/shipping-policy',
+  STORE_RETURNS: '/returns',
+  STORE_CONTACT: '/contact',
+  STORE_LEGAL: '/legal',
+  STORE_CART: '/cart',
 } as const
 
 /** 詳細ページへの URL を生成する */
@@ -35,5 +47,5 @@ export const detailPath = {
   work: (slug: string) => `/works/${slug}`,
   fanclub: (slug: string) => fanclubLink(`/fanclub/${slug}`),
   event: (slug: string) => `/events/${slug}`,
-  product: (handle: string) => storeLink(`/store/${handle}`),
+  product: (handle: string) => (isStoreSite ? `/products/${handle}` : storeLink(`/store/${handle}`)),
 } as const

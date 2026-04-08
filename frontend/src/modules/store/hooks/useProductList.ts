@@ -3,7 +3,7 @@ import { getProducts } from '@/modules/store/api'
 import type { StoreProductSummary } from '@/modules/store/types'
 
 export function useProductList(pageSize = 12) {
-  const { items, loading, error } = useStrapiCollection<StoreProductSummary>(
+  const { items, loading, error, refetch } = useStrapiCollection<StoreProductSummary>(
     () => getProducts({ pagination: { pageSize } }),
   )
 
@@ -11,5 +11,6 @@ export function useProductList(pageSize = 12) {
     products: items ?? [],
     loading,
     error,
+    refetch,
   }
 }
