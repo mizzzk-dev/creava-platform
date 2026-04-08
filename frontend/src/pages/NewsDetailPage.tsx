@@ -21,7 +21,7 @@ import { trackViewHistory } from '@/modules/store/lib/commerceOptimization'
 export default function NewsDetailPage() {
   const { slug } = useParams<{ slug: string }>()
   const { t } = useTranslation()
-  const { item, loading, error, notFound } = useSlugDetail<NewsItem>(getNewsDetail, slug)
+  const { item, loading, error, notFound, refetch } = useSlugDetail<NewsItem>(getNewsDetail, slug)
 
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export default function NewsDetailPage() {
       </Link>
 
       {loading && <SkeletonDetail />}
-      {error && <ErrorState message={error} />}
+      {error && <ErrorState message={error} onRetry={refetch} />}
       {notFound && <NotFoundState backTo={ROUTES.NEWS} />}
 
       {item && (

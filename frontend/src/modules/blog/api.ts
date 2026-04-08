@@ -30,10 +30,11 @@ export function getBlogList(
 
 export function getBlogDetail(
   slug: string,
+  signal?: AbortSignal,
   params?: Omit<StrapiQueryParams, 'filters' | 'pagination'>,
 ): Promise<BlogPost | null> {
   return fetchBySlug<BlogPost>(ENDPOINT, slug, {
     populate: ['thumbnail'],
     ...params,
-  })
+  }, { signal })
 }

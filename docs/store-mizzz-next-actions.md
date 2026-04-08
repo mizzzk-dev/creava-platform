@@ -1,52 +1,90 @@
-# store.mizzz.jp 立ち上げ・安定化: 現状調査と次アクション
+# store.mizzz.jp 立ち上げ・安定化: 現状調査・優先順位・実装結果
 
 ## 1. 現状調査結果
 
-### frontend / backend 構成
-- frontend: React + Vite + TypeScript。`VITE_SITE_TYPE=store` でストア向けルートに切替。
-- backend: Strapi v5。`store-product` / `news-item` / `faq` / `site-setting` は既存定義あり。
+### frontend / backend の構成
+- frontend は React + Vite + TypeScript。`VITE_SITE_TYPE=store` のとき `isStoreSite` 判定で store 専用ルーティングへ切替。
+- backend は Strapi v5。`store-product` / `news-item` / `faq` / `site-setting` が既に定義済み。
+
+### Strapi の既存 content type
+- `store-product`（title/slug/price/currency/purchaseStatus/accessStatus/previewImage など）
+- `news-item`（title/slug/body/thumbnail/accessStatus など）
+- `faq`（question/answer/category/order）
+- `site-setting`
 
 ### 既存 API クライアント
-- `frontend/src/lib/api/client.ts` に timeout / retry / AbortController / HTML 応答判定 / `response.ok` 判定が既に実装済み。
-- 開発時詳細ログは `useAsyncState` で出力する設計。
+- `frontend/src/lib/api/client.ts` に共通 GET クライアントあり。
+- 既に `response.ok` 判定・content-type 検証・HTML 応答判定・timeout・retry を実装済み。
+- `useAsyncState` で開発時詳細ログ、本番安全メッセージの分離済み。
 
-### 商品 / News / FAQ
-- 商品 / News は API モジュール経由で取得済み。
-- FAQ はこれまで静的配列表示だったため、今回 CMS 取得導線を追加。
+### 商品 / News / FAQ の既存有無
+- 商品一覧・詳細、News 一覧・詳細は実装済み。
+- FAQ は CMS 取得機構あり（未取得時に静的 FAQ を表示）。
 
-### デザインシステム / 共通 UI
-- 共通 `ErrorState` / Skeleton 系コンポーネントあり。
-- Store 用 `StoreLayout`、カード UI、法務ページ UI が既存。
+### 既存共通 UI
+- `ErrorState` / `NotFoundState` / `Skeleton*` / `PageHead` / `StructuredData` が共通部品として利用可能。
 
-### サブドメイン受け先
-- `store.mizzz.jp` は frontend 同一コードベースを store ターゲットでデプロイする設計。
-- ルーティングは `isStoreSite` 判定で store 専用構成へ切替。
+### サブドメイン `store.mizzz.jp` の受け先
+- 同一 frontend コードベースを store ターゲットでビルドして配信する設計。
+- デプロイ先は docs 上でロリポップを想定。
 
-### 環境変数 / API URL / CORS
-- frontend は `VITE_STRAPI_API_URL` / `VITE_STRAPI_API_TOKEN` 前提。
-- backend CORS は `https://store.mizzz.jp` を既定許可済み。`FRONTEND_URL` で追加許可可能。
+### 環境変数・API URL・CORS
+- frontend: `VITE_STRAPI_API_URL`, `VITE_STRAPI_API_TOKEN`, `VITE_SITE_TYPE`, `VITE_SITE_URL`。
+- backend: `FRONTEND_URL` に `https://store.mizzz.jp` を含めて CORS 許可。
 
-### デプロイ
-- ロリポップ（frontend）+ Strapi Cloud（backend）運用が docs に明記済み。
+### デプロイ方法
+- frontend は build 後に FTP/GitHub Actions で配信。
+- backend は Strapi Cloud。
 
-## 2. 実装優先順位
-1. API 安定化（FAQ を含めた取得統一、エラー表現の本番安全化）
-2. ストア導線と法務導線（`/legal` / `/terms` / `/privacy`）
-3. CMS モデル拡張（Product の運用項目増強）
-4. 商品一覧/詳細の絞り込み・在庫・関連商品の改善
-5. SEO / 構造化データ / sitemap の最終調整
+### 既存不具合の影響範囲
+- 明細ページ系は再試行操作がなく、一時障害時に復旧操作が弱い。
+- fetch 中断時の明示的な signal 伝搬が不足（ページ離脱時の無駄リクエスト）。
+- Strapi 商品編集時の保存前バリデーション（slug/price/image注意）の運用ガードが弱い。
 
-## 3. 追加 / 修正ファイル一覧
-- 追加: `frontend/src/modules/faq/api.ts`
-- 追加: `frontend/src/pages/storefront/StorefrontLegalPage.tsx`
-- 追加: `docs/store-mizzz-next-actions.md`
-- 修正: `frontend/src/pages/FAQPage.tsx`
-- 修正: `frontend/src/hooks/useAsyncState.ts`
-- 修正: `frontend/src/types/content.ts`
-- 修正: `frontend/src/lib/routeConstants.ts`
-- 修正: `frontend/src/lib/routes.tsx`
+---
 
-## 4. ルーティング一覧（store）
+## 2. そのまま使えるもの
+- store 専用ルーティング基盤（`StoreLayout`, `Storefront*` ページ）。
+- Strapi API クライアント基盤（timeout/retry/content-type 判定）。
+- 商品カード、法務ページ、SEO コンポーネント。
+
+## 3. 新規追加が必要なもの
+- 商品運用バリデーションのサーバー側ガード（Strapi lifecycle）。
+- 詳細ページの Retry 導線統一。
+- store トップでの News / FAQ 導線強化。
+- 仕様確定後の Product スキーマ拡張（sku/stock/seo/caution等）。
+
+## 4. 先に直すべき不具合
+1. API 中断・タイムアウト時の復旧導線不足。
+2. 明細ページでの再試行 UI 欠落。
+3. 管理画面で slug / price 品質を担保するチェック不足。
+
+## 5. 作業ブランチ名
+- `fix/store-api-stability`
+
+---
+
+## 6. 実装優先順位（今回の実施順）
+1. API 取得の安定化（AbortController 伝搬、Retry 導線）
+2. Store トップの主要導線（News / FAQ / Guide）
+3. Strapi 管理運用の事前ガード（lifecycle）
+
+---
+
+## 7. 追加 / 修正ファイル一覧
+- `frontend/src/lib/api/client.ts`
+- `frontend/src/lib/api/strapi.ts`
+- `frontend/src/hooks/useSlugDetail.ts`
+- `frontend/src/modules/store/api.ts`
+- `frontend/src/modules/store/hooks/useProductDetail.ts`
+- `frontend/src/modules/news/api.ts`
+- `frontend/src/pages/StoreDetailPage.tsx`
+- `frontend/src/pages/NewsDetailPage.tsx`
+- `frontend/src/pages/storefront/StorefrontHomePage.tsx`
+- `backend/src/api/store-product/content-types/store-product/lifecycles.ts`（新規）
+- `docs/store-mizzz-next-actions.md`
+
+## 8. ルーティング一覧（store運用対象）
 - `/`
 - `/products`
 - `/products/:handle`
@@ -61,27 +99,24 @@
 - `/legal`
 - `/terms`
 - `/privacy`
-- `/legal/terms`
-- `/legal/privacy-policy`
-- `/legal/tokushoho`
 
-## 5. CMS モデル一覧（現状 + 必要拡張）
-- 現状: `store-product`, `news-item`, `faq`, `site-setting`
-- 追加推奨: `category`（Collection Type）、`product-tag`（Collection Type）
-- `store-product` 追加推奨属性:
-  - `sku`, `stock`, `images(multiple)`, `descriptionShort`, `descriptionLong`
-  - `featured`, `isNewArrival`, `sortOrder`
-  - `seoTitle`, `seoDescription`, `ogImage`
-  - `cautionNotes`, `shippingNotes`, `digitalDeliveryNotes`
+## 9. CMS モデル一覧（現状）
+- Product: `store-product`
+- News: `news-item`
+- FAQ: `faq`
+- Site Settings: `site-setting`
 
-## 6. API 一覧
-- 商品一覧: `GET /api/store-products`
-- 商品詳細(slug): `GET /api/store-products?filters[slug][$eq]=...`
-- News 一覧: `GET /api/news-items`
-- FAQ 一覧: `GET /api/faqs`
-- Site Settings: `GET /api/site-setting`
+※ `Collection / Category`, `Artist / Series` は将来拡張項目として未実装（仮定）。
 
-## 7. 環境変数一覧（store 最低限）
+## 10. API 一覧（frontend利用）
+- `GET /api/store-products`
+- `GET /api/store-products?filters[slug][$eq]=...`
+- `GET /api/news-items`
+- `GET /api/news-items?filters[slug][$eq]=...`
+- `GET /api/faqs`
+- `GET /api/site-setting`
+
+## 11. 環境変数一覧（store立ち上げ最低限）
 ### frontend
 - `VITE_SITE_TYPE=store`
 - `VITE_SITE_URL=https://store.mizzz.jp`
@@ -89,41 +124,43 @@
 - `VITE_STRAPI_API_TOKEN`
 - `VITE_FORMSPREE_CONTACT_ID`
 - `VITE_FORMSPREE_REQUEST_ID`
+- `VITE_STRAPI_TIMEOUT_MS`（任意）
+- `VITE_STRAPI_RETRY_COUNT`（任意）
 
-### backend (Strapi Cloud)
-- `FRONTEND_URL=https://mizzz.jp,https://store.mizzz.jp,https://fc.mizzz.jp`
-- `APP_KEYS`, `API_TOKEN_SALT`, `ADMIN_JWT_SECRET`, `JWT_SECRET`
-- `DATABASE_*`（本番 PostgreSQL）
+### backend
+- `FRONTEND_URL`（store ドメイン含む）
+- `APP_KEYS`
+- `API_TOKEN_SALT`
+- `ADMIN_JWT_SECRET`
+- `JWT_SECRET`
+- `DATABASE_*`
 
-## 8. エラー処理方針
-- API クライアント層で `content-type`, `response.ok`, timeout, retry を強制。
-- HTML 応答・JSON パース失敗を `StrapiApiError` に正規化。
-- UI では `ErrorState` と `EmptyState` を分離。
-- 開発は詳細ログ出力、本番は安全メッセージを表示（今回反映）。
+## 12. エラー処理方針
+- API クライアントで `response.ok` を必須判定。
+- content-type が JSON 以外なら専用エラー化し、`Unexpected token <` を UI に露出しない。
+- timeout + retry + AbortController をクライアント層で吸収。
+- UI は `ErrorState` と `EmptyState` を分離。
+- Retry ボタンを一覧・詳細で提供。
+- 開発時は詳細ログ、本番は安全メッセージ。
 
-## 9. SEO / 法務対応一覧
-- 実装済み:
-  - `PageHead` ベースの title/description/OG
-  - 商品詳細の Product/Breadcrumb 構造化データ
-  - `robots.txt` / `sitemap.xml`
-- 今回追加:
-  - `/legal` ハブページ
-  - `/terms`, `/privacy` の store 導線
+## 13. SEO / 法務対応一覧
+- Store 各ページで `PageHead` を使った title/description 管理。
+- 商品詳細で Product / Breadcrumb 構造化データ。
+- 法務ページ導線（`/guide`, `/terms`, `/privacy`, `/legal`）維持。
 
-## 10. デプロイ確認項目
-- `VITE_SITE_TYPE=store` で build し、`store.mizzz.jp` 配下に配置。
-- Strapi Public 権限で `store-products/news-items/faqs/site-setting` の `find/findOne` を許可。
-- CORS に `https://store.mizzz.jp` が入っていること。
-- 公開後、商品一覧 / 商品詳細 / FAQ / News が取得できること。
+## 14. デプロイ確認項目
+- `VITE_SITE_TYPE=store` で build が通る。
+- Public 権限で `store-products`, `news-items`, `faqs`, `site-setting` を参照可能。
+- `FRONTEND_URL` と backend CORS に store ドメインが含まれる。
+- 商品一覧・詳細・News・FAQ が取得失敗時に Retry 可能。
 
-## 11. 残課題
-- Strapi 管理画面での商品運用バリデーション強化（slug/price/image/stock）。
-- Product モデル拡張（SKU・在庫・SEO・注意事項）と frontend 型追従。
-- 商品一覧のタグ絞り込みとソート強化。
-- カート〜決済導線（Stripe / BASE）の確定実装。
-- モバイル QA（実機）と E2E 導入。
+## 15. 残課題
+- Product モデル拡張（sku/stock/images複数/seo/caution/shipping/digital note）。
+- 管理画面 quick actions の継続確認（現状は app.tsx で絵文字アイコン実装済み）。
+- 商品複製/公開予約/販売終了日時などの編集体験向上。
+- カート〜決済確定導線（Stripe/BASE）の最終仕様固定。
 
-## 仮定
-- 既存の `store-product` は当面 current schema を維持し、破壊的変更を避ける。
-- FAQ は Strapi データ未投入時に既存静的 FAQ をフォールバックとして利用する。
-- `/terms` `/privacy` は store で短縮導線として追加し、既存 `/legal/*` も互換維持する。
+## 16. 仮定
+- `Collection / Category` は現時点で `inferCollectionSlug` による推論運用を継続。
+- 画像未設定は運用警告（warn）とし、保存を完全ブロックしない。
+- スキーマ大幅変更は既存運用影響が大きいため今回は未実施。

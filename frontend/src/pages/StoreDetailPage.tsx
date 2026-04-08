@@ -35,7 +35,7 @@ function purchaseStatusToAvailability(status: PurchaseStatus): 'InStock' | 'OutO
 export default function StoreDetailPage() {
   const { handle } = useParams<{ handle: string }>()
   const { t } = useTranslation()
-  const { product, loading, error, notFound } = useProductDetail(handle)
+  const { product, loading, error, notFound, refetch } = useProductDetail(handle)
   const { products } = useProductList(8)
   const { addItem } = useCart()
   const { currency, updateCurrency } = useDisplayCurrency('JPY')
@@ -78,7 +78,7 @@ export default function StoreDetailPage() {
       </nav>
 
       {loading && <SkeletonProductDetail />}
-      {error && <ErrorState message={error} />}
+      {error && <ErrorState message={error} onRetry={refetch} />}
       {notFound && <NotFoundState backTo={ROUTES.STORE} />}
 
       {product && (

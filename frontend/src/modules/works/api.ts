@@ -23,7 +23,8 @@ export function getWorksList(
  */
 export function getWorkDetail(
   slug: string,
+  signal?: AbortSignal,
   params?: Omit<StrapiQueryParams, 'filters' | 'pagination'>,
 ): Promise<Work | null> {
-  return fetchBySlug<Work>(ENDPOINT, slug, { populate: ['thumbnail'], ...params })
+  return fetchBySlug<Work>(ENDPOINT, slug, { populate: ['thumbnail'], ...params }, { signal })
 }

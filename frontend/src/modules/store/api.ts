@@ -55,7 +55,7 @@ export function getProducts(
  * 見つからない場合は null を返す
  * Strapi 未設定時: モックデータから検索する
  */
-export async function getProduct(slug: string): Promise<StoreProduct | null> {
+export async function getProduct(slug: string, signal?: AbortSignal): Promise<StoreProduct | null> {
   if (USE_MOCK) {
     const res = getMockStoreProduct(slug)
     return res?.data ?? null
@@ -63,7 +63,7 @@ export async function getProduct(slug: string): Promise<StoreProduct | null> {
   try {
     return await fetchBySlug<StoreProduct>(ENDPOINT, slug, {
       populate: ['previewImage'],
-    })
+    }, { signal })
   } catch (error) {
     if (isStrapiForbiddenError(error) || (error instanceof StrapiApiError && (error.status === 0 || error.status === 408))) {
       const res = getMockStoreProduct(slug)
