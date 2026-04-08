@@ -25,7 +25,8 @@ export function getFanclubList(
  */
 export function getFanclubDetail(
   slug: string,
+  signal?: AbortSignal,
   params?: Omit<StrapiQueryParams, 'filters' | 'pagination'>,
 ): Promise<FanclubContent | null> {
-  return fetchBySlug<FanclubContent>(ENDPOINT, slug, { populate: ['thumbnail'], ...params })
+  return fetchBySlug<FanclubContent>(ENDPOINT, slug, { populate: ['thumbnail'], ...params }, { signal })
 }

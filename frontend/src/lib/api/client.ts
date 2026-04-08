@@ -30,6 +30,8 @@ const inFlightRequests = new Map<string, Promise<unknown>>()
 
 export interface StrapiRequestOptions {
   auth?: 'none' | 'required' | 'auto'
+  signal?: AbortSignal
+  timeoutMs?: number
 }
 
 /**
@@ -170,7 +172,7 @@ export async function strapiGet<T>(
     return pending as Promise<T>
   }
 
-  return executeRequest<T>(cacheKey, url, authMode, token)
+  return executeRequest<T>(cacheKey, url, authMode, token, options.signal, options.timeoutMs)
 }
 
 function revalidateInBackground<T>(
@@ -190,6 +192,8 @@ async function executeRequest<T>(
   url: string,
   authMode: 'none' | 'required' | 'auto',
   token: string | undefined,
+  externalSignal?: AbortSignal,
+  timeoutMs?: number,
 ): Promise<T> {
 
   const headers: Record<string, string> = { Accept: 'application/json' }
@@ -205,7 +209,14 @@ async function executeRequest<T>(
   const requestPromise = (async () => {
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
       const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS)
+      const effectiveTimeout = timeoutMs ?? DEFAULT_TIMEOUT_MS
+      const timeout = setTimeout(() => controller.abort(), effectiveTimeout)
+
+      const abortRelay = () => controller.abort()
+      if (externalSignal) {
+        if (externalSignal.aborted) controller.abort()
+        else externalSignal.addEventListener('abort', abortRelay, { once: true })
+      }
 
       try {
         const res = await fetch(url, {
@@ -214,6 +225,7 @@ async function executeRequest<T>(
         })
 
         clearTimeout(timeout)
+        externalSignal?.removeEventListener('abort', abortRelay)
 
         if (!res.ok) {
           if (attempt < MAX_RETRIES && RETRYABLE_STATUS.has(res.status)) {
@@ -234,8 +246,18 @@ async function executeRequest<T>(
         return json
       } catch (err) {
         clearTimeout(timeout)
+        externalSignal?.removeEventListener('abort', abortRelay)
 
-        const isTimeout = err instanceof DOMException && err.name === 'AbortError'
+        const isAbortError = err instanceof DOMException && err.name === 'AbortError'
+        const isTimeout = isAbortError && !externalSignal?.aborted
+
+        if (isAbortError && externalSignal?.aborted) {
+          throw new StrapiApiError(499, 'Request Cancelled', '[Strapi] リクエストがキャンセルされました。', {
+            url,
+            contentType: 'unknown',
+            retried: attempt,
+          })
+        }
 
         // タイムアウト時のみ自動再試行し、403/CORS 等の恒久エラーで待たされないようにする
         if (attempt < MAX_RETRIES && isTimeout) {
@@ -249,7 +271,7 @@ async function executeRequest<T>(
           throw new StrapiApiError(
             408,
             'Request Timeout',
-            `[Strapi] リクエストがタイムアウトしました (${DEFAULT_TIMEOUT_MS}ms): ${url}`,
+            `[Strapi] リクエストがタイムアウトしました (${effectiveTimeout}ms): ${url}`,
             { url, contentType: 'unknown', retried: attempt },
           )
         }

@@ -36,7 +36,8 @@ export function getEventsList(
 
 export function getEventDetail(
   slug: string,
+  signal?: AbortSignal,
   params?: Omit<StrapiQueryParams, 'filters' | 'pagination'>,
 ): Promise<Event | null> {
-  return fetchBySlug<Event>(ENDPOINT, slug, params)
+  return fetchBySlug<Event>(ENDPOINT, slug, params, { signal })
 }
