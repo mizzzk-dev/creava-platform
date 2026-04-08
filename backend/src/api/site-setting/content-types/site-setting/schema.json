@@ -48,6 +48,20 @@
     },
     "socialYoutube": {
       "type": "string"
+    },
+    "announcementText": {
+      "type": "string"
+    },
+    "announcementUrl": {
+      "type": "string"
+    },
+    "announcementLevel": {
+      "type": "enumeration",
+      "enum": [
+        "info",
+        "urgent"
+      ],
+      "default": "info"
     }
   }
 }

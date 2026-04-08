@@ -15,11 +15,14 @@ import { useListPageWebVitals } from '@/modules/analytics/webVitals'
 import { DISPLAY_CURRENCIES } from '@/modules/store/lib/currency'
 import { useDisplayCurrency } from '@/modules/store/hooks/useDisplayCurrency'
 import { getRankedProducts, type RankingRange } from '@/modules/store/lib/ranking'
-import { forecastStockout, getAbVariant, getRegionCommercePolicy } from '@/modules/store/lib/commerceOptimization'
+import { forecastStockout, getAbVariant, getHistoryByKind, getRegionCommercePolicy } from '@/modules/store/lib/commerceOptimization'
+import { trackEvent } from '@/modules/analytics'
 
 const STATUS_FILTERS = ['all', 'available', 'coming_soon', 'soldout'] as const
+const SORT_OPTIONS = ['recommended', 'newest', 'priceAsc', 'priceDesc'] as const
 
 type StatusFilter = (typeof STATUS_FILTERS)[number]
+type SortOption = (typeof SORT_OPTIONS)[number]
 
 export default function StorePage() {
   const { t } = useTranslation()
@@ -30,14 +33,49 @@ export default function StorePage() {
   const [rankingRange, setRankingRange] = useState<RankingRange>('7d')
   const [region, setRegion] = useState<'JP' | 'US' | 'EU' | 'ROW'>('JP')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [query, setQuery] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('all')
+  const [selectedTag, setSelectedTag] = useState('all')
+  const [sortBy, setSortBy] = useState<SortOption>('recommended')
+  const [hideSoldOut, setHideSoldOut] = useState(false)
 
   const visibleProducts = filterVisible(products)
-  const filteredProducts = visibleProducts.filter((product) => statusFilter === 'all' || product.purchaseStatus === statusFilter)
-  const rankingProducts = getRankedProducts(visibleProducts, rankingRange, 3)
   const heroVariant = useMemo(() => getAbVariant('storeHero'), [])
   const rankingVariant = useMemo(() => getAbVariant('storeRanking'), [])
   const ctaVariant = useMemo(() => getAbVariant('storeCta'), [])
   const regionPolicy = getRegionCommercePolicy(region)
+  const rankingProducts = getRankedProducts(visibleProducts, rankingRange, 3)
+  const categories = useMemo(() => ['all', ...new Set(visibleProducts.map((product) => product.category).filter(Boolean))], [visibleProducts])
+  const tags = useMemo(() => ['all', ...new Set(visibleProducts.flatMap((product) => product.tags).filter(Boolean))], [visibleProducts])
+  const recentSlugs = useMemo(() => new Set(getHistoryByKind('product').slice(0, 10)), [])
+
+  const filteredProducts = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase()
+
+    const base = visibleProducts.filter((product) => {
+      if (statusFilter !== 'all' && product.purchaseStatus !== statusFilter) return false
+      if (hideSoldOut && product.purchaseStatus === 'soldout') return false
+      if (selectedCategory !== 'all' && product.category !== selectedCategory) return false
+      if (selectedTag !== 'all' && !product.tags.includes(selectedTag)) return false
+      if (!normalizedQuery) return true
+      return `${product.title} ${product.category} ${product.tags.join(' ')}`.toLowerCase().includes(normalizedQuery)
+    })
+
+    if (sortBy === 'newest') {
+      return [...base].sort((a, b) => Number(b.isNewArrival) - Number(a.isNewArrival) || a.sortOrder - b.sortOrder)
+    }
+    if (sortBy === 'priceAsc') {
+      return [...base].sort((a, b) => a.price - b.price)
+    }
+    if (sortBy === 'priceDesc') {
+      return [...base].sort((a, b) => b.price - a.price)
+    }
+    return [...base].sort((a, b) => Number(b.featured) - Number(a.featured) || Number(b.isNewArrival) - Number(a.isNewArrival) || a.sortOrder - b.sortOrder)
+  }, [hideSoldOut, query, selectedCategory, selectedTag, sortBy, statusFilter, visibleProducts])
+
+  const featuredProducts = filteredProducts.filter((product) => product.featured).slice(0, 4)
+  const viewedProducts = filteredProducts.filter((product) => recentSlugs.has(product.slug)).slice(0, 4)
+
   const stockoutForecast = forecastStockout(visibleProducts.slice(0, 3).map((product, index) => ({
     productId: product.id,
     productTitle: product.title,
@@ -89,11 +127,6 @@ export default function StorePage() {
                 {t('cart.goToCart', { defaultValue: 'カートを見る' })}
               </Link>
             </div>
-            <div className="relative mt-5 flex flex-wrap gap-2 text-[10px]">
-              <span className="rounded-full bg-white/10 px-3 py-1 font-mono uppercase tracking-wider">fast checkout</span>
-              <span className="rounded-full bg-white/10 px-3 py-1 font-mono uppercase tracking-wider">limited drop</span>
-              <span className="rounded-full bg-white/10 px-3 py-1 font-mono uppercase tracking-wider">fanclub early access</span>
-            </div>
           </div>
 
           <div className="rounded-3xl border border-gray-200 bg-white px-5 py-6 dark:border-gray-800 dark:bg-gray-950">
@@ -104,10 +137,6 @@ export default function StorePage() {
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
               {t('store.campaignBody', { defaultValue: '期間限定バンドル、会員先行販売、再販通知登録をまとめて案内しています。' })}
             </p>
-            <div className="mt-4 space-y-2 text-xs text-gray-500 dark:text-gray-400">
-              <p>{t('store.campaignPeriod', { defaultValue: '開催期間: 4/8 - 4/30' })}</p>
-              <p>{t('store.campaignShip', { defaultValue: '配送予定: ご注文後 5〜8 営業日' })}</p>
-            </div>
             <div className="mt-5">
               <Link to={ROUTES.FANCLUB} className="inline-flex items-center text-sm font-semibold text-violet-600 hover:text-violet-500 dark:text-violet-300 dark:hover:text-violet-200">
                 {t('store.campaignCta', { defaultValue: '先行販売の詳細を見る' })} →
@@ -116,7 +145,16 @@ export default function StorePage() {
           </div>
         </div>
 
-        <div className="grid gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950 lg:grid-cols-3">
+        <div className="grid gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950 lg:grid-cols-5">
+          <label className="text-xs text-gray-500 dark:text-gray-400 lg:col-span-2">
+            {t('store.searchLabel', { defaultValue: '商品検索' })}
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t('store.searchPlaceholder', { defaultValue: '商品名・カテゴリ・タグで検索' })}
+              className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+            />
+          </label>
           <label className="text-xs text-gray-500 dark:text-gray-400">
             {t('store.currencyLabel', { defaultValue: '表示通貨' })}
             <select
@@ -125,13 +163,10 @@ export default function StorePage() {
               className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
             >
               {DISPLAY_CURRENCIES.map((code) => (
-                <option key={code} value={code}>
-                  {code}
-                </option>
+                <option key={code} value={code}>{code}</option>
               ))}
             </select>
           </label>
-
           <label className="text-xs text-gray-500 dark:text-gray-400">
             {t('store.regionLabel', { defaultValue: '配送地域' })}
             <select
@@ -139,18 +174,46 @@ export default function StorePage() {
               onChange={(event) => setRegion(event.target.value as typeof region)}
               className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
             >
-              <option value="JP">JP</option>
-              <option value="US">US</option>
-              <option value="EU">EU</option>
-              <option value="ROW">ROW</option>
+              <option value="JP">JP</option><option value="US">US</option><option value="EU">EU</option><option value="ROW">ROW</option>
             </select>
           </label>
-
           <div className="rounded-lg border border-dashed border-gray-300 px-3 py-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
             {t('store.regionNotice', {
               defaultValue: `通貨:${regionPolicy.currency} / 送料:${regionPolicy.shippingFee} / 税率:${Math.round(regionPolicy.taxRate * 100)}% / 配送:${regionPolicy.canShip ? '可' : '不可'}`,
             })}
           </div>
+        </div>
+
+        <div className="grid gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950 md:grid-cols-2 lg:grid-cols-4">
+          <label className="text-xs text-gray-500 dark:text-gray-400">
+            {t('store.sortLabel', { defaultValue: '並び順' })}
+            <select value={sortBy} onChange={(event) => setSortBy(event.target.value as SortOption)} className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900">
+              <option value="recommended">{t('store.sortRecommended', { defaultValue: 'おすすめ順' })}</option>
+              <option value="newest">{t('store.sortNewest', { defaultValue: '新着順' })}</option>
+              <option value="priceAsc">{t('store.sortPriceAsc', { defaultValue: '価格が安い順' })}</option>
+              <option value="priceDesc">{t('store.sortPriceDesc', { defaultValue: '価格が高い順' })}</option>
+            </select>
+          </label>
+          <label className="text-xs text-gray-500 dark:text-gray-400">
+            {t('store.filterCategory', { defaultValue: 'カテゴリ' })}
+            <select value={selectedCategory} onChange={(event) => setSelectedCategory(event.target.value)} className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900">
+              {categories.map((category) => (
+                <option key={category} value={category}>{category === 'all' ? t('store.filterAll', { defaultValue: 'すべて' }) : category}</option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs text-gray-500 dark:text-gray-400">
+            {t('store.filterTag', { defaultValue: 'タグ' })}
+            <select value={selectedTag} onChange={(event) => setSelectedTag(event.target.value)} className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900">
+              {tags.map((tag) => (
+                <option key={tag} value={tag}>{tag === 'all' ? t('store.filterAll', { defaultValue: 'すべて' }) : tag}</option>
+              ))}
+            </select>
+          </label>
+          <label className="mt-5 inline-flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+            <input type="checkbox" checked={hideSoldOut} onChange={(event) => setHideSoldOut(event.target.checked)} />
+            {t('store.hideSoldOut', { defaultValue: '完売商品を非表示' })}
+          </label>
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
@@ -175,6 +238,28 @@ export default function StorePage() {
           </div>
         </div>
 
+        {featuredProducts.length > 0 && (
+          <div className="rounded-2xl border border-gray-200 bg-white px-4 py-4 dark:border-gray-800 dark:bg-gray-950">
+            <p className="font-mono text-[10px] uppercase tracking-wider text-violet-500">{t('store.featuredTitle', { defaultValue: '特集ピックアップ' })}</p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {featuredProducts.map((product) => (
+                <ProductCard key={`featured-${product.id}`} product={product} displayCurrency={currency} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {viewedProducts.length > 0 && (
+          <div className="rounded-2xl border border-gray-200 bg-white px-4 py-4 dark:border-gray-800 dark:bg-gray-950">
+            <p className="font-mono text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-500">{t('store.recentlyViewed', { defaultValue: '最近見た商品' })}</p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {viewedProducts.map((product) => (
+                <ProductCard key={`viewed-${product.id}`} product={product} displayCurrency={currency} />
+              ))}
+            </div>
+          </div>
+        )}
+
         {rankingProducts.length > 0 && (
           <div className="rounded-2xl border border-gray-200 bg-white px-4 py-4 dark:border-gray-800 dark:bg-gray-950">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -183,24 +268,11 @@ export default function StorePage() {
               </p>
               <div className="inline-flex rounded-full border border-gray-200 p-1 dark:border-gray-800">
                 {(['7d', '30d'] as const).map((range) => (
-                  <button
-                    key={range}
-                    type="button"
-                    onClick={() => setRankingRange(range)}
-                    className={`rounded-full px-3 py-1 text-[11px] ${rankingRange === range ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'text-gray-500 dark:text-gray-400'}`}
-                  >
+                  <button key={range} type="button" onClick={() => setRankingRange(range)} className={`rounded-full px-3 py-1 text-[11px] ${rankingRange === range ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'text-gray-500 dark:text-gray-400'}`}>
                     {range === '7d' ? t('store.ranking7d', { defaultValue: '直近7日' }) : t('store.ranking30d', { defaultValue: '直近30日' })}
                   </button>
                 ))}
               </div>
-            </div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-3">
-              {rankingProducts.map((product, index) => (
-                <div key={product.id} className="rounded-xl border border-gray-100 p-3 dark:border-gray-800">
-                  <p className="font-mono text-[10px] text-violet-500">#{index + 1}</p>
-                  <p className="mt-1 line-clamp-1 text-xs text-gray-700 dark:text-gray-200">{product.title}</p>
-                </div>
-              ))}
             </div>
           </div>
         )}
@@ -212,10 +284,7 @@ export default function StorePage() {
             </p>
             <ul className="mt-2 space-y-1 text-xs text-amber-800 dark:text-amber-200">
               {stockoutForecast.map((row) => (
-                <li key={row.productId}>
-                  {row.productTitle}: {t('store.stockoutSummary', { defaultValue: `${row.daysUntilStockout}日で欠品予測 (${row.estimatedStockoutDate})` })}
-                  {row.shouldAlert && ` / 通知候補 ${row.suggestedNotifyAudience}名`}
-                </li>
+                <li key={row.productId}>{row.productTitle}: {t('store.stockoutSummary', { defaultValue: `${row.daysUntilStockout}日で欠品予測 (${row.estimatedStockoutDate})` })}</li>
               ))}
             </ul>
           </div>
@@ -224,58 +293,24 @@ export default function StorePage() {
         <div className="rounded-2xl border border-gray-200 bg-white px-4 py-4 dark:border-gray-800 dark:bg-gray-950">
           <p className="font-mono text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-600">status guide</p>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-            <span className="inline-flex items-center rounded-sm border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-mono text-[11px] uppercase tracking-wider text-emerald-600">
-              AVAILABLE
-            </span>
+            <span className="inline-flex items-center rounded-sm border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-mono text-[11px] uppercase tracking-wider text-emerald-600">AVAILABLE</span>
             <span className="text-gray-500 dark:text-gray-500">購入可能。すぐに購入またはカート追加できます。</span>
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-            <Badge variant="coming_soon" size="sm" />
-            <span className="text-gray-500 dark:text-gray-500">{t('store.statusComingSoon', { defaultValue: '販売準備中。公開通知を待機できます。' })}</span>
-          </div>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-            <Badge variant="soldout" size="sm" />
-            <span className="text-gray-500 dark:text-gray-500">{t('store.statusSoldout', { defaultValue: '完売。再販情報は News / Fanclub で案内します。' })}</span>
-          </div>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-            <Badge variant="fc" size="sm" label="MEMBERS" />
-            <span className="text-gray-500 dark:text-gray-500">
-              {t('store.statusMembers', { defaultValue: '会員限定商品。' })}
-              <Link to={ROUTES.MEMBER} className="ml-1 font-mono text-violet-500 hover:text-violet-400">
-                Member status確認 →
-              </Link>
-            </span>
-          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]"><Badge variant="coming_soon" size="sm" /><span className="text-gray-500 dark:text-gray-500">{t('store.statusComingSoon', { defaultValue: '販売準備中。公開通知を待機できます。' })}</span></div>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]"><Badge variant="soldout" size="sm" /><span className="text-gray-500 dark:text-gray-500">{t('store.statusSoldout', { defaultValue: '完売。再販情報は News / Fanclub で案内します。' })}</span></div>
         </div>
       </motion.div>
 
-      {loading && (
-        <div className="mt-10 grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <SkeletonProductCard key={i} />
-          ))}
-        </div>
-      )}
-
+      {loading && <div className="mt-10 grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">{Array.from({ length: 8 }).map((_, i) => <SkeletonProductCard key={i} />)}</div>}
       {error && <p className="mt-8 font-mono text-sm text-red-400">! {t('common.error')}</p>}
 
       {!loading && !error && filteredProducts.length === 0 && (
         <div className="mt-16 rounded border border-dashed border-gray-200 p-8 text-center dark:border-gray-800">
           <p className="font-mono text-sm text-gray-500 dark:text-gray-500">{t('home.store.comingSoon')}</p>
           <p className="mt-2 text-xs text-gray-400 dark:text-gray-600">{t('store.empty')}</p>
-          <p className="mt-2 text-xs text-gray-400 dark:text-gray-600">
-            {t('store.emptySupport', { defaultValue: '公開前アイテムは限定案内で先行告知します。' })}
-          </p>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-4">
-            <Link
-              to={ROUTES.CONTACT}
-              className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
-            >
-              {t('store.requestCta')} →
-            </Link>
-            <Link to={ROUTES.FANCLUB} className="inline-flex items-center text-xs font-mono text-violet-500 hover:text-violet-400">
-              {t('store.emptySubCta')} →
-            </Link>
+            <Link to={ROUTES.CONTACT} className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100">{t('store.requestCta')} →</Link>
+            <Link to={ROUTES.FANCLUB} className="inline-flex items-center text-xs font-mono text-violet-500 hover:text-violet-400">{t('store.emptySubCta')} →</Link>
           </div>
         </div>
       )}
@@ -283,7 +318,9 @@ export default function StorePage() {
       {filteredProducts.length > 0 && (
         <div id="store-products" className="mt-10 grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
           {filteredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} displayCurrency={currency} />
+            <div key={product.id} onClick={() => trackEvent('store_product_card_click', { slug: product.slug })}>
+              <ProductCard product={product} displayCurrency={currency} />
+            </div>
           ))}
         </div>
       )}
@@ -294,12 +331,8 @@ export default function StorePage() {
             <p className="text-sm text-gray-400 dark:text-gray-600">{t('store.fcNote')}</p>
             <p className="mt-1 font-mono text-[11px] text-gray-300 dark:text-gray-700">{t('store.stripeNote')}</p>
           </div>
-          <Link
-            to={ROUTES.FANCLUB}
-            className="inline-flex shrink-0 items-center gap-2 border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-700 transition-all hover:border-gray-400 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-600"
-          >
-            {t('home.fanclub.joinButton')}
-            <span>→</span>
+          <Link to={ROUTES.FANCLUB} className="inline-flex shrink-0 items-center gap-2 border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-700 transition-all hover:border-gray-400 dark:border-gray-800 dark:text-gray-300 dark:hover:border-gray-600">
+            {t('home.fanclub.joinButton')}<span>→</span>
           </Link>
         </div>
       )}
