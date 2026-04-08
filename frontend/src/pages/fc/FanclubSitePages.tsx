@@ -1,11 +1,12 @@
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useClerk } from '@clerk/clerk-react'
 import PageHead from '@/components/seo/PageHead'
 import { ROUTES } from '@/lib/routeConstants'
 import { useCurrentUser } from '@/hooks'
 import { canAccessByRole, type VisibilityScope } from '@/lib/auth/membership'
+import { trackCtaClick } from '@/modules/analytics/tracking'
 
 type Visibility = VisibilityScope
 
@@ -50,6 +51,9 @@ function FcSectionTemplate({
 }) {
   const { user } = useCurrentUser()
   const role = user?.role ?? 'guest'
+  useEffect(() => {
+    trackCtaClick('fc_section', 'view', { section: title, loggedIn: role !== 'guest' })
+  }, [role, title])
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-12 sm:py-16">
@@ -72,9 +76,9 @@ function FcSectionTemplate({
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{item.description}</p>
               <div className="mt-5">
                 {isLocked ? (
-                  <Link to={ROUTES.FC_JOIN} className="text-sm font-medium text-violet-600 hover:text-violet-500">入会して閲覧する →</Link>
+                  <Link to={ROUTES.FC_JOIN} onClick={() => trackCtaClick('fc_section', 'join_from_locked', { title: item.title, section: title })} className="text-sm font-medium text-violet-600 hover:text-violet-500">入会して閲覧する →</Link>
                 ) : (
-                  <Link to={`${detailBase}/${item.slug}`} className="text-sm font-medium text-gray-900 hover:text-gray-600 dark:text-gray-100 dark:hover:text-gray-300">詳細を見る →</Link>
+                  <Link to={`${detailBase}/${item.slug}`} onClick={() => trackCtaClick('fc_section', 'content_detail', { slug: item.slug, section: title })} className="text-sm font-medium text-gray-900 hover:text-gray-600 dark:text-gray-100 dark:hover:text-gray-300">詳細を見る →</Link>
                 )}
               </div>
             </article>
@@ -117,9 +121,9 @@ export function FanclubHomeHubPage() {
         </div>
 
         <div className="mt-10 flex flex-wrap gap-3">
-          <Link to={ROUTES.FC_JOIN} className="rounded-full bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900">入会する</Link>
-          <Link to={ROUTES.FC_LOGIN} className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-800 hover:border-gray-500 dark:border-gray-700 dark:text-gray-100">ログイン</Link>
-          <Link to={ROUTES.FAQ} className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-gray-200">FAQ</Link>
+          <Link to={ROUTES.FC_JOIN} onClick={() => trackCtaClick('fc_home', 'join')} className="rounded-full bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900">入会する</Link>
+          <Link to={ROUTES.FC_LOGIN} onClick={() => trackCtaClick('fc_home', 'login')} className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-800 hover:border-gray-500 dark:border-gray-700 dark:text-gray-100">ログイン</Link>
+          <Link to={ROUTES.FAQ} onClick={() => trackCtaClick('fc_home', 'faq')} className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-gray-200">FAQ</Link>
         </div>
       </header>
     </section>
@@ -137,7 +141,7 @@ export function FanclubAboutSitePage() {
         <li>・会員特典: 限定コンテンツ閲覧、先行案内、限定販売導線</li>
         <li>・注意事項: 公開範囲や公開期限はコンテンツごとに異なります</li>
       </ul>
-      <Link to={ROUTES.FC_JOIN} className="mt-8 inline-flex text-sm font-medium text-violet-600 hover:text-violet-500">入会ページへ →</Link>
+      <Link to={ROUTES.FC_JOIN} onClick={() => trackCtaClick('fc_about', 'join')} className="mt-8 inline-flex text-sm font-medium text-violet-600 hover:text-violet-500">入会ページへ →</Link>
     </section>
   )
 }
@@ -163,7 +167,7 @@ export function FanclubJoinPage() {
         <li>利用規約 / プライバシー / 特商法 / 継続課金ポリシーに同意</li>
       </ol>
       <div className="mt-8 flex flex-wrap gap-3">
-        <Link to={ROUTES.FC_LOGIN} className="rounded-full bg-gray-900 px-5 py-2.5 text-sm text-white dark:bg-gray-100 dark:text-gray-900">会員登録を開始</Link>
+        <Link to={ROUTES.FC_LOGIN} onClick={() => trackCtaClick('fc_join', 'start_signup')} className="rounded-full bg-gray-900 px-5 py-2.5 text-sm text-white dark:bg-gray-100 dark:text-gray-900">会員登録を開始</Link>
         <Link to={ROUTES.FC_SUBSCRIPTION_POLICY} className="text-sm text-gray-500 underline">継続課金 / 解約ポリシー</Link>
       </div>
     </section>
@@ -207,14 +211,20 @@ function FanclubLoginActionsWithClerk({ redirectPath }: { redirectPath: string }
     <div className="mt-8 flex flex-wrap gap-3">
       <button
         type="button"
-        onClick={() => void openSignIn({ afterSignInUrl: redirectPath })}
+        onClick={() => {
+          trackCtaClick('fc_login', 'open_signin', { redirectPath })
+          void openSignIn({ afterSignInUrl: redirectPath })
+        }}
         className="rounded-full bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900"
       >
         ログインを開く
       </button>
       <button
         type="button"
-        onClick={() => void openSignUp({ afterSignUpUrl: redirectPath })}
+        onClick={() => {
+          trackCtaClick('fc_login', 'open_signup', { redirectPath })
+          void openSignUp({ afterSignUpUrl: redirectPath })
+        }}
         className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:border-gray-500 dark:border-gray-700 dark:text-gray-200"
       >
         新規登録
@@ -278,7 +288,7 @@ export function FanclubMyPageSite() {
             </div>
             <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-950/50">
               <p className="text-[11px] text-gray-500">ショートカット</p>
-              <Link to={ROUTES.FC_MOVIES} className="mt-1 inline-flex text-sm text-violet-600 hover:text-violet-500">Moviesへ →</Link>
+              <Link to={ROUTES.FC_MOVIES} onClick={() => trackCtaClick('fc_mypage', 'shortcut_movies')} className="mt-1 inline-flex text-sm text-violet-600 hover:text-violet-500">Moviesへ →</Link>
             </div>
           </div>
         </article>
@@ -287,8 +297,8 @@ export function FanclubMyPageSite() {
           <p className="text-xs text-gray-500">次回更新日</p>
           <p className="mt-2 text-sm text-gray-800 dark:text-gray-100">2026-05-01（仮）</p>
           <p className="mt-2 text-xs text-gray-500">解約 / 退会はポリシーに沿って手続きできます。</p>
-          <Link to={ROUTES.FC_SUBSCRIPTION_POLICY} className="mt-3 inline-flex text-xs text-violet-600 hover:text-violet-500">継続課金ポリシーを確認</Link>
-          <Link to={ROUTES.STORE_HOME} className="mt-2 block text-xs text-gray-500 underline">ストア連携導線へ</Link>
+          <Link to={ROUTES.FC_SUBSCRIPTION_POLICY} onClick={() => trackCtaClick('fc_mypage', 'subscription_policy')} className="mt-3 inline-flex text-xs text-violet-600 hover:text-violet-500">継続課金ポリシーを確認</Link>
+          <Link to={ROUTES.STORE_HOME} onClick={() => trackCtaClick('fc_mypage', 'to_store')} className="mt-2 block text-xs text-gray-500 underline">ストア連携導線へ</Link>
         </article>
       </div>
 
@@ -304,9 +314,9 @@ export function FanclubMyPageSite() {
         <article className="rounded-2xl border border-gray-200 p-5 dark:border-gray-800">
           <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">おすすめ導線</h2>
           <div className="mt-3 flex flex-wrap gap-2 text-sm">
-            <Link to={ROUTES.FC_GALLERY} className="rounded-full border border-gray-300 px-3 py-1.5 dark:border-gray-700">Gallery</Link>
-            <Link to={ROUTES.EVENTS} className="rounded-full border border-gray-300 px-3 py-1.5 dark:border-gray-700">Events</Link>
-            <Link to={ROUTES.FC_TICKETS} className="rounded-full border border-gray-300 px-3 py-1.5 dark:border-gray-700">Tickets</Link>
+            <Link to={ROUTES.FC_GALLERY} onClick={() => trackCtaClick('fc_mypage', 'recommend_gallery')} className="rounded-full border border-gray-300 px-3 py-1.5 dark:border-gray-700">Gallery</Link>
+            <Link to={ROUTES.EVENTS} onClick={() => trackCtaClick('fc_mypage', 'recommend_events')} className="rounded-full border border-gray-300 px-3 py-1.5 dark:border-gray-700">Events</Link>
+            <Link to={ROUTES.FC_TICKETS} onClick={() => trackCtaClick('fc_mypage', 'recommend_tickets')} className="rounded-full border border-gray-300 px-3 py-1.5 dark:border-gray-700">Tickets</Link>
           </div>
         </article>
       </div>
@@ -360,7 +370,7 @@ function FcDetailTemplate({ item, title }: { item: FcItem; title: string }) {
       {locked ? (
         <div className="mt-8 rounded-2xl border border-gray-200 bg-gray-50 p-6 dark:border-gray-800 dark:bg-gray-900">
           <p className="text-sm text-gray-700 dark:text-gray-200">このコンテンツは {ACCESS_LABEL[item.visibility]} です。入会後に閲覧できます。</p>
-          <Link to={ROUTES.FC_JOIN} className="mt-4 inline-flex text-sm font-medium text-violet-600 hover:text-violet-500">入会する →</Link>
+          <Link to={ROUTES.FC_JOIN} onClick={() => trackCtaClick('fc_detail_locked', 'join', { title: item.title })} className="mt-4 inline-flex text-sm font-medium text-violet-600 hover:text-violet-500">入会する →</Link>
         </div>
       ) : (
         <p className="mt-8 text-sm leading-7 text-gray-700 dark:text-gray-200">{item.description}（実運用では CMS 登録本文・動画URL・公開期限・関連コンテンツを表示）</p>

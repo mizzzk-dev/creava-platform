@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { trackCtaClick } from '@/modules/analytics/tracking'
 
 const LANGS = [
   { code: 'ja', label: 'JA' },
@@ -12,6 +13,7 @@ export default function LangSwitcher() {
 
   function switchLang(code: string) {
     i18n.changeLanguage(code)
+    trackCtaClick('global', 'language_switch', { language: code })
   }
 
   return (

@@ -25,6 +25,7 @@ import { convertPrice, DISPLAY_CURRENCIES } from '@/modules/store/lib/currency'
 import { useDisplayCurrency } from '@/modules/store/hooks/useDisplayCurrency'
 import RestockNotifyForm from '@/modules/store/components/RestockNotifyForm'
 import { trackViewHistory } from '@/modules/store/lib/commerceOptimization'
+import { trackCtaClick } from '@/modules/analytics/tracking'
 
 function purchaseStatusToAvailability(status: PurchaseStatus): 'InStock' | 'OutOfStock' | 'PreOrder' {
   if (status === 'available') return 'InStock'
@@ -78,7 +79,7 @@ export default function StoreDetailPage() {
       </nav>
 
       {loading && <SkeletonProductDetail />}
-      {error && <ErrorState message={error} onRetry={refetch} />}
+      {error && <ErrorState message={error} onRetry={refetch} location="store_detail" />}
       {notFound && <NotFoundState backTo={ROUTES.STORE} />}
 
       {product && (
@@ -237,6 +238,7 @@ export default function StoreDetailPage() {
 
               <Link
                 to={cartPath}
+                onClick={() => trackCtaClick('store_detail', 'go_to_cart', { slug: product.slug })}
                 className="mt-3 inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
               >
                 {t('cart.goToCart', { defaultValue: 'カートへ進む' })} →
@@ -245,6 +247,7 @@ export default function StoreDetailPage() {
               {product.accessStatus === 'fc_only' && (
                 <Link
                   to={ROUTES.MEMBER}
+                  onClick={() => trackCtaClick('store_detail', 'fc_member_check', { slug: product.slug })}
                   className="mt-2 inline-flex items-center gap-1 text-xs font-mono text-violet-500 hover:text-violet-400"
                 >
                   {t('store.fcMemberCheck', { defaultValue: '会員状態を確認する' })} →
@@ -259,6 +262,7 @@ export default function StoreDetailPage() {
               {/* ストアへ戻る */}
               <Link
                 to={storeListPath}
+                onClick={() => trackCtaClick('store_detail', 'back_to_store')}
                 className="mt-8 inline-flex items-center gap-1 font-mono text-[11px] text-gray-400 transition-colors hover:text-gray-700 dark:text-gray-600 dark:hover:text-gray-300"
               >
                 ← {t('store.backToStore')}
@@ -280,7 +284,7 @@ export default function StoreDetailPage() {
               </p>
               <div className="mt-6 grid grid-cols-2 gap-5 sm:grid-cols-4">
                 {related.map((p) => (
-                  <ProductCard key={p.id} product={p} displayCurrency={currency} />
+                  <ProductCard key={p.id} product={p} displayCurrency={currency} trackingLocation="store_detail_related" />
                 ))}
               </div>
             </motion.div>

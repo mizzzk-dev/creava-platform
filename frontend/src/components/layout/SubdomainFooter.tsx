@@ -4,6 +4,7 @@ import LangSwitcher from '@/components/common/LangSwitcher'
 import SmartLink from '@/components/common/SmartLink'
 import { ROUTES } from '@/lib/routeConstants'
 import { mainLink, fanclubLink, storeLink } from '@/lib/siteLinks'
+import { trackCtaClick } from '@/modules/analytics/tracking'
 
 interface FooterLink {
   to: string
@@ -26,7 +27,7 @@ export default function SubdomainFooter({ legalLinks }: SubdomainFooterProps) {
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-gray-600 dark:text-gray-300">
               {t('subdomain.noticeMainContact')}
             </p>
-            <SmartLink to={mainLink(ROUTES.CONTACT)} className="mt-4 inline-flex rounded-full border border-gray-300 px-4 py-2 text-xs text-gray-700 transition-colors hover:border-gray-500 dark:border-gray-700 dark:text-gray-200 dark:hover:border-gray-500">
+            <SmartLink to={mainLink(ROUTES.CONTACT)} onClick={() => trackCtaClick('footer', 'contact_to_main')} className="mt-4 inline-flex rounded-full border border-gray-300 px-4 py-2 text-xs text-gray-700 transition-colors hover:border-gray-500 dark:border-gray-700 dark:text-gray-200 dark:hover:border-gray-500">
               {t('subdomain.contactMain')}
             </SmartLink>
           </div>
@@ -34,10 +35,10 @@ export default function SubdomainFooter({ legalLinks }: SubdomainFooterProps) {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-500">{t('subdomain.navigateTitle')}</p>
             <ul className="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
-              <li><SmartLink to={mainLink('/')}>mizzz.jp</SmartLink></li>
-              <li><SmartLink to={storeLink('/')}>{t('nav.store')}</SmartLink></li>
-              <li><SmartLink to={fanclubLink('/')}>{t('nav.fanclub')}</SmartLink></li>
-              <li><NavLink to={ROUTES.FAQ}>{t('nav.faq')}</NavLink></li>
+              <li><SmartLink to={mainLink('/')} onClick={() => trackCtaClick('footer', 'network_link', { target: 'main' })}>mizzz.jp</SmartLink></li>
+              <li><SmartLink to={storeLink('/')} onClick={() => trackCtaClick('footer', 'network_link', { target: 'store' })}>{t('nav.store')}</SmartLink></li>
+              <li><SmartLink to={fanclubLink('/')} onClick={() => trackCtaClick('footer', 'network_link', { target: 'fanclub' })}>{t('nav.fanclub')}</SmartLink></li>
+              <li><NavLink to={ROUTES.FAQ} onClick={() => trackCtaClick('footer', 'faq')}>{t('nav.faq')}</NavLink></li>
             </ul>
           </div>
 
@@ -45,7 +46,7 @@ export default function SubdomainFooter({ legalLinks }: SubdomainFooterProps) {
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-500">{t('subdomain.legalTitle')}</p>
             <ul className="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
               {legalLinks.map((link) => (
-                <li key={link.to}><NavLink to={link.to}>{t(link.labelKey)}</NavLink></li>
+                <li key={link.to}><NavLink to={link.to} onClick={() => trackCtaClick('footer', 'legal_link', { target: link.to })}>{t(link.labelKey)}</NavLink></li>
               ))}
             </ul>
           </div>

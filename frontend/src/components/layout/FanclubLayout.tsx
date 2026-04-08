@@ -3,6 +3,8 @@ import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { ROUTES } from '@/lib/routeConstants'
 import { trackPageView } from '@/modules/analytics'
+import { initializeAnalytics } from '@/modules/analytics'
+import { setAnalyticsEnabled } from '@/modules/cookie/consent'
 import SubdomainHeader from '@/components/layout/SubdomainHeader'
 import SubdomainFooter from '@/components/layout/SubdomainFooter'
 
@@ -26,6 +28,11 @@ const LEGAL_LINKS = [
 
 export default function FanclubLayout() {
   const { pathname } = useLocation()
+
+  useEffect(() => {
+    setAnalyticsEnabled(true)
+    initializeAnalytics(true)
+  }, [])
 
   useEffect(() => {
     trackPageView(pathname)

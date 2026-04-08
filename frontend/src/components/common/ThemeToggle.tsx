@@ -1,4 +1,5 @@
 import { useTheme } from '@/lib/theme'
+import { trackCtaClick } from '@/modules/analytics/tracking'
 
 const ICONS = {
   light: (
@@ -27,7 +28,9 @@ export default function ThemeToggle() {
 
   function toggle() {
     const idx = CYCLE.indexOf(theme as typeof CYCLE[number])
-    setTheme(CYCLE[(idx + 1) % CYCLE.length])
+    const nextTheme = CYCLE[(idx + 1) % CYCLE.length]
+    setTheme(nextTheme)
+    trackCtaClick('global', 'theme_switch', { from: theme, to: nextTheme })
   }
 
   return (

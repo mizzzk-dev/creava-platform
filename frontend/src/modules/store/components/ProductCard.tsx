@@ -5,13 +5,15 @@ import { formatPriceNum } from '@/utils'
 import { convertPrice, type DisplayCurrency } from '../lib/currency'
 import Badge from '@/components/common/Badge'
 import type { StoreProductSummary } from '../types'
+import { trackCtaClick } from '@/modules/analytics/tracking'
 
 interface Props {
   product: StoreProductSummary
   displayCurrency?: DisplayCurrency
+  trackingLocation?: string
 }
 
-export default function ProductCard({ product, displayCurrency = 'JPY' }: Props) {
+export default function ProductCard({ product, displayCurrency = 'JPY', trackingLocation = 'store_product_card' }: Props) {
   const { t } = useTranslation()
   const isUnavailable = product.purchaseStatus !== 'available'
 
@@ -23,7 +25,12 @@ export default function ProductCard({ product, displayCurrency = 'JPY' }: Props)
         : formatPriceNum(convertPrice(product.price, product.currency, displayCurrency), displayCurrency)
 
   return (
-    <Link to={detailPath.product(product.slug)} className="group block" aria-label={`${product.title} ${t('store.detailCta')}`}>
+    <Link
+      to={detailPath.product(product.slug)}
+      onClick={() => trackCtaClick(trackingLocation, 'product_click', { slug: product.slug, status: product.purchaseStatus })}
+      className="group block"
+      aria-label={`${product.title} ${t('store.detailCta')}`}
+    >
       <article className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white/90 shadow-sm shadow-gray-200/40 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-lg dark:border-gray-800 dark:bg-gray-900/80 dark:shadow-black/20">
         <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800">
           {product.previewImage ? (

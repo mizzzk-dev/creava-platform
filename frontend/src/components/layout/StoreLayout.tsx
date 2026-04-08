@@ -1,8 +1,11 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
 import CookieConsentBanner from '@/components/common/CookieConsentBanner'
 import SubdomainHeader from '@/components/layout/SubdomainHeader'
 import SubdomainFooter from '@/components/layout/SubdomainFooter'
 import { ROUTES } from '@/lib/routeConstants'
+import { initializeAnalytics, trackPageView } from '@/modules/analytics'
+import { loadCookieConsent, setAnalyticsEnabled } from '@/modules/cookie/consent'
 
 const NAV_ITEMS = [
   { to: ROUTES.STORE_HOME, labelKey: 'nav.home' },
@@ -22,6 +25,19 @@ const LEGAL_LINKS = [
 ]
 
 export default function StoreLayout() {
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    const consent = loadCookieConsent()
+    const enabled = consent?.analytics === 'granted'
+    setAnalyticsEnabled(enabled)
+    initializeAnalytics(enabled)
+  }, [])
+
+  useEffect(() => {
+    trackPageView(pathname)
+  }, [pathname])
+
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
       <SubdomainHeader site="store" navItems={NAV_ITEMS} />
