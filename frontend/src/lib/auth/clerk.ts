@@ -8,7 +8,15 @@ import type { AppUser, UserRole } from '@/types'
  */
 interface ClerkUserLike {
   id: string
-  primaryEmailAddress: { emailAddress: string } | null | undefined
+  primaryEmailAddress:
+    | {
+        emailAddress: string
+        verification?: {
+          status?: 'verified' | 'unverified' | 'transferable' | string | null
+        }
+      }
+    | null
+    | undefined
   publicMetadata: Record<string, unknown>
 }
 
@@ -38,6 +46,7 @@ export function toAppUser(clerkUser: ClerkUserLike): AppUser {
   const role = resolveRole(clerkUser.publicMetadata.role)
   const rawPlan = clerkUser.publicMetadata.memberPlan
   const rawStatus = clerkUser.publicMetadata.contractStatus
+  const verificationStatus = clerkUser.primaryEmailAddress?.verification?.status
 
   return {
     id: clerkUser.id,
@@ -51,6 +60,6 @@ export function toAppUser(clerkUser: ClerkUserLike): AppUser {
       rawStatus === 'expired'
         ? rawStatus
         : 'active',
-    emailVerified: Boolean(clerkUser.primaryEmailAddress?.emailAddress),
+    emailVerified: verificationStatus === 'verified',
   }
 }

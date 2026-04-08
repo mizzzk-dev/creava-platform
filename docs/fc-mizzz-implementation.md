@@ -212,6 +212,51 @@
 
 ---
 
+## 14. 作成したブランチ名
+- `feature/fc-auth-and-protected-pages`
+
+---
+
+## 15. コミット一覧（このブランチで作成）
+- ファンクラブ認証ガードを会員状態まで検証するよう強化（予定）
+- Clerk のメール認証判定を verification.status ベースへ修正（予定）
+
+---
+
+## 16. PR本文案
+```md
+## タイトル
+ファンクラブ認証基盤と限定公開制御を追加
+
+## 概要
+- fc.mizzz.jp の会員サイト運用で最優先の認証・保護ページ制御を強化
+- 未ログイン / 未認証 / 会員状態不備の各ケースで安全な導線を統一
+
+## 変更内容
+- FanclubAuthGuard に会員契約状態・可視性要件チェックを追加
+- Clerk ユーザー正規化時のメール認証判定を厳密化
+- 現状調査ドキュメントにブランチ情報と運用向け PR テンプレートを追記
+
+## 確認手順
+- `npm run lint --prefix frontend`
+- `npm run build:frontend`
+- `npm run build:backend`
+- `npm run test:frontend`
+
+## 影響範囲
+- frontend: 認証ガード、ユーザー正規化
+- docs: fc 実装計画
+
+## 破壊的変更
+- なし
+
+## 未対応事項
+- 課金基盤と Clerk metadata のサーバー同期
+- Movie / Gallery / TicketInfo の Strapi 本モデル実装
+```
+
+---
+
 ## 仮定
 - 本フェーズでは課金バックエンド未接続のため、会員状態は Clerk metadata 主体で扱う。
 - `Movie / Gallery / Ticket` はまずルート・導線を先行し、CMS モデル本実装は次フェーズ。
