@@ -146,4 +146,9 @@ export interface SiteSettings extends StrapiBase {
   announcementText?: string | null
   announcementUrl?: string | null
   announcementLevel?: 'info' | 'urgent' | null
+  announcementBadge?: 'new' | 'important' | 'members' | 'early' | null
+  announcementSecondaryText?: string | null
+  weeklyHighlightTitle?: string | null
+  weeklyHighlightText?: string | null
+  weeklyHighlightUrl?: string | null
 }

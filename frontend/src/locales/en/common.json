@@ -32,7 +32,14 @@
     "error": "An error occurred",
     "notFound": "Page not found",
     "backToHome": "Back to Home",
-    "retry": "Retry"
+    "retry": "Retry",
+    "viewDetails": "View details",
+    "close": "Close",
+    "badgeNew": "New",
+    "badgeImportant": "Important",
+    "badgeMembersOnly": "Members only",
+    "badgeEarlyAccess": "Early access",
+    "weeklyHighlight": "Weekly highlight"
   },
   "auth": {
     "signIn": "Sign In",

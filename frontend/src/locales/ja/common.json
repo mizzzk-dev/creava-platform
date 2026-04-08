@@ -32,7 +32,14 @@
     "error": "エラーが発生しました",
     "notFound": "ページが見つかりません",
     "backToHome": "ホームへ戻る",
-    "retry": "再試行"
+    "retry": "再試行",
+    "viewDetails": "詳細を見る",
+    "close": "閉じる",
+    "badgeNew": "新着",
+    "badgeImportant": "重要",
+    "badgeMembersOnly": "会員限定",
+    "badgeEarlyAccess": "先行",
+    "weeklyHighlight": "今週の注目"
   },
   "auth": {
     "signIn": "ログイン",

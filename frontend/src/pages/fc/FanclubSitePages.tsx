@@ -9,6 +9,7 @@ import { canAccessByRole, type VisibilityScope } from '@/lib/auth/membership'
 import { trackCtaClick } from '@/modules/analytics/tracking'
 import { useProductList } from '@/modules/store/hooks/useProductList'
 import { storeLink } from '@/lib/siteLinks'
+import UpdateDigestSection, { type UpdateDigestItem } from '@/components/common/UpdateDigestSection'
 
 type Visibility = VisibilityScope
 
@@ -94,6 +95,32 @@ function FcSectionTemplate({
 export function FanclubHomeHubPage() {
   const { products } = useProductList(8)
   const storeBenefits = useMemo(() => products.filter((item) => item.earlyAccess || item.memberBenefit || item.accessStatus === 'fc_only').slice(0, 3), [products])
+  const homeDigestItems = useMemo<UpdateDigestItem[]>(() => ([
+    {
+      id: 'members-weekly',
+      title: '会員限定の今週更新',
+      description: 'Movies / Gallery / Tickets の更新をまとめて確認できます。',
+      href: ROUTES.FC_MYPAGE,
+      tone: 'members',
+      location: 'fc_home_digest',
+    },
+    {
+      id: 'early-store',
+      title: 'FC向け先行販売情報',
+      description: '会員向け販売・先行案内をストア連携で確認。',
+      href: storeLink('/products'),
+      tone: 'early',
+      location: 'fc_home_digest',
+    },
+    {
+      id: 'join-value',
+      title: '継続特典と次回更新を確認',
+      description: 'マイページで次に見るべき内容を迷わずチェック。',
+      href: ROUTES.FC_MYPAGE,
+      tone: 'important',
+      location: 'fc_home_digest',
+    },
+  ]), [])
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-10 md:py-16">
@@ -132,6 +159,12 @@ export function FanclubHomeHubPage() {
           <Link to={ROUTES.FAQ} onClick={() => trackCtaClick('fc_home', 'faq')} className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-gray-200">FAQ</Link>
         </div>
       </header>
+
+      <UpdateDigestSection
+        title="今週の更新・限定・先行"
+        subtitle="再訪時に価値が分かる導線を先頭で確認"
+        items={homeDigestItems}
+      />
 
       {storeBenefits.length > 0 && (
         <section className="mt-8 rounded-3xl border border-violet-200 bg-violet-50/70 p-6 dark:border-violet-900/60 dark:bg-violet-950/20">
@@ -295,6 +328,39 @@ export function FanclubMyPageSite() {
   const { user } = useCurrentUser()
   const { products } = useProductList(8)
   const memberStoreItems = useMemo(() => products.filter((item) => item.earlyAccess || item.accessStatus === 'fc_only' || item.memberBenefit).slice(0, 4), [products])
+  const mypageDigestItems = useMemo<UpdateDigestItem[]>(() => ([
+    {
+      id: 'mypage-weekly-news',
+      title: '今週の更新をまとめて確認',
+      description: 'News / Blog / Movie / Gallery の更新を毎週チェック。',
+      href: ROUTES.NEWS,
+      tone: 'new',
+      location: 'fc_mypage_digest',
+    },
+    {
+      id: 'mypage-event-priority',
+      title: '注目イベント・先行受付',
+      description: '次回イベントとチケット先行の受付情報を優先表示。',
+      href: ROUTES.FC_TICKETS,
+      tone: 'important',
+      location: 'fc_mypage_digest',
+    },
+    {
+      id: 'mypage-member-store',
+      title: '会員向けストア特典',
+      description: '限定・先行・会員特典つき商品を横断して確認。',
+      href: storeLink('/products'),
+      tone: 'members',
+      location: 'fc_mypage_digest',
+    },
+  ]), [])
+
+  useEffect(() => {
+    trackCtaClick('fc_mypage', 'dashboard_view', {
+      contractStatus: user?.contractStatus ?? 'active',
+      memberPlan: user?.memberPlan ?? 'paid',
+    })
+  }, [user?.contractStatus, user?.memberPlan])
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
@@ -327,6 +393,12 @@ export function FanclubMyPageSite() {
           <Link to={ROUTES.STORE_HOME} onClick={() => trackCtaClick('fc_mypage', 'to_store')} className="mt-2 block text-xs text-gray-500 underline">ストア連携導線へ</Link>
         </article>
       </div>
+
+      <UpdateDigestSection
+        title="次に見るべき更新"
+        subtitle="未読になりやすい更新導線を上部に集約"
+        items={mypageDigestItems}
+      />
 
       <div className="mt-8 grid gap-4 md:grid-cols-2">
         <article className="rounded-2xl border border-gray-200 p-5 dark:border-gray-800">

@@ -14,6 +14,7 @@ import { trackApiFailure, trackCtaClick, trackEmptyState } from '@/modules/analy
 import { useEffect } from 'react'
 import { fanclubLink } from '@/lib/siteLinks'
 import { ROUTES } from '@/lib/routeConstants'
+import UpdateDigestSection, { type UpdateDigestItem } from '@/components/common/UpdateDigestSection'
 
 export default function StorefrontHomePage() {
   const { products, loading, error, refetch } = useProductList(24)
@@ -29,6 +30,38 @@ export default function StorefrontHomePage() {
   const digitalGoods = useMemo(() => products.filter((product) => inferCollectionSlug(product) === 'digital').slice(0, 4), [products])
   const pickup = useMemo(() => products.filter((product) => product.purchaseStatus === 'available').slice(0, 2), [products])
   const memberPickup = useMemo(() => products.filter((product) => product.earlyAccess || product.accessStatus === 'fc_only' || product.memberBenefit).slice(0, 3), [products])
+  const digestItems = useMemo<UpdateDigestItem[]>(() => {
+    const next: UpdateDigestItem[] = []
+    if (products[0]) {
+      next.push({
+        id: `product-${products[0].id}`,
+        title: `新着: ${products[0].title}`,
+        description: 'ストアの新着商品を今すぐチェック',
+        href: `/products/${products[0].slug}`,
+        tone: 'new',
+        location: 'store_home_digest',
+      })
+    }
+    if (memberPickup[0]) {
+      next.push({
+        id: `member-${memberPickup[0].id}`,
+        title: `FC先行: ${memberPickup[0].title}`,
+        description: memberPickup[0].specialOffer ?? memberPickup[0].memberBenefit ?? '会員向け販売情報を確認できます。',
+        href: fanclubLink(ROUTES.FC_JOIN),
+        tone: 'early',
+        location: 'store_home_digest',
+      })
+    }
+    next.push({
+      id: 'support-faq-guide',
+      title: '配送・返品・FAQをまとめて確認',
+      description: '購入前後の不安をガイド導線で解消できます。',
+      href: '/guide',
+      tone: 'important',
+      location: 'store_home_digest',
+    })
+    return next.slice(0, 3)
+  }, [memberPickup, products])
   useEffect(() => {
     if (error) trackApiFailure('store_home_products', error)
   }, [error])
@@ -102,6 +135,13 @@ export default function StorefrontHomePage() {
           </Link>
         ))}
       </section>
+
+
+      <UpdateDigestSection
+        title="今週の更新・注目"
+        subtitle="新着 / 先行 / 重要導線をまとめて再訪しやすく整理"
+        items={digestItems}
+      />
 
       {!loading && !error && memberPickup.length > 0 && (
         <section className="mt-12 rounded-3xl border border-violet-200/70 bg-violet-50/60 p-5 dark:border-violet-900/60 dark:bg-violet-950/20 sm:p-7">

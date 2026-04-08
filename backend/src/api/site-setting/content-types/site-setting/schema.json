@@ -38,7 +38,9 @@
       "type": "media",
       "multiple": false,
       "required": false,
-      "allowedTypes": ["images"]
+      "allowedTypes": [
+        "images"
+      ]
     },
     "socialInstagram": {
       "type": "string"
@@ -62,6 +64,28 @@
         "urgent"
       ],
       "default": "info"
+    },
+    "announcementBadge": {
+      "type": "enumeration",
+      "enum": [
+        "new",
+        "important",
+        "members",
+        "early"
+      ],
+      "default": "new"
+    },
+    "announcementSecondaryText": {
+      "type": "string"
+    },
+    "weeklyHighlightTitle": {
+      "type": "string"
+    },
+    "weeklyHighlightText": {
+      "type": "string"
+    },
+    "weeklyHighlightUrl": {
+      "type": "string"
     }
   }
 }

@@ -32,7 +32,14 @@
     "error": "오류가 발생했습니다",
     "notFound": "페이지를 찾을 수 없습니다",
     "backToHome": "홈으로 돌아가기",
-    "retry": "Retry"
+    "retry": "Retry",
+    "viewDetails": "자세히 보기",
+    "close": "닫기",
+    "badgeNew": "신규",
+    "badgeImportant": "중요",
+    "badgeMembersOnly": "회원 전용",
+    "badgeEarlyAccess": "선행",
+    "weeklyHighlight": "이번 주 하이라이트"
   },
   "auth": {
     "signIn": "로그인",
