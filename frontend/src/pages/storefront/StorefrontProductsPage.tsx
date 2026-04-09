@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import ProductCard from '@/modules/store/components/ProductCard'
 import { useProductList } from '@/modules/store/hooks/useProductList'
 import SkeletonProductCard from '@/components/common/SkeletonProductCard'
@@ -14,6 +15,9 @@ import type { CampaignSummary } from '@/modules/campaign/types'
 import { isCampaignActive } from '@/modules/campaign/lib'
 import CampaignHero from '@/modules/campaign/components/CampaignHero'
 import NotificationInterestButton from '@/modules/notifications/components/NotificationInterestButton'
+
+const SELECT_CLS =
+  'mt-1 w-full border border-[rgba(6,182,212,0.15)] bg-[rgba(6,6,15,0.6)] px-3 py-2 font-mono text-xs text-[rgba(180,190,220,0.7)] transition-colors focus:border-cyan-500/40 focus:outline-none'
 
 export default function StorefrontProductsPage() {
   const { products, loading, error, refetch } = useProductList(120)
@@ -42,6 +46,7 @@ export default function StorefrontProductsPage() {
     if (sort === 'newest') return [...base].sort((a, b) => Number(b.isNewArrival) - Number(a.isNewArrival))
     return [...base].sort((a, b) => a.sortOrder - b.sortOrder)
   }, [collection, products, search, sort, status, tag])
+
   const campaignSpotlights = useMemo(
     () =>
       filtered
@@ -59,6 +64,7 @@ export default function StorefrontProductsPage() {
         })),
     [filtered],
   )
+
   const activeCampaign = useMemo(
     () =>
       (campaigns ?? [])
@@ -68,9 +74,7 @@ export default function StorefrontProductsPage() {
   )
 
   useEffect(() => {
-    if (error) {
-      trackApiFailure('store_products', error)
-    }
+    if (error) trackApiFailure('store_products', error)
   }, [error])
 
   useEffect(() => {
@@ -80,21 +84,44 @@ export default function StorefrontProductsPage() {
   }, [collection, error, filtered.length, loading, search, sort, status, tag])
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
+    <section className="relative mx-auto max-w-6xl px-4 py-10 sm:py-14">
       <PageHead title="全商品 | mizzz Official Store" description="mizzz Official Store の全商品一覧。カテゴリ・在庫状態で絞り込みできます。" />
-      <div className="flex flex-wrap items-end justify-between gap-4">
+
+      {/* page header */}
+      <motion.div
+        className="flex flex-wrap items-end justify-between gap-4"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-gray-500">Store catalog</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">All Products</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">新着 / 在庫状況 / カテゴリで絞り込みできます。</p>
+          <p className="section-eyebrow mb-3">store catalog</p>
+          <h1 className="font-display text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100 md:text-4xl">
+            All Products
+          </h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-[rgba(180,190,220,0.55)]">
+            新着 / 在庫状況 / カテゴリで絞り込みできます。
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link to="/cart" onClick={() => trackCtaClick('store_products', 'cart')} className="rounded-full border border-gray-300 px-4 py-2 text-sm text-gray-700 dark:border-gray-700 dark:text-gray-200">カート</Link>
-          <Link to="/faq" onClick={() => trackCtaClick('store_products', 'faq')} className="rounded-full border border-gray-300 px-4 py-2 text-sm text-gray-700 dark:border-gray-700 dark:text-gray-200">FAQ</Link>
-          <Link to="/guide" onClick={() => trackCtaClick('store_products', 'guide')} className="rounded-full border border-gray-300 px-4 py-2 text-sm text-gray-700 dark:border-gray-700 dark:text-gray-200">Guide</Link>
-          <Link to="/news" onClick={() => trackCtaClick('store_products', 'news')} className="rounded-full border border-gray-300 px-4 py-2 text-sm text-gray-700 dark:border-gray-700 dark:text-gray-200">News</Link>
+          {[
+            { to: '/cart',  label: 'カート', key: 'cart'  },
+            { to: '/faq',   label: 'FAQ',    key: 'faq'   },
+            { to: '/guide', label: 'Guide',  key: 'guide' },
+            { to: '/news',  label: 'News',   key: 'news'  },
+          ].map(({ to, label, key }) => (
+            <Link
+              key={key}
+              to={to}
+              onClick={() => trackCtaClick('store_products', key)}
+              className="btn-cyber-ghost focus-ring text-xs"
+            >
+              {label}
+            </Link>
+          ))}
         </div>
-      </div>
+      </motion.div>
+
       <NotificationInterestButton
         location="store_products"
         topic="weekly_update"
@@ -106,58 +133,71 @@ export default function StorefrontProductsPage() {
         defaultLabel="今週の注目通知を受け取る"
       />
 
-      <div className="sticky top-20 z-20 mt-6 rounded-2xl border border-gray-200/80 bg-white/95 p-4 backdrop-blur dark:border-gray-800 dark:bg-gray-900/95">
+      {/* filter bar */}
+      <motion.div
+        className="sticky top-20 z-20 mt-6 glass-cyber p-4"
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.4 }}
+      >
+        <div className="mb-3 flex items-center gap-2">
+          <span className="font-mono text-[8px] uppercase tracking-[0.25em] text-cyan-500/30">// filter</span>
+          <div className="h-px flex-1 bg-gradient-to-r from-cyan-500/20 to-transparent" />
+          <span className="font-mono text-[9px] text-[rgba(6,182,212,0.35)]">
+            {loading ? '...' : filtered.length} items
+          </span>
+        </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="text-xs text-gray-500 dark:text-gray-400 sm:col-span-2">
-            検索
+          <label className="sm:col-span-2">
+            <span className="font-mono text-[9px] uppercase tracking-widest text-[rgba(6,182,212,0.4)]">検索</span>
             <input
               value={search}
               onChange={(event) => {
                 setSearch(event.target.value)
                 trackCtaClick('store_products_filter', 'search_input', { keyword_length: event.target.value.length })
               }}
-              placeholder="商品名・説明で検索"
-              className="mt-1 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+              placeholder="商品名・タグで検索"
+              className="mt-1 w-full border border-[rgba(6,182,212,0.15)] bg-[rgba(6,6,15,0.6)] px-3 py-2 font-mono text-xs text-[rgba(180,190,220,0.7)] placeholder:text-[rgba(6,182,212,0.2)] transition-colors focus:border-cyan-500/40 focus:outline-none"
             />
           </label>
-          <label className="text-xs text-gray-500 dark:text-gray-400">
-            在庫状態
+          <label>
+            <span className="font-mono text-[9px] uppercase tracking-widest text-[rgba(6,182,212,0.4)]">在庫状態</span>
             <select value={status} onChange={(event) => {
               setStatus(event.target.value as typeof status)
               trackCtaClick('store_products_filter', 'status_filter', { value: event.target.value })
-            }} className="mt-1 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+            }} className={SELECT_CLS}>
               <option value="all">すべて</option>
               <option value="available">販売中</option>
               <option value="coming_soon">販売準備中</option>
               <option value="soldout">売り切れ</option>
             </select>
           </label>
-          <label className="text-xs text-gray-500 dark:text-gray-400">
-            カテゴリ
+          <label>
+            <span className="font-mono text-[9px] uppercase tracking-widest text-[rgba(6,182,212,0.4)]">カテゴリ</span>
             <select value={collection} onChange={(event) => {
               setCollection(event.target.value)
               trackCtaClick('store_products_filter', 'collection_filter', { value: event.target.value })
-            }} className="mt-1 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+            }} className={SELECT_CLS}>
               <option value="all">すべて</option>
               {DEFAULT_COLLECTIONS.map((item) => <option key={item.slug} value={item.slug}>{item.name}</option>)}
             </select>
           </label>
-          <label className="text-xs text-gray-500 dark:text-gray-400">
-            タグ
+          <label>
+            <span className="font-mono text-[9px] uppercase tracking-widest text-[rgba(6,182,212,0.4)]">タグ</span>
             <select value={tag} onChange={(event) => {
               setTag(event.target.value)
               trackCtaClick('store_products_filter', 'tag_filter', { value: event.target.value })
-            }} className="mt-1 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+            }} className={SELECT_CLS}>
               <option value="all">すべて</option>
               {availableTags.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
           </label>
-          <label className="text-xs text-gray-500 dark:text-gray-400">
-            並び順
+          <label>
+            <span className="font-mono text-[9px] uppercase tracking-widest text-[rgba(6,182,212,0.4)]">並び順</span>
             <select value={sort} onChange={(event) => {
               setSort(event.target.value as typeof sort)
               trackCtaClick('store_products_filter', 'sort', { value: event.target.value })
-            }} className="mt-1 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+            }} className={SELECT_CLS}>
               <option value="recommended">おすすめ順</option>
               <option value="newest">新着優先</option>
               <option value="price_asc">価格が安い順</option>
@@ -165,9 +205,8 @@ export default function StorefrontProductsPage() {
             </select>
           </label>
         </div>
-      </div>
+      </motion.div>
 
-      <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">表示件数: {loading ? '...' : filtered.length}件</p>
       {activeCampaign && <CampaignHero campaign={activeCampaign} location="store_products_campaign_block" />}
       {!loading && !error && (
         <EditorialSpotlightSection
@@ -177,15 +216,43 @@ export default function StorefrontProductsPage() {
         />
       )}
 
-      {loading && <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">{Array.from({ length: 8 }).map((_, idx) => <SkeletonProductCard key={idx} />)}</div>}
-      {error && <div className="mt-8"><ErrorState message={error} onRetry={refetch} location="store_products" /></div>}
-      {!loading && !error && filtered.length === 0 && (
-        <div className="mt-10 rounded-2xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
-          条件に合う商品がありません。絞り込み条件を変更してください。
+      {loading && (
+        <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, idx) => <SkeletonProductCard key={idx} />)}
         </div>
       )}
+      {error && (
+        <div className="mt-8">
+          <ErrorState message={error} onRetry={refetch} location="store_products" />
+        </div>
+      )}
+      {!loading && !error && filtered.length === 0 && (
+        <motion.div
+          className="mt-10 border border-dashed border-[rgba(6,182,212,0.15)] p-10 text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4 }}
+        >
+          <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-cyan-500/30 mb-2">// no_results</p>
+          <p className="text-sm text-gray-500 dark:text-[rgba(180,190,220,0.5)]">
+            条件に合う商品がありません。絞り込み条件を変更してください。
+          </p>
+        </motion.div>
+      )}
       {!loading && !error && filtered.length > 0 && (
-        <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">{filtered.map((product) => <ProductCard key={product.id} product={product} trackingLocation="store_products_grid" />)}</div>
+        <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+          {filtered.map((product, i) => (
+            <motion.div
+              key={product.id}
+              initial={{ opacity: 0, y: 16, filter: 'blur(4px)' }}
+              whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              viewport={{ once: true, margin: '-20px' }}
+              transition={{ duration: 0.4, delay: (i % 8) * 0.04 }}
+            >
+              <ProductCard product={product} trackingLocation="store_products_grid" />
+            </motion.div>
+          ))}
+        </div>
       )}
     </section>
   )
