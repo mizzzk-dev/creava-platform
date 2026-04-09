@@ -31,8 +31,11 @@ export default function ProductCard({ product, displayCurrency = 'JPY', tracking
       className="group block"
       aria-label={`${product.title} ${t('store.detailCta')}`}
     >
-      <article className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white/90 shadow-sm shadow-gray-200/40 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-lg dark:border-gray-800 dark:bg-gray-900/80 dark:shadow-black/20">
+      <article className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white/90 shadow-sm shadow-gray-200/40 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl dark:border-gray-800 dark:bg-gray-900/80 dark:shadow-black/20">
         <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800">
+          <div className="absolute left-3 top-3 z-10 rounded-full border border-white/70 bg-white/70 px-2 py-1 font-mono text-[9px] uppercase tracking-[0.18em] text-gray-500 backdrop-blur dark:border-white/20 dark:bg-gray-900/70 dark:text-gray-300">
+            curated
+          </div>
           {product.previewImage ? (
             <img
               src={product.previewImage.url}
@@ -46,7 +49,7 @@ export default function ProductCard({ product, displayCurrency = 'JPY', tracking
             </div>
           )}
 
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-950/35 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-950/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
           <div className="absolute right-2 top-2 flex flex-col items-end gap-1">
             {product.campaignType === 'drop' && <Badge variant="featured" size="sm" label="DROP" />}
