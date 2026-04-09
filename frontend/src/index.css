@@ -205,3 +205,17 @@
     }
   }
 }
+
+@layer utilities {
+  .seasonal-theme.seasonal-christmas {
+    --ds-color-accent-primary: #10b981;
+  }
+
+  .seasonal-theme.seasonal-halloween {
+    --ds-color-accent-primary: #f97316;
+  }
+
+  .seasonal-theme.seasonal-newyear {
+    --ds-color-accent-primary: #f59e0b;
+  }
+}

@@ -1,6 +1,9 @@
 import { Outlet, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import CookieConsentBanner from '@/components/common/CookieConsentBanner'
+import LoadingScreen from '@/components/common/LoadingScreen'
+import NewYearExperience from '@/modules/seasonal/NewYearExperience'
+import { SeasonalThemeProvider } from '@/modules/seasonal/context'
 import SubdomainHeader from '@/components/layout/SubdomainHeader'
 import SubdomainFooter from '@/components/layout/SubdomainFooter'
 import { ROUTES } from '@/lib/routeConstants'
@@ -39,6 +42,7 @@ export default function StoreLayout() {
   }, [pathname])
 
   return (
+    <SeasonalThemeProvider site="store">
     <div className="flex min-h-screen flex-col bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
       <SubdomainHeader site="store" navItems={NAV_ITEMS} />
       <main id="main-content" className="flex-1">
@@ -46,6 +50,9 @@ export default function StoreLayout() {
       </main>
       <SubdomainFooter legalLinks={LEGAL_LINKS} />
       <CookieConsentBanner />
+      <LoadingScreen />
+      <NewYearExperience site="store" />
     </div>
+    </SeasonalThemeProvider>
   )
 }

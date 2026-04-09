@@ -533,5 +533,38 @@
   },
   "fanclub": {
     "subscriptionPolicy": "サブスクポリシー"
+  },
+  "seasonal": {
+    "theme": {
+      "default": "通常",
+      "christmas": "クリスマス",
+      "halloween": "ハロウィン",
+      "newyear": "お正月"
+    },
+    "themeSource": "適用ソース: {{source}}",
+    "heroBadgeDefault": "featured / pickup / weekly update",
+    "heroBadgeMembers": "members only / weekly / limited",
+    "store": {
+      "title": "静けさの中で、",
+      "subtitle": "欲しいものに迷わず届く。",
+      "description": "新着・限定・デジタル商品をエディトリアルに整理。商品が少ない時も、多い時も、見つけやすく心地よいストア体験を保ちます。"
+    },
+    "fc": {
+      "title": "mizzz official fanclub",
+      "description": "限定ニュース、ブログ、動画、ギャラリー、イベント先行情報を、余白と静けさを保ちながら届けるメンバーシップサイトです。"
+    },
+    "newyear": {
+      "overlayTitle": "新年のご挨拶",
+      "overlayBody": "今年も mizzz をよろしくお願いします。運試しでおみくじを引けます。",
+      "drawOmikuji": "おみくじを引く"
+    },
+    "omikuji": {
+      "great_blessing": "大吉: 最高の一年の始まりです。",
+      "middle_blessing": "中吉: 着実に良い流れが来ています。",
+      "small_blessing": "小吉: 小さな幸運を積み上げましょう。",
+      "blessing": "吉: 丁寧な行動が実りにつながります。",
+      "future_blessing": "末吉: 焦らず進むほど良い結果に。",
+      "curse": "凶: 無理せず整える日を作ると好転します。"
+    }
   }
 }

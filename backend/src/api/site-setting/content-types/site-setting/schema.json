@@ -140,6 +140,91 @@
     },
     "notificationCtaLink": {
       "type": "string"
+    },
+    "seasonalTheme": {
+      "type": "enumeration",
+      "enum": [
+        "default",
+        "christmas",
+        "halloween",
+        "newyear"
+      ],
+      "default": "default"
+    },
+    "themeMode": {
+      "type": "enumeration",
+      "enum": [
+        "auto",
+        "manual"
+      ],
+      "default": "auto"
+    },
+    "autoThemeEnabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "manualThemeOverride": {
+      "type": "enumeration",
+      "enum": [
+        "default",
+        "christmas",
+        "halloween",
+        "newyear"
+      ]
+    },
+    "seasonalStartAt": {
+      "type": "datetime"
+    },
+    "seasonalEndAt": {
+      "type": "datetime"
+    },
+    "heroSeasonalVariant": {
+      "type": "string"
+    },
+    "illustrationSeasonalVariant": {
+      "type": "string"
+    },
+    "loadingAnimationVariant": {
+      "type": "string"
+    },
+    "scrollAnimationVariant": {
+      "type": "string"
+    },
+    "sectionStyleVariant": {
+      "type": "string"
+    },
+    "seasonalBadgeVariant": {
+      "type": "string"
+    },
+    "seasonalBackgroundVariant": {
+      "type": "string"
+    },
+    "seasonalCampaign": {
+      "type": "json"
+    },
+    "themeAppliedSites": {
+      "type": "json"
+    },
+    "newyearIntroEnabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "omikujiEnabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "omikujiMessages": {
+      "type": "json"
+    },
+    "omikujiVisualVariant": {
+      "type": "string"
+    },
+    "perYearEventKey": {
+      "type": "string"
+    },
+    "firstVisitOnlyEnabled": {
+      "type": "boolean",
+      "default": true
     }
   }
 }

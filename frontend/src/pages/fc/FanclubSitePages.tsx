@@ -30,6 +30,7 @@ import SectionReveal from '@/components/common/SectionReveal'
 import CuratedBentoSection from '@/components/common/CuratedBentoSection'
 import VisualHeroSection from '@/components/common/VisualHeroSection'
 import type { FanclubContent } from '@/types'
+import { useSeasonalTheme } from '@/modules/seasonal/context'
 
 type Visibility = VisibilityScope
 
@@ -113,7 +114,8 @@ function FcSectionTemplate({
 }
 
 export function FanclubHomeHubPage() {
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
+  const { resolution, config } = useSeasonalTheme()
   const { products } = useProductList(8)
   const { items: campaigns } = useStrapiCollection<CampaignSummary>(() => getCampaignList())
   const { item: settings } = useStrapiSingle(() => getSiteSettings({
@@ -258,16 +260,17 @@ export function FanclubHomeHubPage() {
   return (
     <section className="ds-container py-10 md:py-16">
       <PageHead
-        title={settings?.heroTitle?.trim() || 'mizzz official fanclub'}
+        title={settings?.heroTitle?.trim() || t('seasonal.fc.title', { defaultValue: 'mizzz official fanclub' })}
         description="mizzz の公式ファンクラブ。ニュース、ブログ、動画、ギャラリー、チケット先行情報を会員向けに配信。"
       />
       <VisualHeroSection
         location="fc_home"
         eyebrow="OFFICIAL FANCLUB"
-        badge={settings?.heroSubcopy?.trim() || 'members only / weekly / limited'}
-        title={settings?.heroTitle?.trim() || 'mizzz official fanclub'}
-        description={settings?.heroCopy?.trim() || '限定ニュース、ブログ、動画、ギャラリー、イベント先行情報を、余白と静けさを保ちながら届けるメンバーシップサイトです。'}
-        illustrationVariant="fanclub"
+        badge={settings?.heroSubcopy?.trim() || t('seasonal.heroBadgeMembers', { defaultValue: 'members only / weekly / limited' })}
+        title={settings?.heroTitle?.trim() || t('seasonal.fc.title', { defaultValue: 'mizzz official fanclub' })}
+        description={settings?.heroCopy?.trim() || t('seasonal.fc.description', { defaultValue: '限定ニュース、ブログ、動画、ギャラリー、イベント先行情報を、余白と静けさを保ちながら届けるメンバーシップサイトです。' })}
+        seasonalTitle={t(`seasonal.theme.${resolution.theme}`)}
+        illustrationVariant={config.illustrationVariant}
         backgroundVariant="fanclub"
         actions={[
           { label: settings?.heroCTALabel?.trim() || '入会する', to: settings?.heroCTAUrl?.trim() || ROUTES.FC_JOIN, cta: 'join', style: 'primary' },

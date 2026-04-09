@@ -533,5 +533,38 @@
   },
   "fanclub": {
     "subscriptionPolicy": "구독 정책"
+  },
+  "seasonal": {
+    "theme": {
+      "default": "기본",
+      "christmas": "크리스마스",
+      "halloween": "할로윈",
+      "newyear": "설날"
+    },
+    "themeSource": "적용 소스: {{source}}",
+    "heroBadgeDefault": "featured / pickup / weekly update",
+    "heroBadgeMembers": "members only / weekly / limited",
+    "store": {
+      "title": "고요함 속에서,",
+      "subtitle": "원하는 것을 더 쉽게 찾다.",
+      "description": "신상품, 한정 드롭, 디지털 상품을 에디토리얼 흐름으로 정리해 편안한 스토어 경험을 제공합니다."
+    },
+    "fc": {
+      "title": "mizzz official fanclub",
+      "description": "독점 뉴스, 블로그, 영상, 갤러리, 선행 예매 정보를 전달하는 멤버십 공간입니다."
+    },
+    "newyear": {
+      "overlayTitle": "새해 인사",
+      "overlayBody": "올해도 mizzz와 함께해 주세요. 오미쿠지를 뽑아 보세요.",
+      "drawOmikuji": "오미쿠지 뽑기"
+    },
+    "omikuji": {
+      "great_blessing": "대길: 최고의 한 해 시작입니다.",
+      "middle_blessing": "중길: 좋은 흐름이 이어집니다.",
+      "small_blessing": "소길: 작은 행운이 쌓입니다.",
+      "blessing": "길: 차분한 선택이 성과로 이어집니다.",
+      "future_blessing": "말길: 서두르지 않으면 운이 좋아집니다.",
+      "curse": "흉: 속도를 늦추고 컨디션을 정리해 보세요."
+    }
   }
 }

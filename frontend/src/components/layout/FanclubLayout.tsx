@@ -7,6 +7,9 @@ import { initializeAnalytics } from '@/modules/analytics'
 import { setAnalyticsEnabled } from '@/modules/cookie/consent'
 import SubdomainHeader from '@/components/layout/SubdomainHeader'
 import SubdomainFooter from '@/components/layout/SubdomainFooter'
+import LoadingScreen from '@/components/common/LoadingScreen'
+import NewYearExperience from '@/modules/seasonal/NewYearExperience'
+import { SeasonalThemeProvider } from '@/modules/seasonal/context'
 
 const NAV_ITEMS = [
   { labelKey: 'nav.about', to: ROUTES.FC_ABOUT },
@@ -39,12 +42,16 @@ export default function FanclubLayout() {
   }, [pathname])
 
   return (
+    <SeasonalThemeProvider site="fanclub">
     <div className="min-h-screen bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100">
       <SubdomainHeader site="fanclub" navItems={NAV_ITEMS} showAuth />
       <main id="main-content" className="flex-1">
         <Outlet />
       </main>
       <SubdomainFooter legalLinks={LEGAL_LINKS} />
+      <LoadingScreen />
+      <NewYearExperience site="fanclub" />
     </div>
+    </SeasonalThemeProvider>
   )
 }

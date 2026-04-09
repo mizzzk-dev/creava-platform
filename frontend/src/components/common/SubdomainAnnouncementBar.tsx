@@ -4,6 +4,7 @@ import { useStrapiSingle } from '@/hooks'
 import { getSiteSettings } from '@/modules/settings/api'
 import SmartLink from '@/components/common/SmartLink'
 import { trackEvent } from '@/modules/analytics'
+import { useSeasonalTheme } from '@/modules/seasonal/context'
 
 const DISMISS_KEY = 'creava.subdomain.announcement.dismissed'
 
@@ -27,6 +28,7 @@ const BADGE_LABEL_KEY: Record<string, string> = {
 
 export default function SubdomainAnnouncementBar({ site }: SubdomainAnnouncementBarProps) {
   const { t } = useTranslation()
+  const { resolution } = useSeasonalTheme()
   const [dismissed, setDismissed] = useState(() => typeof window !== 'undefined' && window.localStorage.getItem(DISMISS_KEY) === '1')
   const { item: settings } = useStrapiSingle(() => getSiteSettings({
     fields: ['announcementText', 'announcementUrl', 'announcementLevel', 'announcementBadge', 'announcementSecondaryText', 'weeklyHighlightTitle', 'weeklyHighlightText', 'weeklyHighlightUrl'],
@@ -52,10 +54,18 @@ export default function SubdomainAnnouncementBar({ site }: SubdomainAnnouncement
 
   if (dismissed || !announcement.text) return null
 
+  const seasonalClass = resolution.theme === 'christmas'
+    ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/35 dark:text-emerald-200 border-emerald-200 dark:border-emerald-900/60'
+    : resolution.theme === 'halloween'
+      ? 'bg-orange-50 text-orange-800 dark:bg-orange-950/25 dark:text-orange-200 border-orange-200 dark:border-orange-900/50'
+      : resolution.theme === 'newyear'
+        ? 'bg-amber-50 text-amber-800 dark:bg-amber-950/30 dark:text-amber-100 border-amber-200 dark:border-amber-900/60'
+        : ''
+
   return (
     <div className={`border-b px-4 py-2 text-xs ${announcement.level === 'urgent'
       ? 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200'
-      : 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-900/60 dark:bg-violet-950/40 dark:text-violet-200'}`}
+      : 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-900/60 dark:bg-violet-950/40 dark:text-violet-200'} ${seasonalClass}`}
     >
       <div className="mx-auto grid max-w-6xl gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
         <div className="flex min-w-0 items-center gap-2">

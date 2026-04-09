@@ -48,3 +48,11 @@ export function trackLanguageSwitch(language: string, fromLanguage?: string): vo
 export function trackProductCardClick(location: string, slug: string, status: string): void {
   trackMizzzEvent('product_card_click', { location, slug, status })
 }
+
+export function trackSeasonalBlockClick(location: string, theme: string, extras?: AnalyticsParams): void {
+  trackMizzzEvent('seasonal_block_click', { location, theme, ...extras })
+}
+
+export function trackOmikujiResult(site: string, result: string, extras?: AnalyticsParams): void {
+  trackMizzzEvent('omikuji_result', { site, result, ...extras })
+}

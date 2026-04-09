@@ -185,6 +185,27 @@ export interface SiteSettings extends StrapiBase {
   badgeStyleVariant?: string | null
   campaign?: string | null
   topPageSections?: unknown
+  seasonalTheme?: 'default' | 'christmas' | 'halloween' | 'newyear' | null
+  themeMode?: 'auto' | 'manual' | null
+  autoThemeEnabled?: boolean
+  manualThemeOverride?: 'default' | 'christmas' | 'halloween' | 'newyear' | null
+  seasonalStartAt?: string | null
+  seasonalEndAt?: string | null
+  heroSeasonalVariant?: string | null
+  illustrationSeasonalVariant?: string | null
+  loadingAnimationVariant?: string | null
+  scrollAnimationVariant?: string | null
+  sectionStyleVariant?: string | null
+  seasonalBadgeVariant?: string | null
+  seasonalBackgroundVariant?: string | null
+  seasonalCampaign?: unknown
+  themeAppliedSites?: unknown
+  newyearIntroEnabled?: boolean
+  omikujiEnabled?: boolean
+  omikujiMessages?: unknown
+  omikujiVisualVariant?: string | null
+  perYearEventKey?: string | null
+  firstVisitOnlyEnabled?: boolean
   notificationCtaText?: string | null
   notificationCtaLink?: string | null
 }

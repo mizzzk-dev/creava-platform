@@ -25,9 +25,11 @@ import SectionReveal from '@/components/common/SectionReveal'
 import CuratedBentoSection from '@/components/common/CuratedBentoSection'
 import VisualHeroSection from '@/components/common/VisualHeroSection'
 import { createSectionVisibilityResolver, parseTopPageSections } from '@/lib/editorial'
+import { useSeasonalTheme } from '@/modules/seasonal/context'
 
 export default function StorefrontHomePage() {
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
+  const { resolution, config } = useSeasonalTheme()
   const { products, loading, error, refetch } = useProductList(24)
   const { item: settings } = useStrapiSingle(() => getSiteSettings({
     locale: i18n.resolvedLanguage,
@@ -174,11 +176,12 @@ export default function StorefrontHomePage() {
       <VisualHeroSection
         location="store_home_hero"
         eyebrow="mizzz official store"
-        badge={settings?.announcementText?.trim() || 'featured / pickup / weekly update'}
-        title={settings?.heroTitle?.trim() || '静けさの中で、'}
-        subtitle={settings?.heroSubtitle?.trim() || '欲しいものに迷わず届く。'}
-        description={settings?.heroCopy?.trim() || '新着・限定・デジタル商品をエディトリアルに整理。商品が少ない時も、多い時も、見つけやすく心地よいストア体験を保ちます。'}
-        illustrationVariant="store"
+        badge={settings?.announcementText?.trim() || t('seasonal.heroBadgeDefault', { defaultValue: 'featured / pickup / weekly update' })}
+        title={settings?.heroTitle?.trim() || t('seasonal.store.title', { defaultValue: '静けさの中で、' })}
+        subtitle={settings?.heroSubtitle?.trim() || t('seasonal.store.subtitle', { defaultValue: '欲しいものに迷わず届く。' })}
+        description={settings?.heroCopy?.trim() || t('seasonal.store.description', { defaultValue: '新着・限定・デジタル商品をエディトリアルに整理。商品が少ない時も、多い時も、見つけやすく心地よいストア体験を保ちます。' })}
+        seasonalTitle={t(`seasonal.theme.${resolution.theme}`)}
+        illustrationVariant={config.illustrationVariant}
         backgroundVariant="store"
         actions={[
           { label: settings?.heroCTALabel?.trim() || '全商品を見る', to: settings?.heroCTAUrl?.trim() || '/products', cta: 'all_products', style: 'primary' },
@@ -194,6 +197,7 @@ export default function StorefrontHomePage() {
           { label: 'ガイド', value: 'FAQ / 配送 / 返品導線を固定配置。' },
         ]}
       />
+      <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{t('seasonal.themeSource', { source: resolution.source })}</p>
       {primaryCampaign && <CampaignHero campaign={primaryCampaign} location="store_home_campaign_hero" />}
 
       {sectionResolver('store-home-pickup', true) && !loading && !error && pickup.length > 0 && (

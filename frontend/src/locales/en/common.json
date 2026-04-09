@@ -533,5 +533,38 @@
   },
   "fanclub": {
     "subscriptionPolicy": "Subscription Policy"
+  },
+  "seasonal": {
+    "theme": {
+      "default": "Default",
+      "christmas": "Christmas",
+      "halloween": "Halloween",
+      "newyear": "New Year"
+    },
+    "themeSource": "Source: {{source}}",
+    "heroBadgeDefault": "featured / pickup / weekly update",
+    "heroBadgeMembers": "members only / weekly / limited",
+    "store": {
+      "title": "In stillness,",
+      "subtitle": "find what you want without friction.",
+      "description": "New arrivals, limited drops, and digital goods are curated in an editorial flow for a comfortable shopping journey."
+    },
+    "fc": {
+      "title": "mizzz official fanclub",
+      "description": "A membership space for exclusive news, blog posts, videos, gallery updates, and early event access."
+    },
+    "newyear": {
+      "overlayTitle": "Happy New Year",
+      "overlayBody": "Thank you for being with mizzz this year. Try your luck with Omikuji.",
+      "drawOmikuji": "Draw Omikuji"
+    },
+    "omikuji": {
+      "great_blessing": "Great Blessing: A brilliant start to the year.",
+      "middle_blessing": "Middle Blessing: Steady momentum is on your side.",
+      "small_blessing": "Small Blessing: Build joy through small wins.",
+      "blessing": "Blessing: Careful steps will pay off.",
+      "future_blessing": "Future Blessing: Progress patiently and things improve.",
+      "curse": "Curse: Slow down and reset your rhythm."
+    }
   }
 }
