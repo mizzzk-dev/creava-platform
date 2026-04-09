@@ -1,4 +1,4 @@
-import { useRef, type ButtonHTMLAttributes, type AnchorHTMLAttributes, type ReactNode } from 'react'
+import { type ButtonHTMLAttributes, type AnchorHTMLAttributes, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/design-system/classNames'
 import { useMagneticHover } from '@/hooks/useMagneticHover'
@@ -68,7 +68,6 @@ export default function Button({
   children,
   ...props
 }: Props) {
-  const magneticRef = useRef<HTMLElement>(null)
   const mag = useMagneticHover<HTMLElement>({ strength: 0.3, scale: 1.03 })
 
   const isCyber = variant.startsWith('cyber')
