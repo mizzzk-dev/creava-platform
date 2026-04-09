@@ -149,6 +149,46 @@
     "badgeStyleVariant": {
       "type": "string"
     },
+    "notifyEnabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "notifyType": {
+      "type": "enumeration",
+      "enum": [
+        "restock",
+        "sale_start",
+        "campaign",
+        "member_early_access",
+        "weekly_update"
+      ],
+      "default": "restock"
+    },
+    "notifyLabel": {
+      "type": "string"
+    },
+    "notificationCopy": {
+      "type": "text"
+    },
+    "restockExpectedAt": {
+      "type": "datetime"
+    },
+    "isImportant": {
+      "type": "boolean",
+      "default": false
+    },
+    "weeklyHighlight": {
+      "type": "boolean",
+      "default": false
+    },
+    "dashboardPriority": {
+      "type": "integer",
+      "default": 0
+    },
+    "announcementBar": {
+      "type": "boolean",
+      "default": false
+    },
     "seoTitle": {
       "type": "string"
     },

@@ -3,6 +3,7 @@ import type { ContentStatus } from '@/types'
 export type PurchaseStatus = 'available' | 'soldout' | 'coming_soon'
 export type StoreCategory = 'other' | 'digital' | 'photo' | 'apparel' | 'print'
 export type CampaignType = 'feature' | 'drop' | 'launch' | 'restock' | 'benefit' | 'announcement'
+export type NotifyType = 'restock' | 'sale_start' | 'campaign' | 'member_early_access' | 'weekly_update'
 
 export interface StoreProductSummary {
   id: number
@@ -45,6 +46,15 @@ export interface StoreProductSummary {
   sectionStyle?: string | null
   badgeStyleVariant?: string | null
   displayPriority: number
+  notifyEnabled?: boolean
+  notifyType?: NotifyType | null
+  notifyLabel?: string | null
+  restockExpectedAt?: string | null
+  isImportant?: boolean
+  weeklyHighlight?: boolean
+  dashboardPriority?: number
+  announcementBar?: boolean
+  notificationCopy?: string | null
 }
 
 export interface RelatedContentLink {

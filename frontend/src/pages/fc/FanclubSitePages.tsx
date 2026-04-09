@@ -15,6 +15,8 @@ import CampaignHero from '@/modules/campaign/components/CampaignHero'
 import { getCampaignList } from '@/modules/campaign/api'
 import type { CampaignSummary } from '@/modules/campaign/types'
 import { isCampaignActive } from '@/modules/campaign/lib'
+import NotificationInterestButton from '@/modules/notifications/components/NotificationInterestButton'
+import NotificationSettingsPanel from '@/modules/notifications/components/NotificationSettingsPanel'
 
 type Visibility = VisibilityScope
 
@@ -213,6 +215,16 @@ export function FanclubHomeHubPage() {
         title="今週の更新・限定・先行"
         subtitle="再訪時に価値が分かる導線を先頭で確認"
         items={homeDigestItems}
+      />
+      <NotificationInterestButton
+        location="fc_home"
+        topic="weekly_update"
+        site="fanclub"
+        targetType="digest"
+        targetId="fc-weekly-digest"
+        title="今週の更新・限定・先行"
+        description="会員限定の更新まとめを受け取る"
+        defaultLabel="今週の更新通知を受け取る"
       />
       {memberCampaign && <CampaignHero campaign={memberCampaign} location="fc_home_campaign_hero" />}
       <EditorialSpotlightSection
@@ -495,6 +507,7 @@ export function FanclubMyPageSite() {
             <Link to={ROUTES.FC_TICKETS} onClick={() => trackCtaClick('fc_mypage', 'recommend_tickets')} className="rounded-full border border-gray-300 px-3 py-1.5 dark:border-gray-700">Tickets</Link>
           </div>
         </article>
+        <NotificationSettingsPanel location="fc_mypage" />
       </div>
 
       {memberStoreItems.length > 0 && (
@@ -511,6 +524,16 @@ export function FanclubMyPageSite() {
               </Link>
             ))}
           </div>
+          <NotificationInterestButton
+            location="fc_mypage_member_store"
+            topic="member_early_access"
+            site="cross"
+            targetType="digest"
+            targetId="member-store-bridge"
+            title="会員向けストア導線"
+            description="会員向け先行販売や限定特典の案内を受け取る"
+            defaultLabel="会員向けストア通知を受け取る"
+          />
         </article>
       )}
     </section>

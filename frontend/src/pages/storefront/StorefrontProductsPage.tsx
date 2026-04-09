@@ -13,6 +13,7 @@ import { getCampaignList } from '@/modules/campaign/api'
 import type { CampaignSummary } from '@/modules/campaign/types'
 import { isCampaignActive } from '@/modules/campaign/lib'
 import CampaignHero from '@/modules/campaign/components/CampaignHero'
+import NotificationInterestButton from '@/modules/notifications/components/NotificationInterestButton'
 
 export default function StorefrontProductsPage() {
   const { products, loading, error, refetch } = useProductList(120)
@@ -94,6 +95,16 @@ export default function StorefrontProductsPage() {
           <Link to="/news" onClick={() => trackCtaClick('store_products', 'news')} className="rounded-full border border-gray-300 px-4 py-2 text-sm text-gray-700 dark:border-gray-700 dark:text-gray-200">News</Link>
         </div>
       </div>
+      <NotificationInterestButton
+        location="store_products"
+        topic="weekly_update"
+        site="store"
+        targetType="digest"
+        targetId="store-weekly-highlight"
+        title="今週の注目商品"
+        description="再入荷・販売開始・キャンペーン開始の通知"
+        defaultLabel="今週の注目通知を受け取る"
+      />
 
       <div className="sticky top-20 z-20 mt-6 rounded-2xl border border-gray-200/80 bg-white/95 p-4 backdrop-blur dark:border-gray-800 dark:bg-gray-900/95">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

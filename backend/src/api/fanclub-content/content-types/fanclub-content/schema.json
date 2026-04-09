@@ -153,6 +153,43 @@
     "badgeStyleVariant": {
       "type": "string"
     },
+    "notifyEnabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "notifyType": {
+      "type": "enumeration",
+      "enum": [
+        "weekly_update",
+        "campaign",
+        "member_early_access",
+        "new_content",
+        "announcement"
+      ],
+      "default": "weekly_update"
+    },
+    "notifyLabel": {
+      "type": "string"
+    },
+    "notificationCopy": {
+      "type": "text"
+    },
+    "isImportant": {
+      "type": "boolean",
+      "default": false
+    },
+    "weeklyHighlight": {
+      "type": "boolean",
+      "default": false
+    },
+    "dashboardPriority": {
+      "type": "integer",
+      "default": 0
+    },
+    "announcementBar": {
+      "type": "boolean",
+      "default": false
+    },
     "sortOrder": {
       "type": "integer",
       "default": 0

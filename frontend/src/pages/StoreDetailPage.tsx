@@ -26,6 +26,7 @@ import { useDisplayCurrency } from '@/modules/store/hooks/useDisplayCurrency'
 import RestockNotifyForm from '@/modules/store/components/RestockNotifyForm'
 import { trackViewHistory } from '@/modules/store/lib/commerceOptimization'
 import { trackCtaClick } from '@/modules/analytics/tracking'
+import NotificationInterestButton from '@/modules/notifications/components/NotificationInterestButton'
 
 function purchaseStatusToAvailability(status: PurchaseStatus): 'InStock' | 'OutOfStock' | 'PreOrder' {
   if (status === 'available') return 'InStock'
@@ -249,6 +250,20 @@ export default function StoreDetailPage() {
                   productId={product.id}
                   productSlug={product.slug}
                   productTitle={product.title}
+                />
+              )}
+              {(product.purchaseStatus === 'soldout' || product.purchaseStatus === 'coming_soon' || product.earlyAccess || product.membersOnly) && (
+                <NotificationInterestButton
+                  location="store_detail"
+                  topic={product.purchaseStatus === 'soldout' ? 'restock' : product.purchaseStatus === 'coming_soon' ? 'sale_start' : 'member_early_access'}
+                  site="store"
+                  targetType="product"
+                  targetId={`product:${product.id}`}
+                  title={product.title}
+                  description={product.shortHighlight ?? undefined}
+                  defaultLabel={product.purchaseStatus === 'soldout'
+                    ? t('store.restockSubmit', { defaultValue: '通知を受け取る' })
+                    : t('store.reminderCta', { defaultValue: '販売開始をリマインド' })}
                 />
               )}
 

@@ -57,6 +57,15 @@ function normalizeStoreProduct(item: Partial<StoreProductSummary>): StoreProduct
     sectionStyle: typeof item.sectionStyle === 'string' ? item.sectionStyle : null,
     badgeStyleVariant: typeof item.badgeStyleVariant === 'string' ? item.badgeStyleVariant : null,
     displayPriority: typeof item.displayPriority === 'number' ? item.displayPriority : 0,
+    notifyEnabled: Boolean(item.notifyEnabled),
+    notifyType: item.notifyType === 'restock' || item.notifyType === 'sale_start' || item.notifyType === 'campaign' || item.notifyType === 'member_early_access' || item.notifyType === 'weekly_update' ? item.notifyType : null,
+    notifyLabel: typeof item.notifyLabel === 'string' ? item.notifyLabel : null,
+    restockExpectedAt: typeof item.restockExpectedAt === 'string' ? item.restockExpectedAt : null,
+    isImportant: Boolean(item.isImportant),
+    weeklyHighlight: Boolean(item.weeklyHighlight),
+    dashboardPriority: typeof item.dashboardPriority === 'number' ? item.dashboardPriority : 0,
+    announcementBar: Boolean(item.announcementBar),
+    notificationCopy: typeof item.notificationCopy === 'string' ? item.notificationCopy : null,
   }
 }
 
@@ -92,7 +101,7 @@ export function getProducts(
   }
 
   const merged = {
-    fields: ['title', 'slug', 'price', 'currency', 'accessStatus', 'limitedEndAt', 'archiveVisibleForFC', 'stripeLink', 'baseLink', 'purchaseStatus', 'stock', 'category', 'tags', 'sortOrder', 'featured', 'isNewArrival', 'pickup', 'memberBenefit', 'membersOnlyNotice', 'earlyAccess', 'specialOffer', 'campaignLabel', 'campaignSlug', 'campaignType', 'shortHighlight', 'heroCopy', 'isTrending', 'isLimited', 'membersOnly', 'displayPriority', 'startAt', 'endAt', 'bannerLink', 'ctaText', 'ctaLink', 'sectionStyle', 'badgeStyleVariant'],
+    fields: ['title', 'slug', 'price', 'currency', 'accessStatus', 'limitedEndAt', 'archiveVisibleForFC', 'stripeLink', 'baseLink', 'purchaseStatus', 'stock', 'category', 'tags', 'sortOrder', 'featured', 'isNewArrival', 'pickup', 'memberBenefit', 'membersOnlyNotice', 'earlyAccess', 'specialOffer', 'campaignLabel', 'campaignSlug', 'campaignType', 'shortHighlight', 'heroCopy', 'isTrending', 'isLimited', 'membersOnly', 'displayPriority', 'startAt', 'endAt', 'bannerLink', 'ctaText', 'ctaLink', 'sectionStyle', 'badgeStyleVariant', 'notifyEnabled', 'notifyType', 'notifyLabel', 'restockExpectedAt', 'isImportant', 'weeklyHighlight', 'dashboardPriority', 'announcementBar', 'notificationCopy'],
     populate: {
       previewImage: { fields: ['url', 'alternativeText', 'width', 'height'] },
     },
@@ -118,7 +127,7 @@ export async function getProduct(slug: string, signal?: AbortSignal): Promise<St
   }
   try {
     const product = await fetchBySlug<StoreProduct>(ENDPOINT, slug, {
-      fields: ['title', 'slug', 'price', 'currency', 'accessStatus', 'limitedEndAt', 'archiveVisibleForFC', 'stripeLink', 'baseLink', 'purchaseStatus', 'description', 'externalPurchaseNote', 'stock', 'category', 'tags', 'sortOrder', 'featured', 'isNewArrival', 'pickup', 'memberBenefit', 'membersOnlyNotice', 'earlyAccess', 'specialOffer', 'campaignLabel', 'campaignSlug', 'campaignType', 'shortHighlight', 'heroCopy', 'isTrending', 'isLimited', 'membersOnly', 'displayPriority', 'startAt', 'endAt', 'bannerLink', 'ctaText', 'ctaLink', 'sectionStyle', 'badgeStyleVariant', 'cautionNotes', 'shippingNotes', 'digitalDeliveryNotes'],
+      fields: ['title', 'slug', 'price', 'currency', 'accessStatus', 'limitedEndAt', 'archiveVisibleForFC', 'stripeLink', 'baseLink', 'purchaseStatus', 'description', 'externalPurchaseNote', 'stock', 'category', 'tags', 'sortOrder', 'featured', 'isNewArrival', 'pickup', 'memberBenefit', 'membersOnlyNotice', 'earlyAccess', 'specialOffer', 'campaignLabel', 'campaignSlug', 'campaignType', 'shortHighlight', 'heroCopy', 'isTrending', 'isLimited', 'membersOnly', 'displayPriority', 'startAt', 'endAt', 'bannerLink', 'ctaText', 'ctaLink', 'sectionStyle', 'badgeStyleVariant', 'cautionNotes', 'shippingNotes', 'digitalDeliveryNotes', 'notifyEnabled', 'notifyType', 'notifyLabel', 'restockExpectedAt', 'isImportant', 'weeklyHighlight', 'dashboardPriority', 'announcementBar', 'notificationCopy'],
       populate: {
         previewImage: { fields: ['url', 'alternativeText', 'width', 'height'] },
         relatedProducts: { fields: ['slug', 'title'] },
