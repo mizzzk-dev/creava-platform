@@ -17,7 +17,6 @@ interface Props {
 }
 
 export default function HiddenQuote({ quote, author, location = 'hidden_quote', className = '' }: Props) {
-  const { t } = useTranslation()
   const reduceMotion = useReducedMotion()
 
   const wrapper = `relative py-8 text-center ${className}`
@@ -25,7 +24,7 @@ export default function HiddenQuote({ quote, author, location = 'hidden_quote', 
   if (reduceMotion) {
     return (
       <div className={wrapper}>
-        <Inner quote={quote} author={author} t={t} />
+        <Inner quote={quote} author={author} />
       </div>
     )
   }
@@ -41,20 +40,13 @@ export default function HiddenQuote({ quote, author, location = 'hidden_quote', 
         trackPlayfulInteraction('hidden_quote_revealed', location)
       }
     >
-      <Inner quote={quote} author={author} t={t} />
+      <Inner quote={quote} author={author} />
     </motion.div>
   )
 }
 
-function Inner({
-  quote,
-  author,
-  t,
-}: {
-  quote: string
-  author?: string
-  t: (key: string, opts?: object) => string
-}) {
+function Inner({ quote, author }: { quote: string; author?: string }) {
+  const { t } = useTranslation()
   return (
     <>
       {/* 装飾ライン */}

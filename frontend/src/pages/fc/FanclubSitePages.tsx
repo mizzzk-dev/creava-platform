@@ -573,6 +573,7 @@ export function FanclubVerifyEmailPage() {
 }
 
 export function FanclubMyPageSite() {
+  const { t } = useTranslation()
   const { user } = useCurrentUser()
   const { getToken } = useAuth()
   const { products } = useProductList(8)
