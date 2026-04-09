@@ -5,6 +5,7 @@
  * - 発見済みは localStorage で記憶
  * - 世界観に合わせたシンプルな表現
  */
+import { useRef } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { useEasterEgg } from '../hooks/useEasterEgg'
@@ -36,6 +37,9 @@ export default function EasterEggTrigger({
   const { t } = useTranslation()
   const reduceMotion = useReducedMotion()
   const { found, handleClick, isClose } = useEasterEgg({ id, triggerCount, location })
+  // マウント時点で既に発見済み（localStorage 由来）かどうかを記憶する。
+  // persistAfterFound=false の場合、以前の訪問で発見済みのものはバブルを表示しない。
+  const wasFoundOnMount = useRef(found)
 
   return (
     <span className={`relative inline-block select-none ${className}`}>
@@ -61,9 +65,12 @@ export default function EasterEggTrigger({
         />
       )}
 
-      {/* 発見演出 */}
+      {/* 発見演出:
+          - persistAfterFound=true  → found であれば常に表示
+          - persistAfterFound=false → 今セッションで発見した場合のみ表示
+            （前回訪問で発見済みの場合は非表示）                */}
       <AnimatePresence>
-        {found && (persistAfterFound || true) && (
+        {found && (persistAfterFound || !wasFoundOnMount.current) && (
           <motion.span
             key="egg-found"
             initial={reduceMotion ? {} : { opacity: 0, y: -6, scale: 0.9 }}
