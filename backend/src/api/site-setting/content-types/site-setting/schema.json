@@ -28,6 +28,12 @@
     "heroSubtitle": {
       "type": "text"
     },
+    "heroCopy": {
+      "type": "text"
+    },
+    "heroSubcopy": {
+      "type": "text"
+    },
     "heroCTALabel": {
       "type": "string"
     },
@@ -89,6 +95,45 @@
     },
     "topPageSections": {
       "type": "json"
+    },
+    "heroVisual": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "heroIllustration": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "illustrationAsset": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "sectionBackgroundVariant": {
+      "type": "string"
+    },
+    "backgroundVariant": {
+      "type": "string"
+    },
+    "motionStyle": {
+      "type": "string"
+    },
+    "cardStyleVariant": {
+      "type": "string"
+    },
+    "badgeStyleVariant": {
+      "type": "string"
+    },
+    "campaign": {
+      "type": "string"
     },
     "notificationCtaText": {
       "type": "string"

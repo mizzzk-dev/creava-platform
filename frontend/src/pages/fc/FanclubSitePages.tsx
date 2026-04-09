@@ -1,6 +1,5 @@
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
-import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { useAuth, useClerk } from '@clerk/clerk-react'
 import PageHead from '@/components/seo/PageHead'
@@ -24,6 +23,7 @@ import type { MembershipPlan } from '@/modules/payments/types'
 import BrandIllustration from '@/components/common/BrandIllustration'
 import SectionReveal from '@/components/common/SectionReveal'
 import CuratedBentoSection from '@/components/common/CuratedBentoSection'
+import VisualHeroSection from '@/components/common/VisualHeroSection'
 
 type Visibility = VisibilityScope
 
@@ -232,53 +232,28 @@ export function FanclubHomeHubPage() {
         title="mizzz official fanclub"
         description="mizzz の公式ファンクラブ。ニュース、ブログ、動画、ギャラリー、チケット先行情報を会員向けに配信。"
       />
-      <motion.header
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-        className="overflow-hidden rounded-3xl border border-gray-200/80 bg-gradient-to-br from-white via-fuchsia-50/60 to-white p-6 shadow-sm shadow-gray-200/50 dark:border-gray-800 dark:bg-gradient-to-br dark:from-gray-900 dark:via-fuchsia-950/30 dark:to-gray-900 dark:shadow-black/20 md:p-10"
-      >
-        <p className="font-mono text-xs tracking-[0.18em] text-gray-500">OFFICIAL FANCLUB</p>
-        <div className="mt-4 grid gap-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
-          <div>
-            <span className="inline-flex rounded-full border border-fuchsia-300/70 bg-fuchsia-100/80 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-fuchsia-700 dark:border-fuchsia-700 dark:bg-fuchsia-900/50 dark:text-fuchsia-200">members only / weekly / limited</span>
-            <h1 className="mt-4 text-4xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 md:text-6xl">mizzz official fanclub</h1>
-            <p className="mt-6 max-w-2xl text-sm leading-7 text-gray-600 dark:text-gray-300">限定ニュース、ブログ、動画、ギャラリー、イベント先行情報を、余白と静けさを保ちながら届けるメンバーシップサイトです。</p>
-            <div className="mt-10 flex flex-wrap gap-3">
-              <Link to={ROUTES.FC_JOIN} onClick={() => trackCtaClick('fc_home', 'join')} className="rounded-full bg-gray-900 px-5 py-2.5 text-sm font-medium text-white transition hover:-translate-y-0.5 hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900">入会する</Link>
-              <Link to={ROUTES.FC_LOGIN} onClick={() => trackCtaClick('fc_home', 'login')} className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-800 transition hover:-translate-y-0.5 hover:border-gray-500 dark:border-gray-700 dark:text-gray-100">ログイン</Link>
-              <Link to={storeLink(ROUTES.STORE_HOME)} onClick={() => trackCtaClick('fc_home', 'to_store')} className="rounded-full border border-violet-300 bg-violet-50 px-5 py-2.5 text-sm font-medium text-violet-700 transition hover:-translate-y-0.5 hover:bg-violet-100 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-300">会員向けストアを見る</Link>
-              <Link to={ROUTES.FAQ} onClick={() => trackCtaClick('fc_home', 'faq')} className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-500 dark:border-gray-700 dark:text-gray-200">FAQ</Link>
-            </div>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-            <BrandIllustration variant="fanclub" />
-            <article className="rounded-2xl border border-gray-200 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-950/50">
-              <p className="font-mono text-xs text-gray-500">会員特典</p>
-              <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">先行案内 / FC限定公開 / 会員向け販売導線</p>
-            </article>
-          </div>
-        </div>
-
-        <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-2xl border border-gray-200 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-950/50">
-            <p className="font-mono text-xs text-gray-500">料金</p>
-            <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">月額 880円 / 年額 8,800円</p>
-          </div>
-          <div className="rounded-2xl border border-gray-200 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-950/50">
-            <p className="font-mono text-xs text-gray-500">今週の更新</p>
-            <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">動画・ブログ・イベント情報を順次公開</p>
-          </div>
-          <div className="rounded-2xl border border-gray-200 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-950/50">
-            <p className="font-mono text-xs text-gray-500">限定特典</p>
-            <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">先行案内 / FC限定公開 / 会員向け販売導線</p>
-          </div>
-          <div className="rounded-2xl border border-gray-200 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-950/50">
-            <p className="font-mono text-xs text-gray-500">FAQ</p>
-            <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">入会・解約・公開範囲の案内を常設</p>
-          </div>
-        </div>
-      </motion.header>
+      <VisualHeroSection
+        location="fc_home"
+        eyebrow="OFFICIAL FANCLUB"
+        badge="members only / weekly / limited"
+        title="mizzz official fanclub"
+        description="限定ニュース、ブログ、動画、ギャラリー、イベント先行情報を、余白と静けさを保ちながら届けるメンバーシップサイトです。"
+        illustrationVariant="fanclub"
+        backgroundVariant="fanclub"
+        actions={[
+          { label: '入会する', to: ROUTES.FC_JOIN, cta: 'join', style: 'primary' },
+          { label: 'ログイン', to: ROUTES.FC_LOGIN, cta: 'login', style: 'secondary' },
+          { label: '会員向けストアを見る', to: storeLink(ROUTES.STORE_HOME), cta: 'to_store', style: 'accent' },
+          { label: 'FAQ', to: ROUTES.FAQ, cta: 'faq', style: 'secondary' },
+        ]}
+        metrics={[
+          { label: '会員特典', value: '先行案内 / FC限定公開 / 会員向け販売導線' },
+          { label: '料金', value: '月額 880円 / 年額 8,800円' },
+          { label: '今週の更新', value: '動画・ブログ・イベント情報を順次公開' },
+          { label: '限定特典', value: '先行案内 / FC限定公開 / 会員向け販売導線' },
+          { label: 'FAQ', value: '入会・解約・公開範囲の案内を常設' },
+        ]}
+      />
 
       <UpdateDigestSection
         title="今週の更新・限定・先行"

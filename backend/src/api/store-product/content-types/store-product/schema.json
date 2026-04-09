@@ -112,6 +112,9 @@
     "heroCopy": {
       "type": "text"
     },
+    "heroSubcopy": {
+      "type": "text"
+    },
     "isTrending": {
       "type": "boolean",
       "default": false
@@ -146,7 +149,19 @@
     "sectionStyle": {
       "type": "string"
     },
+    "cardStyleVariant": {
+      "type": "string"
+    },
     "badgeStyleVariant": {
+      "type": "string"
+    },
+    "backgroundVariant": {
+      "type": "string"
+    },
+    "sectionBackgroundVariant": {
+      "type": "string"
+    },
+    "motionStyle": {
       "type": "string"
     },
     "notifyEnabled": {
@@ -275,6 +290,27 @@
       "type": "media",
       "multiple": false,
       "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "heroVisual": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "heroIllustration": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "illustrationAsset": {
+      "type": "media",
+      "multiple": false,
       "allowedTypes": [
         "images"
       ]

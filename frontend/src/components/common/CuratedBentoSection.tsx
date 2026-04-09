@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { trackCtaClick } from '@/modules/analytics/tracking'
+import { motionPresets, motionTransition } from '@/components/common/motionPresets'
 
 interface CuratedBentoItem {
   id: string
@@ -41,10 +42,11 @@ export default function CuratedBentoSection({ eyebrow, title, subtitle, items }:
         {items.map((item, index) => (
           <motion.div
             key={item.id}
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            variants={motionPresets.sectionFadeIn}
+            initial="hidden"
+            whileInView="visible"
             viewport={{ once: true, amount: 0.4 }}
-            transition={reduceMotion ? { duration: 0 } : { duration: 0.45, delay: index * 0.04, ease: 'easeOut' }}
+            transition={reduceMotion ? { duration: 0 } : { ...motionTransition.base, delay: index * 0.04 }}
             className={item.className ?? 'lg:col-span-2'}
           >
             <Link

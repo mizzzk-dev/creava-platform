@@ -15,7 +15,7 @@ export function getFanclubList(
 ): Promise<StrapiListResponse<FanclubContent>> {
   return fetchCollection<FanclubContent>(ENDPOINT, {
     sort: ['publishAt:desc'],
-    populate: ['thumbnail'],
+    populate: ['thumbnail', 'heroVisual', 'heroIllustration', 'illustrationAsset'],
     ...params,
   })
 }
@@ -28,5 +28,5 @@ export function getFanclubDetail(
   signal?: AbortSignal,
   params?: Omit<StrapiQueryParams, 'filters' | 'pagination'>,
 ): Promise<FanclubContent | null> {
-  return fetchBySlug<FanclubContent>(ENDPOINT, slug, { populate: ['thumbnail'], ...params }, { signal })
+  return fetchBySlug<FanclubContent>(ENDPOINT, slug, { populate: ['thumbnail', 'heroVisual', 'heroIllustration', 'illustrationAsset'], ...params }, { signal })
 }

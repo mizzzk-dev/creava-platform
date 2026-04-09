@@ -42,6 +42,10 @@ export interface StoreProductSummary {
   campaignType?: CampaignType
   shortHighlight: string | null
   heroCopy: string | null
+  heroSubcopy?: string | null
+  heroVisual?: { url: string; alt: string | null } | null
+  heroIllustration?: { url: string; alt: string | null } | null
+  illustrationAsset?: { url: string; alt: string | null } | null
   isTrending: boolean
   isLimited: boolean
   membersOnly?: boolean
@@ -51,7 +55,11 @@ export interface StoreProductSummary {
   ctaText?: string | null
   ctaLink?: string | null
   sectionStyle?: string | null
+  cardStyleVariant?: string | null
   badgeStyleVariant?: string | null
+  backgroundVariant?: string | null
+  sectionBackgroundVariant?: string | null
+  motionStyle?: string | null
   displayPriority: number
   notifyEnabled?: boolean
   notifyType?: NotifyType | null

@@ -1,4 +1,5 @@
 import { motion, useReducedMotion } from 'framer-motion'
+import { motionPresets } from '@/components/common/motionPresets'
 
 interface BrandIllustrationProps {
   variant?: 'store' | 'fanclub' | 'limited' | 'support'
@@ -36,7 +37,9 @@ export default function BrandIllustration({ variant = 'store', className }: Bran
     <div className={`pointer-events-none relative aspect-[5/4] w-full overflow-hidden rounded-3xl border border-white/40 bg-gradient-to-br from-white/70 via-white/30 to-white/10 backdrop-blur-sm dark:border-white/10 dark:from-white/10 dark:via-white/5 dark:to-transparent ${className ?? ''}`}>
       <motion.div
         className={`absolute -left-8 top-4 h-36 w-36 rounded-full blur-2xl ${tone.primary}`}
-        animate={reduceMotion ? undefined : { x: [0, 16, 0], y: [0, -10, 0] }}
+        variants={motionPresets.illustrationFloatSoft}
+        initial="rest"
+        animate={reduceMotion ? 'rest' : 'animate'}
         transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
       />
       <motion.div

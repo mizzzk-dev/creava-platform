@@ -53,6 +53,10 @@ function normalizeStoreProduct(item: Partial<StoreProductSummary>): StoreProduct
     campaignType: item.campaignType === 'drop' || item.campaignType === 'launch' || item.campaignType === 'restock' || item.campaignType === 'benefit' || item.campaignType === 'announcement' ? item.campaignType : 'feature',
     shortHighlight: typeof item.shortHighlight === 'string' ? item.shortHighlight : null,
     heroCopy: typeof item.heroCopy === 'string' ? item.heroCopy : null,
+    heroSubcopy: typeof item.heroSubcopy === 'string' ? item.heroSubcopy : null,
+    heroVisual: item.heroVisual ?? null,
+    heroIllustration: item.heroIllustration ?? null,
+    illustrationAsset: item.illustrationAsset ?? null,
     isTrending: Boolean(item.isTrending),
     isLimited: Boolean(item.isLimited),
     membersOnly: Boolean(item.membersOnly),
@@ -62,7 +66,11 @@ function normalizeStoreProduct(item: Partial<StoreProductSummary>): StoreProduct
     ctaText: typeof item.ctaText === 'string' ? item.ctaText : null,
     ctaLink: typeof item.ctaLink === 'string' ? item.ctaLink : null,
     sectionStyle: typeof item.sectionStyle === 'string' ? item.sectionStyle : null,
+    cardStyleVariant: typeof item.cardStyleVariant === 'string' ? item.cardStyleVariant : null,
     badgeStyleVariant: typeof item.badgeStyleVariant === 'string' ? item.badgeStyleVariant : null,
+    backgroundVariant: typeof item.backgroundVariant === 'string' ? item.backgroundVariant : null,
+    sectionBackgroundVariant: typeof item.sectionBackgroundVariant === 'string' ? item.sectionBackgroundVariant : null,
+    motionStyle: typeof item.motionStyle === 'string' ? item.motionStyle : null,
     displayPriority: typeof item.displayPriority === 'number' ? item.displayPriority : 0,
     notifyEnabled: Boolean(item.notifyEnabled),
     notifyType: item.notifyType === 'restock' || item.notifyType === 'sale_start' || item.notifyType === 'campaign' || item.notifyType === 'member_early_access' || item.notifyType === 'weekly_update' ? item.notifyType : null,
@@ -108,9 +116,12 @@ export function getProducts(
   }
 
   const merged = {
-    fields: ['title', 'slug', 'price', 'currency', 'accessStatus', 'limitedEndAt', 'archiveVisibleForFC', 'stripeLink', 'baseLink', 'stripeProductId', 'stripePriceId', 'productType', 'isPurchasable', 'stockStatus', 'saleStatus', 'metadataKey', 'purchaseStatus', 'stock', 'category', 'tags', 'sortOrder', 'featured', 'isNewArrival', 'pickup', 'memberBenefit', 'membersOnlyNotice', 'earlyAccess', 'specialOffer', 'campaignLabel', 'campaignSlug', 'campaignType', 'shortHighlight', 'heroCopy', 'isTrending', 'isLimited', 'membersOnly', 'displayPriority', 'startAt', 'endAt', 'bannerLink', 'ctaText', 'ctaLink', 'sectionStyle', 'badgeStyleVariant', 'notifyEnabled', 'notifyType', 'notifyLabel', 'restockExpectedAt', 'isImportant', 'weeklyHighlight', 'dashboardPriority', 'announcementBar', 'notificationCopy'],
+    fields: ['title', 'slug', 'price', 'currency', 'accessStatus', 'limitedEndAt', 'archiveVisibleForFC', 'stripeLink', 'baseLink', 'stripeProductId', 'stripePriceId', 'productType', 'isPurchasable', 'stockStatus', 'saleStatus', 'metadataKey', 'purchaseStatus', 'stock', 'category', 'tags', 'sortOrder', 'featured', 'isNewArrival', 'pickup', 'memberBenefit', 'membersOnlyNotice', 'earlyAccess', 'specialOffer', 'campaignLabel', 'campaignSlug', 'campaignType', 'shortHighlight', 'heroCopy', 'heroSubcopy', 'isTrending', 'isLimited', 'membersOnly', 'displayPriority', 'startAt', 'endAt', 'bannerLink', 'ctaText', 'ctaLink', 'sectionStyle', 'cardStyleVariant', 'badgeStyleVariant', 'backgroundVariant', 'sectionBackgroundVariant', 'motionStyle', 'notifyEnabled', 'notifyType', 'notifyLabel', 'restockExpectedAt', 'isImportant', 'weeklyHighlight', 'dashboardPriority', 'announcementBar', 'notificationCopy'],
     populate: {
       previewImage: { fields: ['url', 'alternativeText', 'width', 'height'] },
+      heroVisual: { fields: ['url', 'alternativeText', 'width', 'height'] },
+      heroIllustration: { fields: ['url', 'alternativeText', 'width', 'height'] },
+      illustrationAsset: { fields: ['url', 'alternativeText', 'width', 'height'] },
     },
     sort: ['sortOrder:asc', 'publishAt:desc'],
     pagination: { pageSize: 24, withCount: false },
@@ -134,9 +145,12 @@ export async function getProduct(slug: string, signal?: AbortSignal): Promise<St
   }
   try {
     const product = await fetchBySlug<StoreProduct>(ENDPOINT, slug, {
-      fields: ['title', 'slug', 'price', 'currency', 'accessStatus', 'limitedEndAt', 'archiveVisibleForFC', 'stripeLink', 'baseLink', 'stripeProductId', 'stripePriceId', 'productType', 'isPurchasable', 'stockStatus', 'saleStatus', 'metadataKey', 'purchaseStatus', 'description', 'externalPurchaseNote', 'stock', 'category', 'tags', 'sortOrder', 'featured', 'isNewArrival', 'pickup', 'memberBenefit', 'membersOnlyNotice', 'earlyAccess', 'specialOffer', 'campaignLabel', 'campaignSlug', 'campaignType', 'shortHighlight', 'heroCopy', 'isTrending', 'isLimited', 'membersOnly', 'displayPriority', 'startAt', 'endAt', 'bannerLink', 'ctaText', 'ctaLink', 'sectionStyle', 'badgeStyleVariant', 'cautionNotes', 'shippingNotes', 'digitalDeliveryNotes', 'notifyEnabled', 'notifyType', 'notifyLabel', 'restockExpectedAt', 'isImportant', 'weeklyHighlight', 'dashboardPriority', 'announcementBar', 'notificationCopy'],
+      fields: ['title', 'slug', 'price', 'currency', 'accessStatus', 'limitedEndAt', 'archiveVisibleForFC', 'stripeLink', 'baseLink', 'stripeProductId', 'stripePriceId', 'productType', 'isPurchasable', 'stockStatus', 'saleStatus', 'metadataKey', 'purchaseStatus', 'description', 'externalPurchaseNote', 'stock', 'category', 'tags', 'sortOrder', 'featured', 'isNewArrival', 'pickup', 'memberBenefit', 'membersOnlyNotice', 'earlyAccess', 'specialOffer', 'campaignLabel', 'campaignSlug', 'campaignType', 'shortHighlight', 'heroCopy', 'heroSubcopy', 'isTrending', 'isLimited', 'membersOnly', 'displayPriority', 'startAt', 'endAt', 'bannerLink', 'ctaText', 'ctaLink', 'sectionStyle', 'cardStyleVariant', 'badgeStyleVariant', 'backgroundVariant', 'sectionBackgroundVariant', 'motionStyle', 'cautionNotes', 'shippingNotes', 'digitalDeliveryNotes', 'notifyEnabled', 'notifyType', 'notifyLabel', 'restockExpectedAt', 'isImportant', 'weeklyHighlight', 'dashboardPriority', 'announcementBar', 'notificationCopy'],
       populate: {
         previewImage: { fields: ['url', 'alternativeText', 'width', 'height'] },
+        heroVisual: { fields: ['url', 'alternativeText', 'width', 'height'] },
+        heroIllustration: { fields: ['url', 'alternativeText', 'width', 'height'] },
+        illustrationAsset: { fields: ['url', 'alternativeText', 'width', 'height'] },
         relatedProducts: { fields: ['slug', 'title'] },
         relatedNews: { fields: ['slug', 'title'] },
         relatedEvents: { fields: ['slug', 'title'] },

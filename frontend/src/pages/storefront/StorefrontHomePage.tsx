@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { useEffect, useMemo } from 'react'
-import { motion } from 'framer-motion'
 import { useProductList } from '@/modules/store/hooks/useProductList'
 import ProductCard from '@/modules/store/components/ProductCard'
 import SkeletonProductCard from '@/components/common/SkeletonProductCard'
@@ -20,9 +19,9 @@ import CampaignHero from '@/modules/campaign/components/CampaignHero'
 import { getCampaignList } from '@/modules/campaign/api'
 import type { CampaignSummary } from '@/modules/campaign/types'
 import { isCampaignActive } from '@/modules/campaign/lib'
-import BrandIllustration from '@/components/common/BrandIllustration'
 import SectionReveal from '@/components/common/SectionReveal'
 import CuratedBentoSection from '@/components/common/CuratedBentoSection'
+import VisualHeroSection from '@/components/common/VisualHeroSection'
 
 export default function StorefrontHomePage() {
   const { products, loading, error, refetch } = useProductList(24)
@@ -158,36 +157,29 @@ export default function StorefrontHomePage() {
     <section className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
       <PageHead title="mizzz Official Store" description="mizzz公式オンラインストア。新商品・デジタル商品・お知らせをまとめて確認できます。" />
 
-      <motion.header
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-        className="overflow-hidden rounded-3xl border border-gray-200/70 bg-gradient-to-br from-white via-violet-50/60 to-white p-6 shadow-sm shadow-gray-200/40 dark:border-gray-800 dark:bg-gradient-to-br dark:from-gray-900 dark:via-violet-950/30 dark:to-gray-900 dark:shadow-black/20 sm:p-10"
-      >
-        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-gray-500">mizzz official store</p>
-        <div className="mt-4 grid gap-7 lg:grid-cols-[1.25fr_1fr] lg:items-end">
-          <div>
-            <span className="inline-flex rounded-full border border-violet-300/70 bg-violet-100/80 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-violet-700 dark:border-violet-700 dark:bg-violet-900/50 dark:text-violet-200">featured / pickup / weekly update</span>
-            <h1 className="mt-4 text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 sm:text-5xl">静けさの中で、
-              <span className="block text-gray-500 dark:text-gray-400">欲しいものに迷わず届く。</span>
-            </h1>
-            <p className="mt-4 max-w-2xl text-sm leading-relaxed text-gray-600 dark:text-gray-300">新着・限定・デジタル商品をエディトリアルに整理。商品が少ない時も、多い時も、見つけやすく心地よいストア体験を保ちます。</p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link to="/products" onClick={() => trackCtaClick('store_home_hero', 'all_products')} className="rounded-full bg-gray-900 px-5 py-2.5 text-sm font-medium text-white transition hover:-translate-y-0.5 hover:bg-gray-700 dark:bg-white dark:text-gray-900">全商品を見る</Link>
-              <Link to="/collections/digital" onClick={() => trackCtaClick('store_home_hero', 'digital_collection')} className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-500 dark:border-gray-700 dark:text-gray-200">Digital Goods</Link>
-              <Link to={fanclubLink(ROUTES.FC_JOIN)} onClick={() => trackCtaClick('store_home_hero', 'to_fanclub_join')} className="rounded-full border border-violet-300 bg-violet-50 px-5 py-2.5 text-sm font-medium text-violet-700 transition hover:-translate-y-0.5 hover:bg-violet-100 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-300">FC先行案内を見る</Link>
-              <Link to="/guide" onClick={() => trackCtaClick('store_home_hero', 'guide')} className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-500 dark:border-gray-700 dark:text-gray-200">Guide</Link>
-            </div>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-            <BrandIllustration variant="store" />
-            <article className="rounded-2xl border border-gray-200 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-950/60">
-              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-gray-500">This week</p>
-              <p className="mt-2 text-sm text-gray-700 dark:text-gray-200">新着ドロップと限定販売の更新を毎週整理して掲載。</p>
-            </article>
-          </div>
-        </div>
-      </motion.header>
+      <VisualHeroSection
+        location="store_home_hero"
+        eyebrow="mizzz official store"
+        badge="featured / pickup / weekly update"
+        title="静けさの中で、"
+        subtitle="欲しいものに迷わず届く。"
+        description="新着・限定・デジタル商品をエディトリアルに整理。商品が少ない時も、多い時も、見つけやすく心地よいストア体験を保ちます。"
+        illustrationVariant="store"
+        backgroundVariant="store"
+        actions={[
+          { label: '全商品を見る', to: '/products', cta: 'all_products', style: 'primary' },
+          { label: 'Digital Goods', to: '/collections/digital', cta: 'digital_collection', style: 'secondary' },
+          { label: 'FC先行案内を見る', to: fanclubLink(ROUTES.FC_JOIN), cta: 'to_fanclub_join', style: 'accent' },
+          { label: 'Guide', to: '/guide', cta: 'guide', style: 'secondary' },
+        ]}
+        metrics={[
+          { label: 'This week', value: '新着ドロップと限定販売の更新を毎週整理して掲載。' },
+          { label: '今週の更新', value: 'weekly update を先頭導線で常設。' },
+          { label: 'キャンペーン', value: 'limited / trending をカードで再編集。' },
+          { label: '会員導線', value: 'FC先行や特典導線を常時表示。' },
+          { label: 'ガイド', value: 'FAQ / 配送 / 返品導線を固定配置。' },
+        ]}
+      />
       {primaryCampaign && <CampaignHero campaign={primaryCampaign} location="store_home_campaign_hero" />}
 
       {!loading && !error && pickup.length > 0 && (
