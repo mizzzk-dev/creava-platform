@@ -217,7 +217,7 @@ npm run seed:backend
 - なし / あり（移行手順）
 ```
 
-### GitHub CLI 実行例（labels / reviewers / milestone まで設定）
+### GitHub CLI 実行例（labels / reviewers / milestone を実際に付与）
 
 ```bash
 # 1) 本文ファイルを用意して PR 作成
@@ -227,8 +227,11 @@ gh pr create \
   --base main \
   --head <branch-name>
 
-# 2) labels / reviewers / milestone を設定
-gh pr edit <pr-number> \
+# 2) 作成した PR 番号を取得
+PR_NUMBER="$(gh pr view --json number --jq '.number')"
+
+# 3) labels / reviewers / milestone を実際に設定（`codex` ラベルは使わない）
+gh pr edit "$PR_NUMBER" \
   --add-label "documentation" \
   --add-label "ops" \
   --add-reviewer "<reviewer1>,<reviewer2>" \
