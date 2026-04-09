@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "orders",
+  "info": {
+    "singularName": "order",
+    "pluralName": "orders",
+    "displayName": "Order"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "externalId": { "type": "string" },
+    "provider": { "type": "enumeration", "enum": ["stripe"], "default": "stripe", "required": true },
+    "orderStatus": { "type": "enumeration", "enum": ["pending", "paid", "processing", "fulfilled", "canceled", "failed"], "default": "pending", "required": true },
+    "paymentStatus": { "type": "enumeration", "enum": ["pending", "succeeded", "failed", "canceled", "refunded"], "default": "pending", "required": true },
+    "customerId": { "type": "string" },
+    "checkoutSessionId": { "type": "string" },
+    "paymentIntentId": { "type": "string" },
+    "currency": { "type": "string", "default": "JPY" },
+    "amountTotal": { "type": "integer", "default": 0, "min": 0 },
+    "lineItems": { "type": "json" },
+    "locale": { "type": "string", "default": "ja" },
+    "metadata": { "type": "json" },
+    "webhookSyncedAt": { "type": "datetime" }
+  }
+}

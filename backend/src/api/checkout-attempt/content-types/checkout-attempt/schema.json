@@ -1,0 +1,22 @@
+{
+  "kind": "collectionType",
+  "collectionName": "checkout_attempts",
+  "info": {
+    "singularName": "checkout-attempt",
+    "pluralName": "checkout-attempts",
+    "displayName": "Checkout Attempt"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "checkoutType": { "type": "enumeration", "enum": ["store", "fanclub"], "required": true },
+    "provider": { "type": "enumeration", "enum": ["stripe"], "default": "stripe", "required": true },
+    "status": { "type": "enumeration", "enum": ["created", "redirected", "completed", "canceled", "failed"], "default": "created", "required": true },
+    "idempotencyKey": { "type": "string" },
+    "externalCheckoutSessionId": { "type": "string" },
+    "userId": { "type": "string" },
+    "locale": { "type": "string", "default": "ja" },
+    "metadata": { "type": "json" }
+  }
+}

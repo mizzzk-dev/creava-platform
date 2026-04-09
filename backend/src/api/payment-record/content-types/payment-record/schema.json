@@ -1,0 +1,22 @@
+{
+  "kind": "collectionType",
+  "collectionName": "payment_records",
+  "info": {
+    "singularName": "payment-record",
+    "pluralName": "payment-records",
+    "displayName": "Payment Record"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "provider": { "type": "enumeration", "enum": ["stripe"], "default": "stripe", "required": true },
+    "paymentStatus": { "type": "enumeration", "enum": ["pending", "succeeded", "failed", "canceled", "refunded"], "default": "pending", "required": true },
+    "customerId": { "type": "string" },
+    "checkoutSessionId": { "type": "string" },
+    "paymentIntentId": { "type": "string" },
+    "currency": { "type": "string", "default": "JPY" },
+    "amountTotal": { "type": "integer", "default": 0, "min": 0 },
+    "metadata": { "type": "json" }
+  }
+}

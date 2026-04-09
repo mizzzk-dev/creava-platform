@@ -18,6 +18,13 @@ export interface StoreProductSummary {
   archiveVisibleForFC: boolean
   stripeLink: string | null
   baseLink: string | null
+  stripeProductId?: string | null
+  stripePriceId?: string | null
+  productType?: 'digital' | 'physical' | 'ticket' | 'service' | string
+  isPurchasable?: boolean
+  stockStatus?: 'in_stock' | 'low_stock' | 'out_of_stock' | string
+  saleStatus?: 'active' | 'scheduled' | 'ended' | string
+  metadataKey?: string | null
   purchaseStatus: PurchaseStatus
   stock: number
   category: StoreCategory | string

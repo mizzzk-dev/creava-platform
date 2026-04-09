@@ -211,6 +211,47 @@
     "digitalDeliveryNotes": {
       "type": "text"
     },
+    "stripeProductId": {
+      "type": "string"
+    },
+    "stripePriceId": {
+      "type": "string"
+    },
+    "productType": {
+      "type": "enumeration",
+      "enum": [
+        "digital",
+        "physical",
+        "ticket",
+        "service"
+      ],
+      "default": "physical"
+    },
+    "isPurchasable": {
+      "type": "boolean",
+      "default": true
+    },
+    "stockStatus": {
+      "type": "enumeration",
+      "enum": [
+        "in_stock",
+        "low_stock",
+        "out_of_stock"
+      ],
+      "default": "in_stock"
+    },
+    "saleStatus": {
+      "type": "enumeration",
+      "enum": [
+        "active",
+        "scheduled",
+        "ended"
+      ],
+      "default": "active"
+    },
+    "metadataKey": {
+      "type": "string"
+    },
     "stripeLink": {
       "type": "string"
     },

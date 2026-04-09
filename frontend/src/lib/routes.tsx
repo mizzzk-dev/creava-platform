@@ -17,6 +17,7 @@ import StorefrontShippingPolicyPage from '@/pages/storefront/StorefrontShippingP
 import StorefrontReturnsPage from '@/pages/storefront/StorefrontReturnsPage'
 import StorefrontLegalPage from '@/pages/storefront/StorefrontLegalPage'
 import StorefrontContactRedirectPage from '@/pages/storefront/StorefrontContactRedirectPage'
+import CheckoutResultPage from '@/pages/shared/CheckoutResultPage'
 import {
   FanclubAboutSitePage,
   FanclubGalleryDetailPage,
@@ -87,6 +88,8 @@ export function AppRoutes() {
             <Route path={ROUTES.STORE_PRODUCTS} element={<StorefrontProductsPage />} />
             <Route path={ROUTES.STORE_PRODUCT_DETAIL} element={<StoreDetailPage />} />
             <Route path={ROUTES.STORE_CART} element={<CartPage />} />
+            <Route path={ROUTES.STORE_CHECKOUT_SUCCESS} element={<CheckoutResultPage title="ご購入ありがとうございます" description="決済が完了しました。注文状態はWebhook経由で同期されます。" backTo={ROUTES.STORE_PRODUCTS} backLabel="商品一覧へ戻る" />} />
+            <Route path={ROUTES.STORE_CHECKOUT_CANCEL} element={<CheckoutResultPage title="決済をキャンセルしました" description="決済は完了していません。内容を見直して再度お試しください。" backTo={ROUTES.STORE_CART} backLabel="カートへ戻る" />} />
             <Route path={ROUTES.CART} element={<CartPage />} />
             <Route path={ROUTES.STORE_COLLECTION} element={<StorefrontCollectionPage />} />
             <Route path={ROUTES.STORE_CAMPAIGN} element={<CampaignLandingPage />} />
@@ -148,6 +151,8 @@ export function AppRoutes() {
             <Route path={ROUTES.LEGAL_TERMS} element={<TermsPage />} />
             <Route path={ROUTES.FC_COMMERCE_LAW} element={<TokushohoPage />} />
             <Route path={ROUTES.FC_SUBSCRIPTION_POLICY} element={<FanclubSubscriptionPolicyPage />} />
+            <Route path={ROUTES.FC_CHECKOUT_SUCCESS} element={<CheckoutResultPage title="入会手続きを受け付けました" description="継続課金の状態同期が完了次第、会員ステータスへ反映されます。" backTo={ROUTES.FC_MYPAGE} backLabel="マイページへ" />} />
+            <Route path={ROUTES.FC_CHECKOUT_CANCEL} element={<CheckoutResultPage title="入会手続きをキャンセルしました" description="課金は確定していません。タイミングを変えて再度お試しください。" backTo={ROUTES.FC_JOIN} backLabel="入会ページへ戻る" />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

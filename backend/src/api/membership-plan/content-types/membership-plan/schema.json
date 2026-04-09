@@ -1,0 +1,29 @@
+{
+  "kind": "collectionType",
+  "collectionName": "membership_plans",
+  "info": {
+    "singularName": "membership-plan",
+    "pluralName": "membership-plans",
+    "displayName": "Membership Plan"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "name": { "type": "string", "required": true },
+    "slug": { "type": "uid", "targetField": "name", "required": true },
+    "description": { "type": "text" },
+    "membershipType": { "type": "enumeration", "enum": ["free", "paid", "premium"], "default": "paid", "required": true },
+    "accessLevel": { "type": "enumeration", "enum": ["free", "paid", "premium"], "default": "paid", "required": true },
+    "billingCycle": { "type": "enumeration", "enum": ["monthly", "yearly"], "default": "monthly" },
+    "price": { "type": "integer", "default": 0, "min": 0 },
+    "currency": { "type": "string", "default": "JPY" },
+    "stripeProductId": { "type": "string" },
+    "stripePriceId": { "type": "string" },
+    "isJoinable": { "type": "boolean", "default": true },
+    "displayPriority": { "type": "integer", "default": 0 },
+    "startAt": { "type": "datetime" },
+    "endAt": { "type": "datetime" },
+    "metadata": { "type": "json" }
+  }
+}

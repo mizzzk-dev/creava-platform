@@ -41,6 +41,8 @@ export const ROUTES = {
   STORE_TERMS: '/terms',
   STORE_PRIVACY: '/privacy',
   STORE_CART: '/cart',
+  STORE_CHECKOUT_SUCCESS: '/checkout/success',
+  STORE_CHECKOUT_CANCEL: '/checkout/cancel',
 
   FC_ABOUT: '/about',
   FC_JOIN: '/join',
@@ -63,6 +65,8 @@ export const ROUTES = {
   FC_PRIVACY: '/privacy',
   FC_COMMERCE_LAW: '/commerce-law',
   FC_SUBSCRIPTION_POLICY: '/subscription-policy',
+  FC_CHECKOUT_SUCCESS: '/checkout/success',
+  FC_CHECKOUT_CANCEL: '/checkout/cancel',
 } as const
 
 /** 詳細ページへの URL を生成する */

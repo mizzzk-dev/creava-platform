@@ -60,7 +60,16 @@ const config: Core.Config.Middlewares = [
   },
   'strapi::poweredBy',
   'strapi::query',
-  'strapi::body',
+  {
+    name: 'strapi::body',
+    config: {
+      includeUnparsed: true,
+      patchKoa: true,
+      jsonLimit: '2mb',
+      formLimit: '2mb',
+      textLimit: '2mb',
+    },
+  },
   'strapi::session',
   'strapi::favicon',
   'strapi::public',

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
@@ -21,12 +21,14 @@ import Badge from '@/components/common/Badge'
 import MemberGuideCard from '@/components/common/MemberGuideCard'
 import type { PurchaseStatus } from '@/modules/store/types'
 import { useCart } from '@/modules/cart/context'
+import { useCurrentUser } from '@/hooks'
 import { convertPrice, DISPLAY_CURRENCIES } from '@/modules/store/lib/currency'
 import { useDisplayCurrency } from '@/modules/store/hooks/useDisplayCurrency'
 import RestockNotifyForm from '@/modules/store/components/RestockNotifyForm'
 import { trackViewHistory } from '@/modules/store/lib/commerceOptimization'
 import { trackCtaClick } from '@/modules/analytics/tracking'
 import NotificationInterestButton from '@/modules/notifications/components/NotificationInterestButton'
+import { createStoreCheckoutSession } from '@/modules/payments/api'
 
 function purchaseStatusToAvailability(status: PurchaseStatus): 'InStock' | 'OutOfStock' | 'PreOrder' {
   if (status === 'available') return 'InStock'
@@ -40,7 +42,10 @@ export default function StoreDetailPage() {
   const { product, loading, error, notFound, refetch } = useProductDetail(handle)
   const { products } = useProductList(8)
   const { addItem } = useCart()
+  const { user } = useCurrentUser()
   const { currency, updateCurrency } = useDisplayCurrency('JPY')
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const [checkoutError, setCheckoutError] = useState<string | null>(null)
 
   const canAddCart = product?.purchaseStatus === 'available' && product?.accessStatus !== 'fc_only'
 
@@ -67,6 +72,26 @@ export default function StoreDetailPage() {
         : product
           ? formatPriceNum(convertPrice(product.price, product.currency, currency), currency)
           : ''
+
+  async function handleCheckout(): Promise<void> {
+    if (!product || checkoutLoading) return
+    try {
+      setCheckoutLoading(true)
+      setCheckoutError(null)
+      trackCtaClick('store_detail', 'stripe_checkout_start', { slug: product.slug })
+      const session = await createStoreCheckoutSession({
+        productId: product.documentId,
+        quantity: 1,
+        locale: String((navigator.language || 'ja').split('-')[0] || 'ja'),
+        userId: user?.id ?? null,
+      })
+      window.location.assign(session.url)
+    } catch {
+      setCheckoutError(t('store.checkoutError', { defaultValue: '決済ページの作成に失敗しました。時間をおいて再度お試しください。' }))
+    } finally {
+      setCheckoutLoading(false)
+    }
+  }
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-12 sm:py-16">
@@ -239,11 +264,22 @@ export default function StoreDetailPage() {
 
               {/* 購入導線 */}
               <div className="sticky bottom-4 mt-8 rounded-2xl border border-gray-200 bg-white/95 p-3 shadow-lg shadow-gray-200/70 backdrop-blur dark:border-gray-700 dark:bg-gray-900/95 dark:shadow-black/30">
+                {product.purchaseStatus === 'available' && product.isPurchasable !== false && (
+                  <button
+                    type="button"
+                    onClick={() => void handleCheckout()}
+                    disabled={checkoutLoading}
+                    className="mb-3 inline-flex w-full items-center justify-center rounded bg-gray-900 px-6 py-3 text-sm font-medium tracking-wide text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {checkoutLoading ? t('store.checkoutLoading', { defaultValue: '決済ページを準備中...' }) : t('store.checkout', { defaultValue: 'Stripeで購入する' })}
+                  </button>
+                )}
                 <PurchaseActions
                   product={product}
                   className="mt-0"
                   onAddToCart={canAddCart ? () => addItem(product, 1) : undefined}
                 />
+                {checkoutError && <p className="mt-2 text-xs text-rose-600 dark:text-rose-300">{checkoutError}</p>}
               </div>
               {product.purchaseStatus === 'soldout' && (
                 <RestockNotifyForm

@@ -1,0 +1,24 @@
+{
+  "kind": "collectionType",
+  "collectionName": "subscription_records",
+  "info": {
+    "singularName": "subscription-record",
+    "pluralName": "subscription-records",
+    "displayName": "Subscription Record"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "provider": { "type": "enumeration", "enum": ["stripe"], "default": "stripe", "required": true },
+    "membershipType": { "type": "enumeration", "enum": ["free", "paid", "premium"], "default": "paid", "required": true },
+    "accessLevel": { "type": "enumeration", "enum": ["free", "paid", "premium"], "default": "paid", "required": true },
+    "billingCycle": { "type": "enumeration", "enum": ["monthly", "yearly"], "default": "monthly" },
+    "subscriptionStatus": { "type": "string", "default": "incomplete" },
+    "customerId": { "type": "string" },
+    "subscriptionId": { "type": "string" },
+    "startAt": { "type": "datetime" },
+    "endAt": { "type": "datetime" },
+    "metadata": { "type": "json" }
+  }
+}

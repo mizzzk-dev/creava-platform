@@ -1,0 +1,22 @@
+{
+  "kind": "collectionType",
+  "collectionName": "webhook_event_logs",
+  "info": {
+    "singularName": "webhook-event-log",
+    "pluralName": "webhook-event-logs",
+    "displayName": "Webhook Event Log"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "provider": { "type": "enumeration", "enum": ["stripe"], "default": "stripe", "required": true },
+    "eventId": { "type": "string", "required": true, "unique": true },
+    "eventType": { "type": "string", "required": true },
+    "status": { "type": "enumeration", "enum": ["received", "processed", "failed", "ignored"], "default": "received", "required": true },
+    "livemode": { "type": "boolean", "default": false },
+    "payload": { "type": "json" },
+    "processedAt": { "type": "datetime" },
+    "errorMessage": { "type": "text" }
+  }
+}

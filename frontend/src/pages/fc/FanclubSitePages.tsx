@@ -1,5 +1,5 @@
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useClerk } from '@clerk/clerk-react'
 import PageHead from '@/components/seo/PageHead'
@@ -17,6 +17,9 @@ import type { CampaignSummary } from '@/modules/campaign/types'
 import { isCampaignActive } from '@/modules/campaign/lib'
 import NotificationInterestButton from '@/modules/notifications/components/NotificationInterestButton'
 import NotificationSettingsPanel from '@/modules/notifications/components/NotificationSettingsPanel'
+import { createCustomerPortalSession, createFanclubCheckoutSession } from '@/modules/payments/api'
+import { getMembershipPlans } from '@/modules/payments/plans'
+import type { MembershipPlan } from '@/modules/payments/types'
 
 type Visibility = VisibilityScope
 
@@ -271,19 +274,54 @@ export function FanclubAboutSitePage() {
 }
 
 export function FanclubJoinPage() {
+  const { user } = useCurrentUser()
+  const { items: plans } = useStrapiCollection<MembershipPlan>(() => getMembershipPlans())
+  const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null)
+  const [checkoutError, setCheckoutError] = useState<string | null>(null)
+
+  async function handleJoin(planId: string): Promise<void> {
+    if (!user) return
+    try {
+      setLoadingPlanId(planId)
+      setCheckoutError(null)
+      const session = await createFanclubCheckoutSession({
+        planId,
+        locale: String((navigator.language || 'ja').split('-')[0] || 'ja'),
+        userId: user.id,
+      })
+      window.location.assign(session.url)
+    } catch {
+      setCheckoutError('決済ページの準備に失敗しました。時間を置いて再度お試しください。')
+    } finally {
+      setLoadingPlanId(null)
+    }
+  }
+
   return (
     <section className="mx-auto max-w-4xl px-4 py-14">
       <PageHead title="入会 | mizzz official fanclub" description="会費、支払い頻度、登録フロー、注意事項。" />
       <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">入会プラン</h1>
       <div className="mt-8 grid gap-4 md:grid-cols-2">
-        <article className="rounded-2xl border border-gray-200 p-5 dark:border-gray-800">
-          <h2 className="text-lg font-semibold">有料会員（standard）</h2>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">月額 880円 / 年額 8,800円。限定ニュース、ブログ、動画、ギャラリー、チケット先行案内。</p>
-        </article>
-        <article className="rounded-2xl border border-dashed border-gray-300 p-5 dark:border-gray-700">
-          <h2 className="text-lg font-semibold">プレミアム会員（将来拡張）</h2>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">上位プランを追加できるよう、権限制御を拡張可能な構造で設計。</p>
-        </article>
+        {((plans && plans.length > 0) ? plans : [
+          { id: 0, documentId: 'default-paid', name: '有料会員（standard）', description: '月額 880円 / 年額 8,800円。限定ニュース、ブログ、動画、ギャラリー、チケット先行案内。', price: 880, currency: 'JPY', billingCycle: 'monthly', isJoinable: true, membershipType: 'paid' },
+          { id: 1, documentId: 'default-premium', name: 'プレミアム会員（将来拡張）', description: '上位プランを追加できるよう、権限制御を拡張可能な構造で設計。', price: 0, currency: 'JPY', billingCycle: 'monthly', isJoinable: false, membershipType: 'premium' },
+        ]).map((plan) => (
+          <article key={plan.documentId} className="rounded-2xl border border-gray-200 p-5 dark:border-gray-800">
+            <h2 className="text-lg font-semibold">{plan.name}</h2>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{plan.description ?? '詳細は順次公開します。'}</p>
+            <p className="mt-3 text-xs text-gray-500">{plan.price > 0 ? `${plan.price.toLocaleString()} ${plan.currency} / ${plan.billingCycle === 'yearly' ? '年額' : '月額'}` : '価格未定'}</p>
+            {plan.isJoinable && user && (
+              <button
+                type="button"
+                onClick={() => void handleJoin(plan.documentId)}
+                disabled={loadingPlanId === plan.documentId}
+                className="mt-4 inline-flex rounded-full bg-gray-900 px-4 py-2 text-xs text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900"
+              >
+                {loadingPlanId === plan.documentId ? '決済ページを準備中...' : 'Stripe Checkoutで加入する'}
+              </button>
+            )}
+          </article>
+        ))}
       </div>
       <ol className="mt-8 list-decimal space-y-2 pl-5 text-sm text-gray-700 dark:text-gray-200">
         <li>メール認証でアカウント作成</li>
@@ -294,6 +332,7 @@ export function FanclubJoinPage() {
         <Link to={ROUTES.FC_LOGIN} onClick={() => trackCtaClick('fc_join', 'start_signup')} className="rounded-full bg-gray-900 px-5 py-2.5 text-sm text-white dark:bg-gray-100 dark:text-gray-900">会員登録を開始</Link>
         <Link to={ROUTES.FC_SUBSCRIPTION_POLICY} className="text-sm text-gray-500 underline">継続課金 / 解約ポリシー</Link>
       </div>
+      {checkoutError && <p className="mt-4 text-xs text-rose-600 dark:text-rose-300">{checkoutError}</p>}
     </section>
   )
 }
@@ -446,6 +485,27 @@ export function FanclubMyPageSite() {
     })
   }, [user?.contractStatus, user?.memberPlan])
 
+  const [portalLoading, setPortalLoading] = useState(false)
+  const [portalError, setPortalError] = useState<string | null>(null)
+
+  async function handleOpenPortal(): Promise<void> {
+    try {
+      const customerId = import.meta.env.VITE_STRIPE_CUSTOMER_ID_DEMO
+      if (!customerId) {
+        setPortalError('Customer Portal連携には customerId の紐付けが必要です。')
+        return
+      }
+      setPortalLoading(true)
+      setPortalError(null)
+      const session = await createCustomerPortalSession({ customerId })
+      window.location.assign(session.url)
+    } catch {
+      setPortalError('Customer Portal の起動に失敗しました。')
+    } finally {
+      setPortalLoading(false)
+    }
+  }
+
   return (
     <section className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
       <PageHead title="マイページ | mizzz official fanclub" description="会員ステータス、契約プラン、次回更新日、退会導線。" noindex />
@@ -474,7 +534,16 @@ export function FanclubMyPageSite() {
           <p className="mt-2 text-sm text-gray-800 dark:text-gray-100">2026-05-01（仮）</p>
           <p className="mt-2 text-xs text-gray-500">解約 / 退会はポリシーに沿って手続きできます。</p>
           <Link to={ROUTES.FC_SUBSCRIPTION_POLICY} onClick={() => trackCtaClick('fc_mypage', 'subscription_policy')} className="mt-3 inline-flex text-xs text-violet-600 hover:text-violet-500">継続課金ポリシーを確認</Link>
+          <button
+            type="button"
+            onClick={() => void handleOpenPortal()}
+            disabled={portalLoading}
+            className="mt-2 block text-xs text-gray-500 underline disabled:opacity-60"
+          >
+            {portalLoading ? 'Customer Portal を起動中...' : '支払い方法・請求情報を管理'}
+          </button>
           <Link to={ROUTES.STORE_HOME} onClick={() => trackCtaClick('fc_mypage', 'to_store')} className="mt-2 block text-xs text-gray-500 underline">ストア連携導線へ</Link>
+          {portalError && <p className="mt-2 text-[11px] text-amber-600 dark:text-amber-300">{portalError}</p>}
         </article>
       </div>
 
