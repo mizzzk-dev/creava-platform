@@ -182,6 +182,7 @@ npm run seed:backend
 - コミットは日本語で、1コミット1目的を意識する。
 - ブランチ名・コミットメッセージ・PR タイトル / 本文に `codex` の語を含めない。
 - PR タイトル / 本文は日本語で記述する。
+- GitHub CLI（`gh pr create` / `gh pr edit`）で PR を作成する場合は、`labels` / `reviewers` / `milestone` まで設定する前提で実行する。
 - PR には最低限以下を含める:
   - 概要（何をなぜ変えたか）
   - 変更内容（要点）
@@ -214,6 +215,24 @@ npm run seed:backend
 
 ## 破壊的変更
 - なし / あり（移行手順）
+```
+
+### GitHub CLI 実行例（labels / reviewers / milestone まで設定）
+
+```bash
+# 1) 本文ファイルを用意して PR 作成
+gh pr create \
+  --title "docs: AGENTS.md の PR 運用ルールを更新" \
+  --body-file .github/PULL_REQUEST_TEMPLATE.md \
+  --base main \
+  --head <branch-name>
+
+# 2) labels / reviewers / milestone を設定
+gh pr edit <pr-number> \
+  --add-label "documentation" \
+  --add-label "ops" \
+  --add-reviewer "<reviewer1>,<reviewer2>" \
+  --milestone "<milestone-name>"
 ```
 
 ---
