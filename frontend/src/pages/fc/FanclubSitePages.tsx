@@ -23,6 +23,7 @@ import { getMembershipPlans } from '@/modules/payments/plans'
 import type { MembershipPlan } from '@/modules/payments/types'
 import BrandIllustration from '@/components/common/BrandIllustration'
 import SectionReveal from '@/components/common/SectionReveal'
+import CuratedBentoSection from '@/components/common/CuratedBentoSection'
 
 type Visibility = VisibilityScope
 
@@ -178,6 +179,52 @@ export function FanclubHomeHubPage() {
     ],
     [],
   )
+  const homeBentoItems = useMemo(
+    () => [
+      {
+        id: 'fc-weekly',
+        title: '今週の更新を先頭で確認',
+        description: '動画・ギャラリー・先行情報の更新を毎週まとめて確認できます。',
+        href: ROUTES.FC_MYPAGE,
+        label: 'WEEKLY UPDATE',
+        accent: 'fuchsia' as const,
+        location: 'fc_home_bento',
+        action: 'weekly',
+        className: 'sm:col-span-2 lg:col-span-3',
+      },
+      {
+        id: 'fc-join',
+        title: '入会フローをシンプルに',
+        description: 'join / login / mypage まで最短で迷わず遷移できる設計。',
+        href: ROUTES.FC_JOIN,
+        label: 'JOIN FLOW',
+        accent: 'violet' as const,
+        location: 'fc_home_bento',
+        action: 'join',
+      },
+      {
+        id: 'fc-store',
+        title: '会員向けストア連携',
+        description: '先行販売や会員特典つき商品への導線を統合。',
+        href: storeLink('/products'),
+        label: 'MEMBER STORE',
+        accent: 'sky' as const,
+        location: 'fc_home_bento',
+        action: 'member_store',
+      },
+      {
+        id: 'fc-legal',
+        title: '法務・安心導線',
+        description: '規約、プライバシー、継続課金ポリシーを見失わない設計。',
+        href: ROUTES.FC_LEGAL,
+        label: 'SAFE MEMBERSHIP',
+        accent: 'amber' as const,
+        location: 'fc_home_bento',
+        action: 'legal',
+      },
+    ],
+    [],
+  )
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-10 md:py-16">
@@ -249,6 +296,12 @@ export function FanclubHomeHubPage() {
         defaultLabel="今週の更新通知を受け取る"
       />
       {memberCampaign && <CampaignHero campaign={memberCampaign} location="fc_home_campaign_hero" />}
+      <CuratedBentoSection
+        eyebrow="member journey"
+        title="会員体験を高める curated section"
+        subtitle="回遊・没入感・再訪理由を作るための重要導線を bento 構成で配置。"
+        items={homeBentoItems}
+      />
       <EditorialSpotlightSection
         title="Members Spotlight"
         subtitle="限定体験・先行導線・次に見るべき更新を編集表示"
@@ -326,6 +379,15 @@ export function FanclubJoinPage() {
     <section className="mx-auto max-w-4xl px-4 py-14">
       <PageHead title="入会 | mizzz official fanclub" description="会費、支払い頻度、登録フロー、注意事項。" />
       <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">入会プラン</h1>
+      <div className="mt-6 rounded-3xl border border-fuchsia-200/70 bg-gradient-to-br from-white via-fuchsia-50/70 to-white p-5 dark:border-fuchsia-900/50 dark:from-gray-900 dark:via-fuchsia-950/20 dark:to-gray-900">
+        <div className="grid gap-4 md:grid-cols-[1.15fr_0.85fr] md:items-center">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-fuchsia-600 dark:text-fuchsia-300">membership concept</p>
+            <p className="mt-2 text-sm leading-7 text-gray-600 dark:text-gray-300">会員限定コンテンツ、先行案内、会員向けストア導線を「今週の更新」起点で迷わず回遊できるよう設計しています。</p>
+          </div>
+          <BrandIllustration variant="fanclub" className="aspect-[6/4]" />
+        </div>
+      </div>
       <div className="mt-8 grid gap-4 md:grid-cols-2">
         {((plans && plans.length > 0) ? plans : [
           { id: 0, documentId: 'default-paid', name: '有料会員（standard）', description: '月額 880円 / 年額 8,800円。限定ニュース、ブログ、動画、ギャラリー、チケット先行案内。', price: 880, currency: 'JPY', billingCycle: 'monthly', isJoinable: true, membershipType: 'paid' },
@@ -375,6 +437,10 @@ export function FanclubLoginPage() {
       <div className="mt-8 rounded-2xl border border-gray-200 p-5 dark:border-gray-800">
         <p className="text-sm text-gray-700 dark:text-gray-200">認証基盤は Clerk を使用します。メール認証・パスワード再設定・セッション管理に対応。</p>
         <p className="mt-2 text-xs text-gray-500">※ Clerk 未設定環境ではログインUIは無効化されます。</p>
+      </div>
+      <div className="mt-5 rounded-2xl border border-violet-200/80 bg-violet-50/60 p-4 dark:border-violet-900/60 dark:bg-violet-950/20">
+        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-violet-600 dark:text-violet-300">secure + smooth</p>
+        <p className="mt-2 text-xs leading-6 text-gray-600 dark:text-gray-300">ログイン後は会員向け更新・先行特典・継続課金ポリシーへ即アクセスできる導線を維持します。</p>
       </div>
       <div className="mt-6 flex flex-wrap gap-4 text-sm">
         <Link to={ROUTES.FC_LOGIN_RESET_PASSWORD} className="text-gray-600 underline hover:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100">パスワード再設定</Link>
@@ -537,6 +603,24 @@ export function FanclubMyPageSite() {
       <PageHead title="マイページ | mizzz official fanclub" description="会員ステータス、契約プラン、次回更新日、退会導線。" noindex />
       <p className="font-mono text-xs tracking-[0.14em] text-gray-500">MY PAGE</p>
       <h1 className="mt-2 text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">会員ダッシュボード</h1>
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-2xl border border-fuchsia-200/70 bg-fuchsia-50/70 p-4 dark:border-fuchsia-900/60 dark:bg-fuchsia-950/20">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-fuchsia-700 dark:text-fuchsia-200">weekly update</p>
+          <p className="mt-1 text-xs text-gray-700 dark:text-gray-200">今週追加された会員限定コンテンツを要点で表示。</p>
+        </div>
+        <div className="rounded-2xl border border-violet-200/70 bg-violet-50/70 p-4 dark:border-violet-900/60 dark:bg-violet-950/20">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-violet-700 dark:text-violet-200">member benefit</p>
+          <p className="mt-1 text-xs text-gray-700 dark:text-gray-200">会員向けストア特典・先行販売を横断表示。</p>
+        </div>
+        <div className="rounded-2xl border border-sky-200/70 bg-sky-50/70 p-4 dark:border-sky-900/60 dark:bg-sky-950/20">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-sky-700 dark:text-sky-200">quick access</p>
+          <p className="mt-1 text-xs text-gray-700 dark:text-gray-200">Movies / Gallery / Tickets へのショートカット。</p>
+        </div>
+        <div className="rounded-2xl border border-amber-200/70 bg-amber-50/70 p-4 dark:border-amber-900/60 dark:bg-amber-950/20">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-amber-700 dark:text-amber-200">policy</p>
+          <p className="mt-1 text-xs text-gray-700 dark:text-gray-200">継続課金・解約関連の確認導線を常設。</p>
+        </div>
+      </div>
 
       <div className="mt-7 grid gap-4 lg:grid-cols-3">
         <article className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900/70 lg:col-span-2">

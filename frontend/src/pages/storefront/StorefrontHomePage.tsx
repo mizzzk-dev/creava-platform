@@ -22,6 +22,7 @@ import type { CampaignSummary } from '@/modules/campaign/types'
 import { isCampaignActive } from '@/modules/campaign/lib'
 import BrandIllustration from '@/components/common/BrandIllustration'
 import SectionReveal from '@/components/common/SectionReveal'
+import CuratedBentoSection from '@/components/common/CuratedBentoSection'
 
 export default function StorefrontHomePage() {
   const { products, loading, error, refetch } = useProductList(24)
@@ -93,6 +94,52 @@ export default function StorefrontHomePage() {
     })
     return next.slice(0, 3)
   }, [memberPickup, products])
+  const curatedBentoItems = useMemo(
+    () => [
+      {
+        id: 'store-weekly-update',
+        title: '今週の更新を最短で確認',
+        description: '新着・先行・重要導線をまとめた更新ダイジェストにすぐ移動できます。',
+        href: '#store-weekly-update',
+        label: 'WEEKLY UPDATE',
+        accent: 'violet' as const,
+        location: 'store_home_bento',
+        action: 'weekly_update',
+        className: 'sm:col-span-2 lg:col-span-3',
+      },
+      {
+        id: 'store-pickup',
+        title: 'ピックアップ特集',
+        description: 'キャンペーン中の商品を編集視点でまとめた特集を表示。',
+        href: '/products',
+        label: 'CURATED PICKUP',
+        accent: 'sky' as const,
+        location: 'store_home_bento',
+        action: 'pickup',
+      },
+      {
+        id: 'store-member-line',
+        title: 'FC先行・会員特典',
+        description: '会員向け販売情報や先行案内を見逃さない導線設計。',
+        href: fanclubLink(ROUTES.FC_JOIN),
+        label: 'MEMBER BENEFIT',
+        accent: 'fuchsia' as const,
+        location: 'store_home_bento',
+        action: 'member_benefit',
+      },
+      {
+        id: 'store-guide',
+        title: '購入ガイド / FAQ',
+        description: '配送・返品・問い合わせ前の確認ポイントを一箇所に整理。',
+        href: '/guide',
+        label: 'SAFE PURCHASE',
+        accent: 'amber' as const,
+        location: 'store_home_bento',
+        action: 'guide',
+      },
+    ],
+    [],
+  )
   const primaryCampaign = useMemo(
     () =>
       (campaigns ?? [])
@@ -158,6 +205,13 @@ export default function StorefrontHomePage() {
         </section>
       )}
 
+      <CuratedBentoSection
+        eyebrow="editorial flow"
+        title="特集・ピックアップ・回遊導線"
+        subtitle="ストア体験の没入感と再訪理由を、編集構成で直感的に届けるセクション。"
+        items={curatedBentoItems}
+      />
+
       <EditorialSpotlightSection
         title="特集・キャンペーン"
         subtitle="今見てほしい商品を編集視点で再構成"
@@ -185,11 +239,13 @@ export default function StorefrontHomePage() {
       </SectionReveal>
 
 
+      <div id="store-weekly-update">
       <UpdateDigestSection
         title="今週の更新・注目"
         subtitle="新着 / 先行 / 重要導線をまとめて再訪しやすく整理"
         items={digestItems}
       />
+      </div>
 
       {!loading && !error && memberPickup.length > 0 && (
         <section className="mt-12 rounded-3xl border border-violet-200/70 bg-violet-50/60 p-5 dark:border-violet-900/60 dark:bg-violet-950/20 sm:p-7">

@@ -31,7 +31,7 @@ export default function ProductCard({ product, displayCurrency = 'JPY', tracking
       className="group block"
       aria-label={`${product.title} ${t('store.detailCta')}`}
     >
-      <article className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white/90 shadow-sm shadow-gray-200/40 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl dark:border-gray-800 dark:bg-gray-900/80 dark:shadow-black/20">
+      <article className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white/90 shadow-sm shadow-gray-200/40 transition-all duration-300 group-hover:-translate-y-1 group-hover:border-gray-300/90 group-hover:shadow-xl dark:border-gray-800 dark:bg-gray-900/80 dark:shadow-black/20 dark:group-hover:border-gray-700">
         <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800">
           <div className="absolute left-3 top-3 z-10 rounded-full border border-white/70 bg-white/70 px-2 py-1 font-mono text-[9px] uppercase tracking-[0.18em] text-gray-500 backdrop-blur dark:border-white/20 dark:bg-gray-900/70 dark:text-gray-300">
             curated
@@ -49,7 +49,8 @@ export default function ProductCard({ product, displayCurrency = 'JPY', tracking
             </div>
           )}
 
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-950/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-950/45 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+          <div className="pointer-events-none absolute inset-x-3 bottom-3 h-14 rounded-2xl bg-white/60 opacity-0 blur-xl transition duration-300 group-hover:opacity-100 dark:bg-violet-400/20" />
 
           <div className="absolute right-2 top-2 flex flex-col items-end gap-1">
             {product.campaignType === 'drop' && <Badge variant="featured" size="sm" label="DROP" />}
@@ -84,7 +85,7 @@ export default function ProductCard({ product, displayCurrency = 'JPY', tracking
                 ? t('store.fcOnlyNote')
                 : t('store.detailHint', { defaultValue: '購入条件を確認' })}
             </span>
-            <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 font-mono text-[10px] text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+            <span className="shrink-0 rounded-full border border-gray-200 bg-gray-100/90 px-2 py-0.5 font-mono text-[10px] text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
               {product.stock > 0 ? `在庫 ${product.stock}` : '在庫なし'}
             </span>
           </div>
