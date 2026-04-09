@@ -2,68 +2,118 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { ROUTES } from '@/lib/routeConstants'
+import { SplitWords } from '@/components/common/KineticText'
 
 const SERVICES = [
-  { icon: '◈', label: '映像制作', from: '¥150,000〜' },
-  { icon: '◉', label: '写真撮影', from: '¥30,000〜' },
-  { icon: '◎', label: '音楽制作', from: '¥15,000〜' },
-  { icon: '◇', label: 'Web / Dev', from: '¥80,000〜' },
+  { icon: '▶', label: '映像制作',  from: '¥150,000〜', accent: 'cyan',   num: '01' },
+  { icon: '◉', label: '写真撮影',  from: '¥30,000〜',  accent: 'amber',  num: '02' },
+  { icon: '♩', label: '音楽制作',  from: '¥15,000〜',  accent: 'violet', num: '03' },
+  { icon: '◈', label: 'Web / Dev', from: '¥80,000〜',  accent: 'cyan',   num: '04' },
 ]
+
+const accentCfg = {
+  cyan:   { border: 'rgba(6,182,212,0.2)',   text: '#06b6d4', glow: 'rgba(6,182,212,0.06)'   },
+  amber:  { border: 'rgba(245,158,11,0.2)',  text: '#f59e0b', glow: 'rgba(245,158,11,0.06)'  },
+  violet: { border: 'rgba(139,92,246,0.2)',  text: '#8b5cf6', glow: 'rgba(139,92,246,0.06)'  },
+}
 
 export default function PricingTeaserSection() {
   const { t } = useTranslation()
 
   return (
-    <motion.section
-      className="mx-auto max-w-5xl px-4 py-20 border-t border-gray-100 dark:border-gray-800"
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.55 }}
-    >
-      <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
-        {/* left */}
-        <div className="max-w-sm">
-          <p className="font-mono text-[11px] uppercase tracking-widest text-gray-400 dark:text-gray-600">
-            {t('home.pricing.subtitle')}
-          </p>
-          <h2 className="mt-4 text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 md:text-3xl">
-            {t('home.pricing.title')}
-          </h2>
-          <p className="mt-3 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
-            {t('home.pricing.body')}
-          </p>
-          <Link
-            to={ROUTES.PRICING}
-            className="group mt-6 inline-flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors hover:text-gray-900 dark:hover:text-gray-100"
-          >
-            {t('home.pricing.cta')}
-            <span className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
-          </Link>
-        </div>
+    <section className="relative overflow-hidden border-t border-[rgba(6,182,212,0.08)]">
+      <div className="cyber-grid pointer-events-none absolute inset-0 opacity-25" />
 
-        {/* right: service cards */}
-        <div className="grid grid-cols-2 gap-3 md:w-80">
-          {SERVICES.map(({ icon, label, from }, i) => (
-            <motion.div
-              key={label}
-              initial={{ opacity: 0, y: 12 }}
+      <div className="relative mx-auto max-w-5xl px-4 py-20">
+        <div className="flex flex-col gap-12 md:flex-row md:items-start md:justify-between">
+
+          {/* Left: text + CTA */}
+          <div className="max-w-sm">
+            <motion.p
+              className="section-eyebrow mb-5"
+              initial={{ opacity: 0, x: -12 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.45 }}
+            >
+              {t('home.pricing.subtitle')}
+            </motion.p>
+
+            <h2 className="font-display text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100 md:text-4xl">
+              <SplitWords text={t('home.pricing.title')} staggerMs={55} />
+            </h2>
+
+            <motion.p
+              className="mt-4 text-sm leading-relaxed text-gray-500 dark:text-[rgba(180,190,220,0.65)]"
+              initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: i * 0.06 }}
-              className="border border-gray-100 dark:border-gray-800 p-4 space-y-2 hover:border-gray-200 dark:hover:border-gray-700 transition-colors"
+              transition={{ delay: 0.25, duration: 0.5 }}
             >
-              <span className="font-mono text-xs text-gray-200 dark:text-gray-700 select-none">
-                {icon}
-              </span>
-              <p className="text-xs text-gray-700 dark:text-gray-300">{label}</p>
-              <p className="font-mono text-sm font-medium text-gray-500 dark:text-gray-400">
-                {from}
-              </p>
+              {t('home.pricing.body')}
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.35, duration: 0.45 }}
+            >
+              <Link to={ROUTES.PRICING} className="btn-cyber-outline group mt-7 inline-flex items-center gap-2">
+                {t('home.pricing.cta')}
+                <motion.span
+                  animate={{ x: [0, 4, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  →
+                </motion.span>
+              </Link>
             </motion.div>
-          ))}
+          </div>
+
+          {/* Right: 2×2 service cards */}
+          <div className="grid grid-cols-2 gap-3 md:w-[380px]">
+            {SERVICES.map(({ icon, label, from, accent, num }, i) => {
+              const cfg = accentCfg[accent as keyof typeof accentCfg]
+              return (
+                <motion.div
+                  key={label}
+                  initial={{ opacity: 0, y: 16, filter: 'blur(4px)' }}
+                  whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.45, delay: i * 0.07 }}
+                  whileHover={{ y: -4 }}
+                  className="group relative p-5 transition-all duration-300 cursor-default overflow-hidden"
+                  style={{
+                    border: `1px solid ${cfg.border}`,
+                    background: `linear-gradient(135deg, ${cfg.glow} 0%, transparent 65%)`,
+                  }}
+                >
+                  {/* Corner number */}
+                  <span
+                    className="absolute right-3 top-2.5 font-mono text-[9px] tracking-widest"
+                    style={{ color: cfg.text, opacity: 0.25 }}
+                  >
+                    {num}
+                  </span>
+
+                  <span className="mb-3 block font-mono text-sm opacity-60" style={{ color: cfg.text }}>
+                    {icon}
+                  </span>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{label}</p>
+                  <p className="mt-1.5 font-mono text-xs" style={{ color: cfg.text }}>{from}</p>
+
+                  {/* Hover underline */}
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-px origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100"
+                    style={{ background: cfg.text, opacity: 0.35 }}
+                  />
+                </motion.div>
+              )
+            })}
+          </div>
         </div>
       </div>
-    </motion.section>
+    </section>
   )
 }
