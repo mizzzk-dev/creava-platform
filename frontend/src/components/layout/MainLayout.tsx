@@ -6,6 +6,7 @@ import Footer from './Footer'
 import PreviewBanner from '@/components/common/PreviewBanner'
 import LoadingScreen from '@/components/common/LoadingScreen'
 import CookieConsentBanner from '@/components/common/CookieConsentBanner'
+import CustomCursor from '@/components/common/CustomCursor'
 import { COOKIE_CONSENT_EVENT, loadCookieConsent, setAnalyticsEnabled } from '@/modules/cookie/consent'
 import { initializeAnalytics, trackPageView } from '@/modules/analytics'
 
@@ -35,6 +36,7 @@ export default function MainLayout() {
 
   return (
     <>
+      <CustomCursor />
       <LoadingScreen />
       <div className="flex min-h-screen flex-col">
         <a
