@@ -60,6 +60,7 @@ function resolveDetailPath(type: string, slug: string): string {
     case 'work':            return detailPath.work(slug)
     case 'event':           return detailPath.event(slug)
     case 'fanclub-content': return detailPath.fanclub(slug)
+    case 'store-product':   return detailPath.product(slug)
     default:                return '/'
   }
 }
