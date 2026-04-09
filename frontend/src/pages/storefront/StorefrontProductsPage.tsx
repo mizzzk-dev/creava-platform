@@ -8,9 +8,15 @@ import PageHead from '@/components/seo/PageHead'
 import { DEFAULT_COLLECTIONS, inferCollectionSlug } from '@/modules/store/lib/catalog'
 import { trackApiFailure, trackCtaClick, trackEmptyState } from '@/modules/analytics/tracking'
 import EditorialSpotlightSection from '@/components/common/EditorialSpotlightSection'
+import { useStrapiCollection } from '@/hooks'
+import { getCampaignList } from '@/modules/campaign/api'
+import type { CampaignSummary } from '@/modules/campaign/types'
+import { isCampaignActive } from '@/modules/campaign/lib'
+import CampaignHero from '@/modules/campaign/components/CampaignHero'
 
 export default function StorefrontProductsPage() {
   const { products, loading, error, refetch } = useProductList(120)
+  const { items: campaigns } = useStrapiCollection<CampaignSummary>(() => getCampaignList())
   const [status, setStatus] = useState<'all' | 'available' | 'soldout' | 'coming_soon'>('all')
   const [collection, setCollection] = useState<string>('all')
   const [tag, setTag] = useState<string>('all')
@@ -51,6 +57,13 @@ export default function StorefrontProductsPage() {
           trackingLocation: 'store_products_spotlight',
         })),
     [filtered],
+  )
+  const activeCampaign = useMemo(
+    () =>
+      (campaigns ?? [])
+        .filter((item) => isCampaignActive(item))
+        .sort((a, b) => (b.displayPriority ?? 0) - (a.displayPriority ?? 0))[0] ?? null,
+    [campaigns],
   )
 
   useEffect(() => {
@@ -144,6 +157,7 @@ export default function StorefrontProductsPage() {
       </div>
 
       <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">表示件数: {loading ? '...' : filtered.length}件</p>
+      {activeCampaign && <CampaignHero campaign={activeCampaign} location="store_products_campaign_block" />}
       {!loading && !error && (
         <EditorialSpotlightSection
           title="ピックアップ"

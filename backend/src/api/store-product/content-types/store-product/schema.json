@@ -91,6 +91,21 @@
     "campaignLabel": {
       "type": "string"
     },
+    "campaignSlug": {
+      "type": "string"
+    },
+    "campaignType": {
+      "type": "enumeration",
+      "enum": [
+        "feature",
+        "drop",
+        "launch",
+        "restock",
+        "benefit",
+        "announcement"
+      ],
+      "default": "feature"
+    },
     "shortHighlight": {
       "type": "text"
     },
@@ -105,9 +120,34 @@
       "type": "boolean",
       "default": false
     },
+    "membersOnly": {
+      "type": "boolean",
+      "default": false
+    },
     "displayPriority": {
       "type": "integer",
       "default": 0
+    },
+    "startAt": {
+      "type": "datetime"
+    },
+    "endAt": {
+      "type": "datetime"
+    },
+    "bannerLink": {
+      "type": "string"
+    },
+    "ctaText": {
+      "type": "string"
+    },
+    "ctaLink": {
+      "type": "string"
+    },
+    "sectionStyle": {
+      "type": "string"
+    },
+    "badgeStyleVariant": {
+      "type": "string"
     },
     "seoTitle": {
       "type": "string"

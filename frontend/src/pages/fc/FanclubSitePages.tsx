@@ -4,13 +4,17 @@ import { useTranslation } from 'react-i18next'
 import { useClerk } from '@clerk/clerk-react'
 import PageHead from '@/components/seo/PageHead'
 import { ROUTES } from '@/lib/routeConstants'
-import { useCurrentUser } from '@/hooks'
+import { useCurrentUser, useStrapiCollection } from '@/hooks'
 import { canAccessByRole, type VisibilityScope } from '@/lib/auth/membership'
 import { trackCtaClick } from '@/modules/analytics/tracking'
 import { useProductList } from '@/modules/store/hooks/useProductList'
 import { storeLink } from '@/lib/siteLinks'
 import UpdateDigestSection, { type UpdateDigestItem } from '@/components/common/UpdateDigestSection'
 import EditorialSpotlightSection from '@/components/common/EditorialSpotlightSection'
+import CampaignHero from '@/modules/campaign/components/CampaignHero'
+import { getCampaignList } from '@/modules/campaign/api'
+import type { CampaignSummary } from '@/modules/campaign/types'
+import { isCampaignActive } from '@/modules/campaign/lib'
 
 type Visibility = VisibilityScope
 
@@ -95,7 +99,16 @@ function FcSectionTemplate({
 
 export function FanclubHomeHubPage() {
   const { products } = useProductList(8)
+  const { items: campaigns } = useStrapiCollection<CampaignSummary>(() => getCampaignList())
   const storeBenefits = useMemo(() => products.filter((item) => item.earlyAccess || item.memberBenefit || item.accessStatus === 'fc_only').slice(0, 3), [products])
+  const memberCampaign = useMemo(
+    () =>
+      (campaigns ?? [])
+        .filter((item) => item.membersOnly || item.earlyAccess)
+        .filter((item) => isCampaignActive(item))
+        .sort((a, b) => (b.displayPriority ?? 0) - (a.displayPriority ?? 0))[0] ?? null,
+    [campaigns],
+  )
   const homeDigestItems = useMemo<UpdateDigestItem[]>(() => ([
     {
       id: 'members-weekly',
@@ -201,6 +214,7 @@ export function FanclubHomeHubPage() {
         subtitle="再訪時に価値が分かる導線を先頭で確認"
         items={homeDigestItems}
       />
+      {memberCampaign && <CampaignHero campaign={memberCampaign} location="fc_home_campaign_hero" />}
       <EditorialSpotlightSection
         title="Members Spotlight"
         subtitle="限定体験・先行導線・次に見るべき更新を編集表示"
@@ -368,7 +382,16 @@ export function FanclubVerifyEmailPage() {
 export function FanclubMyPageSite() {
   const { user } = useCurrentUser()
   const { products } = useProductList(8)
+  const { items: campaigns } = useStrapiCollection<CampaignSummary>(() => getCampaignList())
   const memberStoreItems = useMemo(() => products.filter((item) => item.earlyAccess || item.accessStatus === 'fc_only' || item.memberBenefit).slice(0, 4), [products])
+  const mypageCampaign = useMemo(
+    () =>
+      (campaigns ?? [])
+        .filter((item) => item.membersOnly || item.earlyAccess || item.pickup)
+        .filter((item) => isCampaignActive(item))
+        .sort((a, b) => (b.displayPriority ?? 0) - (a.displayPriority ?? 0))[0] ?? null,
+    [campaigns],
+  )
   const mypageDigestItems = useMemo<UpdateDigestItem[]>(() => ([
     {
       id: 'mypage-weekly-news',
@@ -448,6 +471,7 @@ export function FanclubMyPageSite() {
         subtitle="未読になりやすい更新導線を上部に集約"
         items={mypageDigestItems}
       />
+      {mypageCampaign && <CampaignHero campaign={mypageCampaign} location="fc_mypage_campaign_hero" />}
 
       <div className="mt-8 grid gap-4 md:grid-cols-2">
         <article className="rounded-2xl border border-gray-200 p-5 dark:border-gray-800">

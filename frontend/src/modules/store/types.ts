@@ -2,6 +2,7 @@ import type { ContentStatus } from '@/types'
 
 export type PurchaseStatus = 'available' | 'soldout' | 'coming_soon'
 export type StoreCategory = 'other' | 'digital' | 'photo' | 'apparel' | 'print'
+export type CampaignType = 'feature' | 'drop' | 'launch' | 'restock' | 'benefit' | 'announcement'
 
 export interface StoreProductSummary {
   id: number
@@ -29,10 +30,20 @@ export interface StoreProductSummary {
   earlyAccess: boolean
   specialOffer: string | null
   campaignLabel: string | null
+  campaignSlug?: string | null
+  campaignType?: CampaignType
   shortHighlight: string | null
   heroCopy: string | null
   isTrending: boolean
   isLimited: boolean
+  membersOnly?: boolean
+  startAt?: string | null
+  endAt?: string | null
+  bannerLink?: string | null
+  ctaText?: string | null
+  ctaLink?: string | null
+  sectionStyle?: string | null
+  badgeStyleVariant?: string | null
   displayPriority: number
 }
 

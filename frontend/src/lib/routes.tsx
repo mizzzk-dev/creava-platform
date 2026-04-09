@@ -11,6 +11,7 @@ import FanclubLayout from '@/components/layout/FanclubLayout'
 import StorefrontHomePage from '@/pages/storefront/StorefrontHomePage'
 import StorefrontProductsPage from '@/pages/storefront/StorefrontProductsPage'
 import StorefrontCollectionPage from '@/pages/storefront/StorefrontCollectionPage'
+import CampaignLandingPage from '@/pages/shared/CampaignLandingPage'
 import StorefrontGuidePage from '@/pages/storefront/StorefrontGuidePage'
 import StorefrontShippingPolicyPage from '@/pages/storefront/StorefrontShippingPolicyPage'
 import StorefrontReturnsPage from '@/pages/storefront/StorefrontReturnsPage'
@@ -88,6 +89,7 @@ export function AppRoutes() {
             <Route path={ROUTES.STORE_CART} element={<CartPage />} />
             <Route path={ROUTES.CART} element={<CartPage />} />
             <Route path={ROUTES.STORE_COLLECTION} element={<StorefrontCollectionPage />} />
+            <Route path={ROUTES.STORE_CAMPAIGN} element={<CampaignLandingPage />} />
             <Route path={ROUTES.NEWS} element={<NewsPage />} />
             <Route path={ROUTES.NEWS_DETAIL} element={<NewsDetailPage />} />
             <Route path={ROUTES.FAQ} element={<FAQPage />} />
@@ -135,6 +137,7 @@ export function AppRoutes() {
             <Route path={ROUTES.FC_TICKETS} element={<FanclubAuthGuard><FanclubTicketsPage /></FanclubAuthGuard>} />
             <Route path={ROUTES.FC_TICKET_DETAIL} element={<FanclubAuthGuard><FanclubTicketsDetailPage /></FanclubAuthGuard>} />
             <Route path={ROUTES.FC_MEMBER_STORE} element={<FanclubAuthGuard><FanclubMemberStorePage /></FanclubAuthGuard>} />
+            <Route path={ROUTES.FC_CAMPAIGN} element={<CampaignLandingPage />} />
             <Route path={ROUTES.FAQ} element={<FAQPage />} />
             <Route path={ROUTES.FC_GUIDE} element={<FanclubGuidePage />} />
             <Route path={ROUTES.CONTACT} element={<StorefrontContactRedirectPage />} />

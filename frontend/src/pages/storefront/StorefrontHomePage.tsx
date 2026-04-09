@@ -15,6 +15,10 @@ import { fanclubLink } from '@/lib/siteLinks'
 import { ROUTES } from '@/lib/routeConstants'
 import UpdateDigestSection, { type UpdateDigestItem } from '@/components/common/UpdateDigestSection'
 import EditorialSpotlightSection from '@/components/common/EditorialSpotlightSection'
+import CampaignHero from '@/modules/campaign/components/CampaignHero'
+import { getCampaignList } from '@/modules/campaign/api'
+import type { CampaignSummary } from '@/modules/campaign/types'
+import { isCampaignActive } from '@/modules/campaign/lib'
 
 export default function StorefrontHomePage() {
   const { products, loading, error, refetch } = useProductList(24)
@@ -24,6 +28,7 @@ export default function StorefrontHomePage() {
   const { items: faqs, loading: faqLoading, error: faqError, refetch: refetchFaq } = useStrapiCollection<FAQItem>(
     () => getFaqList({ pagination: { pageSize: 4, withCount: false } }),
   )
+  const { items: campaigns } = useStrapiCollection<CampaignSummary>(() => getCampaignList())
 
   const priorityProducts = useMemo(() => [...products].sort((a, b) => (b.displayPriority ?? 0) - (a.displayPriority ?? 0)), [products])
   const newArrivals = useMemo(() => priorityProducts.slice(0, 8), [priorityProducts])
@@ -85,6 +90,13 @@ export default function StorefrontHomePage() {
     })
     return next.slice(0, 3)
   }, [memberPickup, products])
+  const primaryCampaign = useMemo(
+    () =>
+      (campaigns ?? [])
+        .filter((item) => isCampaignActive(item))
+        .sort((a, b) => (b.displayPriority ?? 0) - (a.displayPriority ?? 0))[0] ?? null,
+    [campaigns],
+  )
   useEffect(() => {
     if (error) trackApiFailure('store_home_products', error)
   }, [error])
@@ -123,6 +135,7 @@ export default function StorefrontHomePage() {
           </div>
         </div>
       </header>
+      {primaryCampaign && <CampaignHero campaign={primaryCampaign} location="store_home_campaign_hero" />}
 
       {!loading && !error && pickup.length > 0 && (
         <section className="mt-10 grid gap-4 lg:grid-cols-3">

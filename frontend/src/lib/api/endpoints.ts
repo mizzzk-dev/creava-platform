@@ -16,6 +16,7 @@ export const API_ENDPOINTS = {
   fanclub:         '/fanclub-contents',
   events:          '/events',
   store:           '/store-products',
+  campaigns:       '/campaigns',
   memberOrders:    '/orders',
   memberShipments: '/shipments',
   memberNotices:   '/member-notices',

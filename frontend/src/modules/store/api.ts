@@ -42,10 +42,20 @@ function normalizeStoreProduct(item: Partial<StoreProductSummary>): StoreProduct
     earlyAccess: Boolean(item.earlyAccess),
     specialOffer: typeof item.specialOffer === 'string' ? item.specialOffer : null,
     campaignLabel: typeof item.campaignLabel === 'string' ? item.campaignLabel : null,
+    campaignSlug: typeof item.campaignSlug === 'string' ? item.campaignSlug : null,
+    campaignType: item.campaignType === 'drop' || item.campaignType === 'launch' || item.campaignType === 'restock' || item.campaignType === 'benefit' || item.campaignType === 'announcement' ? item.campaignType : 'feature',
     shortHighlight: typeof item.shortHighlight === 'string' ? item.shortHighlight : null,
     heroCopy: typeof item.heroCopy === 'string' ? item.heroCopy : null,
     isTrending: Boolean(item.isTrending),
     isLimited: Boolean(item.isLimited),
+    membersOnly: Boolean(item.membersOnly),
+    startAt: typeof item.startAt === 'string' ? item.startAt : null,
+    endAt: typeof item.endAt === 'string' ? item.endAt : null,
+    bannerLink: typeof item.bannerLink === 'string' ? item.bannerLink : null,
+    ctaText: typeof item.ctaText === 'string' ? item.ctaText : null,
+    ctaLink: typeof item.ctaLink === 'string' ? item.ctaLink : null,
+    sectionStyle: typeof item.sectionStyle === 'string' ? item.sectionStyle : null,
+    badgeStyleVariant: typeof item.badgeStyleVariant === 'string' ? item.badgeStyleVariant : null,
     displayPriority: typeof item.displayPriority === 'number' ? item.displayPriority : 0,
   }
 }
@@ -82,7 +92,7 @@ export function getProducts(
   }
 
   const merged = {
-    fields: ['title', 'slug', 'price', 'currency', 'accessStatus', 'limitedEndAt', 'archiveVisibleForFC', 'stripeLink', 'baseLink', 'purchaseStatus', 'stock', 'category', 'tags', 'sortOrder', 'featured', 'isNewArrival', 'pickup', 'memberBenefit', 'membersOnlyNotice', 'earlyAccess', 'specialOffer', 'campaignLabel', 'shortHighlight', 'heroCopy', 'isTrending', 'isLimited', 'displayPriority'],
+    fields: ['title', 'slug', 'price', 'currency', 'accessStatus', 'limitedEndAt', 'archiveVisibleForFC', 'stripeLink', 'baseLink', 'purchaseStatus', 'stock', 'category', 'tags', 'sortOrder', 'featured', 'isNewArrival', 'pickup', 'memberBenefit', 'membersOnlyNotice', 'earlyAccess', 'specialOffer', 'campaignLabel', 'campaignSlug', 'campaignType', 'shortHighlight', 'heroCopy', 'isTrending', 'isLimited', 'membersOnly', 'displayPriority', 'startAt', 'endAt', 'bannerLink', 'ctaText', 'ctaLink', 'sectionStyle', 'badgeStyleVariant'],
     populate: {
       previewImage: { fields: ['url', 'alternativeText', 'width', 'height'] },
     },
@@ -108,7 +118,7 @@ export async function getProduct(slug: string, signal?: AbortSignal): Promise<St
   }
   try {
     const product = await fetchBySlug<StoreProduct>(ENDPOINT, slug, {
-      fields: ['title', 'slug', 'price', 'currency', 'accessStatus', 'limitedEndAt', 'archiveVisibleForFC', 'stripeLink', 'baseLink', 'purchaseStatus', 'description', 'externalPurchaseNote', 'stock', 'category', 'tags', 'sortOrder', 'featured', 'isNewArrival', 'pickup', 'memberBenefit', 'membersOnlyNotice', 'earlyAccess', 'specialOffer', 'campaignLabel', 'shortHighlight', 'heroCopy', 'isTrending', 'isLimited', 'displayPriority', 'cautionNotes', 'shippingNotes', 'digitalDeliveryNotes'],
+      fields: ['title', 'slug', 'price', 'currency', 'accessStatus', 'limitedEndAt', 'archiveVisibleForFC', 'stripeLink', 'baseLink', 'purchaseStatus', 'description', 'externalPurchaseNote', 'stock', 'category', 'tags', 'sortOrder', 'featured', 'isNewArrival', 'pickup', 'memberBenefit', 'membersOnlyNotice', 'earlyAccess', 'specialOffer', 'campaignLabel', 'campaignSlug', 'campaignType', 'shortHighlight', 'heroCopy', 'isTrending', 'isLimited', 'membersOnly', 'displayPriority', 'startAt', 'endAt', 'bannerLink', 'ctaText', 'ctaLink', 'sectionStyle', 'badgeStyleVariant', 'cautionNotes', 'shippingNotes', 'digitalDeliveryNotes'],
       populate: {
         previewImage: { fields: ['url', 'alternativeText', 'width', 'height'] },
         relatedProducts: { fields: ['slug', 'title'] },

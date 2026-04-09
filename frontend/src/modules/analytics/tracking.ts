@@ -17,6 +17,10 @@ export function trackCtaClick(location: string, cta: string, extras?: AnalyticsP
   trackMizzzEvent('cta_click', { location, cta, ...extras })
 }
 
+export function trackCampaignClick(location: string, campaignSlug: string, action: string, extras?: AnalyticsParams): void {
+  trackMizzzEvent('campaign_click', { location, campaignSlug, action, ...extras })
+}
+
 export function trackErrorState(location: string, message: string, extras?: AnalyticsParams): void {
   trackMizzzEvent('error_state_view', { location, message, ...extras })
 }

@@ -49,6 +49,8 @@ export default function ProductCard({ product, displayCurrency = 'JPY', tracking
           <div className="absolute inset-0 bg-gradient-to-t from-gray-950/35 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
           <div className="absolute right-2 top-2 flex flex-col items-end gap-1">
+            {product.campaignType === 'drop' && <Badge variant="featured" size="sm" label="DROP" />}
+            {product.campaignType === 'restock' && <Badge variant="new" size="sm" label="RESTOCK" />}
             {product.pickup && <Badge variant="pickup" size="sm" />}
             {product.isTrending && <Badge variant="featured" size="sm" label="TRENDING" />}
             {product.purchaseStatus === 'soldout' && <Badge variant="soldout" size="sm" />}
