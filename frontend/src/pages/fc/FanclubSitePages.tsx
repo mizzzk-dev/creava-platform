@@ -1,10 +1,13 @@
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { getSiteSettings } from '@/modules/settings/api'
+import { getFanclubList } from '@/modules/fanclub/api'
+import { createSectionVisibilityResolver, isWithinPublicationWindow, parseTopPageSections } from '@/lib/editorial'
 import { useAuth, useClerk } from '@clerk/clerk-react'
 import PageHead from '@/components/seo/PageHead'
 import { ROUTES } from '@/lib/routeConstants'
-import { useCurrentUser, useStrapiCollection } from '@/hooks'
+import { useCurrentUser, useStrapiCollection, useStrapiSingle } from '@/hooks'
 import { canAccessByRole, type VisibilityScope } from '@/lib/auth/membership'
 import { trackCtaClick } from '@/modules/analytics/tracking'
 import { useProductList } from '@/modules/store/hooks/useProductList'
@@ -24,6 +27,7 @@ import BrandIllustration from '@/components/common/BrandIllustration'
 import SectionReveal from '@/components/common/SectionReveal'
 import CuratedBentoSection from '@/components/common/CuratedBentoSection'
 import VisualHeroSection from '@/components/common/VisualHeroSection'
+import type { FanclubContent } from '@/types'
 
 type Visibility = VisibilityScope
 
@@ -107,9 +111,29 @@ function FcSectionTemplate({
 }
 
 export function FanclubHomeHubPage() {
+  const { i18n } = useTranslation()
   const { products } = useProductList(8)
   const { items: campaigns } = useStrapiCollection<CampaignSummary>(() => getCampaignList())
+  const { item: settings } = useStrapiSingle(() => getSiteSettings({
+    locale: i18n.resolvedLanguage,
+    fields: ['heroTitle', 'heroSubtitle', 'heroCopy', 'heroSubcopy', 'heroCTALabel', 'heroCTAUrl', 'topPageSections'],
+  }))
+  const { items: weeklyContent } = useStrapiCollection<FanclubContent>(() => getFanclubList({
+    locale: i18n.resolvedLanguage,
+    filters: { weeklyHighlight: { $eq: true } },
+    pagination: { pageSize: 6, withCount: false },
+  }))
   const storeBenefits = useMemo(() => products.filter((item) => item.earlyAccess || item.memberBenefit || item.accessStatus === 'fc_only').slice(0, 3), [products])
+  const sectionResolver = useMemo(() => createSectionVisibilityResolver(
+    parseTopPageSections(settings?.topPageSections),
+    'fanclub',
+    i18n.resolvedLanguage,
+  ), [i18n.resolvedLanguage, settings?.topPageSections])
+
+  const activeWeeklyContent = useMemo(() => (weeklyContent ?? [])
+    .filter((item) => isWithinPublicationWindow({ startAt: item.startAt, endAt: item.endAt }))
+    .sort((a, b) => (b.displayPriority ?? 0) - (a.displayPriority ?? 0))
+    .slice(0, 3), [weeklyContent])
   const memberCampaign = useMemo(
     () =>
       (campaigns ?? [])
@@ -118,32 +142,35 @@ export function FanclubHomeHubPage() {
         .sort((a, b) => (b.displayPriority ?? 0) - (a.displayPriority ?? 0))[0] ?? null,
     [campaigns],
   )
-  const homeDigestItems = useMemo<UpdateDigestItem[]>(() => ([
-    {
-      id: 'members-weekly',
-      title: '会員限定の今週更新',
-      description: 'Movies / Gallery / Tickets の更新をまとめて確認できます。',
-      href: ROUTES.FC_MYPAGE,
+  const homeDigestItems = useMemo<UpdateDigestItem[]>(() => {
+    const next: UpdateDigestItem[] = activeWeeklyContent.map((item) => ({
+      id: `weekly-${item.id}`,
+      title: `今週更新: ${item.title}`,
+      description: item.shortHighlight ?? item.heroCopy ?? '会員向け更新を公開しました。',
+      href: `/fanclub/${item.slug}`,
       tone: 'members',
       location: 'fc_home_digest',
-    },
-    {
+    }))
+
+    next.push({
       id: 'early-store',
       title: 'FC向け先行販売情報',
       description: '会員向け販売・先行案内をストア連携で確認。',
       href: storeLink('/products'),
       tone: 'early',
       location: 'fc_home_digest',
-    },
-    {
+    })
+    next.push({
       id: 'join-value',
       title: '継続特典と次回更新を確認',
       description: 'マイページで次に見るべき内容を迷わずチェック。',
       href: ROUTES.FC_MYPAGE,
       tone: 'important',
       location: 'fc_home_digest',
-    },
-  ]), [])
+    })
+
+    return next.slice(0, 3)
+  }, [activeWeeklyContent])
   const fanclubSpotlights = useMemo(
     () => [
       {
@@ -229,19 +256,19 @@ export function FanclubHomeHubPage() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-10 md:py-16">
       <PageHead
-        title="mizzz official fanclub"
+        title={settings?.heroTitle?.trim() || 'mizzz official fanclub'}
         description="mizzz の公式ファンクラブ。ニュース、ブログ、動画、ギャラリー、チケット先行情報を会員向けに配信。"
       />
       <VisualHeroSection
         location="fc_home"
         eyebrow="OFFICIAL FANCLUB"
-        badge="members only / weekly / limited"
-        title="mizzz official fanclub"
-        description="限定ニュース、ブログ、動画、ギャラリー、イベント先行情報を、余白と静けさを保ちながら届けるメンバーシップサイトです。"
+        badge={settings?.heroSubcopy?.trim() || 'members only / weekly / limited'}
+        title={settings?.heroTitle?.trim() || 'mizzz official fanclub'}
+        description={settings?.heroCopy?.trim() || '限定ニュース、ブログ、動画、ギャラリー、イベント先行情報を、余白と静けさを保ちながら届けるメンバーシップサイトです。'}
         illustrationVariant="fanclub"
         backgroundVariant="fanclub"
         actions={[
-          { label: '入会する', to: ROUTES.FC_JOIN, cta: 'join', style: 'primary' },
+          { label: settings?.heroCTALabel?.trim() || '入会する', to: settings?.heroCTAUrl?.trim() || ROUTES.FC_JOIN, cta: 'join', style: 'primary' },
           { label: 'ログイン', to: ROUTES.FC_LOGIN, cta: 'login', style: 'secondary' },
           { label: '会員向けストアを見る', to: storeLink(ROUTES.STORE_HOME), cta: 'to_store', style: 'accent' },
           { label: 'FAQ', to: ROUTES.FAQ, cta: 'faq', style: 'secondary' },
@@ -255,11 +282,11 @@ export function FanclubHomeHubPage() {
         ]}
       />
 
-      <UpdateDigestSection
+      {sectionResolver('fc-home-weekly-update', true) && <UpdateDigestSection
         title="今週の更新・限定・先行"
         subtitle="再訪時に価値が分かる導線を先頭で確認"
         items={homeDigestItems}
-      />
+      />}
       <NotificationInterestButton
         location="fc_home"
         topic="weekly_update"
@@ -271,19 +298,19 @@ export function FanclubHomeHubPage() {
         defaultLabel="今週の更新通知を受け取る"
       />
       {memberCampaign && <CampaignHero campaign={memberCampaign} location="fc_home_campaign_hero" />}
-      <CuratedBentoSection
+      {sectionResolver('fc-home-bento', true) && <CuratedBentoSection
         eyebrow="member journey"
         title="会員体験を高める curated section"
         subtitle="回遊・没入感・再訪理由を作るための重要導線を bento 構成で配置。"
         items={homeBentoItems}
-      />
-      <EditorialSpotlightSection
+      />}
+      {sectionResolver('fc-home-spotlight', true) && <EditorialSpotlightSection
         title="Members Spotlight"
         subtitle="限定体験・先行導線・次に見るべき更新を編集表示"
         items={fanclubSpotlights}
-      />
+      />}
 
-      {storeBenefits.length > 0 && (
+      {sectionResolver('fc-home-store-bridge', true) && storeBenefits.length > 0 && (
         <SectionReveal className="mt-8 rounded-3xl border border-violet-200 bg-violet-50/70 p-6 dark:border-violet-900/60 dark:bg-violet-950/20">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">会員向け販売・先行案内</h2>

@@ -12,5 +12,8 @@ const ENDPOINT = API_ENDPOINTS.siteSettings
 export function getSiteSettings(
   params?: StrapiQueryParams,
 ): Promise<StrapiSingleResponse<SiteSettings>> {
-  return fetchSingle<SiteSettings>(ENDPOINT, { populate: ['ogImage'], ...params })
+  return fetchSingle<SiteSettings>(ENDPOINT, {
+    populate: ['ogImage', 'heroVisual', 'heroIllustration', 'illustrationAsset'],
+    ...params,
+  })
 }

@@ -110,8 +110,12 @@ export interface Event extends ContentBase {
 
 export interface FanclubContent extends ContentBase {
   body: string | null
+  startAt?: string | null
+  endAt?: string | null
   thumbnail: StrapiMedia | null
   category?: string
+  heroTitle?: string | null
+  heroSubtitle?: string | null
   heroCopy?: string | null
   heroSubcopy?: string | null
   shortHighlight?: string | null
@@ -165,8 +169,12 @@ export interface SiteSettings extends StrapiBase {
   weeklyHighlightTitle?: string | null
   weeklyHighlightText?: string | null
   weeklyHighlightUrl?: string | null
+  heroTitle?: string | null
+  heroSubtitle?: string | null
   heroCopy?: string | null
   heroSubcopy?: string | null
+  heroCTALabel?: string | null
+  heroCTAUrl?: string | null
   heroVisual?: StrapiMedia | null
   heroIllustration?: StrapiMedia | null
   illustrationAsset?: StrapiMedia | null
@@ -176,4 +184,7 @@ export interface SiteSettings extends StrapiBase {
   cardStyleVariant?: string | null
   badgeStyleVariant?: string | null
   campaign?: string | null
-  }
+  topPageSections?: unknown
+  notificationCtaText?: string | null
+  notificationCtaLink?: string | null
+}

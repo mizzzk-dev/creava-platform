@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom'
 import { useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useProductList } from '@/modules/store/hooks/useProductList'
 import ProductCard from '@/modules/store/components/ProductCard'
 import SkeletonProductCard from '@/components/common/SkeletonProductCard'
 import ErrorState from '@/components/common/ErrorState'
 import PageHead from '@/components/seo/PageHead'
 import { DEFAULT_COLLECTIONS, inferCollectionSlug } from '@/modules/store/lib/catalog'
-import { useStrapiCollection } from '@/hooks'
+import { useStrapiCollection, useStrapiSingle } from '@/hooks'
 import { getNewsList } from '@/modules/news/api'
 import { getFaqList } from '@/modules/faq/api'
 import type { FAQItem, NewsItem } from '@/types'
@@ -17,14 +18,21 @@ import UpdateDigestSection, { type UpdateDigestItem } from '@/components/common/
 import EditorialSpotlightSection from '@/components/common/EditorialSpotlightSection'
 import CampaignHero from '@/modules/campaign/components/CampaignHero'
 import { getCampaignList } from '@/modules/campaign/api'
+import { getSiteSettings } from '@/modules/settings/api'
 import type { CampaignSummary } from '@/modules/campaign/types'
 import { isCampaignActive } from '@/modules/campaign/lib'
 import SectionReveal from '@/components/common/SectionReveal'
 import CuratedBentoSection from '@/components/common/CuratedBentoSection'
 import VisualHeroSection from '@/components/common/VisualHeroSection'
+import { createSectionVisibilityResolver, parseTopPageSections } from '@/lib/editorial'
 
 export default function StorefrontHomePage() {
+  const { i18n } = useTranslation()
   const { products, loading, error, refetch } = useProductList(24)
+  const { item: settings } = useStrapiSingle(() => getSiteSettings({
+    locale: i18n.resolvedLanguage,
+    fields: ['heroTitle', 'heroSubtitle', 'heroCopy', 'heroSubcopy', 'heroCTALabel', 'heroCTAUrl', 'topPageSections', 'announcementText', 'announcementUrl', 'weeklyHighlightTitle', 'weeklyHighlightUrl'],
+  }))
   const { items: news, loading: newsLoading, error: newsError, refetch: refetchNews } = useStrapiCollection<NewsItem>(
     () => getNewsList({ pagination: { pageSize: 4, withCount: false } }),
   )
@@ -32,6 +40,12 @@ export default function StorefrontHomePage() {
     () => getFaqList({ pagination: { pageSize: 4, withCount: false } }),
   )
   const { items: campaigns } = useStrapiCollection<CampaignSummary>(() => getCampaignList())
+  const sectionResolver = useMemo(() => createSectionVisibilityResolver(
+    parseTopPageSections(settings?.topPageSections),
+    'store',
+    i18n.resolvedLanguage,
+  ), [i18n.resolvedLanguage, settings?.topPageSections])
+
 
   const priorityProducts = useMemo(() => [...products].sort((a, b) => (b.displayPriority ?? 0) - (a.displayPriority ?? 0)), [products])
   const newArrivals = useMemo(() => priorityProducts.slice(0, 8), [priorityProducts])
@@ -160,14 +174,14 @@ export default function StorefrontHomePage() {
       <VisualHeroSection
         location="store_home_hero"
         eyebrow="mizzz official store"
-        badge="featured / pickup / weekly update"
-        title="静けさの中で、"
-        subtitle="欲しいものに迷わず届く。"
-        description="新着・限定・デジタル商品をエディトリアルに整理。商品が少ない時も、多い時も、見つけやすく心地よいストア体験を保ちます。"
+        badge={settings?.announcementText?.trim() || 'featured / pickup / weekly update'}
+        title={settings?.heroTitle?.trim() || '静けさの中で、'}
+        subtitle={settings?.heroSubtitle?.trim() || '欲しいものに迷わず届く。'}
+        description={settings?.heroCopy?.trim() || '新着・限定・デジタル商品をエディトリアルに整理。商品が少ない時も、多い時も、見つけやすく心地よいストア体験を保ちます。'}
         illustrationVariant="store"
         backgroundVariant="store"
         actions={[
-          { label: '全商品を見る', to: '/products', cta: 'all_products', style: 'primary' },
+          { label: settings?.heroCTALabel?.trim() || '全商品を見る', to: settings?.heroCTAUrl?.trim() || '/products', cta: 'all_products', style: 'primary' },
           { label: 'Digital Goods', to: '/collections/digital', cta: 'digital_collection', style: 'secondary' },
           { label: 'FC先行案内を見る', to: fanclubLink(ROUTES.FC_JOIN), cta: 'to_fanclub_join', style: 'accent' },
           { label: 'Guide', to: '/guide', cta: 'guide', style: 'secondary' },
@@ -182,7 +196,7 @@ export default function StorefrontHomePage() {
       />
       {primaryCampaign && <CampaignHero campaign={primaryCampaign} location="store_home_campaign_hero" />}
 
-      {!loading && !error && pickup.length > 0 && (
+      {sectionResolver('store-home-pickup', true) && !loading && !error && pickup.length > 0 && (
         <section className="mt-10 grid gap-4 lg:grid-cols-3">
           {pickup.map((item, index) => (
             <Link key={item.id} to={`/products/${item.slug}`} onClick={() => trackCtaClick('store_home_pickup', 'pickup_click', { slug: item.slug })} className={`group overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 transition hover:-translate-y-1 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900 ${index === 0 ? 'lg:col-span-2' : ''}`}>
@@ -197,20 +211,20 @@ export default function StorefrontHomePage() {
         </section>
       )}
 
-      <CuratedBentoSection
+      {sectionResolver('store-home-bento', true) && <CuratedBentoSection
         eyebrow="editorial flow"
         title="特集・ピックアップ・回遊導線"
         subtitle="ストア体験の没入感と再訪理由を、編集構成で直感的に届けるセクション。"
         items={curatedBentoItems}
-      />
+      />}
 
-      <EditorialSpotlightSection
+      {sectionResolver('store-home-spotlight', true) && <EditorialSpotlightSection
         title="特集・キャンペーン"
         subtitle="今見てほしい商品を編集視点で再構成"
         items={spotlightItems}
-      />
+      />}
 
-      <SectionReveal className="mt-12">
+      {sectionResolver('store-home-new-arrivals', true) && <SectionReveal className="mt-12">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">New Arrival</h2>
           <Link to="/products" onClick={() => trackCtaClick('store_home_new_arrival', 'more')} className="text-sm text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100">もっと見る →</Link>
@@ -219,27 +233,27 @@ export default function StorefrontHomePage() {
         {error && <ErrorState message={error} onRetry={refetch} location="store_home_new_arrival" />}
         {!loading && !error && newArrivals.length === 0 && <p className="rounded-xl border border-dashed border-gray-300 p-6 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">公開中の商品はまだありません。</p>}
         {!loading && !error && newArrivals.length > 0 && <div className="grid grid-cols-2 gap-4 md:grid-cols-4">{newArrivals.map((product) => <ProductCard key={product.id} product={product} trackingLocation="store_home_new_arrival" />)}</div>}
-      </SectionReveal>
+      </SectionReveal>}
 
-      <SectionReveal className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      {sectionResolver('store-home-collections', true) && <SectionReveal className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {DEFAULT_COLLECTIONS.map((collection) => (
           <Link key={collection.slug} to={`/collections/${collection.slug}`} onClick={() => trackCtaClick('store_home_collection', 'collection_click', { collection: collection.slug })} className="rounded-2xl border border-gray-200 bg-white p-4 transition hover:-translate-y-0.5 hover:shadow-md dark:border-gray-800 dark:bg-gray-900/70">
             <p className="font-mono text-[11px] uppercase tracking-wider text-gray-500">{collection.name}</p>
             <p className="mt-2 text-xs leading-relaxed text-gray-500 dark:text-gray-400">{collection.description}</p>
           </Link>
         ))}
-      </SectionReveal>
+      </SectionReveal>}
 
 
-      <div id="store-weekly-update">
+      {sectionResolver('store-home-weekly-update', true) && <div id="store-weekly-update">
       <UpdateDigestSection
         title="今週の更新・注目"
         subtitle="新着 / 先行 / 重要導線をまとめて再訪しやすく整理"
         items={digestItems}
       />
-      </div>
+      </div>}
 
-      {!loading && !error && memberPickup.length > 0 && (
+      {sectionResolver('store-home-member-pickup', true) && !loading && !error && memberPickup.length > 0 && (
         <section className="mt-12 rounded-3xl border border-violet-200/70 bg-violet-50/60 p-5 dark:border-violet-900/60 dark:bg-violet-950/20 sm:p-7">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
@@ -263,7 +277,7 @@ export default function StorefrontHomePage() {
         </section>
       )}
 
-      <SectionReveal className="mt-12 grid gap-10 lg:grid-cols-2">
+      {sectionResolver('store-home-featured', true) && <SectionReveal className="mt-12 grid gap-10 lg:grid-cols-2">
         {!loading && !error && featured.length > 0 && (
           <div>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Featured</h2>
@@ -277,9 +291,9 @@ export default function StorefrontHomePage() {
             <div className="mt-4 grid grid-cols-2 gap-4">{digitalGoods.map((product) => <ProductCard key={product.id} product={product} trackingLocation="store_home_digital" />)}</div>
           </div>
         )}
-      </SectionReveal>
+      </SectionReveal>}
 
-      <SectionReveal className="mt-12 grid gap-4 md:grid-cols-2">
+      {sectionResolver('store-home-news-support', true) && <SectionReveal className="mt-12 grid gap-4 md:grid-cols-2">
         <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900/70">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">お知らせ</h2>
@@ -320,7 +334,7 @@ export default function StorefrontHomePage() {
             </ul>
           )}
         </div>
-      </SectionReveal>
+      </SectionReveal>}
     </section>
   )
 }
