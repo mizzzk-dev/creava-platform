@@ -13,10 +13,10 @@ import { useCart } from '@/modules/cart/context'
 import { prefetchRoute } from '@/lib/routePrefetch'
 
 const NAV_ITEMS = [
-  { key: 'nav.news', to: ROUTES.NEWS },
-  { key: 'nav.blog', to: ROUTES.BLOG },
-  { key: 'nav.events', to: ROUTES.EVENTS },
-  { key: 'nav.store', to: storeLink(ROUTES.STORE) },
+  { key: 'nav.news',    to: ROUTES.NEWS },
+  { key: 'nav.blog',    to: ROUTES.BLOG },
+  { key: 'nav.events',  to: ROUTES.EVENTS },
+  { key: 'nav.store',   to: storeLink(ROUTES.STORE) },
   { key: 'nav.fanclub', to: fanclubLink(ROUTES.FANCLUB) },
   { key: 'nav.request', to: `${ROUTES.CONTACT}?tab=request` },
   { key: 'nav.contact', to: ROUTES.CONTACT },
@@ -52,6 +52,7 @@ export default function Header() {
   const [showDragHint, setShowDragHint] = useState(false)
   const [isDraggingCart, setIsDraggingCart] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [scrollProgress, setScrollProgress] = useState(0)
   const dragStartTimerRef = useRef<number | null>(null)
   const pointerStateRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null)
   const { pathname } = useLocation()
@@ -98,21 +99,22 @@ export default function Header() {
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : ''
-    return () => {
-      document.body.style.overflow = ''
-    }
+    return () => { document.body.style.overflow = '' }
   }, [isOpen])
 
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 10)
+    const handler = () => {
+      const y = window.scrollY
+      setScrolled(y > 10)
+      const docH = document.documentElement.scrollHeight - window.innerHeight
+      setScrollProgress(docH > 0 ? Math.min(y / docH, 1) : 0)
+    }
     window.addEventListener('scroll', handler, { passive: true })
     return () => window.removeEventListener('scroll', handler)
   }, [])
 
   useEffect(() => {
-    if (floatingPosition.x === 0 && floatingPosition.y === 0) {
-      return
-    }
+    if (floatingPosition.x === 0 && floatingPosition.y === 0) return
     localStorage.setItem(getFloatingCartStorageKey(deviceType), JSON.stringify(floatingPosition))
   }, [deviceType, floatingPosition])
 
@@ -177,11 +179,7 @@ export default function Header() {
 
     const onUp = () => {
       pointerStateRef.current = null
-      try {
-        event.currentTarget.releasePointerCapture(event.pointerId)
-      } catch {
-        // noop
-      }
+      try { event.currentTarget.releasePointerCapture(event.pointerId) } catch { /* noop */ }
       if (dragStartTimerRef.current) {
         window.clearTimeout(dragStartTimerRef.current)
         dragStartTimerRef.current = null
@@ -194,11 +192,7 @@ export default function Header() {
     dragStartTimerRef.current = window.setTimeout(() => {
       window.addEventListener('pointermove', onMove)
       window.addEventListener('pointerup', onUp)
-      try {
-        localStorage.setItem(DRAG_HINT_SEEN_KEY, '1')
-      } catch {
-        // noop
-      }
+      try { localStorage.setItem(DRAG_HINT_SEEN_KEY, '1') } catch { /* noop */ }
       setShowDragHint(false)
     }, 240)
 
@@ -207,17 +201,26 @@ export default function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-all duration-300 ${
+      className={`sticky top-0 z-50 transition-all duration-400 ${
         scrolled
-          ? 'border-gray-200/90 bg-white/92 shadow-[0_6px_28px_rgba(0,0,0,0.08)] backdrop-blur-lg dark:border-gray-800/85 dark:bg-gray-950/92 dark:shadow-[0_6px_28px_rgba(0,0,0,0.45)]'
-          : 'border-gray-100/80 bg-white/86 backdrop-blur-md dark:border-gray-800/60 dark:bg-gray-950/80'
+          ? 'border-[rgba(6,182,212,0.12)] bg-white/92 shadow-[0_8px_32px_rgba(0,0,0,0.08)] backdrop-blur-xl dark:bg-[rgba(6,6,15,0.92)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)]'
+          : 'border-gray-100/60 bg-white/80 backdrop-blur-lg dark:border-[rgba(6,182,212,0.06)] dark:bg-[rgba(6,6,15,0.75)]'
       } border-b`}
     >
+      {/* ── Scroll progress bar ───────────────────────── */}
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-transparent">
+        <div
+          className="h-full bg-gradient-to-r from-cyan-500 via-violet-500 to-transparent transition-all duration-100"
+          style={{ width: `${scrollProgress * 100}%` }}
+        />
+      </div>
+
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3.5">
         <NavLink to={ROUTES.HOME} className="transition-opacity hover:opacity-70" aria-label="mizzz Home">
           <SiteLogo />
         </NavLink>
 
+        {/* ── Desktop nav ──────────────────────────────── */}
         <div className="hidden items-center gap-2 md:flex">
           <nav>
             <ul className="flex items-center gap-0.5">
@@ -226,7 +229,7 @@ export default function Header() {
                   {isAbsoluteUrl(to) ? (
                     <a
                       href={to}
-                      className="focus-ring relative rounded-md px-3 py-1.5 text-sm text-gray-500 transition-colors duration-150 hover:bg-gray-100/50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/50 dark:hover:text-gray-100"
+                      className="focus-ring relative rounded-sm px-3 py-1.5 text-sm text-gray-500 transition-colors duration-150 hover:bg-gray-100/50 hover:text-gray-900 dark:text-[rgba(120,140,180,0.7)] dark:hover:bg-[rgba(6,182,212,0.05)] dark:hover:text-cyan-300"
                     >
                       {t(key)}
                     </a>
@@ -237,14 +240,25 @@ export default function Header() {
                       onFocus={() => prefetchRoute(to)}
                       onTouchStart={() => prefetchRoute(to)}
                       className={({ isActive }) =>
-                        `focus-ring relative rounded-md px-3 py-1.5 text-sm transition-colors duration-150 ${
+                        `focus-ring relative rounded-sm px-3 py-1.5 text-sm transition-colors duration-150 ${
                           isActive
-                            ? 'bg-gray-100/80 font-medium text-gray-900 dark:bg-gray-800/80 dark:text-gray-100'
-                            : 'text-gray-500 hover:bg-gray-100/50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/50 dark:hover:text-gray-100'
+                            ? 'bg-[rgba(6,182,212,0.08)] font-medium text-cyan-600 dark:bg-[rgba(6,182,212,0.1)] dark:text-cyan-300'
+                            : 'text-gray-500 hover:bg-gray-100/50 hover:text-gray-900 dark:text-[rgba(120,140,180,0.7)] dark:hover:bg-[rgba(6,182,212,0.05)] dark:hover:text-cyan-300'
                         }`
                       }
                     >
-                      {t(key)}
+                      {({ isActive }) => (
+                        <>
+                          {t(key)}
+                          {isActive && (
+                            <motion.span
+                              layoutId="nav-indicator"
+                              className="absolute bottom-0 left-2 right-2 h-px bg-gradient-to-r from-cyan-500/80 via-cyan-400 to-cyan-500/80"
+                              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                            />
+                          )}
+                        </>
+                      )}
                     </NavLink>
                   )}
                 </li>
@@ -252,13 +266,14 @@ export default function Header() {
             </ul>
           </nav>
 
-          <div className="ml-2 flex items-center gap-2 border-l border-gray-200/70 dark:border-gray-700/50 pl-3">
+          <div className="ml-2 flex items-center gap-2 border-l border-[rgba(6,182,212,0.1)] dark:border-[rgba(6,182,212,0.12)] pl-3">
             <LangSwitcher />
             <ThemeToggle />
             {showAuth && <AuthButton />}
           </div>
         </div>
 
+        {/* ── Mobile controls ───────────────────────────── */}
         <div className="flex items-center gap-1 md:hidden">
           <LangSwitcher />
           <ThemeToggle />
@@ -268,13 +283,26 @@ export default function Header() {
             aria-label={isOpen ? t('nav.closeMenu') : t('nav.openMenu')}
             aria-expanded={isOpen}
           >
-            <span className={`block h-px w-5 bg-gray-600 dark:bg-gray-400 transition-all duration-300 origin-center ${isOpen ? 'translate-y-[3.5px] rotate-45' : ''}`} />
-            <span className={`block h-px w-5 bg-gray-600 dark:bg-gray-400 transition-opacity duration-300 ${isOpen ? 'opacity-0' : ''}`} />
-            <span className={`block h-px w-5 bg-gray-600 dark:bg-gray-400 transition-all duration-300 origin-center ${isOpen ? '-translate-y-[9px] -rotate-45' : ''}`} />
+            <motion.span
+              animate={isOpen ? { rotate: 45, y: 3.5 } : { rotate: 0, y: 0 }}
+              transition={{ duration: 0.25 }}
+              className="block h-px w-5 bg-gray-600 dark:bg-cyan-400/70 origin-center"
+            />
+            <motion.span
+              animate={isOpen ? { opacity: 0, scaleX: 0 } : { opacity: 1, scaleX: 1 }}
+              transition={{ duration: 0.2 }}
+              className="block h-px w-5 bg-gray-600 dark:bg-cyan-400/70"
+            />
+            <motion.span
+              animate={isOpen ? { rotate: -45, y: -9 } : { rotate: 0, y: 0 }}
+              transition={{ duration: 0.25 }}
+              className="block h-px w-5 bg-gray-600 dark:bg-cyan-400/70 origin-center"
+            />
           </button>
         </div>
       </div>
 
+      {/* ── Mobile menu ──────────────────────────────────── */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -282,35 +310,52 @@ export default function Header() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.22, ease: 'easeInOut' }}
-            className="overflow-hidden border-t border-gray-100/80 dark:border-gray-800/80 md:hidden"
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden border-t border-[rgba(6,182,212,0.1)] md:hidden"
           >
-            <nav className="bg-white/96 dark:bg-gray-900/96 px-4 pb-6 pt-3 backdrop-blur-md">
-              <ul className="flex flex-col divide-y divide-gray-50 dark:divide-gray-800">
-                {NAV_ITEMS.map(({ key, to }) => (
-                  <li key={to}>
+            <nav className="bg-white/96 dark:bg-[rgba(6,6,15,0.97)] px-4 pb-6 pt-3 backdrop-blur-xl">
+              {/* Cyber grid overlay */}
+              <div className="cyber-grid-fine absolute inset-0 pointer-events-none opacity-40" />
+
+              <ul className="relative flex flex-col divide-y divide-gray-50 dark:divide-[rgba(6,182,212,0.06)]">
+                {NAV_ITEMS.map(({ key, to }, i) => (
+                  <motion.li
+                    key={to}
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.04, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  >
                     <SmartLink
                       to={to}
                       onMouseEnter={() => !isAbsoluteUrl(to) && prefetchRoute(to)}
                       onFocus={() => !isAbsoluteUrl(to) && prefetchRoute(to)}
                       onTouchStart={() => !isAbsoluteUrl(to) && prefetchRoute(to)}
-                      className="block py-3 text-sm text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                      className="group flex items-center justify-between py-3 text-sm text-gray-500 transition-colors hover:text-cyan-500 dark:text-[rgba(120,140,180,0.7)] dark:hover:text-cyan-400"
                     >
-                      {t(key)}
+                      <span>{t(key)}</span>
+                      <span className="font-mono text-[9px] text-transparent group-hover:text-cyan-500/40 transition-colors duration-200">
+                        →
+                      </span>
                     </SmartLink>
-                  </li>
+                  </motion.li>
                 ))}
               </ul>
               {showAuth && (
-                <div className="mt-4 border-t border-gray-100 dark:border-gray-800 pt-4">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: NAV_ITEMS.length * 0.04 + 0.1 }}
+                  className="mt-4 border-t border-gray-100 dark:border-[rgba(6,182,212,0.08)] pt-4"
+                >
                   <AuthButton />
-                </div>
+                </motion.div>
               )}
             </nav>
           </motion.div>
         )}
       </AnimatePresence>
 
+      {/* ── Floating cart ────────────────────────────────── */}
       {showFloatingCart && !pathname.startsWith(ROUTES.CART) && (
         <div className="pointer-events-none fixed z-[60]" style={{ left: floatingPosition.x, top: floatingPosition.y }}>
           <div className="pointer-events-auto relative">
@@ -318,7 +363,7 @@ export default function Header() {
               type="button"
               onClick={() => setShowFloatingCart(false)}
               aria-label={t('cart.hideFloating', { defaultValue: 'カートアイコンを閉じる' })}
-              className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border border-gray-200 bg-white text-[10px] leading-none text-gray-500 shadow-sm transition hover:text-gray-800 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+              className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border border-gray-200 bg-white text-[10px] leading-none text-gray-500 shadow-sm transition hover:text-gray-800 dark:border-[rgba(6,182,212,0.2)] dark:bg-[rgba(6,6,15,0.95)] dark:text-gray-400 dark:hover:text-cyan-400"
             >
               ×
             </button>
@@ -330,11 +375,9 @@ export default function Header() {
                   window.clearTimeout(dragStartTimerRef.current)
                   dragStartTimerRef.current = null
                 }
-                if (isDraggingCart) {
-                  event.preventDefault()
-                }
+                if (isDraggingCart) event.preventDefault()
               }}
-              className="relative flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-md transition hover:scale-[1.03] hover:text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:text-white"
+              className="relative flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-md transition hover:scale-[1.05] hover:border-cyan-400/40 hover:text-gray-900 hover:shadow-[0_0_16px_rgba(6,182,212,0.2)] dark:border-[rgba(6,182,212,0.2)] dark:bg-[rgba(6,6,15,0.95)] dark:text-gray-300 dark:hover:border-cyan-400/50 dark:hover:text-cyan-300"
               style={{ touchAction: 'none' }}
               aria-label={t('cart.goToCart', { defaultValue: 'カートを見る' })}
             >
@@ -344,13 +387,13 @@ export default function Header() {
                 <circle cx="17" cy="19" r="1.5" fill="currentColor" />
               </svg>
               {itemCount > 0 && (
-                <span className="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-gray-900 px-1 text-[10px] text-white dark:bg-gray-100 dark:text-gray-900">
+                <span className="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-neon-cyan px-1 text-[10px] font-bold text-cyber-950">
                   {itemCount}
                 </span>
               )}
             </Link>
             {showDragHint && (
-              <p className="pointer-events-none absolute -top-7 right-0 rounded-full border border-violet-200 bg-white/95 px-2 py-1 text-[10px] font-mono text-violet-600 shadow-sm dark:border-violet-800 dark:bg-gray-900/95 dark:text-violet-300">
+              <p className="pointer-events-none absolute -top-7 right-0 rounded-sm border border-[rgba(6,182,212,0.3)] bg-white/95 px-2 py-1 text-[10px] font-mono text-cyan-600 shadow-sm dark:border-[rgba(6,182,212,0.25)] dark:bg-[rgba(6,6,15,0.95)] dark:text-cyan-400">
                 {t('cart.dragHint', { defaultValue: '長押しでドラッグ' })}
               </p>
             )}
