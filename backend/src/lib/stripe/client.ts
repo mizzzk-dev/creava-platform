@@ -4,7 +4,7 @@ import { assertStripeModeSafety } from './env'
 let stripeClient: Stripe | null = null
 
 function getStripeApiVersion(): Stripe.LatestApiVersion {
-  return '2025-03-31.basil'
+  return '2025-08-27.basil'
 }
 
 export function getStripeMode(): 'test' | 'live' {

@@ -187,7 +187,7 @@ export default ({ strapi }) => ({
         },
       })
 
-      const object = event.data.object as Record<string, unknown>
+      const object = event.data.object as unknown as Record<string, unknown>
       const metadata = parseStripeMetadata(object)
       const clerkUserId = toUserId(metadata)
 
