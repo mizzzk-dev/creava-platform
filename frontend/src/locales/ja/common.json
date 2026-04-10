@@ -547,7 +547,12 @@
     }
   },
   "fanclub": {
-    "subscriptionPolicy": "サブスクポリシー"
+    "subscriptionPolicy": "サブスクポリシー",
+    "accessPublic": "一般公開",
+    "accessMembers": "会員限定",
+    "accessPremium": "プレミアム限定",
+    "joinToView": "入会して閲覧する",
+    "archive": "fanclub archive"
   },
   "seasonal": {
     "theme": {
@@ -608,5 +613,56 @@
     "fcHomeHiddenQuote": "ファンクラブは、静かに特別な場所だ。",
     "fcEasterEggMessage": "ありがとう、見つけてくれて。",
     "easterEggFoundLabel": "発見済み"
+  },
+  "storefront": {
+    "guide": {
+      "title": "ガイド",
+      "subtitle": "購入前の確認事項",
+      "lead": "ご購入前に確認いただきたい情報をまとめています。",
+      "contactNote": "ストアに関するお問い合わせは mizzz.jp のお問い合わせページから受け付けています。",
+      "contactLink": "mizzz.jp にお問い合わせ",
+      "links": {
+        "shipping": "配送ポリシー",
+        "returns": "返品・交換ポリシー",
+        "terms": "利用規約",
+        "privacy": "プライバシーポリシー",
+        "tokushoho": "特定商取引法表記",
+        "contact": "お問い合わせ（mizzz.jp）"
+      }
+    },
+    "shipping": {
+      "title": "配送ポリシー",
+      "subtitle": "配送方法・期間について",
+      "description": "mizzz Official Store の配送ポリシーです。",
+      "standard": "通常商品はご注文確定後 5〜8 営業日で発送します。",
+      "preorder": "予約商品・受注生産品は商品ページ記載の日程を優先します。",
+      "domestic": "配送先は日本国内（JST基準）を標準とし、海外配送は段階的に対応予定です。",
+      "contactNote": "お問い合わせは",
+      "contactLink": "mizzz.jp お問い合わせページ",
+      "contactNoteSuffix": "から受け付けています。",
+      "feeTitle": "送料について",
+      "feeBody": "一部商品を除き、配送料は別途ご負担いただきます。具体的な金額は商品ページまたはチェックアウト時にご確認ください。",
+      "trackingTitle": "配送追跡",
+      "trackingBody": "発送完了後、追跡番号をメールでお知らせします。発送完了後 24 時間以内に追跡が開始されます。",
+      "delayTitle": "遅延について",
+      "delayBody": "繁忙期・天候・配送業者都合による遅延が発生する場合があります。お急ぎの場合は事前にお問い合わせください。"
+    },
+    "returns": {
+      "title": "返品・交換ポリシー",
+      "subtitle": "返品・交換の条件と手順",
+      "description": "mizzz Official Store の返品・交換方針です。",
+      "noReturn": "お客様都合による返品・交換は原則お受けしていません。",
+      "defective": "不良品・誤配送の場合は、商品到着後 7 日以内にお問い合わせください。",
+      "digital": "デジタル商品は性質上、購入完了後の返品はできません。",
+      "contactNote": "返品・交換に関するお問い合わせは",
+      "contactLink": "mizzz.jp お問い合わせページ",
+      "contactNoteSuffix": "からお送りください。",
+      "procedureTitle": "返品・交換の手順",
+      "step1": "商品到着後 7 日以内にお問い合わせページからご連絡ください。",
+      "step2": "不良品・誤配送の内容を確認後、返送先をご案内します。",
+      "step3": "商品が返送されたことを確認後、代替品または返金のご対応をいたします。",
+      "noteTitle": "ご注意",
+      "noteBody": "お客様都合の返品は対応外です。また、開封済み・使用済みの商品は不良品の場合でも交換対象外になる場合があります。"
+    }
   }
 }

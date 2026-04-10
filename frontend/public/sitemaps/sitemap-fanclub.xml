@@ -22,7 +22,7 @@
   <url>
     <loc>https://fc.mizzz.jp/join</loc>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.9</priority>
     <xhtml:link rel="alternate" hreflang="ja" href="https://fc.mizzz.jp/join"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://fc.mizzz.jp/join?lng=en"/>
     <xhtml:link rel="alternate" hreflang="ko" href="https://fc.mizzz.jp/join?lng=ko"/>
@@ -56,6 +56,24 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://fc.mizzz.jp/events"/>
   </url>
   <url>
+    <loc>https://fc.mizzz.jp/movies</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://fc.mizzz.jp/movies"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fc.mizzz.jp/movies?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://fc.mizzz.jp/movies?lng=ko"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fc.mizzz.jp/movies"/>
+  </url>
+  <url>
+    <loc>https://fc.mizzz.jp/gallery</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://fc.mizzz.jp/gallery"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fc.mizzz.jp/gallery?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://fc.mizzz.jp/gallery?lng=ko"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fc.mizzz.jp/gallery"/>
+  </url>
+  <url>
     <loc>https://fc.mizzz.jp/faq</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -63,5 +81,59 @@
     <xhtml:link rel="alternate" hreflang="en" href="https://fc.mizzz.jp/faq?lng=en"/>
     <xhtml:link rel="alternate" hreflang="ko" href="https://fc.mizzz.jp/faq?lng=ko"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://fc.mizzz.jp/faq"/>
+  </url>
+  <url>
+    <loc>https://fc.mizzz.jp/guide</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://fc.mizzz.jp/guide"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fc.mizzz.jp/guide?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://fc.mizzz.jp/guide?lng=ko"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fc.mizzz.jp/guide"/>
+  </url>
+  <url>
+    <loc>https://fc.mizzz.jp/subscription-policy</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://fc.mizzz.jp/subscription-policy"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fc.mizzz.jp/subscription-policy?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://fc.mizzz.jp/subscription-policy?lng=ko"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fc.mizzz.jp/subscription-policy"/>
+  </url>
+  <url>
+    <loc>https://fc.mizzz.jp/legal</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://fc.mizzz.jp/legal"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fc.mizzz.jp/legal?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://fc.mizzz.jp/legal?lng=ko"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fc.mizzz.jp/legal"/>
+  </url>
+  <url>
+    <loc>https://fc.mizzz.jp/terms</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://fc.mizzz.jp/terms"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fc.mizzz.jp/terms?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://fc.mizzz.jp/terms?lng=ko"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fc.mizzz.jp/terms"/>
+  </url>
+  <url>
+    <loc>https://fc.mizzz.jp/privacy</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://fc.mizzz.jp/privacy"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fc.mizzz.jp/privacy?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://fc.mizzz.jp/privacy?lng=ko"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fc.mizzz.jp/privacy"/>
+  </url>
+  <url>
+    <loc>https://fc.mizzz.jp/commerce-law</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://fc.mizzz.jp/commerce-law"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fc.mizzz.jp/commerce-law?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://fc.mizzz.jp/commerce-law?lng=ko"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fc.mizzz.jp/commerce-law"/>
   </url>
 </urlset>

@@ -62,12 +62,6 @@ const TICKETS: FcItem[] = [
   { slug: 'live-2026-tokyo-preorder', title: 'LIVE 2026 TOKYO 先行受付', description: '会員先行チケットの受付情報。', publishAt: '2026-04-04', visibility: 'members' },
 ]
 
-const ACCESS_LABEL: Record<Visibility, string> = {
-  public: '一般公開',
-  members: '会員限定',
-  premium: 'プレミアム限定',
-}
-
 function FcSectionTemplate({
   title,
   description,
@@ -79,16 +73,23 @@ function FcSectionTemplate({
   items: FcItem[]
   detailBase: string
 }) {
+  const { t } = useTranslation()
   const { user } = useCurrentUser()
   const role = user?.role ?? 'guest'
   useEffect(() => {
     trackCtaClick('fc_section', 'view', { section: title, loggedIn: role !== 'guest' })
   }, [role, title])
 
+  const accessLabel: Record<Visibility, string> = {
+    public: t('fanclub.accessPublic'),
+    members: t('fanclub.accessMembers'),
+    premium: t('fanclub.accessPremium'),
+  }
+
   return (
     <section className="ds-container py-12 sm:py-16">
       <PageHead title={`${title} | mizzz official fanclub`} description={description} noindex />
-      <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-gray-500">fanclub archive</p>
+      <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-gray-500">{t('fanclub.archive')}</p>
       <h1 className="mt-2 text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">{title}</h1>
       <p className="mt-3 max-w-2xl text-sm leading-7 text-gray-600 dark:text-gray-300">{description}</p>
       <div className="mt-8 grid gap-4 md:grid-cols-2">
@@ -99,16 +100,16 @@ function FcSectionTemplate({
               <div className="flex items-center justify-between gap-3">
                 <p className="font-mono text-xs text-gray-500 dark:text-gray-400">{item.publishAt}</p>
                 <SemanticBadge tone={isLocked ? 'neutral' : 'members'} className="text-[11px]">
-                  {isLocked ? `🔒 ${ACCESS_LABEL[item.visibility]}` : ACCESS_LABEL[item.visibility]}
+                  {isLocked ? `🔒 ${accessLabel[item.visibility]}` : accessLabel[item.visibility]}
                 </SemanticBadge>
               </div>
               <h2 className="mt-3 text-lg font-semibold text-gray-900 dark:text-gray-100">{item.title}</h2>
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{item.description}</p>
               <div className="mt-5">
                 {isLocked ? (
-                  <Button to={ROUTES.FC_JOIN} variant="accent" size="sm" onClick={() => trackCtaClick('fc_section', 'join_from_locked', { title: item.title, section: title })}>入会して閲覧する</Button>
+                  <Button to={ROUTES.FC_JOIN} variant="accent" size="sm" onClick={() => trackCtaClick('fc_section', 'join_from_locked', { title: item.title, section: title })}>{t('fanclub.joinToView')}</Button>
                 ) : (
-                  <Button to={`${detailBase}/${item.slug}`} variant="ghost" size="sm" onClick={() => trackCtaClick('fc_section', 'content_detail', { slug: item.slug, section: title })}>詳細を見る</Button>
+                  <Button to={`${detailBase}/${item.slug}`} variant="ghost" size="sm" onClick={() => trackCtaClick('fc_section', 'content_detail', { slug: item.slug, section: title })}>{t('common.viewDetails')}</Button>
                 )}
               </div>
             </article>
@@ -832,9 +833,15 @@ export function FanclubTicketsDetailPage() {
 }
 
 function FcDetailTemplate({ item, title }: { item: FcItem; title: string }) {
+  const { t } = useTranslation()
   const { user } = useCurrentUser()
   const role = user?.role ?? 'guest'
   const locked = !canAccessByRole(role, item.visibility)
+  const accessLabel: Record<Visibility, string> = {
+    public: t('fanclub.accessPublic'),
+    members: t('fanclub.accessMembers'),
+    premium: t('fanclub.accessPremium'),
+  }
   return (
     <section className="mx-auto max-w-3xl px-4 py-14">
       <PageHead title={`${item.title} | ${title}`} description={item.description} noindex />
@@ -843,11 +850,11 @@ function FcDetailTemplate({ item, title }: { item: FcItem; title: string }) {
       <p className="mt-2 text-xs text-gray-500">{item.publishAt}</p>
       {locked ? (
         <div className="mt-8 rounded-2xl border border-gray-200 bg-gray-50 p-6 dark:border-gray-800 dark:bg-gray-900">
-          <p className="text-sm text-gray-700 dark:text-gray-200">このコンテンツは {ACCESS_LABEL[item.visibility]} です。入会後に閲覧できます。</p>
-          <Link to={ROUTES.FC_JOIN} onClick={() => trackCtaClick('fc_detail_locked', 'join', { title: item.title })} className="mt-4 inline-flex text-sm font-medium text-violet-600 hover:text-violet-500">入会する →</Link>
+          <p className="text-sm text-gray-700 dark:text-gray-200">{accessLabel[item.visibility]} — {t('fanclub.joinToView')}</p>
+          <Link to={ROUTES.FC_JOIN} onClick={() => trackCtaClick('fc_detail_locked', 'join', { title: item.title })} className="mt-4 inline-flex text-sm font-medium text-violet-600 hover:text-violet-500">{t('fanclub.joinToView')} →</Link>
         </div>
       ) : (
-        <p className="mt-8 text-sm leading-7 text-gray-700 dark:text-gray-200">{item.description}（実運用では CMS 登録本文・動画URL・公開期限・関連コンテンツを表示）</p>
+        <p className="mt-8 text-sm leading-7 text-gray-700 dark:text-gray-200">{item.description}</p>
       )}
     </section>
   )

@@ -32,7 +32,7 @@
     "error": "오류가 발생했습니다",
     "notFound": "페이지를 찾을 수 없습니다",
     "backToHome": "홈으로 돌아가기",
-    "retry": "Retry",
+    "retry": "다시 시도",
     "viewDetails": "자세히 보기",
     "close": "닫기",
     "badgeNew": "신규",
@@ -360,18 +360,18 @@
     }
   },
   "cart": {
-    "title": "Cart",
-    "description": "Review selected items.",
-    "add": "Add to cart",
-    "goToCart": "View cart",
-    "empty": "Your cart is empty.",
-    "goStore": "Go to store",
-    "remove": "Remove",
-    "subtotal": "Subtotal",
-    "checkout": "Checkout",
-    "clear": "Clear cart",
-    "fcRestricted": "Fanclub members only.",
-    "selectCheckout": "Select an item to checkout",
+    "title": "카트",
+    "description": "선택한 상품을 확인하는 페이지입니다.",
+    "add": "장바구니에 담기",
+    "goToCart": "장바구니 보기",
+    "empty": "장바구니가 비어 있습니다.",
+    "goStore": "스토어 보기",
+    "remove": "삭제",
+    "subtotal": "소계",
+    "checkout": "체크아웃",
+    "clear": "장바구니 비우기",
+    "fcRestricted": "FC회원만 구매 가능합니다.",
+    "selectCheckout": "구매할 상품을 선택해 주세요",
     "helper": "수량과 구매 조건을 확인한 후 외부 결제로 이동합니다.",
     "emptySub": "Store에서 상품을 추가해 결제를 시작하세요.",
     "seeFanclub": "Fanclub 혜택 보기",
@@ -392,13 +392,13 @@
     "guestShippingPlaceholder": "배송지 주소"
   },
   "member": {
-    "title": "My Page",
-    "description": "View your membership status and benefits.",
-    "signInPrompt": "Please sign in to view member info.",
-    "memberLabel": "Fanclub member",
-    "guestLabel": "Standard user",
-    "memberDesc": "You can access members-only content and products.",
-    "guestDesc": "Some content becomes available after joining Fanclub.",
+    "title": "마이페이지",
+    "description": "회원 상태와 특전을 확인할 수 있습니다.",
+    "signInPrompt": "회원정보를 보려면 로그인해 주세요.",
+    "memberLabel": "FC회원",
+    "guestLabel": "일반 사용자",
+    "memberDesc": "회원 전용 콘텐츠·상품에 접근할 수 있습니다.",
+    "guestDesc": "일부 콘텐츠는 Fanclub 가입 후 이용 가능합니다.",
     "pageLead": "회원 상태와 이용 가능한 동선을 한 번에 확인할 수 있습니다.",
     "adminLabel": "관리자",
     "adminDesc": "회원 전용 동선을 포함한 전체 콘텐츠 확인이 가능합니다.",
@@ -547,7 +547,12 @@
     }
   },
   "fanclub": {
-    "subscriptionPolicy": "구독 정책"
+    "subscriptionPolicy": "구독 정책",
+    "accessPublic": "일반 공개",
+    "accessMembers": "회원 전용",
+    "accessPremium": "프리미엄 전용",
+    "joinToView": "가입 후 보기",
+    "archive": "fanclub archive"
   },
   "seasonal": {
     "theme": {
@@ -584,7 +589,7 @@
   },
   "playful": {
     "dailyLabel": "오늘의 한마디",
-    "memberDailyLabel": "today — members",
+    "memberDailyLabel": "오늘 — 회원 전용",
     "dailyMessageLabel": "오늘의 한마디",
     "hiddenLabel": "발견했습니다",
     "memberBlockLabel": "회원 전용",
@@ -608,5 +613,56 @@
     "fcHomeHiddenQuote": "팬클럽은 조용히 특별한 공간입니다.",
     "fcEasterEggMessage": "발견해 주셔서 감사합니다.",
     "easterEggFoundLabel": "발견됨"
+  },
+  "storefront": {
+    "guide": {
+      "title": "가이드",
+      "subtitle": "구매 전 확인 사항",
+      "lead": "구매 전에 확인하실 정보를 정리했습니다.",
+      "contactNote": "스토어 관련 문의는 mizzz.jp 문의 페이지에서 접수합니다.",
+      "contactLink": "mizzz.jp 문의하기",
+      "links": {
+        "shipping": "배송 정책",
+        "returns": "반품·교환 정책",
+        "terms": "이용약관",
+        "privacy": "개인정보처리방침",
+        "tokushoho": "특정상거래법 표기",
+        "contact": "문의하기 (mizzz.jp)"
+      }
+    },
+    "shipping": {
+      "title": "배송 정책",
+      "subtitle": "배송 방법 및 기간",
+      "description": "mizzz Official Store 배송 정책입니다.",
+      "standard": "일반 상품은 주문 확정 후 5~8 영업일 내 발송합니다.",
+      "preorder": "예약 상품·주문 제작 상품은 각 상품 페이지에 기재된 일정을 따릅니다.",
+      "domestic": "국내(일본, JST 기준) 배송이 기본이며, 해외 배송은 단계적으로 대응 예정입니다.",
+      "contactNote": "문의는",
+      "contactLink": "mizzz.jp 문의 페이지",
+      "contactNoteSuffix": "에서 접수합니다.",
+      "feeTitle": "배송비",
+      "feeBody": "일부 상품을 제외하고 배송비는 별도 부담입니다. 정확한 금액은 상품 페이지 또는 체크아웃 시 확인해 주세요.",
+      "trackingTitle": "배송 추적",
+      "trackingBody": "발송 완료 후 추적 번호를 이메일로 안내합니다. 발송 후 24시간 이내에 추적이 시작됩니다.",
+      "delayTitle": "배송 지연",
+      "delayBody": "성수기·기상 상황·배송 업체 사정으로 지연될 수 있습니다. 긴급한 경우 사전에 문의해 주세요."
+    },
+    "returns": {
+      "title": "반품·교환 정책",
+      "subtitle": "반품·교환 조건 및 절차",
+      "description": "mizzz Official Store 반품·교환 방침입니다.",
+      "noReturn": "고객 변심에 의한 반품·교환은 원칙적으로 받지 않습니다.",
+      "defective": "불량품·오배송의 경우 상품 수령 후 7일 이내에 문의해 주세요.",
+      "digital": "디지털 상품은 특성상 구매 완료 후 반품이 불가합니다.",
+      "contactNote": "반품·교환 문의는",
+      "contactLink": "mizzz.jp 문의 페이지",
+      "contactNoteSuffix": "에서 접수합니다.",
+      "procedureTitle": "반품·교환 절차",
+      "step1": "상품 수령 후 7일 이내에 문의 페이지로 연락해 주세요.",
+      "step2": "불량·오배송 여부를 확인 후 반송 주소를 안내해 드립니다.",
+      "step3": "반송 상품 수령 후 교환품 또는 환불 처리를 진행합니다.",
+      "noteTitle": "유의사항",
+      "noteBody": "고객 변심에 의한 반품은 불가합니다. 개봉·사용한 상품은 불량인 경우에도 교환 대상에서 제외될 수 있습니다."
+    }
   }
 }

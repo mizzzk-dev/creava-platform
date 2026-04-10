@@ -28,6 +28,24 @@ const RESPONSE_CACHE_STALE_TTL_MS = Number(import.meta.env.VITE_STRAPI_RESPONSE_
 const responseCache = new Map<string, { expiresAt: number; staleExpiresAt: number; value: unknown }>()
 const inFlightRequests = new Map<string, Promise<unknown>>()
 
+/**
+ * 指定パスプレフィックスに一致するキャッシュエントリを削除する
+ * ページ遷移後や投稿後の意図的な再フェッチに使用する
+ *
+ * @param pathPrefix - 削除対象のパスプレフィックス（例: '/api/news'）
+ */
+export function invalidateResponseCache(pathPrefix?: string): void {
+  if (!pathPrefix) {
+    responseCache.clear()
+    return
+  }
+  for (const key of responseCache.keys()) {
+    if (key.includes(pathPrefix)) {
+      responseCache.delete(key)
+    }
+  }
+}
+
 export interface StrapiRequestOptions {
   auth?: 'none' | 'required' | 'auto'
   signal?: AbortSignal

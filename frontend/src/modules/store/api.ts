@@ -116,12 +116,10 @@ export function getProducts(
   }
 
   const merged = {
-    fields: ['title', 'slug', 'price', 'currency', 'accessStatus', 'limitedEndAt', 'archiveVisibleForFC', 'stripeLink', 'baseLink', 'stripeProductId', 'stripePriceId', 'productType', 'isPurchasable', 'stockStatus', 'saleStatus', 'metadataKey', 'purchaseStatus', 'stock', 'category', 'tags', 'sortOrder', 'featured', 'isNewArrival', 'pickup', 'memberBenefit', 'membersOnlyNotice', 'earlyAccess', 'specialOffer', 'campaignLabel', 'campaignSlug', 'campaignType', 'shortHighlight', 'heroCopy', 'heroSubcopy', 'isTrending', 'isLimited', 'membersOnly', 'displayPriority', 'startAt', 'endAt', 'bannerLink', 'ctaText', 'ctaLink', 'sectionStyle', 'cardStyleVariant', 'badgeStyleVariant', 'backgroundVariant', 'sectionBackgroundVariant', 'motionStyle', 'notifyEnabled', 'notifyType', 'notifyLabel', 'restockExpectedAt', 'isImportant', 'weeklyHighlight', 'dashboardPriority', 'announcementBar', 'notificationCopy'],
+    // 一覧では previewImage のみ取得し、heroVisual / heroIllustration / illustrationAsset は詳細ページ専用
+    fields: ['title', 'slug', 'price', 'currency', 'accessStatus', 'limitedEndAt', 'archiveVisibleForFC', 'stripeLink', 'baseLink', 'stripeProductId', 'stripePriceId', 'productType', 'isPurchasable', 'stockStatus', 'saleStatus', 'purchaseStatus', 'stock', 'category', 'tags', 'sortOrder', 'featured', 'isNewArrival', 'pickup', 'earlyAccess', 'campaignLabel', 'campaignSlug', 'campaignType', 'shortHighlight', 'isTrending', 'isLimited', 'membersOnly', 'displayPriority', 'startAt', 'endAt', 'ctaText', 'ctaLink', 'notifyEnabled', 'notifyType', 'isImportant', 'weeklyHighlight', 'announcementBar'],
     populate: {
       previewImage: { fields: ['url', 'alternativeText', 'width', 'height'] },
-      heroVisual: { fields: ['url', 'alternativeText', 'width', 'height'] },
-      heroIllustration: { fields: ['url', 'alternativeText', 'width', 'height'] },
-      illustrationAsset: { fields: ['url', 'alternativeText', 'width', 'height'] },
     },
     sort: ['sortOrder:asc', 'publishAt:desc'],
     pagination: { pageSize: 24, withCount: false },
