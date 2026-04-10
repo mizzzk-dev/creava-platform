@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'framer-motion'
 import ThemeToggle from '@/components/common/ThemeToggle'
@@ -11,6 +11,7 @@ import { mainLink, storeLink, fanclubLink } from '@/lib/siteLinks'
 import AuthButton from '@/components/auth/AuthButton'
 import SubdomainAnnouncementBar from '@/components/common/SubdomainAnnouncementBar'
 import { trackCtaClick } from '@/modules/analytics/tracking'
+import { useCart } from '@/modules/cart/context'
 
 interface NavItem {
   to: string
@@ -28,6 +29,7 @@ export default function SubdomainHeader({ site, navItems, showAuth = false }: Su
   const [mobileOpen, setMobileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [scrollProgress, setScrollProgress] = useState(0)
+  const { itemCount } = useCart()
 
   useEffect(() => {
     const onScroll = () => {
@@ -107,17 +109,17 @@ export default function SubdomainHeader({ site, navItems, showAuth = false }: Su
         {/* right controls */}
         <div className="flex items-center gap-1.5">
           {/* site switcher */}
-          <div className="hidden md:flex items-center gap-px rounded-none border border-[rgba(6,182,212,0.15)] bg-[rgba(6,6,15,0.6)] px-1 py-1">
+          <div className="hidden items-center gap-px border border-[rgba(6,182,212,0.15)] bg-[rgba(6,6,15,0.6)] px-1 py-1 md:flex">
             {[
-              { to: storeLink('/'),        label: 'Store',  key: 'network_store'   },
-              { to: fanclubLink('/'),       label: 'FC',     key: 'network_fanclub' },
-              { to: mainLink('/'),          label: 'Main',   key: 'network_main'    },
+              { to: storeLink('/'),   label: 'Store', key: 'network_store'   },
+              { to: fanclubLink('/'), label: 'FC',    key: 'network_fanclub' },
+              { to: mainLink('/'),    label: 'Main',  key: 'network_main'    },
             ].map(({ to, label, key }) => (
               <SmartLink
                 key={key}
                 to={to}
                 onClick={() => trackCtaClick(`header_${site}`, key)}
-                className="rounded-none px-2.5 py-1 font-mono text-[9px] uppercase tracking-widest text-[rgba(6,182,212,0.35)] transition-colors hover:text-cyan-400"
+                className="px-2.5 py-1 font-mono text-[9px] uppercase tracking-widest text-[rgba(6,182,212,0.35)] transition-colors hover:text-cyan-400"
               >
                 {label}
               </SmartLink>
@@ -138,6 +140,27 @@ export default function SubdomainHeader({ site, navItems, showAuth = false }: Su
           <LangSwitcher />
           <ThemeToggle />
           {showAuth && <AuthButton />}
+
+          {/* cart icon (store only) */}
+          {site === 'store' && (
+            <Link
+              to={ROUTES.CART}
+              onClick={() => trackCtaClick('header_store', 'cart_click')}
+              aria-label={t('cart.goToCart', { defaultValue: 'カートを見る' })}
+              className="relative flex h-9 w-9 items-center justify-center border border-[rgba(6,182,212,0.2)] text-cyan-400/70 transition-colors hover:border-cyan-500/40 hover:text-cyan-400"
+            >
+              <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" aria-hidden="true">
+                <path d="M3 5h2l2 11h10l2-8H7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="10" cy="19" r="1.5" fill="currentColor" />
+                <circle cx="17" cy="19" r="1.5" fill="currentColor" />
+              </svg>
+              {itemCount > 0 && (
+                <span className="absolute -right-1 -top-1 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-cyan-400 px-1 text-[9px] font-bold text-gray-950">
+                  {itemCount}
+                </span>
+              )}
+            </Link>
+          )}
 
           {/* mobile hamburger */}
           <button
@@ -213,6 +236,29 @@ export default function SubdomainHeader({ site, navItems, showAuth = false }: Su
                   </NavLink>
                 </motion.div>
               ))}
+              {site === 'store' && (
+                <motion.div
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: navItems.length * 0.04, duration: 0.2 }}
+                >
+                  <Link
+                    to={ROUTES.CART}
+                    onClick={() => {
+                      setMobileOpen(false)
+                      trackCtaClick('mobile_header_store', 'cart_click')
+                    }}
+                    className="flex items-center justify-between px-3 py-2.5 font-mono text-[10px] uppercase tracking-widest text-[rgba(180,190,220,0.45)] transition-colors hover:text-cyan-400"
+                  >
+                    <span>{t('cart.goToCart', { defaultValue: 'カート' })}</span>
+                    {itemCount > 0 && (
+                      <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-cyan-400 px-1 text-[9px] font-bold text-gray-950">
+                        {itemCount}
+                      </span>
+                    )}
+                  </Link>
+                </motion.div>
+              )}
               <div className="mt-2 border-t border-[rgba(6,182,212,0.08)] pt-2">
                 <SmartLink
                   to={mainLink(ROUTES.CONTACT)}

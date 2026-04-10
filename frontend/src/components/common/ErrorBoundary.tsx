@@ -1,5 +1,6 @@
 import { Component } from 'react'
 import type { ReactNode, ErrorInfo } from 'react'
+import InternalErrorPage from '@/pages/InternalErrorPage'
 
 interface Props {
   children: ReactNode
@@ -38,20 +39,12 @@ export default class ErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) return this.props.fallback
 
       return (
-        <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
-          <p className="text-sm font-medium text-gray-500">
-            予期しないエラーが発生しました
-          </p>
-          <p className="mt-1 text-xs text-gray-400">
-            ページをリロードするか、しばらくしてから再度お試しください。
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-6 text-xs text-gray-400 underline underline-offset-4 transition-colors hover:text-gray-700"
-          >
-            ページをリロード
-          </button>
-        </div>
+        <InternalErrorPage
+          code="500"
+          onRetry={() => {
+            this.setState({ hasError: false, error: null })
+          }}
+        />
       )
     }
 

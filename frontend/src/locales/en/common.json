@@ -227,7 +227,17 @@
   "events": {
     "empty": "No upcoming events",
     "book": "Reserve / Details",
-    "backToEvents": "Back to events"
+    "backToEvents": "Back to events",
+    "statusNow": "Ongoing",
+    "statusUpcoming": "Upcoming",
+    "statusEnded": "Ended",
+    "viewCalendar": "Calendar",
+    "viewList": "List",
+    "upcomingList": "Upcoming Events",
+    "calendar": {
+      "prevMonth": "Previous month",
+      "nextMonth": "Next month"
+    }
   },
   "home": {
     "hero": {
@@ -325,13 +335,18 @@
     }
   },
   "error": {
-    "404title": "404 — Not Found",
-    "404sub": "This page doesn't exist or has moved.",
-    "404hint": "Check the URL or navigate home.",
-    "500title": "500 — System Error",
-    "500sub": "A temporary error occurred on mizzz. Please try again in a few moments.",
+    "404title": "Page not found",
+    "404sub": "The page you're looking for may have moved or been removed.",
+    "404hint": "Check the URL or use the links above to find what you need.",
+    "500title": "Something went wrong",
+    "500sub": "A temporary error occurred. Please try again in a few moments.",
+    "500hint": "If the problem persists, please contact us.",
+    "503title": "Under Maintenance",
+    "503sub": "We're currently performing system maintenance. Please try again shortly.",
+    "503hint": "We'll be back up soon. Thank you for your patience.",
     "403title": "403 — Access Restricted",
-    "403sub": "This content is available to mizzz Fanclub members only."
+    "403sub": "This content is available to mizzz Fanclub members only.",
+    "reload": "Reload page"
   },
   "work": {
     "case": {

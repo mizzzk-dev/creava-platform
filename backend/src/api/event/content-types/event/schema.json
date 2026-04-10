@@ -78,10 +78,48 @@
       "default": "public",
       "required": true
     },
+    "category": {
+      "type": "enumeration",
+      "enum": [
+        "live",
+        "exhibition",
+        "workshop",
+        "release",
+        "online",
+        "other"
+      ],
+      "default": "other"
+    },
+    "calendarColor": {
+      "type": "enumeration",
+      "enum": [
+        "default",
+        "cyan",
+        "violet",
+        "amber",
+        "emerald",
+        "rose"
+      ],
+      "default": "default"
+    },
+    "calendarVisibility": {
+      "type": "enumeration",
+      "enum": [
+        "public",
+        "members_only",
+        "hidden"
+      ],
+      "default": "public"
+    },
     "relatedProducts": {
       "type": "relation",
       "relation": "manyToMany",
       "target": "api::store-product.store-product"
+    },
+    "relatedNews": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::news-item.news-item"
     },
     "featured": {
       "type": "boolean",
@@ -94,6 +132,16 @@
     "sortOrder": {
       "type": "integer",
       "default": 0
+    },
+    "displayPriority": {
+      "type": "integer",
+      "default": 0
+    },
+    "heroCopy": {
+      "type": "string"
+    },
+    "shortHighlight": {
+      "type": "string"
     }
   }
 }

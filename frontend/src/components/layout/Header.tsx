@@ -1,5 +1,5 @@
-import { useRef, useState, useEffect, type PointerEvent as ReactPointerEvent } from 'react'
-import { NavLink, useLocation, Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 import SmartLink from '@/components/common/SmartLink'
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -9,7 +9,6 @@ import AuthButton from '@/components/auth/AuthButton'
 import ThemeToggle from '@/components/common/ThemeToggle'
 import LangSwitcher from '@/components/common/LangSwitcher'
 import SiteLogo from '@/components/layout/SiteLogo'
-import { useCart } from '@/modules/cart/context'
 import { prefetchRoute } from '@/lib/routePrefetch'
 
 const NAV_ITEMS = [
@@ -18,21 +17,8 @@ const NAV_ITEMS = [
   { key: 'nav.events',  to: ROUTES.EVENTS },
   { key: 'nav.store',   to: storeLink(ROUTES.STORE) },
   { key: 'nav.fanclub', to: fanclubLink(ROUTES.FANCLUB) },
-  { key: 'nav.request', to: `${ROUTES.CONTACT}?tab=request` },
   { key: 'nav.contact', to: ROUTES.CONTACT },
 ] as const
-
-type DeviceType = 'mobile' | 'desktop'
-const DRAG_HINT_SEEN_KEY = 'floating-cart-drag-hint-seen'
-
-function getDeviceType(): DeviceType {
-  if (typeof window === 'undefined') return 'desktop'
-  return window.matchMedia('(max-width: 767px)').matches ? 'mobile' : 'desktop'
-}
-
-function getFloatingCartStorageKey(deviceType: DeviceType): string {
-  return `floating-cart-position:${deviceType}`
-}
 
 function useShowAuth() {
   const { pathname } = useLocation()
@@ -46,56 +32,14 @@ function useShowAuth() {
 export default function Header() {
   const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
-  const [showFloatingCart, setShowFloatingCart] = useState(true)
-  const [deviceType, setDeviceType] = useState<DeviceType>(() => getDeviceType())
-  const [floatingPosition, setFloatingPosition] = useState({ x: 0, y: 0 })
-  const [showDragHint, setShowDragHint] = useState(false)
-  const [isDraggingCart, setIsDraggingCart] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [scrollProgress, setScrollProgress] = useState(0)
-  const dragStartTimerRef = useRef<number | null>(null)
-  const pointerStateRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null)
   const { pathname } = useLocation()
   const showAuth = useShowAuth()
-  const { itemCount } = useCart()
 
   useEffect(() => {
     setIsOpen(false)
-    setShowFloatingCart(true)
   }, [pathname])
-
-  useEffect(() => {
-    setDeviceType(getDeviceType())
-    const fallback = { x: Math.max(window.innerWidth - 68, 16), y: Math.max(window.innerHeight - 68, 16) }
-
-    try {
-      const raw = localStorage.getItem(getFloatingCartStorageKey(getDeviceType()))
-      if (!raw) {
-        setFloatingPosition(fallback)
-        return
-      }
-      const parsed = JSON.parse(raw) as { x?: number; y?: number }
-      if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
-        setFloatingPosition({
-          x: Math.min(Math.max(parsed.x, 16), window.innerWidth - 56),
-          y: Math.min(Math.max(parsed.y, 16), window.innerHeight - 56),
-        })
-        return
-      }
-      setFloatingPosition(fallback)
-    } catch {
-      setFloatingPosition(fallback)
-    }
-  }, [])
-
-  useEffect(() => {
-    try {
-      const hasSeen = localStorage.getItem(DRAG_HINT_SEEN_KEY) === '1'
-      setShowDragHint(!hasSeen)
-    } catch {
-      setShowDragHint(true)
-    }
-  }, [])
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : ''
@@ -113,97 +57,11 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handler)
   }, [])
 
-  useEffect(() => {
-    if (floatingPosition.x === 0 && floatingPosition.y === 0) return
-    localStorage.setItem(getFloatingCartStorageKey(deviceType), JSON.stringify(floatingPosition))
-  }, [deviceType, floatingPosition])
-
-  useEffect(() => {
-    const resizeHandler = () => {
-      const nextDeviceType = getDeviceType()
-      setDeviceType((prev) => {
-        if (prev !== nextDeviceType) {
-          const fallback = { x: Math.max(window.innerWidth - 68, 16), y: Math.max(window.innerHeight - 68, 16) }
-          try {
-            const raw = localStorage.getItem(getFloatingCartStorageKey(nextDeviceType))
-            if (!raw) {
-              setFloatingPosition(fallback)
-            } else {
-              const parsed = JSON.parse(raw) as { x?: number; y?: number }
-              if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
-                setFloatingPosition({
-                  x: Math.min(Math.max(parsed.x, 16), window.innerWidth - 56),
-                  y: Math.min(Math.max(parsed.y, 16), window.innerHeight - 56),
-                })
-              } else {
-                setFloatingPosition(fallback)
-              }
-            }
-          } catch {
-            setFloatingPosition(fallback)
-          }
-        }
-        return nextDeviceType
-      })
-      setFloatingPosition((prev) => ({
-        x: Math.min(Math.max(prev.x, 16), window.innerWidth - 56),
-        y: Math.min(Math.max(prev.y, 16), window.innerHeight - 56),
-      }))
-    }
-    window.addEventListener('resize', resizeHandler)
-    return () => window.removeEventListener('resize', resizeHandler)
-  }, [])
-
-  const beginCartDrag = (event: ReactPointerEvent<HTMLAnchorElement>) => {
-    event.currentTarget.setPointerCapture(event.pointerId)
-    pointerStateRef.current = {
-      startX: event.clientX,
-      startY: event.clientY,
-      originX: floatingPosition.x,
-      originY: floatingPosition.y,
-    }
-    setIsDraggingCart(false)
-
-    const onMove = (moveEvent: PointerEvent) => {
-      const pointerState = pointerStateRef.current
-      if (!pointerState) return
-      const nextX = Math.min(Math.max(pointerState.originX + (moveEvent.clientX - pointerState.startX), 16), window.innerWidth - 56)
-      const nextY = Math.min(Math.max(pointerState.originY + (moveEvent.clientY - pointerState.startY), 16), window.innerHeight - 56)
-      setFloatingPosition({ x: nextX, y: nextY })
-
-      if (!isDraggingCart) {
-        const moved = Math.abs(moveEvent.clientX - pointerState.startX) + Math.abs(moveEvent.clientY - pointerState.startY) > 8
-        if (moved) setIsDraggingCart(true)
-      }
-    }
-
-    const onUp = () => {
-      pointerStateRef.current = null
-      try { event.currentTarget.releasePointerCapture(event.pointerId) } catch { /* noop */ }
-      if (dragStartTimerRef.current) {
-        window.clearTimeout(dragStartTimerRef.current)
-        dragStartTimerRef.current = null
-      }
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', onUp)
-      setTimeout(() => setIsDraggingCart(false), 0)
-    }
-
-    dragStartTimerRef.current = window.setTimeout(() => {
-      window.addEventListener('pointermove', onMove)
-      window.addEventListener('pointerup', onUp)
-      try { localStorage.setItem(DRAG_HINT_SEEN_KEY, '1') } catch { /* noop */ }
-      setShowDragHint(false)
-    }, 240)
-
-    window.addEventListener('pointerup', onUp, { once: true })
-  }
-
   return (
     <header
-      className={`sticky top-0 z-50 transition-all duration-400 ${
+      className={`sticky top-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'border-[rgba(6,182,212,0.12)] bg-white/92 shadow-[0_8px_32px_rgba(0,0,0,0.08)] backdrop-blur-xl dark:bg-[rgba(6,6,15,0.92)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)]'
+          ? 'border-gray-200/80 bg-white/95 shadow-sm backdrop-blur-xl dark:border-[rgba(6,182,212,0.12)] dark:bg-[rgba(6,6,15,0.92)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)]'
           : 'border-gray-100/60 bg-white/80 backdrop-blur-lg dark:border-[rgba(6,182,212,0.06)] dark:bg-[rgba(6,6,15,0.75)]'
       } border-b`}
     >
@@ -229,7 +87,7 @@ export default function Header() {
                   {isAbsoluteUrl(to) ? (
                     <a
                       href={to}
-                      className="focus-ring relative rounded-sm px-3 py-1.5 text-sm text-gray-500 transition-colors duration-150 hover:bg-gray-100/50 hover:text-gray-900 dark:text-[rgba(120,140,180,0.7)] dark:hover:bg-[rgba(6,182,212,0.05)] dark:hover:text-cyan-300"
+                      className="focus-ring relative rounded-md px-3 py-1.5 text-sm text-gray-600 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-900 dark:text-[rgba(120,140,180,0.7)] dark:hover:bg-[rgba(6,182,212,0.05)] dark:hover:text-cyan-300"
                     >
                       {t(key)}
                     </a>
@@ -240,10 +98,10 @@ export default function Header() {
                       onFocus={() => prefetchRoute(to)}
                       onTouchStart={() => prefetchRoute(to)}
                       className={({ isActive }) =>
-                        `focus-ring relative rounded-sm px-3 py-1.5 text-sm transition-colors duration-150 ${
+                        `focus-ring relative rounded-md px-3 py-1.5 text-sm transition-colors duration-150 ${
                           isActive
-                            ? 'bg-[rgba(6,182,212,0.08)] font-medium text-cyan-600 dark:bg-[rgba(6,182,212,0.1)] dark:text-cyan-300'
-                            : 'text-gray-500 hover:bg-gray-100/50 hover:text-gray-900 dark:text-[rgba(120,140,180,0.7)] dark:hover:bg-[rgba(6,182,212,0.05)] dark:hover:text-cyan-300'
+                            ? 'bg-gray-100 font-medium text-gray-900 dark:bg-[rgba(6,182,212,0.1)] dark:text-cyan-300'
+                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-[rgba(120,140,180,0.7)] dark:hover:bg-[rgba(6,182,212,0.05)] dark:hover:text-cyan-300'
                         }`
                       }
                     >
@@ -253,7 +111,7 @@ export default function Header() {
                           {isActive && (
                             <motion.span
                               layoutId="nav-indicator"
-                              className="absolute bottom-0 left-2 right-2 h-px bg-gradient-to-r from-cyan-500/80 via-cyan-400 to-cyan-500/80"
+                              className="absolute bottom-0 left-2 right-2 h-px bg-gradient-to-r from-gray-400/60 via-gray-600/80 to-gray-400/60 dark:from-cyan-500/80 dark:via-cyan-400 dark:to-cyan-500/80"
                               transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                             />
                           )}
@@ -266,7 +124,7 @@ export default function Header() {
             </ul>
           </nav>
 
-          <div className="ml-2 flex items-center gap-2 border-l border-[rgba(6,182,212,0.1)] dark:border-[rgba(6,182,212,0.12)] pl-3">
+          <div className="ml-2 flex items-center gap-2 border-l border-gray-200 dark:border-[rgba(6,182,212,0.12)] pl-3">
             <LangSwitcher />
             <ThemeToggle />
             {showAuth && <AuthButton />}
@@ -286,17 +144,17 @@ export default function Header() {
             <motion.span
               animate={isOpen ? { rotate: 45, y: 3.5 } : { rotate: 0, y: 0 }}
               transition={{ duration: 0.25 }}
-              className="block h-px w-5 bg-gray-600 dark:bg-cyan-400/70 origin-center"
+              className="block h-px w-5 origin-center bg-gray-700 dark:bg-cyan-400/70"
             />
             <motion.span
               animate={isOpen ? { opacity: 0, scaleX: 0 } : { opacity: 1, scaleX: 1 }}
               transition={{ duration: 0.2 }}
-              className="block h-px w-5 bg-gray-600 dark:bg-cyan-400/70"
+              className="block h-px w-5 bg-gray-700 dark:bg-cyan-400/70"
             />
             <motion.span
               animate={isOpen ? { rotate: -45, y: -9 } : { rotate: 0, y: 0 }}
               transition={{ duration: 0.25 }}
-              className="block h-px w-5 bg-gray-600 dark:bg-cyan-400/70 origin-center"
+              className="block h-px w-5 origin-center bg-gray-700 dark:bg-cyan-400/70"
             />
           </button>
         </div>
@@ -311,13 +169,10 @@ export default function Header() {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className="overflow-hidden border-t border-[rgba(6,182,212,0.1)] md:hidden"
+            className="overflow-hidden border-t border-gray-100 dark:border-[rgba(6,182,212,0.1)] md:hidden"
           >
-            <nav className="bg-white/96 dark:bg-[rgba(6,6,15,0.97)] px-4 pb-6 pt-3 backdrop-blur-xl">
-              {/* Cyber grid overlay */}
-              <div className="cyber-grid-fine absolute inset-0 pointer-events-none opacity-40" />
-
-              <ul className="relative flex flex-col divide-y divide-gray-50 dark:divide-[rgba(6,182,212,0.06)]">
+            <nav className="bg-white/98 px-4 pb-6 pt-3 backdrop-blur-xl dark:bg-[rgba(6,6,15,0.97)]">
+              <ul className="flex flex-col divide-y divide-gray-100 dark:divide-[rgba(6,182,212,0.06)]">
                 {NAV_ITEMS.map(({ key, to }, i) => (
                   <motion.li
                     key={to}
@@ -330,10 +185,10 @@ export default function Header() {
                       onMouseEnter={() => !isAbsoluteUrl(to) && prefetchRoute(to)}
                       onFocus={() => !isAbsoluteUrl(to) && prefetchRoute(to)}
                       onTouchStart={() => !isAbsoluteUrl(to) && prefetchRoute(to)}
-                      className="group flex items-center justify-between py-3 text-sm text-gray-500 transition-colors hover:text-cyan-500 dark:text-[rgba(120,140,180,0.7)] dark:hover:text-cyan-400"
+                      className="group flex items-center justify-between py-3 text-sm text-gray-600 transition-colors hover:text-gray-900 dark:text-[rgba(120,140,180,0.7)] dark:hover:text-cyan-400"
                     >
                       <span>{t(key)}</span>
-                      <span className="font-mono text-[9px] text-transparent group-hover:text-cyan-500/40 transition-colors duration-200">
+                      <span className="font-mono text-[9px] text-transparent transition-colors duration-200 group-hover:text-gray-400 dark:group-hover:text-cyan-500/40">
                         →
                       </span>
                     </SmartLink>
@@ -345,7 +200,7 @@ export default function Header() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: NAV_ITEMS.length * 0.04 + 0.1 }}
-                  className="mt-4 border-t border-gray-100 dark:border-[rgba(6,182,212,0.08)] pt-4"
+                  className="mt-4 border-t border-gray-100 pt-4 dark:border-[rgba(6,182,212,0.08)]"
                 >
                   <AuthButton />
                 </motion.div>
@@ -354,52 +209,6 @@ export default function Header() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* ── Floating cart ────────────────────────────────── */}
-      {showFloatingCart && !pathname.startsWith(ROUTES.CART) && (
-        <div className="pointer-events-none fixed z-[60]" style={{ left: floatingPosition.x, top: floatingPosition.y }}>
-          <div className="pointer-events-auto relative">
-            <button
-              type="button"
-              onClick={() => setShowFloatingCart(false)}
-              aria-label={t('cart.hideFloating', { defaultValue: 'カートアイコンを閉じる' })}
-              className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border border-gray-200 bg-white text-[10px] leading-none text-gray-500 shadow-sm transition hover:text-gray-800 dark:border-[rgba(6,182,212,0.2)] dark:bg-[rgba(6,6,15,0.95)] dark:text-gray-400 dark:hover:text-cyan-400"
-            >
-              ×
-            </button>
-            <Link
-              to={ROUTES.CART}
-              onPointerDown={beginCartDrag}
-              onClick={(event) => {
-                if (dragStartTimerRef.current) {
-                  window.clearTimeout(dragStartTimerRef.current)
-                  dragStartTimerRef.current = null
-                }
-                if (isDraggingCart) event.preventDefault()
-              }}
-              className="relative flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-md transition hover:scale-[1.05] hover:border-cyan-400/40 hover:text-gray-900 hover:shadow-[0_0_16px_rgba(6,182,212,0.2)] dark:border-[rgba(6,182,212,0.2)] dark:bg-[rgba(6,6,15,0.95)] dark:text-gray-300 dark:hover:border-cyan-400/50 dark:hover:text-cyan-300"
-              style={{ touchAction: 'none' }}
-              aria-label={t('cart.goToCart', { defaultValue: 'カートを見る' })}
-            >
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
-                <path d="M3 5h2l2 11h10l2-8H7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="10" cy="19" r="1.5" fill="currentColor" />
-                <circle cx="17" cy="19" r="1.5" fill="currentColor" />
-              </svg>
-              {itemCount > 0 && (
-                <span className="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-neon-cyan px-1 text-[10px] font-bold text-cyber-950">
-                  {itemCount}
-                </span>
-              )}
-            </Link>
-            {showDragHint && (
-              <p className="pointer-events-none absolute -top-7 right-0 rounded-sm border border-[rgba(6,182,212,0.3)] bg-white/95 px-2 py-1 text-[10px] font-mono text-cyan-600 shadow-sm dark:border-[rgba(6,182,212,0.25)] dark:bg-[rgba(6,6,15,0.95)] dark:text-cyan-400">
-                {t('cart.dragHint', { defaultValue: '長押しでドラッグ' })}
-              </p>
-            )}
-          </div>
-        </div>
-      )}
     </header>
   )
 }

@@ -17,7 +17,7 @@ import CampaignHero from '@/modules/campaign/components/CampaignHero'
 import NotificationInterestButton from '@/modules/notifications/components/NotificationInterestButton'
 
 const SELECT_CLS =
-  'mt-1 w-full border border-[rgba(6,182,212,0.15)] bg-[rgba(6,6,15,0.6)] px-3 py-2 font-mono text-xs text-[rgba(180,190,220,0.7)] transition-colors focus:border-cyan-500/40 focus:outline-none'
+  'mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-xs text-gray-700 transition-colors focus:border-gray-400 focus:outline-none dark:border-[rgba(6,182,212,0.15)] dark:bg-[rgba(6,6,15,0.6)] dark:text-[rgba(180,190,220,0.7)] dark:focus:border-cyan-500/40'
 
 export default function StorefrontProductsPage() {
   const { products, loading, error, refetch } = useProductList(120)
@@ -141,15 +141,15 @@ export default function StorefrontProductsPage() {
         transition={{ delay: 0.2, duration: 0.4 }}
       >
         <div className="mb-3 flex items-center gap-2">
-          <span className="font-mono text-[8px] uppercase tracking-[0.25em] text-cyan-500/30">// filter</span>
-          <div className="h-px flex-1 bg-gradient-to-r from-cyan-500/20 to-transparent" />
-          <span className="font-mono text-[9px] text-[rgba(6,182,212,0.35)]">
+          <span className="font-mono text-[8px] uppercase tracking-[0.25em] text-gray-400 dark:text-cyan-500/30">// filter</span>
+          <div className="h-px flex-1 bg-gradient-to-r from-gray-200 to-transparent dark:from-cyan-500/20" />
+          <span className="font-mono text-[9px] text-gray-500 dark:text-[rgba(6,182,212,0.35)]">
             {loading ? '...' : filtered.length} items
           </span>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className="sm:col-span-2">
-            <span className="font-mono text-[9px] uppercase tracking-widest text-[rgba(6,182,212,0.4)]">検索</span>
+            <span className="font-mono text-[9px] uppercase tracking-widest text-gray-500 dark:text-[rgba(6,182,212,0.4)]">検索</span>
             <input
               value={search}
               onChange={(event) => {
@@ -157,11 +157,11 @@ export default function StorefrontProductsPage() {
                 trackCtaClick('store_products_filter', 'search_input', { keyword_length: event.target.value.length })
               }}
               placeholder="商品名・タグで検索"
-              className="mt-1 w-full border border-[rgba(6,182,212,0.15)] bg-[rgba(6,6,15,0.6)] px-3 py-2 font-mono text-xs text-[rgba(180,190,220,0.7)] placeholder:text-[rgba(6,182,212,0.2)] transition-colors focus:border-cyan-500/40 focus:outline-none"
+              className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-xs text-gray-700 placeholder:text-gray-400 transition-colors focus:border-gray-400 focus:outline-none dark:border-[rgba(6,182,212,0.15)] dark:bg-[rgba(6,6,15,0.6)] dark:text-[rgba(180,190,220,0.7)] dark:placeholder:text-[rgba(6,182,212,0.2)] dark:focus:border-cyan-500/40"
             />
           </label>
           <label>
-            <span className="font-mono text-[9px] uppercase tracking-widest text-[rgba(6,182,212,0.4)]">在庫状態</span>
+            <span className="font-mono text-[9px] uppercase tracking-widest text-gray-500 dark:text-[rgba(6,182,212,0.4)]">在庫状態</span>
             <select value={status} onChange={(event) => {
               setStatus(event.target.value as typeof status)
               trackCtaClick('store_products_filter', 'status_filter', { value: event.target.value })
@@ -173,7 +173,7 @@ export default function StorefrontProductsPage() {
             </select>
           </label>
           <label>
-            <span className="font-mono text-[9px] uppercase tracking-widest text-[rgba(6,182,212,0.4)]">カテゴリ</span>
+            <span className="font-mono text-[9px] uppercase tracking-widest text-gray-500 dark:text-[rgba(6,182,212,0.4)]">カテゴリ</span>
             <select value={collection} onChange={(event) => {
               setCollection(event.target.value)
               trackCtaClick('store_products_filter', 'collection_filter', { value: event.target.value })
@@ -183,7 +183,7 @@ export default function StorefrontProductsPage() {
             </select>
           </label>
           <label>
-            <span className="font-mono text-[9px] uppercase tracking-widest text-[rgba(6,182,212,0.4)]">タグ</span>
+            <span className="font-mono text-[9px] uppercase tracking-widest text-gray-500 dark:text-[rgba(6,182,212,0.4)]">タグ</span>
             <select value={tag} onChange={(event) => {
               setTag(event.target.value)
               trackCtaClick('store_products_filter', 'tag_filter', { value: event.target.value })
@@ -193,7 +193,7 @@ export default function StorefrontProductsPage() {
             </select>
           </label>
           <label>
-            <span className="font-mono text-[9px] uppercase tracking-widest text-[rgba(6,182,212,0.4)]">並び順</span>
+            <span className="font-mono text-[9px] uppercase tracking-widest text-gray-500 dark:text-[rgba(6,182,212,0.4)]">並び順</span>
             <select value={sort} onChange={(event) => {
               setSort(event.target.value as typeof sort)
               trackCtaClick('store_products_filter', 'sort', { value: event.target.value })
