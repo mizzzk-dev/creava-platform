@@ -46,4 +46,49 @@
     <xhtml:link rel="alternate" hreflang="ko" href="https://store.mizzz.jp/guide?lng=ko"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://store.mizzz.jp/guide"/>
   </url>
+  <url>
+    <loc>https://store.mizzz.jp/shipping-policy</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://store.mizzz.jp/shipping-policy"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://store.mizzz.jp/shipping-policy?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://store.mizzz.jp/shipping-policy?lng=ko"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://store.mizzz.jp/shipping-policy"/>
+  </url>
+  <url>
+    <loc>https://store.mizzz.jp/returns</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://store.mizzz.jp/returns"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://store.mizzz.jp/returns?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://store.mizzz.jp/returns?lng=ko"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://store.mizzz.jp/returns"/>
+  </url>
+  <url>
+    <loc>https://store.mizzz.jp/legal</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://store.mizzz.jp/legal"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://store.mizzz.jp/legal?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://store.mizzz.jp/legal?lng=ko"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://store.mizzz.jp/legal"/>
+  </url>
+  <url>
+    <loc>https://store.mizzz.jp/terms</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://store.mizzz.jp/terms"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://store.mizzz.jp/terms?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://store.mizzz.jp/terms?lng=ko"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://store.mizzz.jp/terms"/>
+  </url>
+  <url>
+    <loc>https://store.mizzz.jp/privacy</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://store.mizzz.jp/privacy"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://store.mizzz.jp/privacy?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://store.mizzz.jp/privacy?lng=ko"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://store.mizzz.jp/privacy"/>
+  </url>
 </urlset>

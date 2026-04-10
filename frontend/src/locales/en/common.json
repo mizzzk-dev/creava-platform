@@ -547,7 +547,12 @@
     }
   },
   "fanclub": {
-    "subscriptionPolicy": "Subscription Policy"
+    "subscriptionPolicy": "Subscription Policy",
+    "accessPublic": "Public",
+    "accessMembers": "Members only",
+    "accessPremium": "Premium only",
+    "joinToView": "Join to view",
+    "archive": "fanclub archive"
   },
   "seasonal": {
     "theme": {
@@ -608,5 +613,56 @@
     "fcHomeHiddenQuote": "The fan club is quietly a special place.",
     "fcEasterEggMessage": "Thank you for finding this.",
     "easterEggFoundLabel": "Found"
+  },
+  "storefront": {
+    "guide": {
+      "title": "Guide",
+      "subtitle": "Pre-purchase information",
+      "lead": "Here is an overview of information to check before making a purchase.",
+      "contactNote": "For store inquiries, please use the contact form on mizzz.jp.",
+      "contactLink": "Contact mizzz.jp",
+      "links": {
+        "shipping": "Shipping Policy",
+        "returns": "Returns & Exchanges",
+        "terms": "Terms of Use",
+        "privacy": "Privacy Policy",
+        "tokushoho": "Commercial Disclosure",
+        "contact": "Contact (mizzz.jp)"
+      }
+    },
+    "shipping": {
+      "title": "Shipping Policy",
+      "subtitle": "Delivery methods and timelines",
+      "description": "Shipping policy for mizzz Official Store.",
+      "standard": "Standard items ship within 5–8 business days after your order is confirmed.",
+      "preorder": "Pre-order and made-to-order items follow the timeline stated on each product page.",
+      "domestic": "Domestic shipping (Japan, JST) is standard. International shipping is being rolled out in phases.",
+      "contactNote": "For inquiries, please use the",
+      "contactLink": "mizzz.jp contact page",
+      "contactNoteSuffix": ".",
+      "feeTitle": "Shipping fee",
+      "feeBody": "Shipping fees apply except where noted. Please check the product page or checkout for the exact amount.",
+      "trackingTitle": "Order tracking",
+      "trackingBody": "A tracking number will be sent by email once your order has shipped. Tracking becomes active within 24 hours of dispatch.",
+      "delayTitle": "Delays",
+      "delayBody": "Delays may occur during peak periods, severe weather, or due to carrier conditions. Please contact us in advance if you have a time-sensitive order."
+    },
+    "returns": {
+      "title": "Returns & Exchanges",
+      "subtitle": "Conditions and process",
+      "description": "Returns and exchange policy for mizzz Official Store.",
+      "noReturn": "Returns and exchanges due to customer preference are not accepted in principle.",
+      "defective": "For defective or incorrect items, please contact us within 7 days of receiving your order.",
+      "digital": "Digital products cannot be returned after purchase due to their nature.",
+      "contactNote": "For returns and exchanges, please reach us via the",
+      "contactLink": "mizzz.jp contact page",
+      "contactNoteSuffix": ".",
+      "procedureTitle": "How to request a return or exchange",
+      "step1": "Contact us via the contact page within 7 days of receiving your item.",
+      "step2": "We will verify the defect or error, then provide a return address.",
+      "step3": "Once your return is received, we will arrange a replacement or refund.",
+      "noteTitle": "Please note",
+      "noteBody": "Returns due to customer preference are not accepted. Opened or used items may not qualify for exchange even in cases of defect."
+    }
   }
 }
