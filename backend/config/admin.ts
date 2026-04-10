@@ -3,6 +3,12 @@ import type { Core } from '@strapi/strapi';
 const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Admin => ({
   auth: {
     secret: env('ADMIN_JWT_SECRET'),
+    sessions: {
+      // Strapi v5.41 以降では auth.options.expiresIn が非推奨のため、
+      // セッション寿命は sessions 設定へ移行する。
+      maxRefreshTokenLifespan: env.int('ADMIN_AUTH_MAX_REFRESH_TOKEN_LIFESPAN', 60 * 60 * 24 * 30),
+      maxSessionLifespan: env.int('ADMIN_AUTH_MAX_SESSION_LIFESPAN', 60 * 60 * 24 * 7),
+    },
   },
   apiToken: {
     salt: env('API_TOKEN_SALT'),

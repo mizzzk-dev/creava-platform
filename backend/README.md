@@ -53,6 +53,8 @@ npm run dev:backend
 | `APP_KEYS` | セッションキー（初期化時に自動生成） |
 | `API_TOKEN_SALT` | API トークンのソルト |
 | `ADMIN_JWT_SECRET` | 管理画面 JWT シークレット |
+| `ADMIN_AUTH_MAX_REFRESH_TOKEN_LIFESPAN` | 管理画面リフレッシュトークンの有効期限（秒） |
+| `ADMIN_AUTH_MAX_SESSION_LIFESPAN` | 管理画面セッションの最大有効期限（秒） |
 | `TRANSFER_TOKEN_SALT` | データ転送トークンのソルト |
 | `DATABASE_CLIENT` | DB クライアント（デフォルト: `sqlite`） |
 | `DATABASE_FILENAME` | SQLite ファイルパス（デフォルト: `.tmp/data.db`） |
