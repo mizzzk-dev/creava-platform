@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useEffect, useMemo } from 'react'
+import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { useProductList } from '@/modules/store/hooks/useProductList'
 import ProductCard from '@/modules/store/components/ProductCard'
@@ -348,27 +349,50 @@ export default function StorefrontHomePage() {
       </div>
 
       {sectionResolver('store-home-member-pickup', true) && !loading && !error && memberPickup.length > 0 && (
-        <section className="mt-12 rounded-3xl border border-violet-200/70 bg-violet-50/60 p-5 dark:border-violet-900/60 dark:bg-violet-950/20 sm:p-7">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-violet-600 dark:text-violet-300">member benefit / early access</p>
-              <h2 className="mt-2 text-xl font-semibold text-gray-900 dark:text-gray-100">会員向け販売・先行導線</h2>
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">FC先行・会員特典つき商品の導線をまとめて表示します。</p>
-            </div>
-            <Link to={fanclubLink(ROUTES.FC_MYPAGE)} onClick={() => trackCtaClick('store_home_member_pickup', 'to_fc_mypage')} className="rounded-full border border-violet-300 px-4 py-2 text-xs font-medium text-violet-700 dark:border-violet-700 dark:text-violet-300">
-              FCマイページで特典を確認
-            </Link>
-          </div>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            {memberPickup.map((item) => (
-              <Link key={item.id} to={`/products/${item.slug}`} onClick={() => trackCtaClick('store_home_member_pickup', 'product_click', { slug: item.slug })} className="rounded-2xl border border-violet-200 bg-white/85 p-4 dark:border-violet-900/70 dark:bg-gray-900/80">
-                <p className="font-mono text-[10px] uppercase tracking-wider text-violet-500">{item.earlyAccess ? 'EARLY ACCESS' : 'MEMBER BENEFIT'}</p>
-                <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">{item.title}</h3>
-                <p className="mt-1 line-clamp-2 text-xs text-gray-600 dark:text-gray-300">{item.specialOffer ?? item.memberBenefit ?? '会員向け販売情報を商品詳細で確認できます。'}</p>
+        <SectionReveal className="mt-12">
+          <section className="relative overflow-hidden rounded-3xl border border-violet-200/70 bg-gradient-to-br from-violet-50/80 via-white to-violet-50/30 p-5 shadow-sm dark:border-violet-900/50 dark:bg-violet-950/15 dark:from-transparent dark:to-transparent sm:p-7">
+            {/* Ambient glow */}
+            <div className="pointer-events-none absolute right-0 top-0 h-48 w-48 rounded-full bg-violet-400/5 blur-3xl dark:bg-violet-500/5" aria-hidden="true" />
+            <div className="relative flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-violet-600 dark:text-violet-400">member benefit · early access</p>
+                <h2 className="mt-2 text-xl font-semibold text-gray-900 dark:text-gray-100">会員向け販売・先行導線</h2>
+                <p className="mt-1.5 text-sm text-gray-600 dark:text-gray-300">FC先行・会員特典つき商品の導線をまとめて表示します。</p>
+              </div>
+              <Link
+                to={fanclubLink(ROUTES.FC_MYPAGE)}
+                onClick={() => trackCtaClick('store_home_member_pickup', 'to_fc_mypage')}
+                className="shrink-0 rounded-full border border-violet-300/80 px-4 py-2 text-xs font-medium text-violet-700 transition-all hover:border-violet-400 hover:bg-violet-50 dark:border-violet-700/60 dark:text-violet-300 dark:hover:border-violet-600 dark:hover:bg-violet-950/30"
+              >
+                FCマイページで特典を確認 →
               </Link>
-            ))}
-          </div>
-        </section>
+            </div>
+            <div className="relative mt-5 grid gap-3 sm:grid-cols-3">
+              {memberPickup.map((item, i) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ delay: i * 0.07, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <Link
+                    to={`/products/${item.slug}`}
+                    onClick={() => trackCtaClick('store_home_member_pickup', 'product_click', { slug: item.slug })}
+                    className="group block rounded-2xl border border-violet-200/80 bg-white/90 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-violet-300/80 hover:shadow-sm dark:border-violet-900/60 dark:bg-gray-900/80 dark:hover:border-violet-800/60"
+                  >
+                    <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-violet-500 dark:text-violet-400">
+                      {item.earlyAccess ? 'EARLY ACCESS' : 'MEMBER BENEFIT'}
+                    </p>
+                    <h3 className="mt-2 text-sm font-medium text-gray-900 transition-colors group-hover:text-gray-700 dark:text-gray-100 dark:group-hover:text-gray-300">{item.title}</h3>
+                    <p className="mt-1 line-clamp-2 text-xs text-gray-600 dark:text-gray-400">{item.specialOffer ?? item.memberBenefit ?? '会員向け販売情報を商品詳細で確認できます。'}</p>
+                    <p className="mt-3 font-mono text-[10px] text-gray-400 transition-colors group-hover:text-violet-600 dark:text-gray-600 dark:group-hover:text-violet-400">詳細へ →</p>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          </section>
+        </SectionReveal>
       )}
 
       {sectionResolver('store-home-featured', true) && !loading && !error && (featured.length > 0 || digitalGoods.length > 0) && (

@@ -1,5 +1,6 @@
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import DailyMessageCard from '@/modules/playful/components/DailyMessageCard'
 import WeeklyPickupCard from '@/modules/playful/components/WeeklyPickupCard'
@@ -316,6 +317,50 @@ export function FanclubHomeHubPage() {
           location="fc_home_weekly_pickup"
         />
       </div>
+
+      {/* ── Weekly members content visual grid ─────────── */}
+      {activeWeeklyContent.length > 0 && (
+        <SectionReveal className="mt-10">
+          <div className="flex items-center gap-3 mb-5">
+            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-fuchsia-600 dark:text-fuchsia-400">members · this week</p>
+            <div className="h-px flex-1 bg-gradient-to-r from-fuchsia-200/60 to-transparent dark:from-fuchsia-800/30" />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {activeWeeklyContent.map((item, i) => (
+              <motion.div
+                key={item.id ?? item.slug}
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.15 }}
+                transition={{ delay: i * 0.08, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <Link
+                  to={`/fanclub/${item.slug}`}
+                  onClick={() => trackCtaClick('fc_home_weekly_grid', 'content_click', { slug: item.slug })}
+                  className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-fuchsia-200/60 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-fuchsia-300/70 hover:shadow-md dark:border-fuchsia-900/40 dark:bg-gray-900/70 dark:hover:border-fuchsia-800/50 min-h-[9rem]"
+                >
+                  {/* Subtle gradient bg on hover */}
+                  <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-fuchsia-50/60 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:from-fuchsia-950/20" />
+                  <div className="relative">
+                    <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-fuchsia-500 dark:text-fuchsia-400">
+                      {item.category ?? 'weekly'}
+                    </p>
+                    <h3 className="mt-2 text-sm font-semibold leading-snug text-gray-900 transition-colors group-hover:text-gray-700 dark:text-gray-100 dark:group-hover:text-gray-300 line-clamp-2">
+                      {item.heroTitle ?? item.title}
+                    </h3>
+                    <p className="mt-1.5 text-xs leading-relaxed text-gray-500 dark:text-gray-400 line-clamp-2">
+                      {item.shortHighlight ?? item.heroCopy ?? '会員向けコンテンツを公開中。'}
+                    </p>
+                  </div>
+                  <p className="relative mt-4 font-mono text-[10px] text-gray-400 transition-colors group-hover:text-fuchsia-600 dark:text-gray-600 dark:group-hover:text-fuchsia-400">
+                    詳細を見る →
+                  </p>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </SectionReveal>
+      )}
 
       <NotificationInterestButton
         location="fc_home"

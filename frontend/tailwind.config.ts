@@ -40,6 +40,22 @@ const config: Config = {
           700: '#16162b',
           600: '#1e1e38',
         },
+        /* ── Editorial neutrals ──────────────────── */
+        editorial: {
+          warm:   '#f7f3ee',
+          cool:   '#f0f4f8',
+          ink:    '#1a1625',
+          muted:  '#5c5870',
+          subtle: '#9896a8',
+          accent: '#e8e4de',
+          canvas: '#faf8f5',
+        },
+        /* ── Ink text tokens ────────────────────── */
+        ink: {
+          DEFAULT: 'var(--ds-color-fg-default)',
+          muted:   'var(--ds-color-fg-muted)',
+          subtle:  'var(--ds-color-fg-subtle)',
+        },
       },
       keyframes: {
         /* ── Legacy ──────────────────────────── */
@@ -126,6 +142,42 @@ const config: Config = {
           from: { opacity: '0', transform: 'scale(0.94)' },
           to:   { opacity: '1', transform: 'scale(1)'    },
         },
+        /* ── Editorial / Modern additions ────────── */
+        breathe: {
+          '0%, 100%': { transform: 'scale(1)',    opacity: '0.7' },
+          '50%':       { transform: 'scale(1.06)', opacity: '1'   },
+        },
+        orbit_slow: {
+          from: { transform: 'rotate(0deg)'   },
+          to:   { transform: 'rotate(360deg)' },
+        },
+        float_diagonal: {
+          '0%, 100%': { transform: 'translate(0px, 0px)'   },
+          '33%':       { transform: 'translate(5px, -7px)'  },
+          '66%':       { transform: 'translate(-4px, -5px)' },
+        },
+        draw_line: {
+          from: { strokeDashoffset: '300' },
+          to:   { strokeDashoffset: '0'   },
+        },
+        word_up: {
+          '0%':   { opacity: '0', transform: 'translateY(12px)',  clipPath: 'inset(100% 0 0 0)' },
+          '15%':  { opacity: '1', transform: 'translateY(0)',     clipPath: 'inset(0% 0 0 0)'   },
+          '85%':  { opacity: '1', transform: 'translateY(0)',     clipPath: 'inset(0% 0 0 0)'   },
+          '100%': { opacity: '0', transform: 'translateY(-12px)', clipPath: 'inset(0 0 100% 0)' },
+        },
+        line_grow: {
+          from: { transform: 'scaleX(0)', transformOrigin: 'left' },
+          to:   { transform: 'scaleX(1)', transformOrigin: 'left' },
+        },
+        ripple_out: {
+          from: { transform: 'scale(0)', opacity: '0.6' },
+          to:   { transform: 'scale(2)', opacity: '0'   },
+        },
+        bg_pan: {
+          from: { backgroundPosition: '0% 50%'   },
+          to:   { backgroundPosition: '100% 50%' },
+        },
       },
       animation: {
         /* Legacy */
@@ -148,6 +200,15 @@ const config: Config = {
         count_up:        'count_up 0.4s ease both',
         fade_in_up:      'fade_in_up 0.5s ease both',
         scale_in:        'scale_in 0.4s cubic-bezier(0.22,1,0.36,1) both',
+        /* New editorial animations */
+        breathe:         'breathe 5s ease-in-out infinite',
+        orbit_slow:      'orbit_slow 22s linear infinite',
+        float_diagonal:  'float_diagonal 8s ease-in-out infinite',
+        draw_line:       'draw_line 1.4s cubic-bezier(0.22,1,0.36,1) forwards',
+        word_up:         'word_up 3s ease-in-out infinite',
+        line_grow:       'line_grow 0.8s cubic-bezier(0.22,1,0.36,1) forwards',
+        ripple_out:      'ripple_out 1.8s ease-out infinite',
+        bg_pan:          'bg_pan 6s ease-in-out infinite alternate',
       },
       backgroundSize: {
         '200%': '200% 100%',

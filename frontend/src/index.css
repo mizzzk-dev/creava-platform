@@ -1065,6 +1065,198 @@
     background: linear-gradient(to right, transparent, var(--ds-color-border-default) 30%, var(--ds-color-border-default) 70%, transparent);
     margin-block: var(--ds-space-10);
   }
+
+  /* ════════════════════════════════════════════════════
+     EDITORIAL MODERN — 追加ユーティリティ
+  ════════════════════════════════════════════════════ */
+
+  /* ウォームカード: ライト=white/cream, ダーク=深い紺 */
+  .card-editorial {
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.07);
+    border-radius: 1rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03);
+    transition:
+      border-color 0.25s ease,
+      box-shadow    0.25s ease,
+      transform     0.25s cubic-bezier(0.22,1,0.36,1);
+  }
+  .card-editorial:hover {
+    border-color: rgba(0,0,0,0.12);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.09), 0 1px 4px rgba(0,0,0,0.05);
+    transform: translateY(-3px);
+  }
+  .dark .card-editorial {
+    background: rgba(14,14,28,0.95);
+    border-color: rgba(120,130,200,0.10);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  }
+  .dark .card-editorial:hover {
+    border-color: rgba(139,92,246,0.28);
+    box-shadow: 0 0 0 1px rgba(139,92,246,0.15), 0 8px 32px rgba(0,0,0,0.5);
+  }
+
+  /* タイムラインレール */
+  .timeline-track {
+    position: relative;
+    padding-left: 2rem;
+  }
+  .timeline-track::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.6rem;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--ds-color-border-default), transparent 90%);
+  }
+  .dark .timeline-track::before {
+    background: linear-gradient(to bottom, rgba(139,92,246,0.25), transparent 90%);
+  }
+
+  .timeline-dot {
+    position: absolute;
+    left: -2rem;
+    top: 0.5rem;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    background: var(--ds-color-fg-subtle);
+    border: 2px solid var(--ds-color-bg-default);
+    box-shadow: 0 0 0 1px var(--ds-color-border-default);
+  }
+  .dark .timeline-dot {
+    background: rgba(139,92,246,0.6);
+    box-shadow: 0 0 0 1px rgba(139,92,246,0.3), 0 0 6px rgba(139,92,246,0.15);
+    border-color: var(--ds-color-bg-default);
+  }
+  .timeline-dot-active {
+    background: #7c3aed;
+    box-shadow: 0 0 0 1px rgba(124,58,237,0.3), 0 0 8px rgba(124,58,237,0.2);
+  }
+  .dark .timeline-dot-active {
+    background: #a78bfa;
+    box-shadow: 0 0 0 1px rgba(167,139,250,0.4), 0 0 12px rgba(167,139,250,0.25);
+  }
+
+  /* バリューカード */
+  .values-card {
+    padding: 1.5rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(0,0,0,0.07);
+    background: #ffffff;
+    transition: border-color 0.22s ease, transform 0.22s cubic-bezier(0.22,1,0.36,1);
+  }
+  .values-card:hover {
+    border-color: rgba(124,58,237,0.22);
+    transform: translateY(-2px);
+  }
+  .dark .values-card {
+    background: rgba(16,16,31,0.80);
+    border-color: rgba(120,130,200,0.10);
+  }
+  .dark .values-card:hover {
+    border-color: rgba(139,92,246,0.30);
+  }
+
+  /* ビジュアルクォート */
+  .visual-quote {
+    position: relative;
+    padding: 2.5rem 2rem;
+    text-align: center;
+  }
+  .visual-quote::before {
+    content: '\201C';
+    position: absolute;
+    top: -1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Syne', serif;
+    font-size: 6rem;
+    line-height: 1;
+    color: rgba(0,0,0,0.05);
+    pointer-events: none;
+  }
+  .dark .visual-quote::before {
+    color: rgba(139,92,246,0.10);
+  }
+
+  /* セクションラベル */
+  .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.625rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #6b6b6b;
+  }
+  .dark .section-label {
+    color: rgba(120,140,180,0.6);
+  }
+  .section-label::before {
+    content: '';
+    display: inline-block;
+    width: 1.5rem;
+    height: 1px;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+
+  /* アクセントライン */
+  .accent-line-v {
+    width: 1px;
+    background: linear-gradient(to bottom, rgba(124,58,237,0.5), transparent);
+  }
+  .dark .accent-line-v {
+    background: linear-gradient(to bottom, rgba(139,92,246,0.5), transparent);
+  }
+
+  /* イラストレーションスポット */
+  .illustration-spot {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.5rem;
+    background: linear-gradient(135deg, #f0edf7 0%, #e8e4f0 100%);
+    border: 1px solid rgba(124,58,237,0.12);
+  }
+  .dark .illustration-spot {
+    background: linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(6,182,212,0.05) 100%);
+    border-color: rgba(139,92,246,0.15);
+  }
+
+  /* エディトリアルテキスト */
+  .text-display {
+    font-family: 'Syne', 'Inter', sans-serif;
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+  }
+
+  /* セクション背景アクセント */
+  .section-bg-accent::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 50% 0%, rgba(124,58,237,0.04) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .dark .section-bg-accent::before {
+    background: radial-gradient(ellipse 70% 60% at 50% 0%, rgba(139,92,246,0.07) 0%, transparent 70%);
+  }
+
+  /* カードホバーグロー violet */
+  .card-hover-glow-violet:hover {
+    box-shadow:
+      0 0 0 1px rgba(124,58,237,0.20),
+      0 8px 32px rgba(124,58,237,0.10);
+  }
+  .dark .card-hover-glow-violet:hover {
+    box-shadow:
+      0 0 0 1px rgba(139,92,246,0.30),
+      0 8px 40px rgba(139,92,246,0.12);
+  }
 }
 
 @layer utilities {
