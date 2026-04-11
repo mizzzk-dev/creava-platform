@@ -16,12 +16,20 @@ function GlitchCode({ code = '404' }: { code?: string }) {
 
   useEffect(() => {
     if (prefersReduced) return
+
+    const clearFrame = () => {
+      if (frameRef.current) {
+        clearInterval(frameRef.current)
+        frameRef.current = null
+      }
+    }
+
     const total = 24
     frameRef.current = setInterval(() => {
       stepRef.current++
       if (stepRef.current >= total) {
         setDisplayed(code)
-        clearInterval(frameRef.current!)
+        clearFrame()
         return
       }
       const progress = stepRef.current / total
@@ -34,7 +42,7 @@ function GlitchCode({ code = '404' }: { code?: string }) {
           .join('')
       )
     }, 40)
-    return () => clearInterval(frameRef.current!)
+    return clearFrame
   }, [code, prefersReduced])
 
   return (
