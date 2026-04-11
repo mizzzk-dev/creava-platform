@@ -1,6 +1,6 @@
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import DailyMessageCard from '@/modules/playful/components/DailyMessageCard'
 import WeeklyPickupCard from '@/modules/playful/components/WeeklyPickupCard'
