@@ -15,6 +15,7 @@
  */
 
 import type { PropsWithChildren } from 'react'
+import type { Variants } from 'framer-motion'
 import { motion, useReducedMotion } from 'framer-motion'
 import { useSeasonalTheme } from '@/modules/seasonal/context'
 
@@ -51,7 +52,7 @@ export default function SectionReveal({
   const baseDur   = isSoft ? 0.7 : isDramatic ? 0.55 : 0.55
   const offset    = isDramatic ? 28 : 18
 
-  const variantMap: Record<RevealVariant, { hidden: object; visible: object }> = {
+  const variantMap: Record<RevealVariant, Variants> = {
     fadeUp: {
       hidden:  { opacity: 0, y: offset },
       visible: {
@@ -173,7 +174,7 @@ export function SectionRevealGroup({
     },
   }
 
-  const itemVariants: Record<RevealVariant, { hidden: object; visible: object }> = {
+  const itemVariants: Record<RevealVariant, Variants> = {
     fadeUp:    { hidden: { opacity: 0, y: 18 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE_OUT } } },
     blur:      { hidden: { opacity: 0, y: 12, filter: 'blur(4px)' }, visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.55, ease: EASE_SMOOTH } } },
     slideLeft: { hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0, transition: { duration: 0.45, ease: EASE_OUT } } },
