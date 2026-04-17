@@ -217,47 +217,31 @@ src/locales/
 
 ---
 
-## Formspree の設定（お問い合わせフォーム）
+## 問い合わせフォーム設定（Strapi 自前基盤）
 
-フォームの送信先は [Formspree](https://formspree.io) を使っています。送信内容はメールで届きます。
-
-### アカウント・フォーム作成
-
-1. [formspree.io](https://formspree.io) でアカウントを作成（無料プランで月 50 件）
-2. ダッシュボード → **New Form** を 2 つ作成:
-   - `creava-contact`（お問い合わせ用）
-   - `creava-request`（仕事依頼用）
-3. 各フォームの **Settings** → **Notifications** で受信メールアドレスを設定
-4. 各フォームの **Integration** タブからフォーム ID（`xxxxxxxx` 形式）をコピー
+フォーム送信先は `POST /api/inquiry-submissions/public` です。Formspree は利用しません。
 
 ### ローカル開発で設定
 
 ```bash
-# frontend/.env.local に追記
-VITE_FORMSPREE_CONTACT_ID=xxxxxxxx
-VITE_FORMSPREE_REQUEST_ID=xxxxxxxx
+# frontend/.env.local
+VITE_STRAPI_API_URL=http://localhost:1337
+VITE_SITE_TYPE=main
 ```
-
-未設定の場合は 800ms 遅延のスタブ動作（実際には送信されません）。  
-開発サーバーのコンソールに警告が表示されます。
 
 ### 本番環境（GitHub Actions）
 
-GitHub リポジトリ → Settings → Secrets and variables → Actions:
-
 | Secret 名 | 値 |
 |---|---|
-| `VITE_FORMSPREE_CONTACT_ID` | お問い合わせフォームの ID |
-| `VITE_FORMSPREE_REQUEST_ID` | 仕事依頼フォームの ID |
-
-`main` へのプッシュで自動ビルド・デプロイされ、本番環境に反映されます。
+| `VITE_STRAPI_API_URL` | Strapi API URL |
+| `VITE_STRAPI_API_TOKEN` | 公開コンテンツ取得トークン（必要時） |
 
 ### 動作確認
 
-1. `npm run dev` で開発サーバーを起動
-2. `/contact` を開く
-3. フォームを送信 → Formspree ダッシュボードで受信確認
-4. 設定したメールアドレスに通知が届くことを確認
+1. `npm run dev:backend` / `npm run dev:frontend` を起動
+2. `/contact` の contact/request を送信
+3. Strapi Admin の `Inquiry Submission` に保存されることを確認
+4. `INQUIRY_NOTIFY_TO` 設定時は通知メール受信を確認
 
 ---
 

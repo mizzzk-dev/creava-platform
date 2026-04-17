@@ -12,7 +12,7 @@
   "attributes": {
     "formType": {
       "type": "enumeration",
-      "enum": ["contact", "request", "restock"],
+      "enum": ["contact", "request", "restock", "application", "entry", "collaboration"],
       "required": true
     },
     "inquiryCategory": { "type": "string" },
@@ -27,6 +27,8 @@
       "multiple": true,
       "allowedTypes": ["files", "images"]
     },
+    "attachmentCount": { "type": "integer", "default": 0 },
+    "attachmentMetadata": { "type": "json" },
     "locale": { "type": "string", "default": "ja" },
     "sourcePage": { "type": "string" },
     "sourceSite": {
@@ -36,18 +38,32 @@
     },
     "status": {
       "type": "enumeration",
-      "enum": ["new", "in_review", "replied", "closed", "spam", "failed"],
+      "enum": ["new", "in_review", "waiting_reply", "replied", "closed", "spam", "failed"],
       "default": "new",
       "required": true
     },
+    "priority": {
+      "type": "enumeration",
+      "enum": ["low", "normal", "high", "urgent"],
+      "default": "normal"
+    },
     "adminMemo": { "type": "text" },
+    "internalTags": { "type": "json" },
     "submittedAt": { "type": "datetime", "required": true },
     "handledAt": { "type": "datetime" },
     "handler": { "type": "string" },
+    "lastActionAt": { "type": "datetime" },
+    "replyStatus": {
+      "type": "enumeration",
+      "enum": ["not_required", "pending", "replied", "failed"],
+      "default": "pending"
+    },
+    "repliedAt": { "type": "datetime" },
     "ipHash": { "type": "string" },
     "userAgent": { "type": "string" },
     "policyAgree": { "type": "boolean", "default": false, "required": true },
     "consentTextVersion": { "type": "string" },
+    "spamFlag": { "type": "boolean", "default": false },
     "spamScore": { "type": "integer", "default": 0 },
     "spamReason": { "type": "string" },
     "meta": { "type": "json" }
