@@ -394,9 +394,30 @@
     "503title": "メンテナンス中です",
     "503sub": "ただいまシステムメンテナンス中です。しばらくしてから再度アクセスしてください。",
     "503hint": "復旧まで今しばらくお待ちください。",
-    "403title": "403 — Access Restricted",
+    "503maintenance": "復旧作業中です",
+    "403title": "アクセスできません",
     "403sub": "このコンテンツは mizzz Fanclub 会員限定です。",
-    "reload": "ページを再読み込み"
+    "403hint": "ログインまたはご入会のうえ、再度アクセスしてください。",
+    "reload": "ページを再読み込み",
+    "discover": "他のサイトも見る",
+    "nav": {
+      "mainHomeDesc": "トップページ",
+      "mainWorksDesc": "制作一覧",
+      "mainEventsDesc": "イベント一覧",
+      "storeHome": "ストアトップ",
+      "storeHomeDesc": "最新ドロップ",
+      "storeProducts": "商品一覧",
+      "storeProductsDesc": "すべての商品",
+      "storeCart": "カートを見る",
+      "storeCartDesc": "選択中のアイテム",
+      "fcHome": "FCホーム",
+      "fcHomeDesc": "更新まとめ",
+      "fcMovies": "ムービー",
+      "fcMoviesDesc": "限定動画",
+      "fcJoin": "入会ご案内",
+      "fcJoinDesc": "特典を見る",
+      "contactDesc": "直接連絡する"
+    }
   },
   "work": {
     "case": {

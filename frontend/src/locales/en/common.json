@@ -394,9 +394,30 @@
     "503title": "Under Maintenance",
     "503sub": "We're currently performing system maintenance. Please try again shortly.",
     "503hint": "We'll be back up soon. Thank you for your patience.",
-    "403title": "403 — Access Restricted",
+    "503maintenance": "Recovery in progress",
+    "403title": "Access restricted",
     "403sub": "This content is available to mizzz Fanclub members only.",
-    "reload": "Reload page"
+    "403hint": "Please sign in or join to access this content.",
+    "reload": "Reload page",
+    "discover": "Explore other sites",
+    "nav": {
+      "mainHomeDesc": "Top page",
+      "mainWorksDesc": "All works",
+      "mainEventsDesc": "Upcoming events",
+      "storeHome": "Store top",
+      "storeHomeDesc": "Latest drops",
+      "storeProducts": "All products",
+      "storeProductsDesc": "Browse store",
+      "storeCart": "View cart",
+      "storeCartDesc": "Selected items",
+      "fcHome": "Fanclub top",
+      "fcHomeDesc": "Recent updates",
+      "fcMovies": "Movies",
+      "fcMoviesDesc": "Members-only",
+      "fcJoin": "Join us",
+      "fcJoinDesc": "See member perks",
+      "contactDesc": "Reach out directly"
+    }
   },
   "work": {
     "case": {

@@ -225,6 +225,108 @@
     "firstVisitOnlyEnabled": {
       "type": "boolean",
       "default": true
+    },
+    "errorPageNotFoundTitle": {
+      "type": "string"
+    },
+    "errorPageNotFoundSubcopy": {
+      "type": "text"
+    },
+    "errorPageNotFoundHint": {
+      "type": "text"
+    },
+    "errorPageServerTitle": {
+      "type": "string"
+    },
+    "errorPageServerSubcopy": {
+      "type": "text"
+    },
+    "errorPageServerHint": {
+      "type": "text"
+    },
+    "errorPageMaintenanceTitle": {
+      "type": "string"
+    },
+    "errorPageMaintenanceSubcopy": {
+      "type": "text"
+    },
+    "errorPageMaintenanceHint": {
+      "type": "text"
+    },
+    "errorPageMaintenanceBadge": {
+      "type": "string"
+    },
+    "errorPageRestrictedTitle": {
+      "type": "string"
+    },
+    "errorPageRestrictedSubcopy": {
+      "type": "text"
+    },
+    "errorPageRestrictedHint": {
+      "type": "text"
+    },
+    "errorPageCtaContactLabel": {
+      "type": "string"
+    },
+    "errorPageCtaHomeLabel": {
+      "type": "string"
+    },
+    "errorPageIllustration": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "errorPageAnimationStyle": {
+      "type": "string"
+    },
+    "errorPageBackgroundVariant": {
+      "type": "string"
+    },
+    "aboutHeroCopy": {
+      "type": "text"
+    },
+    "aboutHeroSubcopy": {
+      "type": "text"
+    },
+    "aboutSections": {
+      "type": "json"
+    },
+    "aboutWorldViewCopy": {
+      "type": "text"
+    },
+    "aboutCtaLabel": {
+      "type": "string"
+    },
+    "aboutCtaUrl": {
+      "type": "string"
+    },
+    "featured": {
+      "type": "boolean",
+      "default": false
+    },
+    "pickup": {
+      "type": "boolean",
+      "default": false
+    },
+    "isNew": {
+      "type": "boolean",
+      "default": false
+    },
+    "isTrending": {
+      "type": "boolean",
+      "default": false
+    },
+    "displayPriority": {
+      "type": "integer",
+      "default": 0
+    },
+    "animationStyle": {
+      "type": "string"
+    },
+    "sectionStyle": {
+      "type": "string"
     }
   }
 }

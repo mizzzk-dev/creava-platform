@@ -64,3 +64,18 @@ export function trackPlayfulInteraction(
 ): void {
   trackMizzzEvent('playful_interaction', { type, location, ...extras })
 }
+
+export function trackErrorPageView(
+  code: '404' | '500' | '503' | '403' | string,
+  extras?: AnalyticsParams,
+): void {
+  trackMizzzEvent('error_page_view', { code, ...extras })
+}
+
+export function trackErrorPageCta(
+  code: '404' | '500' | '503' | '403' | string,
+  cta: string,
+  extras?: AnalyticsParams,
+): void {
+  trackMizzzEvent('error_page_cta_click', { code, cta, ...extras })
+}

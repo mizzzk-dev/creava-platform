@@ -13,7 +13,7 @@ export function getSiteSettings(
   params?: StrapiQueryParams,
 ): Promise<StrapiSingleResponse<SiteSettings>> {
   return fetchSingle<SiteSettings>(ENDPOINT, {
-    populate: ['ogImage', 'heroVisual', 'heroIllustration', 'illustrationAsset'],
+    populate: ['ogImage', 'heroVisual', 'heroIllustration', 'illustrationAsset', 'errorPageIllustration'],
     ...params,
   })
 }

@@ -394,9 +394,30 @@
     "503title": "점검 중입니다",
     "503sub": "현재 시스템 점검 중입니다. 잠시 후 다시 접속해 주세요.",
     "503hint": "곧 복구될 예정입니다. 기다려 주셔서 감사합니다.",
-    "403title": "403 — Access Restricted",
+    "503maintenance": "복구 작업 중입니다",
+    "403title": "접근이 제한되어 있습니다",
     "403sub": "이 콘텐츠는 mizzz 팬클럽 회원 전용입니다.",
-    "reload": "페이지 새로고침"
+    "403hint": "로그인 또는 가입 후 다시 접속해 주세요.",
+    "reload": "페이지 새로고침",
+    "discover": "다른 사이트도 보기",
+    "nav": {
+      "mainHomeDesc": "메인 페이지",
+      "mainWorksDesc": "작품 목록",
+      "mainEventsDesc": "이벤트 목록",
+      "storeHome": "스토어 홈",
+      "storeHomeDesc": "최신 드롭",
+      "storeProducts": "상품 목록",
+      "storeProductsDesc": "모든 상품",
+      "storeCart": "카트 보기",
+      "storeCartDesc": "선택한 아이템",
+      "fcHome": "팬클럽 홈",
+      "fcHomeDesc": "최근 업데이트",
+      "fcMovies": "무비",
+      "fcMoviesDesc": "회원 전용",
+      "fcJoin": "가입 안내",
+      "fcJoinDesc": "혜택 보기",
+      "contactDesc": "직접 문의하기"
+    }
   },
   "work": {
     "case": {

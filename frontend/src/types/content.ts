@@ -208,4 +208,35 @@ export interface SiteSettings extends StrapiBase {
   firstVisitOnlyEnabled?: boolean
   notificationCtaText?: string | null
   notificationCtaLink?: string | null
+  errorPageNotFoundTitle?: string | null
+  errorPageNotFoundSubcopy?: string | null
+  errorPageNotFoundHint?: string | null
+  errorPageServerTitle?: string | null
+  errorPageServerSubcopy?: string | null
+  errorPageServerHint?: string | null
+  errorPageMaintenanceTitle?: string | null
+  errorPageMaintenanceSubcopy?: string | null
+  errorPageMaintenanceHint?: string | null
+  errorPageMaintenanceBadge?: string | null
+  errorPageRestrictedTitle?: string | null
+  errorPageRestrictedSubcopy?: string | null
+  errorPageRestrictedHint?: string | null
+  errorPageCtaContactLabel?: string | null
+  errorPageCtaHomeLabel?: string | null
+  errorPageIllustration?: StrapiMedia | null
+  errorPageAnimationStyle?: string | null
+  errorPageBackgroundVariant?: string | null
+  aboutHeroCopy?: string | null
+  aboutHeroSubcopy?: string | null
+  aboutSections?: unknown
+  aboutWorldViewCopy?: string | null
+  aboutCtaLabel?: string | null
+  aboutCtaUrl?: string | null
+  featured?: boolean | null
+  pickup?: boolean | null
+  isNew?: boolean | null
+  isTrending?: boolean | null
+  displayPriority?: number | null
+  animationStyle?: string | null
+  sectionStyle?: string | null
 }
