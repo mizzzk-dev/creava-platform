@@ -63,8 +63,7 @@ cp frontend/.env.production.example frontend/.env.production
 | `VITE_CLERK_PUBLISHABLE_KEY` | Clerk 認証キー | 認証無効化・guest 固定 |
 | `VITE_SHOPIFY_STORE_DOMAIN` | Shopify ドメイン（将来用） | 現在は不使用 |
 | `VITE_SHOPIFY_STOREFRONT_TOKEN` | Shopify トークン（将来用） | 現在は不使用 |
-| `VITE_FORMSPREE_CONTACT_ID` | Formspree フォーム ID | 送信シミュレーション |
-| `VITE_FORMSPREE_REQUEST_ID` | Formspree フォーム ID | 送信シミュレーション |
+| `VITE_SITE_TYPE` | サイト種別（`main` / `store` / `fc`） | `unknown` として保存 |
 | `VITE_GA_MEASUREMENT_ID` | Google Analytics 4 の測定ID（`G-` 形式） | 計測無効（未送信） |
 
 ---

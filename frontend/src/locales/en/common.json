@@ -165,7 +165,9 @@
       "emailFormat": "Please enter a valid email address",
       "minLength": "Please enter at least {{min}} characters",
       "fileTooLarge": "File size must be 10MB or less",
-      "fileType": "File type not supported"
+      "fileType": "File type not supported",
+      "policyRequired": "You must agree to the policy",
+      "fileCount": "You can attach up to {{max}} files"
     },
     "requestTypes": {
       "video": "Video Production",
@@ -173,7 +175,18 @@
       "music": "Music Production",
       "web": "Web / System Development",
       "other": "Other"
-    }
+    },
+    "toConfirm": "Review before send",
+    "confirmTitle": "Review your message",
+    "backToEdit": "Back to edit",
+    "sendConfirmed": "Send now",
+    "resultFailedTitle": "Failed to send",
+    "backToContactTop": "Back to contact top",
+    "policyAgreePrefix": "Before sending, please agree to",
+    "policyAgreeAnd": "and",
+    "policyAgreeSuffix": ".",
+    "maxFiles": "Up to {{max}} files",
+    "retry": "Retry"
   },
   "seo": {
     "home": "The official website of mizzz—portfolio, latest updates, pricing guidance, store, fanclub, and contact for new projects.",

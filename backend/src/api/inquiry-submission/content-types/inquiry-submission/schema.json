@@ -1,0 +1,55 @@
+{
+  "kind": "collectionType",
+  "collectionName": "inquiry_submissions",
+  "info": {
+    "singularName": "inquiry-submission",
+    "pluralName": "inquiry-submissions",
+    "displayName": "Inquiry Submission"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "formType": {
+      "type": "enumeration",
+      "enum": ["contact", "request", "restock"],
+      "required": true
+    },
+    "inquiryCategory": { "type": "string" },
+    "name": { "type": "string" },
+    "companyOrOrganization": { "type": "string" },
+    "email": { "type": "email", "required": true },
+    "phone": { "type": "string" },
+    "subject": { "type": "string" },
+    "message": { "type": "text" },
+    "attachments": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": ["files", "images"]
+    },
+    "locale": { "type": "string", "default": "ja" },
+    "sourcePage": { "type": "string" },
+    "sourceSite": {
+      "type": "enumeration",
+      "enum": ["main", "store", "fc", "unknown"],
+      "default": "unknown"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["new", "in_review", "replied", "closed", "spam", "failed"],
+      "default": "new",
+      "required": true
+    },
+    "adminMemo": { "type": "text" },
+    "submittedAt": { "type": "datetime", "required": true },
+    "handledAt": { "type": "datetime" },
+    "handler": { "type": "string" },
+    "ipHash": { "type": "string" },
+    "userAgent": { "type": "string" },
+    "policyAgree": { "type": "boolean", "default": false, "required": true },
+    "consentTextVersion": { "type": "string" },
+    "spamScore": { "type": "integer", "default": 0 },
+    "spamReason": { "type": "string" },
+    "meta": { "type": "json" }
+  }
+}

@@ -3,7 +3,10 @@ export interface ContactPayload {
   email: string
   subject: string
   message: string
-  file?: File
+  phone?: string
+  policyAgree: boolean
+  honeypot?: string
+  files?: File[]
 }
 
 export interface RequestPayload {
@@ -14,26 +17,36 @@ export interface RequestPayload {
   budget: string
   deadline: string
   detail: string
-  file?: File
+  phone?: string
+  policyAgree: boolean
+  honeypot?: string
+  files?: File[]
 }
 
-const CONTACT_FORM_ID = import.meta.env.VITE_FORMSPREE_CONTACT_ID as string | undefined
-const REQUEST_FORM_ID = import.meta.env.VITE_FORMSPREE_REQUEST_ID as string | undefined
+export interface RestockPayload {
+  email: string
+  productId: number
+  productSlug: string
+  productTitle: string
+  locale: string
+}
 
-/** ファイル許可 MIME タイプ */
 const ALLOWED_TYPES = [
   'application/pdf',
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/zip',
-  'application/x-zip-compressed',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
   'image/jpeg',
   'image/png',
   'image/gif',
   'image/webp',
 ]
 
-const MAX_FILE_BYTES = 10 * 1024 * 1024 // 10 MB
+const MAX_FILE_BYTES = 10 * 1024 * 1024
+const MAX_FILES = 5
 
 export function validateFile(file: File): string | null {
   if (file.size > MAX_FILE_BYTES) return 'fileTooLarge'
@@ -41,96 +54,108 @@ export function validateFile(file: File): string | null {
   return null
 }
 
-/**
- * Formspree への送信（常に multipart/form-data）
- *
- * JSON 送信は Formspree の設定・プランによって 400 になる場合があるため、
- * Content-Type をブラウザに任せる FormData を常に使用します。
- * _subject  … メール件名として Formspree が利用
- * _replyto  … 返信先として Formspree が利用
- */
-async function postToFormspree(
-  formId: string,
-  data: Record<string, string>,
-  file?: File,
-): Promise<void> {
-  const fd = new FormData()
+function getStrapiBaseUrl(): string {
+  const baseUrl = import.meta.env.VITE_STRAPI_API_URL as string | undefined
+  if (!baseUrl) throw new Error('VITE_STRAPI_API_URL is not set')
+  return baseUrl.replace(/\/$/, '')
+}
 
-  // Formspree 特殊フィールド
-  if (data._subject) fd.append('_subject', data._subject)
-  if (data._replyto) fd.append('_replyto', data._replyto)
+function getSourceSite(): 'main' | 'store' | 'fc' | 'unknown' {
+  const siteType = String(import.meta.env.VITE_SITE_TYPE ?? '').toLowerCase()
+  if (siteType === 'main' || siteType === 'store' || siteType === 'fc') return siteType
+  return 'unknown'
+}
 
-  // 通常フィールド
-  Object.entries(data).forEach(([k, v]) => {
-    if (!k.startsWith('_')) fd.append(k, v)
-  })
-
-  // ファイル添付（Formspree Gold 以上で受信可能）
-  if (file) fd.append('attachment', file, file.name)
-
-  const res = await fetch(`https://formspree.io/f/${formId}`, {
+async function submitInquiry(formData: FormData): Promise<{ id: number; status: string; submittedAt: string }> {
+  const res = await fetch(`${getStrapiBaseUrl()}/api/inquiry-submissions/public`, {
     method: 'POST',
-    headers: { Accept: 'application/json' },
-    body: fd,
+    body: formData,
   })
 
   if (!res.ok) {
     let message = `HTTP ${res.status}`
     try {
-      const err = await res.json() as { error?: string; errors?: { message: string }[] }
-      message = err.errors?.[0]?.message ?? err.error ?? message
-    } catch { /* ignore parse error */ }
+      const json = await res.json() as { error?: { message?: string }; message?: string }
+      message = json.error?.message ?? json.message ?? message
+    } catch {
+      // noop
+    }
     throw new Error(message)
   }
+
+  const json = await res.json() as { data: { id: number; status: string; submittedAt: string } }
+  return json.data
 }
 
-/**
- * 問い合わせフォームの送信処理
- * VITE_FORMSPREE_CONTACT_ID が未設定の場合はスタブ動作（開発用）。
- */
-export async function submitContact(payload: ContactPayload): Promise<void> {
-  if (!CONTACT_FORM_ID) {
-    if (import.meta.env.DEV) {
-      console.warn('[contact] VITE_FORMSPREE_CONTACT_ID is not set. Using dev stub (no email sent).')
-    }
-    await new Promise<void>((r) => setTimeout(r, 800))
-    return
-  }
+function appendCommon(fd: FormData, values: Record<string, string | boolean | number | undefined>, files?: File[]) {
+  Object.entries(values).forEach(([key, value]) => {
+    if (value === undefined || value === null) return
+    fd.append(key, String(value))
+  })
 
-  const { file, ...fields } = payload
-  await postToFormspree(CONTACT_FORM_ID, {
-    _subject: `[お問い合わせ] ${fields.subject}`,
-    _replyto: fields.email,
-    name: fields.name,
-    email: fields.email,
-    subject: fields.subject,
-    message: fields.message,
-  }, file)
+  ;(files ?? []).slice(0, MAX_FILES).forEach((file) => {
+    fd.append('attachments', file, file.name)
+  })
 }
 
-/**
- * 仕事依頼フォームの送信処理
- * VITE_FORMSPREE_REQUEST_ID が未設定の場合はスタブ動作（開発用）。
- */
-export async function submitRequest(payload: RequestPayload): Promise<void> {
-  if (!REQUEST_FORM_ID) {
-    if (import.meta.env.DEV) {
-      console.warn('[contact] VITE_FORMSPREE_REQUEST_ID is not set. Using dev stub (no email sent).')
-    }
-    await new Promise<void>((r) => setTimeout(r, 800))
-    return
-  }
+export async function submitContact(payload: ContactPayload & { locale: string; sourcePage: string }) {
+  const fd = new FormData()
+  appendCommon(fd, {
+    formType: 'contact',
+    inquiryCategory: 'general',
+    name: payload.name,
+    email: payload.email,
+    subject: payload.subject,
+    message: payload.message,
+    phone: payload.phone ?? '',
+    policyAgree: payload.policyAgree,
+    locale: payload.locale,
+    sourcePage: payload.sourcePage,
+    sourceSite: getSourceSite(),
+    website: payload.honeypot ?? '',
+  }, payload.files)
 
-  const { file, ...fields } = payload
-  await postToFormspree(REQUEST_FORM_ID, {
-    _subject: `[仕事依頼] ${fields.requestType} — ${fields.name}`,
-    _replyto: fields.email,
-    name: fields.name,
-    email: fields.email,
-    company: fields.company,
-    requestType: fields.requestType,
-    budget: fields.budget,
-    deadline: fields.deadline,
-    detail: fields.detail,
-  }, file)
+  return submitInquiry(fd)
 }
+
+export async function submitRequest(payload: RequestPayload & { locale: string; sourcePage: string }) {
+  const fd = new FormData()
+  appendCommon(fd, {
+    formType: 'request',
+    inquiryCategory: payload.requestType || 'other',
+    name: payload.name,
+    companyOrOrganization: payload.company,
+    email: payload.email,
+    message: payload.detail,
+    phone: payload.phone ?? '',
+    policyAgree: payload.policyAgree,
+    locale: payload.locale,
+    sourcePage: payload.sourcePage,
+    sourceSite: getSourceSite(),
+    website: payload.honeypot ?? '',
+    requestType: payload.requestType,
+    budget: payload.budget,
+    deadline: payload.deadline,
+  }, payload.files)
+
+  return submitInquiry(fd)
+}
+
+export async function submitRestock(payload: RestockPayload & { sourcePage: string }) {
+  const fd = new FormData()
+  appendCommon(fd, {
+    formType: 'restock',
+    inquiryCategory: 'restock',
+    email: payload.email,
+    locale: payload.locale,
+    sourcePage: payload.sourcePage,
+    sourceSite: getSourceSite(),
+    policyAgree: true,
+    productId: payload.productId,
+    productSlug: payload.productSlug,
+    productTitle: payload.productTitle,
+  })
+  return submitInquiry(fd)
+}
+
+export { MAX_FILES }

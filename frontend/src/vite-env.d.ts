@@ -8,7 +8,7 @@ interface ImportMetaEnv {
   readonly BASE_URL: string
   readonly SSR: boolean
   /* App env vars */
-  readonly VITE_SITE_TYPE?: 'main' | 'store' | 'fanclub'
+  readonly VITE_SITE_TYPE?: 'main' | 'store' | 'fc'
   readonly VITE_SITE_URL?: string
   readonly VITE_MAIN_SITE_URL?: string
   readonly VITE_STORE_SITE_URL?: string
@@ -32,9 +32,6 @@ interface ImportMetaEnv {
   readonly VITE_SHOPIFY_STORE_DOMAIN: string
   readonly VITE_SHOPIFY_STOREFRONT_TOKEN: string
   readonly VITE_STRIPE_PUBLISHABLE_KEY?: string
-  readonly VITE_FORMSPREE_CONTACT_ID?: string
-  readonly VITE_FORMSPREE_REQUEST_ID?: string
-  readonly VITE_FORMSPREE_RESTOCK_ID?: string
   readonly VITE_GA_MEASUREMENT_ID?: string
   readonly VITE_PREVIEW_SECRET?: string
   readonly VITE_AVAILABILITY_STATUS?: string

@@ -165,7 +165,9 @@
       "emailFormat": "올바른 이메일 주소를 입력해 주세요",
       "minLength": "{{min}}자 이상 입력해 주세요",
       "fileTooLarge": "파일 크기는 10MB 이하여야 합니다",
-      "fileType": "지원하지 않는 파일 형식입니다"
+      "fileType": "지원하지 않는 파일 형식입니다",
+      "policyRequired": "동의 체크가 필요합니다",
+      "fileCount": "첨부는 최대 {{max}}개까지 가능합니다"
     },
     "requestTypes": {
       "video": "영상 제작",
@@ -173,7 +175,18 @@
       "music": "음악 제작",
       "web": "Web / 시스템 개발",
       "other": "기타"
-    }
+    },
+    "toConfirm": "확인 화면으로",
+    "confirmTitle": "전송 전 확인",
+    "backToEdit": "입력으로 돌아가기",
+    "sendConfirmed": "이 내용으로 전송",
+    "resultFailedTitle": "전송에 실패했습니다",
+    "backToContactTop": "문의 상단으로 돌아가기",
+    "policyAgreePrefix": "전송 전에",
+    "policyAgreeAnd": "및",
+    "policyAgreeSuffix": "에 동의해 주세요.",
+    "maxFiles": "최대 {{max}}개 파일",
+    "retry": "다시 전송"
   },
   "seo": {
     "home": "mizzz 공식 홈페이지입니다. 포트폴리오, 최신 소식, 요금 안내, 스토어, 팬클럽, 의뢰 문의까지 한곳에서 확인할 수 있습니다.",

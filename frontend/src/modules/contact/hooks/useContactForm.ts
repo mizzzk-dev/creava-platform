@@ -6,26 +6,31 @@ import type { ContactPayload } from '@/modules/contact/lib/submit'
 
 export type FormStatus = 'idle' | 'submitting' | 'success' | 'error'
 
-type Fields = ContactPayload
+type Fields = Omit<ContactPayload, 'files'>
 
 type Errors = Partial<Record<keyof Fields, string>>
 
 export function useContactForm() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [fields, setFields] = useState<Fields>({
     name: '',
     email: '',
     subject: '',
     message: '',
+    phone: '',
+    policyAgree: false,
+    honeypot: '',
   })
   const [errors, setErrors] = useState<Errors>({})
   const [status, setStatus] = useState<FormStatus>('idle')
+  const [submittedId, setSubmittedId] = useState<number | null>(null)
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) {
-    const { name, value } = e.target
-    setFields((prev) => ({ ...prev, [name]: value }))
+    const { name, value, type } = e.target
+    const nextValue = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+    setFields((prev) => ({ ...prev, [name]: nextValue }))
     if (errors[name as keyof Fields]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }))
     }
@@ -43,27 +48,39 @@ export function useContactForm() {
     if (!isMinLength(fields.message, 10)) {
       next.message = t('contact.errors.minLength', { min: 10 })
     }
+    if (!fields.policyAgree) {
+      next.policyAgree = t('contact.errors.policyRequired')
+    }
     setErrors(next)
     return Object.keys(next).length === 0
   }
 
-  async function handleSubmit(e: React.FormEvent, file?: File) {
-    e.preventDefault()
-    if (!validate()) return
+  async function submit(files: File[]) {
     setStatus('submitting')
     try {
-      await submitContact({ ...fields, file })
+      const result = await submitContact({
+        ...fields,
+        files,
+        locale: i18n.language,
+        sourcePage: '/contact?tab=contact',
+      })
       setStatus('success')
+      setSubmittedId(result.id)
     } catch {
       setStatus('error')
     }
   }
 
-  function reset() {
-    setFields({ name: '', email: '', subject: '', message: '' })
-    setErrors({})
-    setStatus('idle')
+  function clearStatus() {
+    if (status !== 'idle') setStatus('idle')
   }
 
-  return { fields, errors, status, handleChange, handleSubmit, reset }
+  function reset() {
+    setFields({ name: '', email: '', subject: '', message: '', phone: '', policyAgree: false, honeypot: '' })
+    setErrors({})
+    setStatus('idle')
+    setSubmittedId(null)
+  }
+
+  return { fields, errors, status, submittedId, handleChange, validate, submit, clearStatus, reset }
 }

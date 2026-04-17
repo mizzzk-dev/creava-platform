@@ -165,7 +165,9 @@
       "emailFormat": "正しいメールアドレスを入力してください",
       "minLength": "{{min}}文字以上入力してください",
       "fileTooLarge": "ファイルサイズは10MB以下にしてください",
-      "fileType": "対応していないファイル形式です"
+      "fileType": "対応していないファイル形式です",
+      "policyRequired": "同意チェックが必要です",
+      "fileCount": "添付は最大{{max}}件までです"
     },
     "requestTypes": {
       "video": "映像制作",
@@ -173,7 +175,18 @@
       "music": "音楽制作",
       "web": "Web制作 / システム開発",
       "other": "その他"
-    }
+    },
+    "toConfirm": "確認画面へ",
+    "confirmTitle": "送信前確認",
+    "backToEdit": "入力に戻る",
+    "sendConfirmed": "この内容で送信",
+    "resultFailedTitle": "送信に失敗しました",
+    "backToContactTop": "お問い合わせトップへ戻る",
+    "policyAgreePrefix": "送信前に",
+    "policyAgreeAnd": "と",
+    "policyAgreeSuffix": "に同意してください。",
+    "maxFiles": "最大{{max}}ファイル",
+    "retry": "再送する"
   },
   "seo": {
     "home": "mizzzの公式ホームページ。映像・写真・音楽の作品、最新情報、料金目安、Store、Fanclub、制作依頼までを案内します。",
