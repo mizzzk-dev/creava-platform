@@ -96,10 +96,12 @@ npm run dev:frontend
 - 429: レート制限に到達。時間を空けて再送
 - 送信後未表示: Strapi admin role permissions / collection filter を確認
 
-## 通知拡張（次PR候補）
-- submission 保存成功時にメール通知
-- spam score による自動分類
-- CSV export の管理アクション追加
+## 運用基盤強化（2026-04-17 反映）
+- 管理API追加: `GET /api/inquiry-submissions/ops/summary`, `GET /api/inquiry-submissions/ops/list`, `GET /api/inquiry-submissions/ops/export.csv`, `PATCH /api/inquiry-submissions/ops/bulk-update`
+- 追加項目: `priority`, `internalTags`, `replyStatus`, `repliedAt`, `lastActionAt`, `spamFlag`, `attachmentCount`, `attachmentMetadata`
+- 通知メール: `INQUIRY_NOTIFY_TO` が設定されていれば新規問い合わせ時に管理通知
+- 自動返信: `INQUIRY_ENABLE_AUTO_REPLY=true` の場合のみ有効（spam/restockは対象外）
+- 重複payload判定・URL比率判定・拡張子チェックを追加
 
 ## 競合解消メモ（PR #126 向け）
 - 競合対象ファイルは `main` 側の最新実装（About 改修で追加された i18n キーを含む）を採用しつつ、Formspree 撤去後の問い合わせ送信実装を維持する。

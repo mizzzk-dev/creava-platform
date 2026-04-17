@@ -66,6 +66,22 @@ function getSourceSite(): 'main' | 'store' | 'fc' | 'unknown' {
   return 'unknown'
 }
 
+
+function getDefaultInquiryCategory(formType: 'contact' | 'request' | 'restock', requestType?: string): string {
+  const site = getSourceSite()
+
+  if (formType === 'restock') return 'restock'
+  if (formType === 'request') {
+    if (requestType) return requestType
+    if (site === 'store') return 'order'
+    if (site === 'fc') return 'membership'
+    return 'project_request'
+  }
+
+  if (site === 'store') return 'product'
+  if (site === 'fc') return 'member_support'
+  return 'general'
+}
 async function submitInquiry(formData: FormData): Promise<{ id: number; status: string; submittedAt: string }> {
   const res = await fetch(`${getStrapiBaseUrl()}/api/inquiry-submissions/public`, {
     method: 'POST',
@@ -102,7 +118,7 @@ export async function submitContact(payload: ContactPayload & { locale: string; 
   const fd = new FormData()
   appendCommon(fd, {
     formType: 'contact',
-    inquiryCategory: 'general',
+    inquiryCategory: getDefaultInquiryCategory('contact'),
     name: payload.name,
     email: payload.email,
     subject: payload.subject,
@@ -122,7 +138,7 @@ export async function submitRequest(payload: RequestPayload & { locale: string; 
   const fd = new FormData()
   appendCommon(fd, {
     formType: 'request',
-    inquiryCategory: payload.requestType || 'other',
+    inquiryCategory: getDefaultInquiryCategory('request', payload.requestType),
     name: payload.name,
     companyOrOrganization: payload.company,
     email: payload.email,
@@ -145,7 +161,7 @@ export async function submitRestock(payload: RestockPayload & { sourcePage: stri
   const fd = new FormData()
   appendCommon(fd, {
     formType: 'restock',
-    inquiryCategory: 'restock',
+    inquiryCategory: getDefaultInquiryCategory('restock'),
     email: payload.email,
     locale: payload.locale,
     sourcePage: payload.sourcePage,

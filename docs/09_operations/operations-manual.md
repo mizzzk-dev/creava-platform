@@ -23,7 +23,7 @@
 
 - Frontend: ブラウザConsole、Network、`StrapiApiError` 内容
 - Backend: Strapiログ、webhook-event-log、rate-limitログ
-- 外部連携: Clerkキー/Formspree ID/Stripe secret の期限切れ
+- 外部連携: Logto/SMTP/Stripe secret の期限切れ
 
 ## 4. 問い合わせ対応時の確認観点
 
@@ -39,3 +39,8 @@
 2. sandbox相当環境で変更
 3. lint/test/build 実行
 4. PRテンプレに沿って提出
+
+
+## 6. フォーム運用
+
+問い合わせ運用の詳細は [フォーム運用マニュアル](./form-operations-manual.md) を参照。

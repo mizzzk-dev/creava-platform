@@ -121,6 +121,11 @@ export default {
         to: '/content-manager/collection-types/api::fanclub-content.fanclub-content/create',
         icon: () => <EmojiIcon symbol="⭐" label="ファンクラブ" />,
       },
+      {
+        intlLabel: { id: 'mizzz.menu.inquiryInbox', defaultMessage: '問い合わせ一覧' },
+        to: '/content-manager/collection-types/api::inquiry-submission.inquiry-submission',
+        icon: () => <EmojiIcon symbol="📥" label="問い合わせ" />,
+      },
     ]
 
     quickLinks.forEach((link) => {

@@ -49,6 +49,7 @@
 - [CMS運用マニュアル](./09_operations/cms-manual.md)
 - [デプロイ手順書](./09_operations/deploy-manual.md)
 - [トラブルシューティング](./09_operations/troubleshooting.md)
+- [フォーム運用マニュアル](./09_operations/form-operations-manual.md)
 
 ### 付録
 - [環境変数一覧](./10_appendix/environment-variables.md)
@@ -62,5 +63,5 @@
 
 ## 4. 仮定と要確認
 
-- 仮定: `backend/.env.example` は現状リポジトリに存在しないため、バックエンド環境変数は `backend/config/*.ts` と `src/lib/stripe/env.ts` から逆算した。
+- 仮定: 本番運用で使う GitHub Environments の reviewer / assignee ルールは組織設定で別途管理される。
 - 要確認: 本番運用の reviewer / assignee / milestone の固定ルールは、GitHub 組織設定側での最終確認が必要。
