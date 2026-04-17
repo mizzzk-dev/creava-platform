@@ -1,51 +1,43 @@
 ---
 name: fanclub-experience
-description: fanclub 体験（fc_only、限定公開、会員導線、マイページ、加入導線）を安全に改善する skill。アクセス制御を伴うFC改修時に使う。単なる見た目調整だけなら使わない。
+description: fanclub サイトの会員導線と限定公開制御を安全に改善する skill。
 ---
 
 # fanclub-experience
 
 ## いつ使うか
-- FC会員向け導線改善
-- `fc_only`/`limited` 表示ロジック確認
-- join/login/mypage フロー改善
+- Join/Login/MyPage 導線改善
+- fc_only / limited 表示改善
 
 ## いつ使わないか
-- Strapi schema 主体変更
-- Store主目的の改善
+- 一般ページのみの軽微な見た目調整
 
-## 入力として読むもの
+## 入力として読むべきファイル
 - `frontend/src/modules/fanclub/*`
-- `frontend/src/hooks/useContentAccess.ts`, `frontend/src/utils/index.ts`
-- `frontend/src/components/guards/FanclubAuthGuard.tsx`
-- `backend/src/api/fanclub-content/*`, `backend/src/lib/auth/logto.ts`
+- `frontend/src/pages/fc/*`
+- `backend/src/api/fanclub-content/*`
 
 ## 実行手順
-1. ゲスト/会員/管理者の表示差を整理
-2. 認証あり/なし両方の安全側挙動を確認
-3. 期限公開・archiveVisibleForFC の条件を検証
-4. FC導線と main 導線の連携を確認
+1. 会員状態別の表示差を確認
+2. 制限表示・導線・アーカイブ扱いを調整
+3. 非会員導線（join/login）を明確化
 
-## 出力の期待形式
-- ロール別挙動表
-- 変更点と回帰リスク
+## 出力形式
+- 状態別挙動一覧
+- 回帰チェック結果
 
-## repo固有の注意点
-- 認証は Logto 実装前提
-- `clerkUserId` は互換残存のため削除前提で扱わない
+## repo 固有の注意点
+- 公開制御を最優先で保護
 
-## どこに効くか
-- fanclub frontend + auth/payment backend
+## 破壊的変更を避けるチェック
+- `fc_only` と `archiveVisibleForFC` の意味を変えない
 
-## 破壊的変更回避チェック
-- FC制御ロジックの条件式互換
-- 非ログイン時の落ち方（クラッシュ防止）
-- checkout/callback ルート維持
-
-## 確認コマンド
+## build / test / review コマンド
 - `npm run test:frontend`
 - `npm run build:frontend`
 
-## PR / commit / branch ルール
-- 日本語コミット・日本語PR
-- branch 名に `codex` / `Claude` を含めない
+## 日本語運用ルール
+- 制限仕様の説明は日本語で明文化
+
+## ブランチ / コミット / PR ルール
+- 禁止語を含めない

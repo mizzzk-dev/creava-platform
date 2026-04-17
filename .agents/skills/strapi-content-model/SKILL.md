@@ -1,53 +1,45 @@
 ---
 name: strapi-content-model
-description: Strapi v5 の content-type / relation / populate / 公開状態を安全に変更する skill。schema変更やAPI拡張時に使う。frontend表示調整のみなら使わない。
+description: Strapi v5 の content-type/relation/populate/Draft-Publish を安全に扱う skill。
 ---
 
 # strapi-content-model
 
 ## いつ使うか
-- content-type 追加/変更
-- relation・populate・公開状態の調整
-- controller/service のAPI仕様変更
+- schema 変更
+- relation/publish 設定変更
 
 ## いつ使わないか
-- frontend見た目のみの変更
+- frontend 見た目調整のみ
 
-## 入力として読むもの
+## 入力として読むべきファイル
 - `../references/backend-strapi-structure.md`
 - `../references/strapi-pitfalls.md`
-- `backend/src/api/*/content-types/*/schema.json`
-- `frontend/src/lib/api/endpoints.ts` と対象 module API
+- 対象 `backend/src/api/*/content-types/*/schema.json`
 
 ## 実行手順
-1. schema diff を最小化
-2. endpoint 名（pluralName）整合を確認
-3. populate 追加漏れをチェック
-4. frontend 型・マッピング・UI影響を同時更新
-5. seed/運用手順への影響を明記
+1. schema 差分を最小化
+2. relation/populate 影響を確認
+3. frontend endpoint/型/表示の追従を確認
 
-## 出力の期待形式
-- schema変更点
-- frontend影響点
-- 移行要否（必要なら手順）
+## 出力形式
+- 変更 schema 一覧
+- frontend 影響
+- 移行要否
 
-## repo固有の注意点
-- `status` は Strapiの publish 用。業務公開は `accessStatus`
-- CORSと公開ルートの扱いに注意
+## repo 固有の注意点
+- Draft/Publish と FC 制御の両立が必須
 
-## どこに効くか
-- backend中心 + frontend連動
+## 破壊的変更を避けるチェック
+- 既存 endpoint とフィールド互換性を確認
+- seed データの成立確認
 
-## 破壊的変更回避チェック
-- 既存 endpoint/slug を維持
-- Draft/Publish の期待挙動維持
-- 管理画面運用の入力負荷を増やし過ぎない
-
-## 確認コマンド
+## build / test / review コマンド
 - `npm run build:backend`
 - `npm run seed:backend`
-- `npm run build:frontend`
 
-## PR / commit / branch ルール
-- 日本語コミット・日本語PR
-- branch 名に `codex` / `Claude` を含めない
+## 日本語運用ルール
+- schema 変更理由を日本語で記録
+
+## ブランチ / コミット / PR ルール
+- 禁止語を含めない

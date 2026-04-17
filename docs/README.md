@@ -16,6 +16,18 @@
 
 ## 2. ドキュメント一覧
 
+### ガイダンス（durable）
+- [デザイン原則](./design/design-principles.md)
+- [ブランド・パーソナリティ](./design/brand-personality.md)
+- [参考/非参考ガイド](./design/reference-and-anti-reference.md)
+- [UI Critique チェックリスト](./design/ui-critique-checklist.md)
+- [リポジトリアーキテクチャ](./architecture/repo-architecture.md)
+- [frontend 境界ルール](./architecture/frontend-boundaries.md)
+- [Strapi 境界ルール](./architecture/strapi-boundaries.md)
+- [APIクライアント/fetch ルール](./architecture/api-client-and-fetch-rules.md)
+- [変更安全チェックリスト](./architecture/change-safety-checklist.md)
+
+
 ### 概要
 - [システム概要書](./01_overview/system-overview.md)
 - [リポジトリ構成説明書](./01_overview/repository-structure.md)

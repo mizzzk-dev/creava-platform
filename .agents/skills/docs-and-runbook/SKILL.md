@@ -1,51 +1,44 @@
 ---
 name: docs-and-runbook
-description: docs/runbook を実装実態に合わせて更新する skill。セットアップ手順・運用手順・トラブルシュート更新で使う。コード変更なしの要約だけなら使わない。
+description: 実装実態に合わせて docs/runbook/setup/troubleshooting を更新する skill。
 ---
 
 # docs-and-runbook
 
 ## いつ使うか
-- 実装変更に伴う docs 更新
-- 古い運用手順の修正
-- 新規 runbook / checklist 追加
+- ドキュメント更新
+- 運用手順・環境変数・障害対応更新
 
 ## いつ使わないか
-- コード修正のみで docs 影響がない小変更
+- 口頭要約だけで済む時
 
-## 入力として読むもの
+## 入力として読むべきファイル
+- `docs/*`
 - `README.md`, `AGENTS.md`
-- 対象コード（frontend/backend/workflows）
-- 既存 docs
-- `../references/writing-rules-ja.md`
+- `.github/workflows/*`
 
 ## 実行手順
-1. docs主張とコード実態を diff 化
-2. 実態優先で本文更新
-3. 旧情報は削除せず「旧運用」明示で残すか判断
-4. 確認コマンド/検証手順を再現可能に記載
+1. コード実態との差分抽出
+2. 影響範囲別に docs 更新
+3. 運用コマンド・未確認事項を明記
 
-## 出力の期待形式
-- 更新理由
-- 変更差分
-- 未検証事項
+## 出力形式
+- 更新ドキュメント一覧
+- 差分理由
+- 未反映/今後対応
 
-## repo固有の注意点
-- 認証/フォームは時期で変遷があるため、現行実装を必ず確認
-- 日本語ドキュメントを基本とする
+## repo 固有の注意点
+- docs の古い記述（認証/フォーム/環境変数）に注意
 
-## どこに効くか
-- docs 全域 + README
+## 破壊的変更を避けるチェック
+- 手順の前提バージョンとコマンド整合
 
-## 破壊的変更回避チェック
-- 既存手順の削除時は代替手順を明示
-- CI/deploy フローに反する記述をしない
-
-## 確認コマンド
-- `npm run test:frontend`
+## build / test / review コマンド
 - `npm run build:frontend`
 - `npm run build:backend`
 
-## PR / commit / branch ルール
-- 日本語コミット・日本語PR
-- branch 名に `codex` / `Claude` を含めない
+## 日本語運用ルール
+- docs は日本語を基本
+
+## ブランチ / コミット / PR ルール
+- 禁止語を含めない

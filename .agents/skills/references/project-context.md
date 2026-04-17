@@ -1,25 +1,22 @@
 # project-context
 
-## 目的と優先順位（repo実態 + AGENTS.md）
-1. ブランド訴求が主役（homeがハブ）
-2. Contact / Request で依頼獲得
-3. News / Blog / Events の継続発信
-4. Store / Fanclub は強いが従属導線
+## 概要
+- creava-platform はクリエイターサイトの monorepo。
+- frontend は React+Vite+TS、backend は Strapi v5。
+- main/store/fc の3サイト運用（`VITE_SITE_TYPE`）。
 
-## 実装の現在地（コード優先）
-- frontend: React 18 + TypeScript + Vite + Tailwind + Framer Motion
-- backend: Strapi v5（開発 SQLite / 本番 PostgreSQL）
-- マルチサイト: `VITE_SITE_TYPE` で `main | store | fanclub` を切替
-- i18n: `ja/en/ko`（READMEの `ja/en` 記述は古い）
-- 認証: Logto（Clerk記述の docs は多くが旧情報）
-- フォーム: Formspree ではなく Strapi API (`/api/inquiry-submissions/public`) 送信が実装済み
+## 役割差
+- main: ブランド全体ハブ（mizzz.jp）。
+- store: 購買体験の独立サイト（store.mizzz.jp）。
+- fc: 会員体験の独立サイト（fc.mizzz.jp）。
 
-## 重要導線
-- Home: 各機能へのハブ
-- Contact/Request: 重要CV導線
-- Store / FC: mainの世界観を崩さない範囲で強化
+## 実装実態（docs差分が出やすい点）
+- 認証: Clerk ではなく Logto 実装が中心。
+- フォーム: Formspree ではなく Strapi 公開API送信が実態。
+- i18n: ja/en/ko 対応。
 
-## 変更時の基本
-- route/slug/endpoint/schema を不用意に変えない
-- module/hook/lib に寄せる（ページ直書き回避）
-- SEO・構造化データ・light/dark・i18nの欠落を起こさない
+## 優先順位
+1. ブランド一貫性
+2. Contact/Request のCV導線
+3. 情報発信導線
+4. store/fc の深い体験

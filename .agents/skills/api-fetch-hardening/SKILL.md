@@ -1,55 +1,44 @@
 ---
 name: api-fetch-hardening
-description: Strapi API クライアントの堅牢化（content-type 検証、HTML応答混入検知、retry、timeout、エラーUX）専用 skill。初回読み込み不安定やAPI失敗時UX改善で使う。
+description: Strapi API クライアントの堅牢化（content-type/HTML混入/retry/timeout/error UX）skill。
 ---
 
 # api-fetch-hardening
 
 ## いつ使うか
-- APIが時々失敗する / 初回表示が不安定
-- HTMLエラーページ混入でJSON parse失敗
-- retry/timeout/重複リクエスト制御を改善したい
+- 初回読み込み不安定
+- API障害耐性の改善
 
 ## いつ使わないか
-- 純粋なUIデザイン調整
-- schema変更主体
+- APIに無関係なUI調整
 
-## 入力として読むもの
+## 入力として読むべきファイル
 - `frontend/src/lib/api/client.ts`
 - `frontend/src/lib/api/strapi.ts`
-- 影響ページの module API + 画面
 - `../references/fetch-hardening-checklist.md`
 
 ## 実行手順
-1. 失敗パターンを分類（network/http/content-type/parse）
-2. retry対象・非対象を明示
-3. timeout + abort を導入
-4. HTML混入/非JSONレスポンス検知
-5. ユーザー向けエラー導線を整備
-6. ログ・再試行・フォールバックの順で改善
+1. エラー経路（ok/content-type/HTML）を洗い出し
+2. timeout/retry/backoff を統一
+3. ユーザー向けエラーUXを改善
 
-## 出力の期待形式
-- hardening差分一覧
-- 想定障害ケースと挙動表
-- UIエラー表示仕様
+## 出力形式
+- ハードニング項目チェック結果
+- 既知の未対応項目
 
-## repo固有の注意点
-- 既存の cache / SWR風再検証を壊さない
-- Authorization 付与条件（publicは不要）を維持
+## repo 固有の注意点
+- main/store/fc の全API体験に波及するため共通層優先
 
-## どこに効くか
-- frontend API層 + 一覧/詳細ページ
+## 破壊的変更を避けるチェック
+- レスポンス型互換維持
+- fallback 削除による白画面化を避ける
 
-## 破壊的変更回避チェック
-- 既存呼び出しシグネチャ互換
-- エラー型の互換（`StrapiApiError`）
-- preview/auth 取得フロー維持
-
-## 確認コマンド
+## build / test / review コマンド
 - `npm run test:frontend`
-- `npm run lint --prefix frontend`
 - `npm run build:frontend`
 
-## PR / commit / branch ルール
-- 日本語コミット・日本語PR
-- branch 名に `codex` / `Claude` を含めない
+## 日本語運用ルール
+- 障害時挙動を日本語で説明
+
+## ブランチ / コミット / PR ルール
+- 禁止語を含めない

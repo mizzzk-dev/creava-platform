@@ -1,54 +1,42 @@
 ---
 name: store-experience
-description: store 体験（商品一覧/詳細/在庫状態/購入導線/再入荷通知）に限定して改善する skill。store改善時に使うが、サイト全体をEC主役に寄せる提案はしない。
+description: store サイトの購買体験（商品導線/案内/不安解消）を改善する skill。
 ---
 
 # store-experience
 
 ## いつ使うか
-- Store UI/UX 改善
-- `available/soldout/coming_soon` 表示の整合修正
-- カート/購入導線/再入荷通知改善
+- 商品一覧/詳細/ガイド/FAQ 導線改善
 
 ## いつ使わないか
-- Home全体のブランド調整（`brand-design-polish`）
-- FC会員制御中心の改修（`fanclub-experience`）
+- main のブランド訴求改善のみを行うとき
 
-## 入力として読むもの
+## 入力として読むべきファイル
 - `frontend/src/modules/store/*`
-- `frontend/src/pages/Store*`
-- `backend/src/api/store-product/*`
-- `../references/project-context.md`, `../references/strapi-pitfalls.md`
+- `frontend/src/pages/storefront/*`
+- `../references/project-context.md`
 
 ## 実行手順
-1. 商品状態管理の現行 enum/条件を確認
-2. FC限定導線が壊れない設計を先に確認
-3. main→store 導線の自然さを維持
-4. 失敗時UX（在庫切れ・決済不可）を明確化
+1. 購買導線（一覧→詳細→購入）を確認
+2. 在庫状態（available/soldout/coming_soon）表示を点検
+3. Guide/FAQ/News への補助導線を調整
 
-## 出力の期待形式
-- UX課題と対応一覧
-- 購買導線の変更点
-- FC連携影響
+## 出力形式
+- 導線改善点
+- 回帰確認（在庫・CTA）
 
-## repo固有の注意点
-- store は重要だが主役化しない
-- checkout周辺は Stripe/Strapi 連携を前提
-- 価格/通貨/在庫の表示整合を維持
+## repo 固有の注意点
+- store強化しても main をEC主役にしない
 
-## どこに効くか
-- store frontend + 関連 backend
+## 破壊的変更を避けるチェック
+- 商品 slug / URL / 購入リンク仕様を壊さない
 
-## 破壊的変更回避チェック
-- 商品 slug/handle 互換
-- 在庫ステータス判定の後方互換
-- FC限定商品制御維持
-
-## 確認コマンド
-- `npm run test:frontend`
+## build / test / review コマンド
 - `npm run lint --prefix frontend`
-- `npm run build:frontend`
+- `npm run test:frontend`
 
-## PR / commit / branch ルール
-- 日本語コミット・日本語PR
-- branch 名に `codex` / `Claude` を含めない
+## 日本語運用ルール
+- 変更理由を日本語で残す
+
+## ブランチ / コミット / PR ルール
+- 禁止語を含めない

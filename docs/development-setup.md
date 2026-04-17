@@ -24,7 +24,7 @@ creava-platform/
 ## 1. リポジトリのクローン
 
 ```bash
-git clone https://github.com/mizzzk-dev/creava-platform.git
+git clone https://github.com/mizzz-dev/creava-platform.git
 cd creava-platform
 ```
 
@@ -60,7 +60,7 @@ cp frontend/.env.local.example frontend/.env.local
 |---|---|---|
 | `VITE_STRAPI_API_URL` | Strapi API の URL（ローカル: `http://localhost:1337`） | 推奨 |
 | `VITE_STRAPI_API_TOKEN` | Strapi API トークン（パブリックアクセスなら空可） | 任意 |
-| `VITE_CLERK_PUBLISHABLE_KEY` | Clerk 認証キー（未設定でも動作） | 任意 |
+| `VITE_LOGTO_ENDPOINT / VITE_LOGTO_APP_ID` | Logto 認証設定（未設定でも動作） | 任意 |
 | `VITE_SHOPIFY_STORE_DOMAIN` | Shopify ドメイン（将来用） | 任意 |
 | `VITE_SHOPIFY_STOREFRONT_TOKEN` | Shopify トークン（将来用） | 任意 |
 | `VITE_SITE_TYPE` | サイト種別（`main` / `store` / `fc`） | 任意 |
@@ -68,7 +68,7 @@ cp frontend/.env.local.example frontend/.env.local
 
 > **最小構成:** 何も設定しなくても起動できます。  
 > - Strapi 未設定 → ストアはモックデータで表示、他ページは空リスト  
-> - Clerk 未設定 → 認証機能が無効化（FC限定コンテンツは guest 扱い）  
+> - Logto 未設定 → 認証機能が無効化（FC限定コンテンツは guest 扱い）  
 
 ### backend
 
@@ -136,11 +136,11 @@ backend を初めて起動すると、管理者アカウント作成画面が表
 
 ---
 
-### `Missing publishableKey`（画面が白くなる）
+### `Logto 設定不整合`（画面が白くなる）
 
-**原因:** `VITE_CLERK_PUBLISHABLE_KEY` に無効な値が設定されている  
-**対処:** 値を空にするか、正しい `pk_test_...` キーを設定する  
-**補足:** 空または未設定なら Clerk は完全に無効化され、正常動作します
+**原因:** `VITE_LOGTO_ENDPOINT / VITE_LOGTO_APP_ID` に無効な値が設定されている  
+**対処:** 値を空にするか、正しい Logto endpoint / app id を設定する  
+**補足:** 空または未設定なら Logto は無効化され、正常動作します
 
 ---
 
@@ -185,7 +185,7 @@ npm install --prefix backend
 |---|---|
 | Strapi 接続 | `http://localhost:1337/_health` が `{"status":"ok"}` を返すか |
 | CORS 確認 | ブラウザの DevTools > Network で `/api/...` リクエストが通るか |
-| FC 制御確認 | Clerk でログイン/ログアウトし、`fc_only` コンテンツの表示切替を確認 |
+| FC 制御確認 | Logto でログイン/ログアウトし、`fc_only` コンテンツの表示切替を確認 |
 | Store mock | `VITE_STRAPI_API_URL` を空にして `http://localhost:5173/store` を開く |
 
 ---

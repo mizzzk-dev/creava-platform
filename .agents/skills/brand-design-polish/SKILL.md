@@ -1,53 +1,43 @@
 ---
 name: brand-design-polish
-description: ブランドサイトとしての見た目品質（余白・タイポ・ヒーロー・導線・light/dark）を改善する skill。UI品質向上時に使う。機能仕様変更やCMSモデル変更が主目的なら使わない。
+description: 余白・タイポ・Hero・CTA・light/dark の最終品質を磨く skill。
 ---
 
 # brand-design-polish
 
 ## いつ使うか
-- Home / main UI の品位向上
-- テンプレ感を減らす微調整
-- hero/CTA/情報階層の改善
+- UI品質改善
+- ブランド一貫性の調整
 
 ## いつ使わないか
-- API仕様変更
-- 認証・決済ロジック変更
+- 機能仕様変更や schema 変更が主目的のとき
 
-## 入力として読むもの
+## 入力として読むべきファイル
 - `../references/design-principles.md`
-- 対象ページ JSX
-- 既存 Tailwind class / motion 設定
+- `docs/design/design-principles.md`
+- 対象ページと共通レイアウト
 
 ## 実行手順
-1. design context / brand personality を先に言語化
-2. reference と anti-reference を定義
-3. 余白・タイポ・色・コントラストを順に整える
-4. motion は意味がある箇所だけ最小追加
-5. store/fc への導線は主役化しない形で配置
+1. design context を1行で定義
+2. Hero/余白/CTA を整理
+3. light/dark と多言語崩れを点検
 
-## 出力の期待形式
-- Before/After の意図説明
-- 調整ポイント（余白/タイポ/導線/モーション）
-- 回帰チェック結果
+## 出力形式
+- before/after の設計意図
+- 改善点と非変更点
 
-## repo固有の注意点
-- main 主役の情報設計を崩さない
-- darkで可読性を必ず確認
-- SEO構造要素（見出し階層等）を壊さない
+## repo 固有の注意点
+- main はブランドハブ、store/fc は独立体験
 
-## どこに効くか
-- 主に main frontend、次点で store/fc UI
+## 破壊的変更を避けるチェック
+- 導線（Home/Contact/store/fc）を壊さない
 
-## 破壊的変更回避チェック
-- CTA先URL・route変更なし
-- i18nキー欠落なし
-- a11y（focus/heading/alt）劣化なし
-
-## 確認コマンド
+## build / test / review コマンド
 - `npm run lint --prefix frontend`
 - `npm run build:frontend`
 
-## PR / commit / branch ルール
-- 日本語コミット・日本語PR
-- branch 名に `codex` / `Claude` を含めない
+## 日本語運用ルール
+- デザイン判断理由は日本語で記述
+
+## ブランチ / コミット / PR ルール
+- 禁止語（`codex` / `Claude`）を含めない
