@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useClerk } from '@clerk/clerk-react'
 import { useCurrentUser } from '@/hooks'
+import { useAuthClient } from '@/lib/auth/AuthProvider'
 import RestrictedNotice from '@/components/common/RestrictedNotice'
 
 interface Props {
@@ -9,17 +9,17 @@ interface Props {
 }
 
 /**
- * Fanclub ページ専用のアクセスガード（Clerk あり）
+ * Fanclub ページ専用のアクセスガード（Logto）
  *
  * 判定フロー:
- * 1. isLoaded = false → ローディング表示（Clerk 認証状態の解決待ち）
+ * 1. isLoaded = false → ローディング表示（認証状態の解決待ち）
  * 2. isSignedIn = false → ログイン誘導
  * 3. role = 'guest' → 会員限定コンテンツの案内
  * 4. role = 'member' | 'admin' → children を描画
  */
-function FanclubGuardWithClerk({ children }: Props) {
+function FanclubGuardWithAuth({ children }: Props) {
   const { t } = useTranslation()
-  const { openSignIn } = useClerk()
+  const { signIn } = useAuthClient()
   const { user, isLoaded, isSignedIn } = useCurrentUser()
 
   if (!isLoaded) {
@@ -28,10 +28,10 @@ function FanclubGuardWithClerk({ children }: Props) {
 
   if (!isSignedIn) {
     return (
-      <RestrictedNotice
-        variant="not_signed_in"
-        onSignIn={() => void openSignIn({})}
-      />
+        <RestrictedNotice
+          variant="not_signed_in"
+          onSignIn={() => void signIn()}
+        />
     )
   }
 
@@ -43,12 +43,12 @@ function FanclubGuardWithClerk({ children }: Props) {
 }
 
 /**
- * Clerk 未設定時はファンクラブコンテンツをゲスト扱いで非表示にする
+ * Logto 未設定時はファンクラブコンテンツをゲスト扱いで非表示にする
  */
-function FanclubGuardNoClerk() {
+function FanclubGuardNoAuth() {
   return <RestrictedNotice variant="not_signed_in" onSignIn={() => {}} />
 }
 
-export default import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
-  ? FanclubGuardWithClerk
-  : FanclubGuardNoClerk
+export default import.meta.env.VITE_LOGTO_APP_ID
+  ? FanclubGuardWithAuth
+  : FanclubGuardNoAuth

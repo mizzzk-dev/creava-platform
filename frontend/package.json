@@ -15,7 +15,6 @@
     "check:i18n": "node ./scripts/check-i18n-keys.mjs"
   },
   "dependencies": {
-    "@clerk/clerk-react": "^5.61.4",
     "framer-motion": "^11.15.0",
     "i18next": "^23.16.0",
     "i18next-browser-languagedetector": "^8.0.4",

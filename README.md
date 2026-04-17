@@ -118,7 +118,7 @@ npm run seed:backend
 | スタイル | Tailwind CSS + Framer Motion |
 | フォント | JetBrains Mono (developer aesthetic) |
 | ルーティング | React Router v6 |
-| 認証 | Clerk（キーなしは条件付きレンダリング） |
+| 認証 | Logto（キーなしは条件付きレンダリング） |
 | CMS | Strapi v5（API 経由 / モックフォールバック対応） |
 | 決済 | Stripe Payment Links + BASE |
 | i18n | i18next（ja / en） |
@@ -198,10 +198,15 @@ npm run seed:backend
 |---|---|---|
 | `VITE_STRAPI_API_URL` | frontend | Strapi API エンドポイント（未設定でモック動作） |
 | `VITE_STRAPI_API_TOKEN` | frontend | Strapi API トークン |
-| `VITE_CLERK_PUBLISHABLE_KEY` | frontend | Clerk 認証キー（未設定で認証無効） |
+| `VITE_LOGTO_ENDPOINT` | frontend | Logto OIDC エンドポイント（例: `https://auth.mizzz.jp`） |
+| `VITE_LOGTO_APP_ID` | frontend | Logto SPA App ID（未設定で認証無効） |
+| `VITE_LOGTO_API_RESOURCE` | frontend | API audience（アクセストークン取得時に使用） |
 | `VITE_SITE_URL` | frontend | 本番サイト URL |
 | `VITE_GA_MEASUREMENT_ID` | frontend | Google Analytics 4 測定ID（`G-` 形式、任意） |
 | `APP_KEYS` | backend | Strapi セッションキー（必須） |
-| `JWT_SECRET` | backend | JWT シークレット（必須） |
+| `JWT_SECRET` | backend | Strapi JWT シークレット（必須） |
+| `LOGTO_ISSUER` | backend | Logto JWT issuer（署名検証で使用） |
+| `LOGTO_JWKS_URI` | backend | Logto JWKS URI（署名検証で使用） |
+| `LOGTO_API_RESOURCE` | backend | API audience（JWT `aud` 検証） |
 | `FRONTEND_URL` | backend | CORS 許可オリジン（本番） |
 | `DATABASE_URL` | backend | PostgreSQL URL（本番のみ） |

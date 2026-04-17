@@ -20,11 +20,15 @@ interface ImportMetaEnv {
   readonly VITE_STRAPI_RESPONSE_CACHE_TTL_MS?: string
   readonly VITE_STRAPI_RESPONSE_CACHE_STALE_TTL_MS?: string
   readonly VITE_STRAPI_USE_TOKEN_FOR_PUBLIC?: string
-  readonly VITE_CLERK_PUBLISHABLE_KEY: string
-  readonly VITE_CLERK_SOCIAL_GOOGLE_ENABLED: string
-  readonly VITE_CLERK_SOCIAL_APPLE_ENABLED: string
-  readonly VITE_CLERK_SOCIAL_X_ENABLED: string
-  readonly VITE_CLERK_SOCIAL_FACEBOOK_ENABLED: string
+  readonly VITE_LOGTO_ENDPOINT?: string
+  readonly VITE_LOGTO_APP_ID?: string
+  readonly VITE_LOGTO_CALLBACK_PATH?: string
+  readonly VITE_LOGTO_POST_LOGOUT_REDIRECT_URI?: string
+  readonly VITE_LOGTO_API_RESOURCE?: string
+  readonly VITE_LOGTO_SOCIAL_GOOGLE_ENABLED?: string
+  readonly VITE_LOGTO_SOCIAL_APPLE_ENABLED?: string
+  readonly VITE_LOGTO_SOCIAL_X_ENABLED?: string
+  readonly VITE_LOGTO_SOCIAL_FACEBOOK_ENABLED?: string
   readonly VITE_SHOPIFY_STORE_DOMAIN: string
   readonly VITE_SHOPIFY_STOREFRONT_TOKEN: string
   readonly VITE_STRIPE_PUBLISHABLE_KEY?: string

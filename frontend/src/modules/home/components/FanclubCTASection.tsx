@@ -1,15 +1,15 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
-import { useClerk } from '@clerk/clerk-react'
 import { useCurrentUser } from '@/hooks'
+import { useAuthClient } from '@/lib/auth/AuthProvider'
 import { fanclubLink } from '@/lib/siteLinks'
 import { ROUTES } from '@/lib/routeConstants'
 import { useHomeCtaAnalytics } from '@/modules/analytics/useHomeCtaAnalytics'
 import ParticleField from '@/components/common/ParticleField'
 import { SplitWords } from '@/components/common/KineticText'
 
-const HAS_CLERK = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY)
+const HAS_LOGTO = Boolean(import.meta.env.VITE_LOGTO_APP_ID)
 
 function BenefitsList() {
   const { t } = useTranslation()
@@ -162,9 +162,9 @@ function FanclubCTALayout({ children }: { children: React.ReactNode }) {
   )
 }
 
-function FanclubCTASectionWithClerk() {
+function FanclubCTASectionWithAuth() {
   const { t } = useTranslation()
-  const { openSignIn } = useClerk()
+  const { signIn } = useAuthClient()
   const { user, isLoaded, isSignedIn } = useCurrentUser()
   const trackHomeCta = useHomeCtaAnalytics('fanclub_cta')
   const isMember = user?.role === 'member' || user?.role === 'admin'
@@ -187,7 +187,7 @@ function FanclubCTASectionWithClerk() {
       {isLoaded && !isMember && (
         !isSignedIn ? (
           <button
-            onClick={() => { trackHomeCta('fanclub'); void openSignIn({}) }}
+            onClick={() => { trackHomeCta('fanclub'); void signIn(fanclubLink(ROUTES.FANCLUB)) }}
             className="btn-cyber-primary focus-ring group inline-flex items-center gap-2"
             style={{ background: 'rgba(139,92,246,0.9)', color: '#fff' }}
           >
@@ -208,7 +208,7 @@ function FanclubCTASectionWithClerk() {
   )
 }
 
-function FanclubCTASectionNoClerk() {
+function FanclubCTASectionNoAuth() {
   const { t } = useTranslation()
   const trackHomeCta = useHomeCtaAnalytics('fanclub_cta')
 
@@ -226,4 +226,4 @@ function FanclubCTASectionNoClerk() {
   )
 }
 
-export default HAS_CLERK ? FanclubCTASectionWithClerk : FanclubCTASectionNoClerk
+export default HAS_LOGTO ? FanclubCTASectionWithAuth : FanclubCTASectionNoAuth

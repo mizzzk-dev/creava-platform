@@ -1,4 +1,4 @@
-import { verifyClerkToken, type AuthenticatedClerkUser } from '../../../lib/auth/clerk'
+import { verifyLogtoToken, type AuthenticatedUser } from '../../../lib/auth/logto'
 import { parseStripeWebhookEvent } from '../../../lib/stripe/webhook'
 import {
   createFanclubCheckoutSession,
@@ -21,16 +21,16 @@ function parseStripeMetadata(object: Record<string, unknown>): Record<string, un
   return (object.metadata as Record<string, unknown>) ?? {}
 }
 
-async function requireAuthenticatedClerkUser(ctx: any): Promise<AuthenticatedClerkUser> {
+async function requireAuthenticatedUser(ctx: any): Promise<AuthenticatedUser> {
   try {
-    return await verifyClerkToken(ctx.request.headers.authorization)
+    return await verifyLogtoToken(ctx.request.headers.authorization)
   } catch (error) {
     throw new Error(`本人認証に失敗しました: ${(error as Error).message}`)
   }
 }
 
-function toUserId(metadata: Record<string, unknown>): string | null {
-  const userId = metadata.userId
+function toAuthUserId(metadata: Record<string, unknown>): string | null {
+  const userId = metadata.authUserId ?? metadata.userId ?? metadata.clerkUserId
   return typeof userId === 'string' && userId && userId !== 'guest' ? userId : null
 }
 
@@ -90,7 +90,7 @@ export default ({ strapi }) => ({
       const { planId, locale } = ctx.request.body ?? {}
       if (!planId) return ctx.badRequest('planId は必須です。')
 
-      const authUser = await requireAuthenticatedClerkUser(ctx)
+      const authUser = await requireAuthenticatedUser(ctx)
 
       const plan = await strapi.documents('api::membership-plan.membership-plan').findOne({
         documentId: String(planId),
@@ -138,12 +138,15 @@ export default ({ strapi }) => ({
 
   async createPortalSession(ctx) {
     try {
-      const authUser = await requireAuthenticatedClerkUser(ctx)
+      const authUser = await requireAuthenticatedUser(ctx)
 
       const latestSubscription = await strapi.documents('api::subscription-record.subscription-record').findFirst({
         filters: {
           provider: { $eq: 'stripe' },
-          clerkUserId: { $eq: authUser.userId },
+          $or: [
+            { authUserId: { $eq: authUser.userId } },
+            { clerkUserId: { $eq: authUser.userId } },
+          ],
           customerId: { $notNull: true },
         },
         sort: ['createdAt:desc'],
@@ -189,7 +192,7 @@ export default ({ strapi }) => ({
 
       const object = event.data.object as unknown as Record<string, unknown>
       const metadata = parseStripeMetadata(object)
-      const clerkUserId = toUserId(metadata)
+      const authUserId = toAuthUserId(metadata)
 
       if (event.type === 'checkout.session.completed') {
         await strapi.documents('api::payment-record.payment-record').create({
@@ -198,7 +201,8 @@ export default ({ strapi }) => ({
             paymentStatus: 'succeeded',
             checkoutSessionId: String(object.id ?? ''),
             customerId: typeof object.customer === 'string' ? object.customer : null,
-            clerkUserId,
+            authUserId,
+            clerkUserId: authUserId,
             paymentIntentId: typeof object.payment_intent === 'string' ? object.payment_intent : null,
             amountTotal: Number(object.amount_total ?? 0),
             currency: typeof object.currency === 'string' ? object.currency.toUpperCase() : 'JPY',
@@ -211,7 +215,8 @@ export default ({ strapi }) => ({
         await strapi.documents('api::subscription-record.subscription-record').create({
           data: {
             provider: 'stripe',
-            clerkUserId,
+            authUserId,
+            clerkUserId: authUserId,
             customerId: typeof object.customer === 'string' ? object.customer : null,
             subscriptionId: typeof object.id === 'string' ? object.id : null,
             subscriptionStatus: typeof object.status === 'string' ? object.status : 'incomplete',

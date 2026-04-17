@@ -1,17 +1,16 @@
-import { useAuth, useClerk } from '@clerk/clerk-react'
 import { useTranslation } from 'react-i18next'
 import { useCurrentUser } from '@/hooks'
+import { useAuthClient } from '@/lib/auth/AuthProvider'
 
 /**
- * ログイン / ログアウトボタン（Clerk あり）
+ * ログイン / ログアウトボタン（Logto）
  *
  * - 未ロード時: 非表示（レイアウトシフト防止）
- * - 未ログイン: ログインボタン（Clerk モーダルを開く）
+ * - 未ログイン: ログインボタン
  * - ログイン済み: role バッジ + ログアウトボタン
  */
-function AuthButtonWithClerk() {
-  const { isLoaded } = useAuth()
-  const { openSignIn, signOut } = useClerk()
+function AuthButtonWithAuth() {
+  const { isLoaded, signIn, signOut } = useAuthClient()
   const { user, isSignedIn } = useCurrentUser()
   const { t } = useTranslation()
 
@@ -21,7 +20,7 @@ function AuthButtonWithClerk() {
 
   if (!isSignedIn) {
     return (
-      <button onClick={() => void openSignIn({})} className={btnClass}>
+      <button onClick={() => void signIn()} className={btnClass}>
         {t('auth.signIn')}
       </button>
     )
@@ -42,8 +41,8 @@ function AuthButtonWithClerk() {
 }
 
 /**
- * VITE_CLERK_PUBLISHABLE_KEY 未設定時は認証ボタンを非表示にする
+ * VITE_LOGTO_APP_ID 未設定時は認証ボタンを非表示にする
  */
-export default import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
-  ? AuthButtonWithClerk
+export default import.meta.env.VITE_LOGTO_APP_ID
+  ? AuthButtonWithAuth
   : function AuthButtonDisabled() { return null }

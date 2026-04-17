@@ -11,10 +11,10 @@ import EasterEggTrigger from '@/modules/playful/components/EasterEggTrigger'
 import { getSiteSettings } from '@/modules/settings/api'
 import { getFanclubList } from '@/modules/fanclub/api'
 import { createSectionVisibilityResolver, isWithinPublicationWindow, parseTopPageSections } from '@/lib/editorial'
-import { useAuth, useClerk } from '@clerk/clerk-react'
 import PageHead from '@/components/seo/PageHead'
 import { ROUTES } from '@/lib/routeConstants'
 import { useCurrentUser, useStrapiCollection, useStrapiSingle } from '@/hooks'
+import { useAuthClient } from '@/lib/auth/AuthProvider'
 import { canAccessByRole, type VisibilityScope } from '@/lib/auth/membership'
 import { trackCtaClick } from '@/modules/analytics/tracking'
 import { useProductList } from '@/modules/store/hooks/useProductList'
@@ -458,7 +458,7 @@ export function FanclubAboutSitePage() {
 
 export function FanclubJoinPage() {
   const { user } = useCurrentUser()
-  const { getToken } = useAuth()
+  const { getAccessToken } = useAuthClient()
   const { items: plans } = useStrapiCollection<MembershipPlan>(() => getMembershipPlans())
   const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null)
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
@@ -468,7 +468,7 @@ export function FanclubJoinPage() {
     try {
       setLoadingPlanId(planId)
       setCheckoutError(null)
-      const authToken = await getToken()
+      const authToken = await getAccessToken()
       if (!authToken) {
         setCheckoutError('ログインセッションの確認に失敗しました。再ログイン後にお試しください。')
         return
@@ -553,8 +553,8 @@ export function FanclubLoginPage() {
       <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">ログイン</h1>
       <p className="mt-4 text-sm text-gray-600 dark:text-gray-300">ログイン後はマイページから契約状況、更新日、最近の更新、退会 / 解約導線を確認できます。</p>
       <div className="mt-8 rounded-2xl border border-gray-200 p-5 dark:border-gray-800">
-        <p className="text-sm text-gray-700 dark:text-gray-200">認証基盤は Clerk を使用します。メール認証・パスワード再設定・セッション管理に対応。</p>
-        <p className="mt-2 text-xs text-gray-500">※ Clerk 未設定環境ではログインUIは無効化されます。</p>
+        <p className="text-sm text-gray-700 dark:text-gray-200">認証基盤は Logto を使用します。メール認証・セッション管理・SSO に対応。</p>
+        <p className="mt-2 text-xs text-gray-500">※ Logto 未設定環境ではログインUIは無効化されます。</p>
       </div>
       <div className="mt-5 rounded-2xl border border-violet-200/80 bg-violet-50/60 p-4 dark:border-violet-900/60 dark:bg-violet-950/20">
         <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-violet-600 dark:text-violet-300">secure + smooth</p>
@@ -577,15 +577,15 @@ function normalizeRedirectPath(raw: string | null): string {
   return raw
 }
 
-function FanclubLoginActionsWithClerk({ redirectPath }: { redirectPath: string }) {
-  const { openSignIn, openSignUp } = useClerk()
+function FanclubLoginActionsWithAuth({ redirectPath }: { redirectPath: string }) {
+  const { signIn, signUp } = useAuthClient()
   return (
     <div className="mt-8 flex flex-wrap gap-3">
       <button
         type="button"
         onClick={() => {
           trackCtaClick('fc_login', 'open_signin', { redirectPath })
-          void openSignIn({ afterSignInUrl: redirectPath })
+          void signIn(redirectPath)
         }}
         className="rounded-full bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900"
       >
@@ -595,7 +595,7 @@ function FanclubLoginActionsWithClerk({ redirectPath }: { redirectPath: string }
         type="button"
         onClick={() => {
           trackCtaClick('fc_login', 'open_signup', { redirectPath })
-          void openSignUp({ afterSignUpUrl: redirectPath })
+          void signUp(redirectPath)
         }}
         className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:border-gray-500 dark:border-gray-700 dark:text-gray-200"
       >
@@ -605,17 +605,17 @@ function FanclubLoginActionsWithClerk({ redirectPath }: { redirectPath: string }
   )
 }
 
-function FanclubLoginActionsNoClerk() {
+function FanclubLoginActionsNoAuth() {
   return (
     <p className="mt-6 text-xs text-gray-500">
-      Clerk 未設定のため、この環境ではログインフローを実行できません。
+      Logto 未設定のため、この環境ではログインフローを実行できません。
     </p>
   )
 }
 
-const FanclubLoginActions = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
-  ? FanclubLoginActionsWithClerk
-  : FanclubLoginActionsNoClerk
+const FanclubLoginActions = import.meta.env.VITE_LOGTO_APP_ID
+  ? FanclubLoginActionsWithAuth
+  : FanclubLoginActionsNoAuth
 
 export function FanclubResetPasswordPage() {
   return (
@@ -642,7 +642,7 @@ export function FanclubVerifyEmailPage() {
 export function FanclubMyPageSite() {
   const { t } = useTranslation()
   const { user } = useCurrentUser()
-  const { getToken } = useAuth()
+  const { getAccessToken } = useAuthClient()
   const { products } = useProductList(8)
   const { items: campaigns } = useStrapiCollection<CampaignSummary>(() => getCampaignList())
   const memberStoreItems = useMemo(() => products.filter((item) => item.earlyAccess || item.accessStatus === 'fc_only' || item.memberBenefit).slice(0, 4), [products])
@@ -701,7 +701,7 @@ export function FanclubMyPageSite() {
 
   async function handleOpenPortal(): Promise<void> {
     try {
-      const authToken = await getToken()
+      const authToken = await getAccessToken()
       if (!authToken) {
         setPortalError('ログインセッションの確認に失敗しました。再ログイン後にお試しください。')
         return

@@ -1,6 +1,6 @@
 /**
  * ユーザーロール定義
- * Clerk の user.publicMetadata.role で管理する
+ * 認証プロバイダのクレームで管理する
  */
 export type UserRole = 'guest' | 'free' | 'member' | 'premium' | 'admin'
 
@@ -14,7 +14,7 @@ export type ContractStatus =
   | 'expired'
 
 /**
- * Clerk の publicMetadata に格納する型
+ * 認証クレームの拡張項目
  */
 export interface UserPublicMetadata {
   role: UserRole

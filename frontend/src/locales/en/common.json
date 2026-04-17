@@ -455,7 +455,7 @@
     "authGoogle": "Google sign-in",
     "authApple": "Apple sign-in",
     "authAvailable": "Available",
-    "authHelp": "\"Available\" indicates providers enabled via environment flags. Actual sign-in methods follow the active providers shown in the Clerk dialog.",
+    "authHelp": "\"Available\" indicates providers enabled via environment flags. Actual sign-in methods follow the active providers shown in the Logto sign-in experience.",
     "checklistLead": "Completing these actions helps you get the most out of your page.",
     "todoGuestSignIn": "Stay signed in so you can confirm current access status correctly",
     "todoGuestFanclub": "Review Fanclub plans and join if you need member access",
@@ -512,7 +512,7 @@
     "withdrawCancel": "Cancel request",
     "authSetupRequired": "Setup required",
     "authTrySignIn": "Sign in with this method",
-    "authUnavailable": "Clerk disabled"
+    "authUnavailable": "Logto disabled"
   },
   "memberGuide": {
     "label": "Member Guide",

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useClerk } from '@clerk/clerk-react'
 import { useCurrentUser, useContentAccess } from '@/hooks'
+import { useAuthClient } from '@/lib/auth/AuthProvider'
 import RestrictedNotice from '@/components/common/RestrictedNotice'
 import type { ContentBase } from '@/types'
 
@@ -11,11 +11,11 @@ interface Props {
 }
 
 /**
- * コンテンツ詳細ページ用のアクセスガード（Clerk あり）
+ * コンテンツ詳細ページ用のアクセスガード（Logto）
  */
-function ContentAccessGuardWithClerk({ item, children }: Props) {
+function ContentAccessGuardWithAuth({ item, children }: Props) {
   const { t } = useTranslation()
-  const { openSignIn } = useClerk()
+  const { signIn } = useAuthClient()
   const { isLoaded, isSignedIn } = useCurrentUser()
   const { canView } = useContentAccess()
 
@@ -28,7 +28,7 @@ function ContentAccessGuardWithClerk({ item, children }: Props) {
       return (
         <RestrictedNotice
           variant="not_signed_in"
-          onSignIn={() => void openSignIn({})}
+          onSignIn={() => void signIn()}
         />
       )
     }
@@ -39,9 +39,9 @@ function ContentAccessGuardWithClerk({ item, children }: Props) {
 }
 
 /**
- * Clerk 未設定時: public コンテンツのみ表示、それ以外はゲスト扱いで制限
+ * Logto 未設定時: public コンテンツのみ表示、それ以外はゲスト扱いで制限
  */
-function ContentAccessGuardNoClerk({ item, children }: Props) {
+function ContentAccessGuardNoAuth({ item, children }: Props) {
   const { canView } = useContentAccess()
 
   if (!canView(item)) {
@@ -51,6 +51,6 @@ function ContentAccessGuardNoClerk({ item, children }: Props) {
   return <>{children}</>
 }
 
-export default import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
-  ? ContentAccessGuardWithClerk
-  : ContentAccessGuardNoClerk
+export default import.meta.env.VITE_LOGTO_APP_ID
+  ? ContentAccessGuardWithAuth
+  : ContentAccessGuardNoAuth

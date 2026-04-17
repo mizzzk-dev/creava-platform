@@ -455,7 +455,7 @@
     "authGoogle": "Google 로그인",
     "authApple": "Apple 로그인",
     "authAvailable": "지원",
-    "authHelp": "\"지원\"은 환경 변수에서 활성화한 후보를 의미합니다. 실제 로그인 방식은 Clerk 다이얼로그의 활성 공급자 설정을 따릅니다.",
+    "authHelp": "\"지원\"은 환경 변수에서 활성화한 후보를 의미합니다. 실제 로그인 방식은 Logto 로그인 화면의 활성 공급자 설정을 따릅니다.",
     "checklistLead": "아래 액션을 진행하면 마이페이지를 더 효율적으로 활용할 수 있습니다.",
     "todoGuestSignIn": "로그인 상태를 유지해 현재 접근 상태를 정확히 확인하기",
     "todoGuestFanclub": "Fanclub 플랜을 확인하고 필요하면 가입하기",
@@ -512,7 +512,7 @@
     "withdrawCancel": "신청 취소",
     "authSetupRequired": "설정 필요",
     "authTrySignIn": "이 방법으로 로그인",
-    "authUnavailable": "Clerk 미설정"
+    "authUnavailable": "Logto 미설정"
   },
   "memberGuide": {
     "label": "Member Guide",

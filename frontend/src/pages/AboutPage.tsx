@@ -32,7 +32,7 @@ const SERVICES = [
 const TOOLS = [
   { category: 'Film / Photo', items: ['DaVinci Resolve', 'Adobe Premiere', 'Lightroom', 'Capture One'] },
   { category: 'Music',        items: ['Logic Pro', 'Ableton Live', 'Pro Tools'] },
-  { category: 'Web / Dev',    items: ['React', 'TypeScript', 'Tailwind CSS', 'Node.js', 'Strapi', 'Clerk', 'Stripe'] },
+  { category: 'Web / Dev',    items: ['React', 'TypeScript', 'Tailwind CSS', 'Node.js', 'Strapi', 'Logto', 'Stripe'] },
 ]
 
 const SOCIAL_PROOF = [

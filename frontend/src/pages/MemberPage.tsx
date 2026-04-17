@@ -555,7 +555,7 @@ export default function MemberPage() {
               <p className="font-mono text-[11px] text-gray-400">auth</p>
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{t('member.authLead', { defaultValue: 'ソーシャルログイン連携の対応状況を確認できます。' })}</p>
               <SocialAuthProviderStatus isSignedIn={isSignedIn} />
-              <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{t('member.authHelp', { defaultValue: '実際のログイン方式は、Clerk ダイアログで表示される有効なプロバイダー設定に従います。' })}</p>
+              <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{t('member.authHelp', { defaultValue: '実際のログイン方式は、Logto サインイン画面で表示される有効なプロバイダー設定に従います。' })}</p>
             </div>
           </div>
 

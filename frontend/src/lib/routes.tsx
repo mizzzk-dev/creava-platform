@@ -39,6 +39,7 @@ import {
   FanclubVerifyEmailPage,
 } from '@/pages/fc/FanclubSitePages'
 import FanclubAuthGuard from '@/components/guards/FanclubAuthGuard'
+import AuthCallbackPage from '@/pages/AuthCallbackPage'
 
 // Lazy-loaded pages — excluded from the initial bundle
 const WorksPage = lazy(() => import('@/pages/WorksPage'))
@@ -103,6 +104,7 @@ export function AppRoutes() {
             <Route path={ROUTES.STORE_LEGAL} element={<StorefrontLegalPage />} />
             <Route path={ROUTES.STORE_TERMS} element={<TermsPage />} />
             <Route path={ROUTES.STORE_PRIVACY} element={<PrivacyPolicyPage />} />
+            <Route path={ROUTES.AUTH_CALLBACK} element={<AuthCallbackPage />} />
             <Route path={ROUTES.LEGAL_PRIVACY} element={<PrivacyPolicyPage />} />
             <Route path={ROUTES.LEGAL_TERMS} element={<TermsPage />} />
             <Route path={ROUTES.LEGAL_TRADE} element={<TokushohoPage />} />
@@ -151,6 +153,7 @@ export function AppRoutes() {
             <Route path={ROUTES.LEGAL_TERMS} element={<TermsPage />} />
             <Route path={ROUTES.FC_COMMERCE_LAW} element={<TokushohoPage />} />
             <Route path={ROUTES.FC_SUBSCRIPTION_POLICY} element={<FanclubSubscriptionPolicyPage />} />
+            <Route path={ROUTES.AUTH_CALLBACK} element={<AuthCallbackPage />} />
             <Route path={ROUTES.FC_CHECKOUT_SUCCESS} element={<CheckoutResultPage title="入会手続きを受け付けました" description="継続課金の状態同期が完了次第、会員ステータスへ反映されます。" backTo={ROUTES.FC_MYPAGE} backLabel="マイページへ" />} />
             <Route path={ROUTES.FC_CHECKOUT_CANCEL} element={<CheckoutResultPage title="入会手続きをキャンセルしました" description="課金は確定していません。タイミングを変えて再度お試しください。" backTo={ROUTES.FC_JOIN} backLabel="入会ページへ戻る" />} />
             <Route path="*" element={<NotFoundPage />} />
@@ -188,6 +191,7 @@ export function AppRoutes() {
           <Route path={ROUTES.LEGAL_COOKIE} element={<CookiePolicyPage />} />
           <Route path={ROUTES.LEGAL_TRADE} element={<TokushohoPage />} />
           <Route path={ROUTES.PREVIEW} element={<PreviewPage />} />
+          <Route path={ROUTES.AUTH_CALLBACK} element={<AuthCallbackPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>

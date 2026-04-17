@@ -53,6 +53,9 @@
     "customerId": {
       "type": "string"
     },
+    "authUserId": {
+      "type": "string"
+    },
     "clerkUserId": {
       "type": "string"
     },
