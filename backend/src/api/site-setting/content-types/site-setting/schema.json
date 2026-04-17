@@ -103,12 +103,123 @@
         "images"
       ]
     },
+    "heroVisualMobile": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
     "heroIllustration": {
       "type": "media",
       "multiple": false,
       "allowedTypes": [
         "images"
       ]
+    },
+    "heroSlides": {
+      "type": "json",
+      "description": "store/main/fc のヒーロースライダー設定配列。image/mobileImage/slideTitle/slideDescription/slideLink/slideOrder/slideVisibility を持つオブジェクトの配列。"
+    },
+    "heroSlidesDesktop": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "heroSlidesMobile": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "mainHeroImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "mainHeroImageMobile": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "fcHeroImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "fcHeroImageMobile": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "aboutMainVisual": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "aboutSubVisuals": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "pickupImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "featuredImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "campaignImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "collectionHeroImages": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "heroOverlayStyle": {
+      "type": "enumeration",
+      "enum": [
+        "soft",
+        "dark",
+        "editorial",
+        "none"
+      ],
+      "default": "soft"
+    },
+    "heroFocalPoint": {
+      "type": "string"
+    },
+    "imageAltDefault": {
+      "type": "string"
     },
     "illustrationAsset": {
       "type": "media",

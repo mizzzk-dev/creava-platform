@@ -25,6 +25,10 @@ import { isCampaignActive } from '@/modules/campaign/lib'
 import SectionReveal from '@/components/common/SectionReveal'
 import CuratedBentoSection from '@/components/common/CuratedBentoSection'
 import VisualHeroSection from '@/components/common/VisualHeroSection'
+import HeroImageSlider, { type HeroSlide } from '@/components/common/HeroImageSlider'
+import ImageFeatureTile from '@/components/common/ImageFeatureTile'
+import { buildStoreHeroFallbackSlides, normalizeHeroSlides } from '@/lib/heroSlides'
+import { getMediaUrl } from '@/utils'
 import { createSectionVisibilityResolver, parseTopPageSections } from '@/lib/editorial'
 import { useSeasonalTheme } from '@/modules/seasonal/context'
 import DailyMessageCard from '@/modules/playful/components/DailyMessageCard'
@@ -39,7 +43,6 @@ export default function StorefrontHomePage() {
   const { products, loading, error, refetch } = useProductList(24)
   const { item: settings } = useStrapiSingle(() => getSiteSettings({
     locale: i18n.resolvedLanguage,
-    fields: ['heroTitle', 'heroSubtitle', 'heroCopy', 'heroSubcopy', 'heroCTALabel', 'heroCTAUrl', 'topPageSections', 'announcementText', 'announcementUrl', 'weeklyHighlightTitle', 'weeklyHighlightUrl'],
   }))
   const { items: news, loading: newsLoading, error: newsError, refetch: refetchNews } = useStrapiCollection<NewsItem>(
     () => getNewsList({ pagination: { pageSize: 4, withCount: false } }),
@@ -168,6 +171,24 @@ export default function StorefrontHomePage() {
         .sort((a, b) => (b.displayPriority ?? 0) - (a.displayPriority ?? 0))[0] ?? null,
     [campaigns],
   )
+  const heroSlides: HeroSlide[] = useMemo(() => {
+    const fromCms = normalizeHeroSlides((settings as unknown as { heroSlides?: unknown })?.heroSlides)
+    if (fromCms.length) return fromCms
+    return buildStoreHeroFallbackSlides(settings ?? null, {
+      title: settings?.heroTitle?.trim() || t('seasonal.store.title', { defaultValue: '静けさの中で、' }),
+      description:
+        settings?.heroCopy?.trim() ||
+        t('seasonal.store.description', { defaultValue: '新着・限定・デジタル商品をエディトリアルに整理。商品が少ない時も、多い時も、見つけやすく心地よいストア体験を保ちます。' }),
+      ctaLabel: settings?.heroCTALabel?.trim() || '全商品を見る',
+      ctaHref: settings?.heroCTAUrl?.trim() || '/products',
+    })
+  }, [settings, t])
+  const pickupImageUrl = getMediaUrl(settings?.pickupImage ?? null, 'medium')
+  const featuredImageUrl = getMediaUrl(settings?.featuredImage ?? null, 'medium')
+  const campaignImageUrl = getMediaUrl(settings?.campaignImage ?? null, 'medium')
+  const collectionHeroImages = (settings?.collectionHeroImages ?? [])
+    .map((m) => getMediaUrl(m, 'medium'))
+    .filter((u): u is string => Boolean(u))
   useEffect(() => {
     if (error) trackApiFailure('store_home_products', error)
   }, [error])
@@ -179,6 +200,20 @@ export default function StorefrontHomePage() {
     <section className="ds-container py-8 sm:py-12">
       <PageHead title="mizzz Official Store" description="mizzz公式オンラインストア。新商品・デジタル商品・お知らせをまとめて確認できます。" />
 
+      {/* ビジュアル主役のヒーロー — CMS heroSlides で差し替え可能、未設定時はフォールバック */}
+      <HeroImageSlider
+        slides={heroSlides}
+        aspectRatio="16/9"
+        mobileAspectRatio="4/5"
+        locationTag="store_home_hero_slider"
+        onCtaClick={(slideIndex, kind) =>
+          trackCtaClick('store_home_hero_slider', `${kind}_slide_${slideIndex}`, {
+            slide: String(heroSlides[slideIndex]?.id ?? slideIndex),
+          })
+        }
+      />
+
+      {/* コピー + アクション — 画像の下にエディトリアルに配置 */}
       <VisualHeroSection
         location="store_home_hero"
         eyebrow="mizzz official store"
@@ -246,6 +281,72 @@ export default function StorefrontHomePage() {
               <p className="mt-2 font-medium text-gray-700 dark:text-gray-300">今週のおすすめ・お知らせを見る</p>
               <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">News一覧へ →</p>
             </Link>
+          </div>
+        </SectionReveal>
+      )}
+
+      {/* 画像つき特集ブロック — featured / pickup / campaign を画像で見せ場に */}
+      {sectionResolver('store-home-visual-feature', true) && (
+        <SectionReveal className="mt-12">
+          <div className="mb-5 flex items-end justify-between gap-3">
+            <div>
+              <p className="section-eyebrow mb-1">Visual Feature</p>
+              <h2 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
+                画像で見るストア特集
+              </h2>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                featured / pickup / campaign の見せ場を画像で整理しました。
+              </p>
+            </div>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-3">
+            <ImageFeatureTile
+              href="/products"
+              image={featuredImageUrl ?? collectionHeroImages[0] ?? null}
+              alt="featured collection"
+              eyebrow="FEATURED"
+              title="今月の特集ラインナップ"
+              description="編集部が推したい商品を画像つきで紹介。"
+              ctaLabel="全商品を見る"
+              variant="editorial"
+              tone="default"
+              className="lg:col-span-2"
+              onClick={() => trackCtaClick('store_home_visual_feature', 'featured_tile')}
+            />
+            <ImageFeatureTile
+              href="/products"
+              image={pickupImageUrl ?? collectionHeroImages[1] ?? null}
+              alt="pickup"
+              eyebrow="PICKUP"
+              title="ピックアップ"
+              description="注目アイテムを厳選。"
+              ctaLabel="見る"
+              tone="accent"
+              onClick={() => trackCtaClick('store_home_visual_feature', 'pickup_tile')}
+            />
+            <ImageFeatureTile
+              href="/collections/digital"
+              image={campaignImageUrl ?? collectionHeroImages[2] ?? null}
+              alt="campaign"
+              eyebrow="CAMPAIGN"
+              title="キャンペーン / 限定ドロップ"
+              description="期間・数量限定のアイテムをまとめて案内します。"
+              ctaLabel="詳細"
+              tone="campaign"
+              onClick={() => trackCtaClick('store_home_visual_feature', 'campaign_tile')}
+            />
+            <ImageFeatureTile
+              href={fanclubLink(ROUTES.FC_JOIN)}
+              image={collectionHeroImages[3] ?? collectionHeroImages[0] ?? null}
+              alt="member"
+              eyebrow="MEMBER"
+              title="FC先行・会員特典"
+              description="会員向け先行販売と特典導線。"
+              ctaLabel="FCを見る"
+              tone="member"
+              className="lg:col-span-2"
+              onClick={() => trackCtaClick('store_home_visual_feature', 'member_tile')}
+            />
           </div>
         </SectionReveal>
       )}

@@ -3,6 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { motion, useReducedMotion } from 'framer-motion'
 import { ROUTES } from '@/lib/routeConstants'
 import { storeLink } from '@/lib/siteLinks'
+import { useStrapiSingle } from '@/hooks'
+import { getSiteSettings } from '@/modules/settings/api'
+import { getMediaUrl } from '@/utils'
+import ResponsiveImage from '@/components/common/ResponsiveImage'
 
 const BENEFITS = [
   { icon: '✦', labelKey: 'fanclub.benefit.exclusive', color: 'text-violet-500 dark:text-violet-400' },
@@ -12,11 +16,41 @@ const BENEFITS = [
 ] as const
 
 export default function FanclubHeroSection() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const reduceMotion = useReducedMotion()
+  const { item: settings } = useStrapiSingle(() =>
+    getSiteSettings({ locale: i18n.resolvedLanguage }),
+  )
+  const fcImage = getMediaUrl(settings?.fcHeroImage ?? null, 'large')
+  const fcImageMobile = getMediaUrl(settings?.fcHeroImageMobile ?? null, 'large')
+  const hasImage = Boolean(fcImage || fcImageMobile)
 
   return (
-    <section className="relative overflow-hidden fc-hero-surface">
+    <section className="relative overflow-hidden fc-hero-surface" aria-label={t('nav.fanclub')}>
+      {/* ブランドビジュアル（CMS 差し替え可能）— 画像があっても無くても成立する */}
+      {hasImage && (
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          initial={{ opacity: 0, scale: reduceMotion ? 1 : 1.05 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.8, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <ResponsiveImage
+            src={fcImage}
+            mobileSrc={fcImageMobile ?? fcImage}
+            alt=""
+            aspectRatio="22/14"
+            mobileAspectRatio="4/5"
+            focalPoint={settings?.heroFocalPoint ?? 'center'}
+            priority
+            className="h-full w-full"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#120c1c]/85 via-[#120c1c]/70 to-[#120c1c]/55" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0b0615]/95 via-transparent to-transparent" />
+        </motion.div>
+      )}
+
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(167,139,250,0.28),transparent_55%)]" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(6,182,212,0.14),transparent_55%)]" />
       <div className="cyber-grid pointer-events-none absolute inset-0 opacity-[0.06]" />
@@ -48,10 +82,10 @@ export default function FanclubHeroSection() {
             </span>
           </div>
 
-          <h1 className="font-display text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-[56px]">
+          <h1 className="font-display text-4xl font-bold leading-tight tracking-tight text-white drop-shadow-[0_2px_16px_rgba(0,0,0,0.45)] sm:text-5xl lg:text-[56px]">
             {t('nav.fanclub')}
           </h1>
-          <p className="mt-4 max-w-xl text-sm leading-relaxed text-violet-100/80">
+          <p className="mt-4 max-w-xl text-sm leading-relaxed text-violet-100/85 drop-shadow-[0_2px_10px_rgba(0,0,0,0.3)]">
             {t('fanclub.pageLead', {
               defaultValue: '今週の更新・限定公開・会員向け導線をまとめて確認できます。',
             })}

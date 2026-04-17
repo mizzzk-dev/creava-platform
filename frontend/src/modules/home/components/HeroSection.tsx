@@ -7,6 +7,10 @@ import { ROUTES } from '@/lib/routeConstants'
 import { useHomeCtaAnalytics } from '@/modules/analytics/useHomeCtaAnalytics'
 import { useTextScramble } from '@/hooks/useTextScramble'
 import { useMagneticHover } from '@/hooks/useMagneticHover'
+import { useStrapiSingle } from '@/hooks'
+import { getSiteSettings } from '@/modules/settings/api'
+import { getMediaUrl } from '@/utils'
+import ResponsiveImage from '@/components/common/ResponsiveImage'
 
 type AvailabilityStatus = 'available' | 'limited' | 'unavailable'
 const AVAILABILITY = import.meta.env.VITE_AVAILABILITY_STATUS as AvailabilityStatus | undefined
@@ -176,9 +180,15 @@ function StatCard({ value, label, suffix = '+' }: { value: number; label: string
 
 /* ── Main HeroSection ───────────────────────────────── */
 export default function HeroSection() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const trackHomeCta = useHomeCtaAnalytics('hero')
   const prefersReduced = useReducedMotion()
+  const { item: settings } = useStrapiSingle(() =>
+    getSiteSettings({ locale: i18n.resolvedLanguage }),
+  )
+  const heroImageDesktop = getMediaUrl(settings?.mainHeroImage ?? null, 'large')
+  const heroImageMobile = getMediaUrl(settings?.mainHeroImageMobile ?? null, 'large')
+  const hasHeroImage = Boolean(heroImageDesktop || heroImageMobile)
 
   const magPrimary   = useMagneticHover<HTMLAnchorElement>({ strength: 0.3, scale: 1.03 })
   const magSecondary = useMagneticHover<HTMLAnchorElement>({ strength: 0.25, scale: 1.02 })
@@ -205,6 +215,32 @@ export default function HeroSection() {
       className="relative flex min-h-[96vh] items-center overflow-hidden"
     >
       {/* ── Background layers ──────────────────────── */}
+
+      {/* Optional brand hero image — CMS: mainHeroImage / mainHeroImageMobile */}
+      {hasHeroImage && (
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{ y: bgY }}
+          initial={{ opacity: 0, scale: prefersReduced ? 1 : 1.04 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <ResponsiveImage
+            src={heroImageDesktop}
+            mobileSrc={heroImageMobile ?? heroImageDesktop}
+            alt=""
+            aspectRatio="22/14"
+            mobileAspectRatio="4/5"
+            focalPoint={settings?.heroFocalPoint ?? 'center'}
+            priority
+            className="h-full w-full"
+          />
+          {/* editorial readability veil — light/dark どちらでも文字が読めるように */}
+          <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-white/55 to-white/35 dark:from-[#06060f]/85 dark:via-[#06060f]/65 dark:to-[#06060f]/35" />
+          <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-transparent to-transparent dark:from-[#06060f]/95" />
+        </motion.div>
+      )}
 
       {/* Subtle grid */}
       <motion.div

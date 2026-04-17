@@ -36,6 +36,10 @@ import SemanticBadge from '@/components/common/ui/SemanticBadge'
 import SectionReveal from '@/components/common/SectionReveal'
 import CuratedBentoSection from '@/components/common/CuratedBentoSection'
 import VisualHeroSection from '@/components/common/VisualHeroSection'
+import HeroImageSlider, { type HeroSlide } from '@/components/common/HeroImageSlider'
+import ImageFeatureTile from '@/components/common/ImageFeatureTile'
+import { normalizeHeroSlides } from '@/lib/heroSlides'
+import { getMediaUrl } from '@/utils'
 import type { FanclubContent } from '@/types'
 import { useSeasonalTheme } from '@/modules/seasonal/context'
 
@@ -128,7 +132,6 @@ export function FanclubHomeHubPage() {
   const { items: campaigns } = useStrapiCollection<CampaignSummary>(() => getCampaignList())
   const { item: settings } = useStrapiSingle(() => getSiteSettings({
     locale: i18n.resolvedLanguage,
-    fields: ['heroTitle', 'heroSubtitle', 'heroCopy', 'heroSubcopy', 'heroCTALabel', 'heroCTAUrl', 'topPageSections'],
   }))
   const { items: weeklyContent } = useStrapiCollection<FanclubContent>(() => getFanclubList({
     locale: i18n.resolvedLanguage,
@@ -265,12 +268,50 @@ export function FanclubHomeHubPage() {
     [],
   )
 
+  const fcHeroSlides: HeroSlide[] = useMemo(() => {
+    const fromCms = normalizeHeroSlides((settings as unknown as { heroSlides?: unknown })?.heroSlides)
+    if (fromCms.length) return fromCms
+    const heroImage = getMediaUrl(settings?.fcHeroImage ?? null, 'large')
+    const heroImageMobile = getMediaUrl(settings?.fcHeroImageMobile ?? null, 'large')
+    return [
+      {
+        id: 'fc-hero-default',
+        image: heroImage,
+        mobileImage: heroImageMobile ?? heroImage,
+        eyebrow: 'OFFICIAL FANCLUB',
+        featuredLabel: 'MEMBERS ONLY',
+        title: settings?.heroTitle?.trim() || t('seasonal.fc.title', { defaultValue: 'mizzz official fanclub' }),
+        description: settings?.heroCopy?.trim() || t('seasonal.fc.description', { defaultValue: '限定ニュース、ブログ、動画、ギャラリー、イベント先行情報を、余白と静けさを保ちながら届けるメンバーシップサイトです。' }),
+        ctaLabel: settings?.heroCTALabel?.trim() || '入会する',
+        ctaHref: settings?.heroCTAUrl?.trim() || ROUTES.FC_JOIN,
+        secondaryCtaLabel: 'ログイン',
+        secondaryCtaHref: ROUTES.FC_LOGIN,
+        overlay: 'editorial',
+        align: 'left',
+      },
+    ]
+  }, [settings, t])
+
   return (
     <section className="ds-container py-10 md:py-16">
       <PageHead
         title={settings?.heroTitle?.trim() || t('seasonal.fc.title', { defaultValue: 'mizzz official fanclub' })}
         description="mizzz の公式ファンクラブ。ニュース、ブログ、動画、ギャラリー、チケット先行情報を会員向けに配信。"
       />
+
+      {/* FC ヒーロー画像スライダー — CMS heroSlides または fcHeroImage で差し替え可能 */}
+      <HeroImageSlider
+        slides={fcHeroSlides}
+        aspectRatio="16/9"
+        mobileAspectRatio="4/5"
+        locationTag="fc_home_hero_slider"
+        onCtaClick={(slideIndex, kind) =>
+          trackCtaClick('fc_home_hero_slider', `${kind}_slide_${slideIndex}`, {
+            slide: String(fcHeroSlides[slideIndex]?.id ?? slideIndex),
+          })
+        }
+      />
+
       <VisualHeroSection
         location="fc_home"
         eyebrow="OFFICIAL FANCLUB"
@@ -300,6 +341,78 @@ export function FanclubHomeHubPage() {
         subtitle="再訪時に価値が分かる導線を先頭で確認"
         items={homeDigestItems}
       />}
+
+      {/* 会員向け visual feature — 画像つきで限定感を伝える */}
+      {sectionResolver('fc-home-visual-benefit', true) && (() => {
+        const subs = (settings?.aboutSubVisuals ?? [])
+          .map((m) => getMediaUrl(m, 'medium'))
+          .filter((u): u is string => Boolean(u))
+        const featured = getMediaUrl(settings?.featuredImage ?? null, 'medium') ?? subs[0] ?? null
+        const pickup = getMediaUrl(settings?.pickupImage ?? null, 'medium') ?? subs[1] ?? null
+        const campaign = getMediaUrl(settings?.campaignImage ?? null, 'medium') ?? subs[2] ?? null
+        return (
+          <SectionReveal className="mt-12">
+            <div className="mb-5">
+              <p className="section-eyebrow mb-1">Members Visual</p>
+              <h2 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
+                会員限定のビジュアル導線
+              </h2>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                限定公開・先行案内・会員特典への導線を画像で整理。
+              </p>
+            </div>
+            <div className="grid gap-4 lg:grid-cols-3">
+              <ImageFeatureTile
+                href={ROUTES.FC_MOVIES}
+                image={featured}
+                alt="会員限定"
+                eyebrow="FC LIMITED"
+                title="会員限定コンテンツ"
+                description="動画・ブログ・写真を会員向けに段階公開。"
+                ctaLabel="限定公開を見る"
+                variant="editorial"
+                tone="member"
+                className="lg:col-span-2"
+                onClick={() => trackCtaClick('fc_home_visual_benefit', 'featured_tile')}
+              />
+              <ImageFeatureTile
+                href={storeLink(ROUTES.STORE_HOME)}
+                image={pickup}
+                alt="会員向けストア"
+                eyebrow="EARLY ACCESS"
+                title="会員先行ストア"
+                description="限定販売・先行購入の導線。"
+                ctaLabel="ストアを見る"
+                tone="accent"
+                onClick={() => trackCtaClick('fc_home_visual_benefit', 'store_tile')}
+              />
+              <ImageFeatureTile
+                href={ROUTES.FC_JOIN}
+                image={campaign}
+                alt="入会"
+                eyebrow="JOIN"
+                title="入会して特典を受け取る"
+                description="月額 880円 / 年額 8,800円"
+                ctaLabel="入会する"
+                tone="campaign"
+                onClick={() => trackCtaClick('fc_home_visual_benefit', 'join_tile')}
+              />
+              <ImageFeatureTile
+                href={ROUTES.FC_MYPAGE}
+                image={subs[3] ?? featured}
+                alt="マイページ"
+                eyebrow="MY PAGE"
+                title="会員ダッシュボード"
+                description="更新履歴・特典・継続課金の状況を管理できます。"
+                ctaLabel="マイページへ"
+                tone="default"
+                className="lg:col-span-2"
+                onClick={() => trackCtaClick('fc_home_visual_benefit', 'mypage_tile')}
+              />
+            </div>
+          </SectionReveal>
+        )
+      })()}
 
       {/* ── playful: 日替わり + 週替わりブロック ─────────── */}
       <div className="mt-8 grid gap-4 sm:grid-cols-2">

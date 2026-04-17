@@ -1,14 +1,16 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion, useReducedMotion } from 'framer-motion'
-import { useStrapiCollection } from '@/hooks'
+import { useStrapiCollection, useStrapiSingle } from '@/hooks'
 import { getWorksList } from '@/modules/works/api'
 import { getBlogList } from '@/modules/blog/api'
+import { getSiteSettings } from '@/modules/settings/api'
 import { getMediaUrl, formatDate } from '@/utils'
 import PageHead from '@/components/seo/PageHead'
 import StructuredData from '@/components/seo/StructuredData'
 import GitHubActivityCard from '@/components/common/GitHubActivityCard'
 import SectionReveal from '@/components/common/SectionReveal'
+import ResponsiveImage from '@/components/common/ResponsiveImage'
 import { ROUTES, detailPath } from '@/lib/routeConstants'
 import { SITE_URL, SITE_NAME } from '@/lib/seo'
 import type { Work, BlogPost } from '@/types'
@@ -88,9 +90,16 @@ const fadeUp = {
 }
 
 export default function AboutPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const prefersReduced = useReducedMotion()
   const avail = AVAILABILITY ? AVAILABILITY_CONFIG[AVAILABILITY] : null
+  const { item: settings } = useStrapiSingle(() =>
+    getSiteSettings({ locale: i18n.resolvedLanguage }),
+  )
+  const aboutVisualDesktop = getMediaUrl(settings?.aboutMainVisual ?? null, 'large')
+  const aboutSubImages = (settings?.aboutSubVisuals ?? [])
+    .map((m) => getMediaUrl(m, 'medium'))
+    .filter((u): u is string => Boolean(u))
 
   const { items: works } = useStrapiCollection<Work>(() =>
     getWorksList({ pagination: { pageSize: 6 } }),
@@ -220,24 +229,55 @@ export default function AboutPage() {
         <div className="grid grid-cols-1 gap-10 md:grid-cols-[1fr_1.8fr]">
           {/* Left: photo + github */}
           <div className="flex flex-col gap-4">
-            {/* Profile image placeholder — editorial design */}
-            <div className="illustration-spot aspect-square w-full max-w-[260px] flex flex-col items-center justify-center gap-3">
-              <span
-                className="font-display text-7xl font-black text-gray-200 dark:text-white/[0.07] select-none leading-none"
-                aria-hidden="true"
-              >
-                M
-              </span>
-              <div className="flex flex-col items-center gap-1.5">
-                <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-gray-300 dark:text-white/20">
-                  mizzz · est. 2016
-                </span>
-                <span className="font-mono text-[8px] uppercase tracking-widest text-gray-200 dark:text-white/10">
-                  film · photo · music
-                </span>
-              </div>
+            {/* Main visual — CMS で aboutMainVisual を差し替え可能。未設定時はエディトリアルなプレースホルダ。 */}
+            <div className="w-full max-w-[280px] overflow-hidden rounded-3xl border border-gray-100 shadow-sm dark:border-white/[0.06]">
+              <ResponsiveImage
+                src={aboutVisualDesktop}
+                mobileSrc={aboutVisualDesktop}
+                alt={settings?.imageAltDefault ?? `${SITE_NAME} — portrait`}
+                aspectRatio="3/4"
+                focalPoint={settings?.heroFocalPoint ?? 'center'}
+                fallbackClassName="bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900"
+                fallback={
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    <span
+                      className="font-display text-7xl font-black text-gray-200 dark:text-white/[0.07] select-none leading-none"
+                      aria-hidden="true"
+                    >
+                      M
+                    </span>
+                    <div className="flex flex-col items-center gap-1.5">
+                      <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-gray-300 dark:text-white/20">
+                        mizzz · est. 2016
+                      </span>
+                      <span className="font-mono text-[8px] uppercase tracking-widest text-gray-200 dark:text-white/10">
+                        film · photo · music
+                      </span>
+                    </div>
+                  </div>
+                }
+              />
             </div>
-            <div className="max-w-[260px]">
+            {aboutSubImages.length > 0 && (
+              <div className="grid max-w-[280px] grid-cols-3 gap-2">
+                {aboutSubImages.slice(0, 3).map((src, i) => (
+                  <div
+                    key={src}
+                    className="overflow-hidden rounded-xl border border-gray-100 dark:border-white/[0.06]"
+                  >
+                    <ResponsiveImage
+                      src={src}
+                      alt=""
+                      aspectRatio="1/1"
+                      focalPoint="center"
+                      className="h-full w-full"
+                      priority={i === 0}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="max-w-[280px]">
               <GitHubActivityCard />
             </div>
           </div>

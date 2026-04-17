@@ -176,7 +176,24 @@ export interface SiteSettings extends StrapiBase {
   heroCTALabel?: string | null
   heroCTAUrl?: string | null
   heroVisual?: StrapiMedia | null
+  heroVisualMobile?: StrapiMedia | null
   heroIllustration?: StrapiMedia | null
+  heroSlides?: unknown
+  heroSlidesDesktop?: StrapiMedia[] | null
+  heroSlidesMobile?: StrapiMedia[] | null
+  mainHeroImage?: StrapiMedia | null
+  mainHeroImageMobile?: StrapiMedia | null
+  fcHeroImage?: StrapiMedia | null
+  fcHeroImageMobile?: StrapiMedia | null
+  aboutMainVisual?: StrapiMedia | null
+  aboutSubVisuals?: StrapiMedia[] | null
+  pickupImage?: StrapiMedia | null
+  featuredImage?: StrapiMedia | null
+  campaignImage?: StrapiMedia | null
+  collectionHeroImages?: StrapiMedia[] | null
+  heroOverlayStyle?: 'soft' | 'dark' | 'editorial' | 'none' | null
+  heroFocalPoint?: string | null
+  imageAltDefault?: string | null
   illustrationAsset?: StrapiMedia | null
   sectionBackgroundVariant?: string | null
   backgroundVariant?: string | null

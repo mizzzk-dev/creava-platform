@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useProductList } from '@/modules/store/hooks/useProductList'
-import { useContentAccess } from '@/hooks'
+import { useContentAccess, useStrapiSingle } from '@/hooks'
+import { getSiteSettings } from '@/modules/settings/api'
 import PageHead from '@/components/seo/PageHead'
 import StructuredData from '@/components/seo/StructuredData'
 import { ROUTES } from '@/lib/routeConstants'
@@ -30,10 +31,13 @@ import StoreProductGrid from '@/modules/store/sections/StoreProductGrid'
 import StoreFooterCta from '@/modules/store/sections/StoreFooterCta'
 
 export default function StorePage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   useListPageWebVitals('store-list')
   const { products, loading, error } = useProductList(24)
   const { filterVisible } = useContentAccess()
+  const { item: settings } = useStrapiSingle(() =>
+    getSiteSettings({ locale: i18n.resolvedLanguage }),
+  )
   const { currency, updateCurrency } = useDisplayCurrency('JPY')
   const [rankingRange, setRankingRange] = useState<RankingRange>('7d')
   const [region, setRegion] = useState<StoreRegion>('JP')
@@ -136,6 +140,7 @@ export default function StorePage() {
         region={region}
         heroVariant={heroVariant}
         ctaVariant={ctaVariant}
+        settings={settings}
       />
 
       <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14 space-y-8">
