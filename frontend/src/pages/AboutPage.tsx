@@ -193,6 +193,23 @@ export default function AboutPage() {
               </span>
             )}
           </motion.div>
+
+          {/* Stats bar — 実績アンカー */}
+          <motion.div
+            variants={fadeUp}
+            className="mt-10 flex flex-wrap gap-8 border-t border-gray-100 dark:border-white/[0.06] pt-8"
+          >
+            {[
+              { value: '10+', label: 'years active' },
+              { value: '200+', label: 'projects' },
+              { value: '3', label: 'disciplines' },
+            ].map(({ value, label }) => (
+              <div key={label} className="flex flex-col gap-0.5">
+                <span className="font-display text-2xl font-black text-gray-900 dark:text-white/85">{value}</span>
+                <span className="font-mono text-[10px] uppercase tracking-widest text-gray-400 dark:text-white/25">{label}</span>
+              </div>
+            ))}
+          </motion.div>
         </motion.div>
       </section>
 
@@ -203,13 +220,21 @@ export default function AboutPage() {
         <div className="grid grid-cols-1 gap-10 md:grid-cols-[1fr_1.8fr]">
           {/* Left: photo + github */}
           <div className="flex flex-col gap-4">
-            {/* Profile image placeholder */}
-            <div className="illustration-spot aspect-square w-full max-w-[260px] flex items-center justify-center">
-              <div className="flex h-full w-full items-center justify-center opacity-20">
-                <svg width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden="true">
-                  <circle cx="32" cy="24" r="14" stroke="currentColor" strokeWidth="1.5" className="text-violet-400" />
-                  <path d="M4 56c0-15.464 12.536-28 28-28s28 12.536 28 28" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-violet-400" />
-                </svg>
+            {/* Profile image placeholder — editorial design */}
+            <div className="illustration-spot aspect-square w-full max-w-[260px] flex flex-col items-center justify-center gap-3">
+              <span
+                className="font-display text-7xl font-black text-gray-200 dark:text-white/[0.07] select-none leading-none"
+                aria-hidden="true"
+              >
+                M
+              </span>
+              <div className="flex flex-col items-center gap-1.5">
+                <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-gray-300 dark:text-white/20">
+                  mizzz · est. 2016
+                </span>
+                <span className="font-mono text-[8px] uppercase tracking-widest text-gray-200 dark:text-white/10">
+                  film · photo · music
+                </span>
               </div>
             </div>
             <div className="max-w-[260px]">
@@ -294,30 +319,55 @@ export default function AboutPage() {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {VALUES.map((v, i) => (
-            <motion.div
-              key={v.title}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.3 }}
-              custom={i}
-              variants={fadeUp}
-              className="values-card group"
-            >
-              <div className="mb-3 flex items-center gap-3">
-                <span className="font-mono text-xl text-violet-400 dark:text-violet-500 group-hover:scale-110 transition-transform duration-200">
-                  {v.icon}
-                </span>
-                <h3 className="font-display text-lg font-bold tracking-tight text-gray-900 dark:text-white/85">
-                  {v.title}
-                </h3>
-              </div>
-              <p className="text-sm leading-relaxed text-gray-500 dark:text-white/40">
-                {v.desc}
-              </p>
-            </motion.div>
-          ))}
+        <div className="space-y-4">
+          {/* Featured first value — full width row */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.3 }}
+            custom={0}
+            variants={fadeUp}
+            className="values-card group sm:flex sm:items-start sm:gap-10"
+          >
+            <div className="mb-3 flex items-center gap-3 sm:mb-0 sm:shrink-0">
+              <span className="font-mono text-2xl text-violet-400 dark:text-violet-500 group-hover:scale-110 transition-transform duration-200">
+                {VALUES[0].icon}
+              </span>
+              <h3 className="font-display text-xl font-bold tracking-tight text-gray-900 dark:text-white/85">
+                {VALUES[0].title}
+              </h3>
+            </div>
+            <p className="text-base leading-relaxed text-gray-500 dark:text-white/40 sm:pt-0.5">
+              {VALUES[0].desc}
+            </p>
+          </motion.div>
+
+          {/* Remaining values — 3-column grid */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {VALUES.slice(1).map((v, i) => (
+              <motion.div
+                key={v.title}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.3 }}
+                custom={i + 1}
+                variants={fadeUp}
+                className="values-card group"
+              >
+                <div className="mb-3 flex items-center gap-3">
+                  <span className="font-mono text-xl text-violet-400 dark:text-violet-500 group-hover:scale-110 transition-transform duration-200">
+                    {v.icon}
+                  </span>
+                  <h3 className="font-display text-lg font-bold tracking-tight text-gray-900 dark:text-white/85">
+                    {v.title}
+                  </h3>
+                </div>
+                <p className="text-sm leading-relaxed text-gray-500 dark:text-white/40">
+                  {v.desc}
+                </p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </SectionReveal>
 
@@ -359,6 +409,9 @@ export default function AboutPage() {
       ══════════════════════════════════════════════ */}
       <SectionReveal className="border-t border-gray-100 dark:border-white/[0.06]">
         <div className="visual-quote py-20">
+          <div className="mb-10 text-center">
+            <span className="section-label">{t('about.worldView', { defaultValue: 'world view' })}</span>
+          </div>
           <motion.div
             initial={{ opacity: 0, scale: 0.97 }}
             whileInView={{ opacity: 1, scale: 1 }}
@@ -376,6 +429,15 @@ export default function AboutPage() {
               <div className="h-px w-8 bg-violet-300 dark:bg-violet-500/50" />
             </div>
           </motion.div>
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.25 }}
+            className="mx-auto mt-8 max-w-xl text-center text-sm leading-relaxed text-gray-400 dark:text-white/30"
+          >
+            {t('about.worldviewDesc', { defaultValue: '映像・写真・音楽を横断することで、単一ジャンルでは届かない感情の層へ踏み込む。それがmizzzの目指すクリエイティブ。' })}
+          </motion.p>
         </div>
       </SectionReveal>
 
@@ -618,26 +680,34 @@ export default function AboutPage() {
           CTA — お問い合わせ導線
       ══════════════════════════════════════════════ */}
       <SectionReveal className="border-t border-gray-100 dark:border-white/[0.06] py-20">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-8">
-          <Link
-            to={ROUTES.CONTACT}
-            className="group inline-flex items-center gap-2.5 rounded-xl bg-gray-900 px-8 py-3.5 text-sm font-semibold tracking-wide text-white transition-all hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
-          >
-            {t('about.ctaContact', { defaultValue: 'お問い合わせ・仕事依頼' })}
-            <span className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
-          </Link>
-          <Link
-            to={ROUTES.PRICING}
-            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-white/[0.10] px-8 py-3.5 text-sm font-medium tracking-wide text-gray-700 dark:text-white/70 transition-all hover:border-gray-400 dark:hover:border-white/25"
-          >
-            {t('about.ctaPricing', { defaultValue: '料金を確認する' })}
-          </Link>
-          <Link
-            to={ROUTES.WORKS}
-            className="text-sm text-gray-400 dark:text-white/30 hover:text-gray-700 dark:hover:text-white/60 transition-colors"
-          >
-            {t('about.ctaWorks', { defaultValue: '作品一覧を見る' })} →
-          </Link>
+        <div className="rounded-2xl bg-gray-50/60 px-8 py-10 dark:bg-white/[0.02]">
+          <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-gray-400 dark:text-white/25">
+            next step
+          </p>
+          <h2 className="mb-7 font-display text-xl font-bold text-gray-900 dark:text-white/85">
+            {t('about.ctaHeadline', { defaultValue: '一緒に、届く作品をつくりましょう。' })}
+          </h2>
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-8">
+            <Link
+              to={ROUTES.CONTACT}
+              className="group inline-flex items-center gap-2.5 rounded-xl bg-gray-900 px-8 py-3.5 text-sm font-semibold tracking-wide text-white transition-all hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
+            >
+              {t('about.ctaContact', { defaultValue: 'お問い合わせ・仕事依頼' })}
+              <span className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
+            </Link>
+            <Link
+              to={ROUTES.PRICING}
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-white/[0.10] px-8 py-3.5 text-sm font-medium tracking-wide text-gray-700 dark:text-white/70 transition-all hover:border-gray-400 dark:hover:border-white/25"
+            >
+              {t('about.ctaPricing', { defaultValue: '料金を確認する' })}
+            </Link>
+            <Link
+              to={ROUTES.WORKS}
+              className="text-sm text-gray-400 dark:text-white/30 hover:text-gray-700 dark:hover:text-white/60 transition-colors"
+            >
+              {t('about.ctaWorks', { defaultValue: '作品一覧を見る' })} →
+            </Link>
+          </div>
         </div>
       </SectionReveal>
     </div>

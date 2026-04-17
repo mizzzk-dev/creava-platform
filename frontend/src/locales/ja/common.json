@@ -224,7 +224,10 @@
     "toolsDesc": "制作・開発で日常的に使用しているスタック",
     "socialProof": "メディア掲載・受賞",
     "selectedWorks": "ピックアップ作品",
-    "featuredWriting": "最近の記事"
+    "featuredWriting": "最近の記事",
+    "worldView": "世界観",
+    "worldviewDesc": "映像・写真・音楽を横断することで、単一ジャンルでは届かない感情の層へ踏み込む。それがmizzzの目指すクリエイティブ。",
+    "ctaHeadline": "一緒に、届く作品をつくりましょう。"
   },
   "pricing": {
     "title": "料金のご案内",
