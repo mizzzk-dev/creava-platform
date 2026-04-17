@@ -27,11 +27,7 @@ function toArray<T>(value: T | T[] | undefined | null): T[] {
 }
 
 function getClientIp(ctx: any): string {
-  const forwarded = ctx.request.headers['x-forwarded-for']
-  if (typeof forwarded === 'string' && forwarded.length > 0) {
-    return forwarded.split(',')[0]?.trim() ?? ctx.ip
-  }
-  return ctx.ip
+  return String(ctx.request.ip ?? ctx.ip ?? '')
 }
 
 function hashIp(ip: string): string {
@@ -83,12 +79,20 @@ async function createSubmission(strapi: any, payload: any, ctx: any) {
   const attachments = attachmentIds.length
     ? await strapi.entityService.findMany('plugin::upload.file', {
         filters: { id: { $in: attachmentIds } },
-        fields: ['id'],
+        fields: ['id', 'size'],
       })
     : []
 
   if (attachments.length !== attachmentIds.length) {
     return { invalid: '添付ファイルIDが不正です' }
+  }
+  if (attachmentIds.length > MAX_FILES) {
+    return { invalid: `添付は最大 ${MAX_FILES} 件です` }
+  }
+
+  const totalAttachmentBytes = attachments.reduce((sum: number, file: any) => sum + Number(file.size ?? 0), 0)
+  if (totalAttachmentBytes > MAX_TOTAL_FILE_BYTES) {
+    return { invalid: `添付合計は ${MAX_TOTAL_FILE_BYTES} bytes 以下にしてください` }
   }
 
   const ipHash = hashIp(getClientIp(ctx))

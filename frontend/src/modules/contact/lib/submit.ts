@@ -82,6 +82,7 @@ function getStrapiBaseUrl(): string {
 
 function getSourceSite(): 'main' | 'store' | 'fc' | 'unknown' {
   const siteType = String(import.meta.env.VITE_SITE_TYPE ?? '').toLowerCase()
+  if (siteType === 'fanclub') return 'fc'
   if (siteType === 'main' || siteType === 'store' || siteType === 'fc') return siteType
   return 'unknown'
 }
