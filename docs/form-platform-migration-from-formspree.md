@@ -100,3 +100,9 @@ npm run dev:frontend
 - submission 保存成功時にメール通知
 - spam score による自動分類
 - CSV export の管理アクション追加
+
+## 競合解消メモ（PR #126 向け）
+- 競合対象ファイルは `main` 側の最新実装（About 改修で追加された i18n キーを含む）を採用しつつ、Formspree 撤去後の問い合わせ送信実装を維持する。
+- 解消時は `frontend/src/modules/contact/lib/submit.ts` の Strapi 投稿経路（`/api/inquiry-submissions/public`）が残っていることを必ず確認する。
+- `frontend/src/locales/{ja,en,ko}/common.json` は連絡フォーム系キーと About ページ系キーの双方が欠落していない状態を正とする。
+
