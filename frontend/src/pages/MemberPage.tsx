@@ -5,10 +5,11 @@ import PageHead from '@/components/seo/PageHead'
 import SocialAuthProviderStatus from '@/components/auth/SocialAuthProviderStatus'
 import { useCurrentUser } from '@/hooks'
 import { ROUTES } from '@/lib/routeConstants'
-import { clearWithdrawRequest, getMemberAccountSettings, getMemberDashboard, requestWithdraw, updateMemberAccountSettings, updateMemberPreferences } from '@/modules/member/api'
+import { clearWithdrawRequest, getMemberAccountSettings, getMemberDashboard, requestWithdraw, updateMemberAccountSettings } from '@/modules/member/api'
 import type { MemberAccountSettings, MemberDashboardData, MemberOrderStatus, MemberPaymentSettings, MemberShippingSettings, ShipmentStatus } from '@/modules/member/types'
 import { buildCrmSegments, buildLtvDashboard, buildSupportTemplates } from '@/modules/store/lib/commerceOptimization'
 import MyPagePersonalizationPanel from '@/modules/personalization/components/MyPagePersonalizationPanel'
+import NotificationPreferenceCenter from '@/modules/notifications/components/NotificationPreferenceCenter'
 import { buildLoyaltyProfile } from '@/modules/member/loyalty'
 import MemberLoyaltyPanel from '@/modules/member/components/MemberLoyaltyPanel'
 import { getCampaignList } from '@/modules/campaign/api'
@@ -180,17 +181,6 @@ export default function MemberPage() {
     if (!dashboardData) return []
     return dashboardData.notices.filter((notice) => notice.audience === 'all' || canViewMemberNotices)
   }, [canViewMemberNotices, dashboardData])
-
-  const handlePreferenceChange = async (key: 'newsletterOptIn' | 'loginAlertOptIn', checked: boolean) => {
-    if (!dashboardData) return
-    const nextPreferences = { ...dashboardData.preferences, [key]: checked }
-    try {
-      const saved = await updateMemberPreferences(nextPreferences)
-      setDashboardData({ ...dashboardData, preferences: saved })
-    } catch {
-      setDashboardError(t('member.preferencesSaveError', { defaultValue: '通知設定の保存に失敗しました。時間をおいて再度お試しください。' }))
-    }
-  }
 
   const handleWithdrawRequest = async () => {
     if (!dashboardData || dashboardData.withdrawRequested) return
@@ -687,18 +677,8 @@ export default function MemberPage() {
                   )}
                 </section>
 
-                <section className="rounded border border-gray-200 p-4 dark:border-gray-700">
-                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('member.preferencesTitle', { defaultValue: '通知設定' })}</h2>
-                  <div className="mt-3 space-y-2 text-xs text-gray-600 dark:text-gray-300">
-                    <label className="flex items-center justify-between gap-3 rounded bg-gray-50 p-2 dark:bg-gray-900/40">
-                      <span>{t('member.newsletterOptIn', { defaultValue: 'メールマガジンを受け取る' })}</span>
-                      <input type="checkbox" checked={dashboardData.preferences.newsletterOptIn} onChange={(event) => void handlePreferenceChange('newsletterOptIn', event.target.checked)} />
-                    </label>
-                    <label className="flex items-center justify-between gap-3 rounded bg-gray-50 p-2 dark:bg-gray-900/40">
-                      <span>{t('member.loginAlertOptIn', { defaultValue: 'ログイン通知を受け取る' })}</span>
-                      <input type="checkbox" checked={dashboardData.preferences.loginAlertOptIn} onChange={(event) => void handlePreferenceChange('loginAlertOptIn', event.target.checked)} />
-                    </label>
-                  </div>
+                <section className="rounded border border-gray-200 p-4 dark:border-gray-700 lg:col-span-2">
+                  <NotificationPreferenceCenter location="member_page" />
                 </section>
 
                 <section className="rounded border border-gray-200 p-4 dark:border-gray-700">

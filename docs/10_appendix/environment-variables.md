@@ -41,6 +41,9 @@
 | `INQUIRY_ENABLE_AUTO_REPLY` | 自動返信有効化 (`true/false`) | 任意 |
 | `INQUIRY_REPLY_SLA_DAYS` | 自動返信本文の返信目安日数 | 任意 |
 | `UPLOAD_MAX_FILE_SIZE_BYTES` | Upload Plugin サイズ上限 | 必須 |
+| `LIFECYCLE_EMAIL_FROM` | ライフサイクル配信の送信元メール（SMTP_FROMを上書きする場合） | 任意 |
+| `LIFECYCLE_DELIVERY_BATCH_SIZE` | 1回の配信バッチ送信件数 | 任意 |
+| `LIFECYCLE_DELIVERY_DRY_RUN` | `true` の場合は送信せず delivery-log のみ記録 | 任意 |
 | `RATE_LIMIT_WINDOW_MS` / `RATE_LIMIT_MAX` | API全体レート制限 | 推奨 |
 | `AUDIT_WINDOW_MS` / `AUDIT_404_THRESHOLD` | 監査ログ閾値 | 推奨 |
 

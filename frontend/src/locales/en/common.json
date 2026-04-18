@@ -876,5 +876,23 @@
     "noFavorite": "Recommendations appear after adding favorites.",
     "noNotification": "No unread notifications.",
     "error": "Failed to load search results. Please try again later."
+  },
+  "notificationPreference": {
+    "title": "Delivery Preferences Center",
+    "description": "Manage channel and theme settings across main / store / fc.",
+    "trackingBadge": "Enable tracking events",
+    "enableAllInApp": "Toggle all in-app notifications",
+    "enableAllEmail": "Toggle all email notifications",
+    "themeFcUpdate": "FC updates",
+    "themeMemberBenefit": "Member benefits",
+    "themeStoreNewArrival": "Store new arrivals",
+    "themeFavoriteRelated": "Favorites related",
+    "themeCampaign": "Campaigns",
+    "themeEvent": "Events",
+    "themeSupportImportant": "Support / important notices",
+    "required": "Required",
+    "unsubscribeHint": "Optional notifications can be turned off anytime. Required notices stay on for service continuity.",
+    "optionalCount": "Optional themes: {{count}}",
+    "unsubscribeLink": "Review unsubscribe and privacy policy"
   }
 }
