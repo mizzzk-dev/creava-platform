@@ -8,7 +8,7 @@ import SubdomainHeader from '@/components/layout/SubdomainHeader'
 import SubdomainFooter from '@/components/layout/SubdomainFooter'
 import { ROUTES } from '@/lib/routeConstants'
 import { initializeAnalytics, trackPageView } from '@/modules/analytics'
-import { loadCookieConsent, setAnalyticsEnabled } from '@/modules/cookie/consent'
+import { COOKIE_CONSENT_EVENT, loadCookieConsent, setAnalyticsEnabled } from '@/modules/cookie/consent'
 
 const NAV_ITEMS = [
   { to: ROUTES.STORE_HOME, labelKey: 'nav.home' },
@@ -31,10 +31,16 @@ export default function StoreLayout() {
   const { pathname } = useLocation()
 
   useEffect(() => {
-    const consent = loadCookieConsent()
-    const enabled = consent?.analytics === 'granted'
-    setAnalyticsEnabled(enabled)
-    initializeAnalytics(enabled)
+    const applyConsent = () => {
+      const consent = loadCookieConsent()
+      const enabled = consent?.analytics === 'granted'
+      setAnalyticsEnabled(enabled)
+      initializeAnalytics(enabled)
+    }
+
+    applyConsent()
+    window.addEventListener(COOKIE_CONSENT_EVENT, applyConsent)
+    return () => window.removeEventListener(COOKIE_CONSENT_EVENT, applyConsent)
   }, [])
 
   useEffect(() => {

@@ -203,6 +203,7 @@ npm run seed:backend
 | `VITE_LOGTO_API_RESOURCE` | frontend | API audience（アクセストークン取得時に使用） |
 | `VITE_SITE_URL` | frontend | 本番サイト URL |
 | `VITE_GA_MEASUREMENT_ID` | frontend | Google Analytics 4 測定ID（`G-` 形式、任意） |
+| `VITE_ANALYTICS_OPS_ENDPOINT` | frontend | 主要イベントを Strapi に保存する endpoint（任意） |
 | `APP_KEYS` | backend | Strapi セッションキー（必須） |
 | `JWT_SECRET` | backend | Strapi JWT シークレット（必須） |
 | `LOGTO_ISSUER` | backend | Logto JWT issuer（署名検証で使用） |
@@ -210,3 +211,4 @@ npm run seed:backend
 | `LOGTO_API_RESOURCE` | backend | API audience（JWT `aud` 検証） |
 | `FRONTEND_URL` | backend | CORS 許可オリジン（本番） |
 | `DATABASE_URL` | backend | PostgreSQL URL（本番のみ） |
+| `ANALYTICS_OPS_TOKEN` | backend | 分析集計 API 保護トークン（推奨） |

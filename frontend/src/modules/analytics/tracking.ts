@@ -1,4 +1,5 @@
 import { trackEvent } from '@/modules/analytics'
+import { getExperimentVariant } from '@/modules/analytics/experiments'
 
 export type AnalyticsParams = Record<string, string | number | boolean | null | undefined>
 
@@ -9,8 +10,23 @@ function sanitize(params?: AnalyticsParams): Record<string, string | number | bo
   ) as Record<string, string | number | boolean>
 }
 
+function withExperiment(params?: AnalyticsParams): Record<string, string | number | boolean> {
+  const sanitized = sanitize(params)
+  const experimentId = typeof sanitized.experimentId === 'string' ? sanitized.experimentId : undefined
+  if (!experimentId) return sanitized
+
+  const assignment = getExperimentVariant(experimentId)
+  if (!assignment) return sanitized
+
+  return {
+    ...sanitized,
+    experimentId: assignment.experimentId,
+    variantId: assignment.variantId,
+  }
+}
+
 export function trackMizzzEvent(eventName: string, params?: AnalyticsParams): void {
-  trackEvent(eventName, sanitize(params))
+  trackEvent(eventName, withExperiment(params))
 }
 
 export function trackCtaClick(location: string, cta: string, extras?: AnalyticsParams): void {
@@ -42,19 +58,19 @@ export function trackThemeToggle(fromTheme: string, toTheme: string): void {
 }
 
 export function trackLanguageSwitch(language: string, fromLanguage?: string): void {
-  trackMizzzEvent('language_switch', { language, from: fromLanguage })
+  trackMizzzEvent('locale_switch', { locale: language, fromLocale: fromLanguage })
 }
 
 export function trackProductCardClick(location: string, slug: string, status: string): void {
-  trackMizzzEvent('product_card_click', { location, slug, status })
+  trackMizzzEvent('card_click', { location, contentType: 'product', entitySlug: slug, category: status })
 }
 
 export function trackSeasonalBlockClick(location: string, theme: string, extras?: AnalyticsParams): void {
-  trackMizzzEvent('seasonal_block_click', { location, theme, ...extras })
+  trackMizzzEvent('hero_click', { location, theme, ...extras })
 }
 
 export function trackOmikujiResult(site: string, result: string, extras?: AnalyticsParams): void {
-  trackMizzzEvent('omikuji_result', { site, result, ...extras })
+  trackMizzzEvent('content_view', { site, category: result, ...extras })
 }
 
 export function trackPlayfulInteraction(
@@ -62,14 +78,14 @@ export function trackPlayfulInteraction(
   location: string,
   extras?: AnalyticsParams,
 ): void {
-  trackMizzzEvent('playful_interaction', { type, location, ...extras })
+  trackMizzzEvent('card_click', { type, location, ...extras })
 }
 
 export function trackErrorPageView(
   code: '404' | '500' | '503' | '403' | string,
   extras?: AnalyticsParams,
 ): void {
-  trackMizzzEvent('error_page_view', { code, ...extras })
+  trackMizzzEvent('content_view', { contentType: 'error_page', category: code, ...extras })
 }
 
 export function trackErrorPageCta(
@@ -77,5 +93,5 @@ export function trackErrorPageCta(
   cta: string,
   extras?: AnalyticsParams,
 ): void {
-  trackMizzzEvent('error_page_cta_click', { code, cta, ...extras })
+  trackMizzzEvent('cta_click', { pageType: 'error', category: code, cta, ...extras })
 }

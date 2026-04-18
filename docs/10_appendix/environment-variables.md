@@ -21,6 +21,7 @@
 | `VITE_STRIPE_PUBLISHABLE_KEY` | 決済公開キー | 任意 | 必須 | 必須 |
 | `VITE_PERSONALIZATION_MAX_HISTORY` | 閲覧履歴の保存上限 | 任意 | 任意 | 任意 |
 | `VITE_PERSONALIZATION_MAX_FAVORITES` | お気に入り保存上限 | 任意 | 任意 | 任意 |
+| `VITE_ANALYTICS_OPS_ENDPOINT` | 主要イベントをStrapiへ保存するエンドポイント | 任意 | 推奨 | 推奨 |
 
 ## 2. backend 変数（フォーム運用関連を含む）
 
@@ -33,6 +34,8 @@
 | `INQUIRY_DUPLICATE_WINDOW_MS` | 同一payload連投判定 | 推奨 |
 | `INQUIRY_IP_HASH_SALT` | IPハッシュソルト | 必須 |
 | `INQUIRY_OPS_TOKEN` | CSV/検索/集計 API 保護トークン | 必須 |
+| `ANALYTICS_OPS_TOKEN` | analytics ops summary API 保護トークン | 推奨 |
+| `ANALYTICS_IP_HASH_SALT` | analytics IPハッシュソルト | 推奨 |
 | `INQUIRY_NOTIFY_TO` | 管理通知メール宛先（カンマ区切り） | 任意 |
 | `INQUIRY_ENABLE_AUTO_REPLY` | 自動返信有効化 (`true/false`) | 任意 |
 | `INQUIRY_REPLY_SLA_DAYS` | 自動返信本文の返信目安日数 | 任意 |
@@ -57,6 +60,8 @@
 - `STRAPI_DEPLOY_TOKEN`
 - `INQUIRY_IP_HASH_SALT`
 - `INQUIRY_OPS_TOKEN`
+- `ANALYTICS_OPS_TOKEN`
+- `ANALYTICS_IP_HASH_SALT`
 - `INQUIRY_NOTIFY_TO`（通知を使う場合）
 - SMTP で必要な Secret（`SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM`）
 

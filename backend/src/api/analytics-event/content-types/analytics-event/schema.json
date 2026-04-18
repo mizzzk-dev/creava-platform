@@ -1,0 +1,59 @@
+{
+  "kind": "collectionType",
+  "collectionName": "analytics_events",
+  "info": {
+    "singularName": "analytics-event",
+    "pluralName": "analytics-events",
+    "displayName": "Analytics Event"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "eventName": { "type": "string", "required": true },
+    "sourceSite": {
+      "type": "enumeration",
+      "enum": ["main", "store", "fc", "unknown"],
+      "default": "unknown",
+      "required": true
+    },
+    "locale": { "type": "string", "default": "ja" },
+    "theme": {
+      "type": "enumeration",
+      "enum": ["light", "dark", "unknown"],
+      "default": "unknown"
+    },
+    "pageType": { "type": "string" },
+    "contentType": { "type": "string" },
+    "entityId": { "type": "string" },
+    "entitySlug": { "type": "string" },
+    "formType": { "type": "string" },
+    "category": { "type": "string" },
+    "userState": {
+      "type": "enumeration",
+      "enum": ["guest", "logged_in", "unknown"],
+      "default": "unknown"
+    },
+    "deviceType": {
+      "type": "enumeration",
+      "enum": ["mobile", "tablet", "desktop", "unknown"],
+      "default": "unknown"
+    },
+    "referrerType": {
+      "type": "enumeration",
+      "enum": ["direct", "internal", "external", "unknown"],
+      "default": "unknown"
+    },
+    "experimentId": { "type": "string" },
+    "variantId": { "type": "string" },
+    "path": { "type": "string" },
+    "payload": { "type": "json" },
+    "eventAt": { "type": "datetime", "required": true },
+    "ipHash": { "type": "string" },
+    "consentState": {
+      "type": "enumeration",
+      "enum": ["granted", "denied", "unknown"],
+      "default": "unknown"
+    }
+  }
+}

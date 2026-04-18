@@ -50,6 +50,7 @@
 - [デプロイ手順書](./09_operations/deploy-manual.md)
 - [トラブルシューティング](./09_operations/troubleshooting.md)
 - [フォーム運用マニュアル](./09_operations/form-operations-manual.md)
+- [分析基盤・改善運用ガイド](./09_operations/analytics-improvement-foundation.md)
 - [パーソナライズ導線運用メモ](./personalization-notification-center.md)
 
 ### 付録

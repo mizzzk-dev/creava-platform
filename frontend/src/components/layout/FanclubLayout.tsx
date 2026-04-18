@@ -4,10 +4,11 @@ import { useLocation } from 'react-router-dom'
 import { ROUTES } from '@/lib/routeConstants'
 import { trackPageView } from '@/modules/analytics'
 import { initializeAnalytics } from '@/modules/analytics'
-import { setAnalyticsEnabled } from '@/modules/cookie/consent'
+import { COOKIE_CONSENT_EVENT, loadCookieConsent, setAnalyticsEnabled } from '@/modules/cookie/consent'
 import SubdomainHeader from '@/components/layout/SubdomainHeader'
 import SubdomainFooter from '@/components/layout/SubdomainFooter'
 import LoadingScreen from '@/components/common/LoadingScreen'
+import CookieConsentBanner from '@/components/common/CookieConsentBanner'
 import NewYearExperience from '@/modules/seasonal/NewYearExperience'
 import { SeasonalThemeProvider } from '@/modules/seasonal/context'
 
@@ -33,8 +34,16 @@ export default function FanclubLayout() {
   const { pathname } = useLocation()
 
   useEffect(() => {
-    setAnalyticsEnabled(true)
-    initializeAnalytics(true)
+    const applyConsent = () => {
+      const consent = loadCookieConsent()
+      const enabled = consent?.analytics === 'granted'
+      setAnalyticsEnabled(enabled)
+      initializeAnalytics(enabled)
+    }
+
+    applyConsent()
+    window.addEventListener(COOKIE_CONSENT_EVENT, applyConsent)
+    return () => window.removeEventListener(COOKIE_CONSENT_EVENT, applyConsent)
   }, [])
 
   useEffect(() => {
@@ -49,6 +58,7 @@ export default function FanclubLayout() {
         <Outlet />
       </main>
       <SubdomainFooter legalLinks={LEGAL_LINKS} />
+      <CookieConsentBanner />
       <LoadingScreen />
       <NewYearExperience site="fanclub" />
     </div>
