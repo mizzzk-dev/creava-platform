@@ -23,6 +23,11 @@ export interface CampaignSummary {
   ctaText: string | null
   ctaLink: string | null
   displayPriority: number
+  audience: 'public' | 'logged_in' | 'member' | 'premium'
+  accessLevel: 'public' | 'logged_in' | 'member' | 'premium'
+  targetSites: Array<'main' | 'store' | 'fc'>
+  targetLocales: string[]
+  retentionSegment: string | null
   heroVisual: { url: string; alt: string | null } | null
 }
 

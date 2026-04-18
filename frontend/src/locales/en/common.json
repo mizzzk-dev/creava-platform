@@ -588,6 +588,39 @@
     "withdrawAction": "Start withdrawal request",
     "withdrawRequested": "Withdrawal request received. We will contact your registered email.",
     "withdrawCancel": "Cancel request",
+    "loyaltyTitle": "Retention status and member value",
+    "loyaltyLead": "Summarize your retention status and available benefits, then show what to explore next.",
+    "loyaltyPlan": "Membership plan",
+    "loyaltyTenure": "Tenure",
+    "loyaltyTenureValue": "{{months}} months",
+    "loyaltyRenewal": "Next renewal date",
+    "loyaltyBadge": "Loyalty badge",
+    "loyaltyBenefits": "Member benefits",
+    "loyaltyCampaigns": "Eligible campaigns",
+    "loyaltyCampaignCta": "Details",
+    "loyaltyCampaignEmpty": "No member campaigns are currently available.",
+    "loyaltyShortcutEarly": "Check early access",
+    "loyaltyShortcutLimited": "Check limited access",
+    "loyaltyShortcutStore": "View Store benefits",
+    "loyaltyShortcutSupport": "Open support",
+    "loyaltyStatus": {
+      "guest": "Guest",
+      "active": "Active",
+      "grace_period": "Renewal pending",
+      "paused": "Paused",
+      "cancelled": "Cancelled"
+    },
+    "loyaltyPlanValue": {
+      "free": "Free",
+      "standard": "Standard",
+      "premium": "Premium"
+    },
+    "loyaltyBadgeValue": {
+      "welcome": "Welcome",
+      "steady": "Steady",
+      "insider": "Insider",
+      "backstage": "Backstage"
+    },
     "authSetupRequired": "Setup required",
     "authTrySignIn": "Sign in with this method",
     "authUnavailable": "Logto disabled"

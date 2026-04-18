@@ -81,5 +81,38 @@ export function createMockMemberDashboardData(isMember: boolean): MemberDashboar
     preferences: BASE_PREFERENCES,
     auditLogs: BASE_LOGS,
     withdrawRequested: false,
+    loyaltyProfile: {
+      membershipStatus: isMember ? 'active' : 'guest',
+      membershipPlan: isMember ? 'standard' : 'free',
+      membershipStartedAt: isMember ? '2025-08-01T00:00:00.000Z' : null,
+      renewalDate: isMember ? '2026-05-01T00:00:00.000Z' : null,
+      tenureMonths: isMember ? 8 : 0,
+      loyaltyBadge: isMember ? 'steady' : 'welcome',
+      rewardState: isMember ? 'available' : 'locked',
+      accessLevel: isMember ? 'member' : 'public',
+      memberBenefits: [
+        {
+          id: 'benefit-early-gallery',
+          title: 'ギャラリー先行公開',
+          description: '毎月の先行公開コンテンツに24時間早くアクセスできます。',
+          accessLevel: 'member',
+        },
+        {
+          id: 'benefit-store-drop',
+          title: 'Store 先行案内',
+          description: 'FC会員向けに新作ドロップを先行案内します。',
+          accessLevel: 'member',
+        },
+      ],
+      campaignEligibility: isMember ? ['member-weekly', 'fc-store-bridge'] : ['public-welcome'],
+      earlyAccessEligible: isMember,
+      limitedContentEligible: isMember,
+      favoriteCategory: isMember ? 'gallery' : null,
+      engagementHint: isMember
+        ? '今週の先行公開と会員限定キャンペーンをチェックしてください。'
+        : 'ログイン後に会員特典を確認すると、次回公開の通知を受け取れます。',
+      retentionSegment: isMember ? 'active_monthly' : 'guest_explore',
+      displayPriority: isMember ? 80 : 20,
+    },
   }
 }

@@ -12,6 +12,8 @@ function normalizeCampaignType(value: unknown): CampaignType {
 }
 
 function normalizeCampaign(item: Partial<CampaignSummary>): CampaignSummary {
+  const targetSitesRaw = Array.isArray(item.targetSites) ? item.targetSites : []
+  const targetLocalesRaw = Array.isArray(item.targetLocales) ? item.targetLocales : []
   return {
     id: Number(item.id ?? 0),
     documentId: String(item.documentId ?? ''),
@@ -35,6 +37,11 @@ function normalizeCampaign(item: Partial<CampaignSummary>): CampaignSummary {
     ctaText: typeof item.ctaText === 'string' ? item.ctaText : null,
     ctaLink: typeof item.ctaLink === 'string' ? item.ctaLink : null,
     displayPriority: typeof item.displayPriority === 'number' ? item.displayPriority : 0,
+    audience: item.audience === 'logged_in' || item.audience === 'member' || item.audience === 'premium' ? item.audience : 'public',
+    accessLevel: item.accessLevel === 'logged_in' || item.accessLevel === 'member' || item.accessLevel === 'premium' ? item.accessLevel : 'public',
+    targetSites: targetSitesRaw.filter((site): site is 'main' | 'store' | 'fc' => site === 'main' || site === 'store' || site === 'fc'),
+    targetLocales: targetLocalesRaw.filter((locale): locale is string => typeof locale === 'string'),
+    retentionSegment: typeof item.retentionSegment === 'string' ? item.retentionSegment : null,
     heroVisual: item.heroVisual ?? null,
   }
 }
@@ -42,7 +49,7 @@ function normalizeCampaign(item: Partial<CampaignSummary>): CampaignSummary {
 export async function getCampaignList(): Promise<StrapiListResponse<CampaignSummary>> {
   try {
     const res = await fetchCollection<CampaignSummary>(ENDPOINT, {
-      fields: ['title', 'slug', 'campaignSlug', 'campaignLabel', 'campaignType', 'heroCopy', 'shortHighlight', 'featured', 'pickup', 'membersOnly', 'earlyAccess', 'specialOffer', 'sectionStyle', 'badgeStyleVariant', 'startAt', 'endAt', 'bannerLink', 'ctaText', 'ctaLink', 'displayPriority'],
+      fields: ['title', 'slug', 'campaignSlug', 'campaignLabel', 'campaignType', 'heroCopy', 'shortHighlight', 'featured', 'pickup', 'membersOnly', 'earlyAccess', 'specialOffer', 'sectionStyle', 'badgeStyleVariant', 'startAt', 'endAt', 'bannerLink', 'ctaText', 'ctaLink', 'displayPriority', 'audience', 'accessLevel', 'targetSites', 'targetLocales', 'retentionSegment'],
       populate: {
         heroVisual: { fields: ['url', 'alternativeText'] },
       },
@@ -65,7 +72,7 @@ export async function getCampaignList(): Promise<StrapiListResponse<CampaignSumm
 export async function getCampaignBySlug(slug: string, signal?: AbortSignal): Promise<CampaignDetail | null> {
   try {
     const campaign = await fetchBySlug<CampaignDetail>(ENDPOINT, slug, {
-      fields: ['title', 'slug', 'campaignSlug', 'campaignLabel', 'campaignType', 'heroCopy', 'shortHighlight', 'featured', 'pickup', 'membersOnly', 'earlyAccess', 'specialOffer', 'sectionStyle', 'badgeStyleVariant', 'startAt', 'endAt', 'bannerLink', 'ctaText', 'ctaLink', 'displayPriority', 'body'],
+      fields: ['title', 'slug', 'campaignSlug', 'campaignLabel', 'campaignType', 'heroCopy', 'shortHighlight', 'featured', 'pickup', 'membersOnly', 'earlyAccess', 'specialOffer', 'sectionStyle', 'badgeStyleVariant', 'startAt', 'endAt', 'bannerLink', 'ctaText', 'ctaLink', 'displayPriority', 'body', 'audience', 'accessLevel', 'targetSites', 'targetLocales', 'retentionSegment'],
       populate: {
         heroVisual: { fields: ['url', 'alternativeText'] },
       },

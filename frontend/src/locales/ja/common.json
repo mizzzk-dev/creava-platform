@@ -588,6 +588,39 @@
     "withdrawAction": "退会申請を開始する",
     "withdrawRequested": "退会申請を受け付けました。運営より登録メール宛にご連絡します。",
     "withdrawCancel": "申請を取り消す",
+    "loyaltyTitle": "継続ステータスと会員価値",
+    "loyaltyLead": "継続状況と利用可能な特典をまとめ、次に見るべき導線を提示します。",
+    "loyaltyPlan": "会員プラン",
+    "loyaltyTenure": "継続期間",
+    "loyaltyTenureValue": "{{months}}か月",
+    "loyaltyRenewal": "次回更新日",
+    "loyaltyBadge": "ロイヤルティバッジ",
+    "loyaltyBenefits": "会員特典",
+    "loyaltyCampaigns": "対象キャンペーン",
+    "loyaltyCampaignCta": "詳細",
+    "loyaltyCampaignEmpty": "現在表示できる会員向けキャンペーンはありません。",
+    "loyaltyShortcutEarly": "先行公開を確認",
+    "loyaltyShortcutLimited": "限定公開を確認",
+    "loyaltyShortcutStore": "Store特典を見る",
+    "loyaltyShortcutSupport": "継続サポートを見る",
+    "loyaltyStatus": {
+      "guest": "ゲスト",
+      "active": "有効",
+      "grace_period": "更新確認中",
+      "paused": "一時停止",
+      "cancelled": "解約"
+    },
+    "loyaltyPlanValue": {
+      "free": "Free",
+      "standard": "Standard",
+      "premium": "Premium"
+    },
+    "loyaltyBadgeValue": {
+      "welcome": "Welcome",
+      "steady": "Steady",
+      "insider": "Insider",
+      "backstage": "Backstage"
+    },
     "authSetupRequired": "要設定",
     "authTrySignIn": "この方法でログインする",
     "authUnavailable": "Logto未設定"

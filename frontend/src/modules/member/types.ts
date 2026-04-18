@@ -44,6 +44,38 @@ export interface MemberPreferences {
   loginAlertOptIn: boolean
 }
 
+export type MembershipStatus = 'guest' | 'active' | 'grace_period' | 'paused' | 'cancelled'
+export type MembershipPlan = 'free' | 'standard' | 'premium'
+export type LoyaltyBadge = 'welcome' | 'steady' | 'insider' | 'backstage'
+export type RewardState = 'locked' | 'available' | 'claimed'
+export type LoyaltyAccessLevel = 'public' | 'logged_in' | 'member' | 'premium'
+
+export interface MemberBenefitItem {
+  id: string
+  title: string
+  description: string
+  accessLevel: LoyaltyAccessLevel
+}
+
+export interface LoyaltyProfile {
+  membershipStatus: MembershipStatus
+  membershipPlan: MembershipPlan
+  membershipStartedAt: string | null
+  renewalDate: string | null
+  tenureMonths: number
+  loyaltyBadge: LoyaltyBadge
+  rewardState: RewardState
+  accessLevel: LoyaltyAccessLevel
+  memberBenefits: MemberBenefitItem[]
+  campaignEligibility: string[]
+  earlyAccessEligible: boolean
+  limitedContentEligible: boolean
+  favoriteCategory: string | null
+  engagementHint: string
+  retentionSegment: string
+  displayPriority: number
+}
+
 export interface AuditLog {
   id: number
   eventType: string
@@ -57,6 +89,7 @@ export interface MemberDashboardData {
   preferences: MemberPreferences
   auditLogs: AuditLog[]
   withdrawRequested: boolean
+  loyaltyProfile: LoyaltyProfile
 }
 
 export interface MemberProfileSettings {

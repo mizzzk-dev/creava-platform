@@ -9,6 +9,12 @@ import { clearWithdrawRequest, getMemberAccountSettings, getMemberDashboard, req
 import type { MemberAccountSettings, MemberDashboardData, MemberOrderStatus, MemberPaymentSettings, MemberShippingSettings, ShipmentStatus } from '@/modules/member/types'
 import { buildCrmSegments, buildLtvDashboard, buildSupportTemplates } from '@/modules/store/lib/commerceOptimization'
 import MyPagePersonalizationPanel from '@/modules/personalization/components/MyPagePersonalizationPanel'
+import { buildLoyaltyProfile } from '@/modules/member/loyalty'
+import MemberLoyaltyPanel from '@/modules/member/components/MemberLoyaltyPanel'
+import { getCampaignList } from '@/modules/campaign/api'
+import type { CampaignSummary } from '@/modules/campaign/types'
+import { SITE_TYPE } from '@/lib/siteLinks'
+import { trackMizzzEvent } from '@/modules/analytics/tracking'
 
 const MEMBER_BENEFITS = [
   'member.benefitEarly',
@@ -97,6 +103,7 @@ export default function MemberPage() {
   const [accountSaveError, setAccountSaveError] = useState<string | null>(null)
   const [accountSavedAt, setAccountSavedAt] = useState<string | null>(null)
   const [cardValidationErrors, setCardValidationErrors] = useState<Record<string, string>>({})
+  const [campaigns, setCampaigns] = useState<CampaignSummary[]>([])
   const role = user?.role ?? 'guest'
   const isMember = role === 'member'
   const isAdmin = role === 'admin'
@@ -137,6 +144,22 @@ export default function MemberPage() {
       cancelled = true
     }
   }, [canViewMemberNotices, isLoaded, isSignedIn, t])
+
+  useEffect(() => {
+    let cancelled = false
+    getCampaignList()
+      .then((res) => {
+        if (cancelled) return
+        setCampaigns(res.data)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setCampaigns([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn) {
@@ -327,6 +350,36 @@ export default function MemberPage() {
   ]) : null
 
   const supportTemplates = dashboardData ? buildSupportTemplates(dashboardData.orders) : []
+  const loyaltyProfile = dashboardData ? buildLoyaltyProfile(dashboardData.loyaltyProfile) : null
+  const locale = (typeof document !== 'undefined' ? document.documentElement.lang : 'ja').slice(0, 2)
+  const visibleCampaigns = useMemo(() => {
+    if (!loyaltyProfile) return []
+    return campaigns.filter((campaign) => {
+      const siteOk = campaign.targetSites.length === 0 || campaign.targetSites.includes(SITE_TYPE === 'fanclub' ? 'fc' : SITE_TYPE === 'store' ? 'store' : 'main')
+      const localeOk = campaign.targetLocales.length === 0 || campaign.targetLocales.includes(locale)
+      const memberOk = loyaltyProfile.accessLevel === 'premium'
+        ? true
+        : loyaltyProfile.accessLevel === 'member'
+          ? campaign.audience !== 'premium'
+          : loyaltyProfile.accessLevel === 'logged_in'
+            ? campaign.audience === 'public' || campaign.audience === 'logged_in'
+            : campaign.audience === 'public'
+      return siteOk && localeOk && memberOk
+    })
+  }, [campaigns, locale, loyaltyProfile])
+
+  useEffect(() => {
+    if (!loyaltyProfile) return
+    trackMizzzEvent('loyalty_badge_view', {
+      membershipState: loyaltyProfile.membershipStatus,
+      accessLevel: loyaltyProfile.accessLevel,
+      badge: loyaltyProfile.loyaltyBadge,
+    })
+    trackMizzzEvent('renewal_info_view', {
+      membershipState: loyaltyProfile.membershipStatus,
+      renewalDate: loyaltyProfile.renewalDate ?? 'none',
+    })
+  }, [loyaltyProfile])
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-20">
@@ -348,6 +401,9 @@ export default function MemberPage() {
 
       {isLoaded && isSignedIn && (
         <div className="mt-6 space-y-4">
+          {loyaltyProfile && (
+            <MemberLoyaltyPanel profile={loyaltyProfile} campaigns={visibleCampaigns} />
+          )}
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded border border-gray-200 p-5 dark:border-gray-800">
               <p className="font-mono text-[11px] text-gray-400">status</p>
@@ -410,6 +466,7 @@ export default function MemberPage() {
                   <Link
                     key={action.to}
                     to={action.to}
+                    onClick={() => trackMizzzEvent('mypage_shortcut_click', { destination: action.to, membershipState: loyaltyProfile?.membershipStatus ?? 'guest' })}
                     className="rounded border border-gray-200 px-3 py-2 text-sm text-gray-600 hover:border-gray-400 dark:border-gray-700 dark:text-gray-300 dark:hover:border-gray-500"
                   >
                     {t(action.key, { defaultValue: action.key })} →

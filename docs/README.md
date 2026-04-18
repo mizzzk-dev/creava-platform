@@ -54,6 +54,7 @@
 - [SEO/コンテンツ流入基盤メモ（2026-04）](./seo-content-growth-foundation.md)
 - [パーソナライズ導線運用メモ](./personalization-notification-center.md)
 - [横断検索/発見導線 基盤](./discovery-search-recommendation-foundation-2026-04-18.md)
+- [ロイヤルティ/継続導線 基盤 (2026-04-18)](./loyalty-retention-foundation-2026-04-18.md)
 
 ### 付録
 - [環境変数一覧](./10_appendix/environment-variables.md)

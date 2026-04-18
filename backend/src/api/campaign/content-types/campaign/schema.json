@@ -82,6 +82,41 @@
       "type": "integer",
       "default": 0
     },
+    "audience": {
+      "type": "enumeration",
+      "enum": [
+        "public",
+        "logged_in",
+        "member",
+        "premium"
+      ],
+      "default": "public"
+    },
+    "accessLevel": {
+      "type": "enumeration",
+      "enum": [
+        "public",
+        "logged_in",
+        "member",
+        "premium"
+      ],
+      "default": "public"
+    },
+    "targetSites": {
+      "type": "json"
+    },
+    "targetLocales": {
+      "type": "json"
+    },
+    "campaignEligibility": {
+      "type": "json"
+    },
+    "memberBenefits": {
+      "type": "json"
+    },
+    "retentionSegment": {
+      "type": "string"
+    },
     "startAt": {
       "type": "datetime"
     },

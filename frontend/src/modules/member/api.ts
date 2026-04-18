@@ -48,6 +48,7 @@ export async function getMemberDashboard(isMember: boolean): Promise<MemberDashb
       preferences: saved ?? { newsletterOptIn: true, loginAlertOptIn: true },
       auditLogs: auditLogs.data,
       withdrawRequested: loadWithdrawRequested(),
+      loyaltyProfile: createMockMemberDashboardData(isMember).loyaltyProfile,
     }
   } catch (error) {
     if (isStrapiForbiddenError(error) || (error instanceof StrapiApiError && error.status === 404)) {
