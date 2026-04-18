@@ -894,5 +894,26 @@
     "unsubscribeHint": "Optional notifications can be turned off anytime. Required notices stay on for service continuity.",
     "optionalCount": "Optional themes: {{count}}",
     "unsubscribeLink": "Review unsubscribe and privacy policy"
+  },
+  "community": {
+    "panelTitle": "Community Participation",
+    "panelDescription": "Use light reactions, event intent, and short posts to move users into the next action.",
+    "reaction": {
+      "cheer": "Cheer",
+      "curious": "Curious",
+      "joined": "Want to join"
+    },
+    "eventParticipationLabel": "Event participation state",
+    "eventState": {
+      "interested": "Interested",
+      "planning": "Planning",
+      "attended": "Attended"
+    },
+    "postTitle": "Quick post",
+    "loginRequired": "Posting is available for logged-in users only.",
+    "postPlaceholder": "Share your thoughts in up to 280 characters (published after moderation review).",
+    "postSubmit": "Post",
+    "recentPosts": "Recent posts (includes pending review)",
+    "report": "Report"
   }
 }

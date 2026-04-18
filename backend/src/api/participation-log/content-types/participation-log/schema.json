@@ -1,0 +1,96 @@
+{
+  "kind": "collectionType",
+  "collectionName": "participation_logs",
+  "info": {
+    "singularName": "participation-log",
+    "pluralName": "participation-logs",
+    "displayName": "Participation Log"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "userId": {
+      "type": "string"
+    },
+    "sourceSite": {
+      "type": "enumeration",
+      "enum": [
+        "main",
+        "store",
+        "fc"
+      ],
+      "required": true
+    },
+    "contentType": {
+      "type": "enumeration",
+      "enum": [
+        "event",
+        "fanclub",
+        "product",
+        "news",
+        "guide",
+        "campaign"
+      ],
+      "required": true
+    },
+    "entityId": {
+      "type": "string",
+      "required": true
+    },
+    "participationType": {
+      "type": "enumeration",
+      "enum": [
+        "reaction",
+        "intent",
+        "ugc_post",
+        "event_report"
+      ],
+      "required": true
+    },
+    "reactionType": {
+      "type": "enumeration",
+      "enum": [
+        "cheer",
+        "curious",
+        "joined"
+      ]
+    },
+    "eventParticipationState": {
+      "type": "enumeration",
+      "enum": [
+        "interested",
+        "planning",
+        "attended"
+      ]
+    },
+    "engagementScore": {
+      "type": "integer",
+      "default": 0
+    },
+    "locale": {
+      "type": "string",
+      "default": "ja"
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": [
+        "public",
+        "member_only",
+        "private",
+        "pending_review"
+      ],
+      "default": "private"
+    },
+    "accessLevel": {
+      "type": "enumeration",
+      "enum": [
+        "public",
+        "logged_in",
+        "member",
+        "premium"
+      ],
+      "default": "public"
+    }
+  }
+}

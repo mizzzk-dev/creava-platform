@@ -1,0 +1,67 @@
+{
+  "kind": "collectionType",
+  "collectionName": "community_reports",
+  "info": {
+    "singularName": "community-report",
+    "pluralName": "community-reports",
+    "displayName": "Community Report"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "postId": {
+      "type": "string",
+      "required": true
+    },
+    "reporterUserId": {
+      "type": "string"
+    },
+    "sourceSite": {
+      "type": "enumeration",
+      "enum": [
+        "main",
+        "store",
+        "fc"
+      ],
+      "required": true
+    },
+    "reason": {
+      "type": "enumeration",
+      "enum": [
+        "spam",
+        "abuse",
+        "copyright",
+        "privacy",
+        "other"
+      ],
+      "required": true
+    },
+    "details": {
+      "type": "text"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "open",
+        "in_review",
+        "resolved",
+        "rejected"
+      ],
+      "default": "open"
+    },
+    "moderationStatus": {
+      "type": "enumeration",
+      "enum": [
+        "pending_review",
+        "hidden",
+        "rejected",
+        "published"
+      ],
+      "default": "pending_review"
+    },
+    "adminMemo": {
+      "type": "text"
+    }
+  }
+}

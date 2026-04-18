@@ -1,0 +1,104 @@
+{
+  "kind": "collectionType",
+  "collectionName": "community_posts",
+  "info": {
+    "singularName": "community-post",
+    "pluralName": "community-posts",
+    "displayName": "Community Post"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "userId": {
+      "type": "string",
+      "required": true
+    },
+    "sourceSite": {
+      "type": "enumeration",
+      "enum": [
+        "main",
+        "store",
+        "fc"
+      ],
+      "required": true
+    },
+    "contentType": {
+      "type": "enumeration",
+      "enum": [
+        "event",
+        "fanclub",
+        "product",
+        "news",
+        "guide",
+        "campaign"
+      ],
+      "required": true
+    },
+    "entityId": {
+      "type": "string",
+      "required": true
+    },
+    "title": {
+      "type": "string"
+    },
+    "body": {
+      "type": "text",
+      "required": true
+    },
+    "locale": {
+      "type": "string",
+      "default": "ja"
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": [
+        "public",
+        "member_only",
+        "private",
+        "pending_review"
+      ],
+      "default": "pending_review"
+    },
+    "accessLevel": {
+      "type": "enumeration",
+      "enum": [
+        "public",
+        "logged_in",
+        "member",
+        "premium"
+      ],
+      "default": "logged_in"
+    },
+    "moderationStatus": {
+      "type": "enumeration",
+      "enum": [
+        "draft",
+        "pending_review",
+        "published",
+        "hidden",
+        "rejected",
+        "archived",
+        "reported"
+      ],
+      "default": "pending_review"
+    },
+    "reportStatus": {
+      "type": "enumeration",
+      "enum": [
+        "open",
+        "in_review",
+        "resolved",
+        "rejected"
+      ],
+      "default": "open"
+    },
+    "featuredCommunityPost": {
+      "type": "boolean",
+      "default": false
+    },
+    "adminMemo": {
+      "type": "text"
+    }
+  }
+}

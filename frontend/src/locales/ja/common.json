@@ -894,5 +894,26 @@
     "unsubscribeHint": "任意通知はいつでも停止できます。重要なお知らせはサービス継続のため配信されます。",
     "optionalCount": "任意通知テーマ: {{count}} 件",
     "unsubscribeLink": "配信停止とプライバシーポリシーを確認"
+  },
+  "community": {
+    "panelTitle": "参加コミュニティ",
+    "panelDescription": "軽いリアクション・参加予定・感想投稿で、次の行動につながる参加体験を作ります。",
+    "reaction": {
+      "cheer": "応援",
+      "curious": "気になる",
+      "joined": "参加したい"
+    },
+    "eventParticipationLabel": "イベント参加ステータス",
+    "eventState": {
+      "interested": "興味あり",
+      "planning": "参加予定",
+      "attended": "参加済み"
+    },
+    "postTitle": "ひとこと投稿",
+    "loginRequired": "投稿はログインユーザーのみ利用できます。",
+    "postPlaceholder": "感想・参加意欲・推しポイントを280文字以内で投稿できます（承認待ちで公開）。",
+    "postSubmit": "投稿する",
+    "recentPosts": "最近の投稿（承認待ち含む）",
+    "report": "通報"
   }
 }

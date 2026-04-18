@@ -16,6 +16,7 @@ import Badge from '@/components/common/Badge'
 import type { Event } from '@/types'
 import FavoriteToggleButton from '@/modules/personalization/components/FavoriteToggleButton'
 import { trackView } from '@/modules/personalization/storage'
+import CommunityEngagementPanel from '@/modules/community/components/CommunityEngagementPanel'
 
 export default function EventDetailPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -90,6 +91,8 @@ export default function EventDetailPage() {
                 {item.description}
               </div>
             )}
+
+            <CommunityEngagementPanel sourceSite="main" contentType="event" entityId={item.slug} />
 
             {/* booking CTA */}
             {item.bookingLink && (

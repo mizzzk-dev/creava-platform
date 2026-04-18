@@ -1,0 +1,56 @@
+{
+  "kind": "collectionType",
+  "collectionName": "moderation_logs",
+  "info": {
+    "singularName": "moderation-log",
+    "pluralName": "moderation-logs",
+    "displayName": "Moderation Log"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "targetType": {
+      "type": "enumeration",
+      "enum": [
+        "community_post",
+        "community_report",
+        "reaction"
+      ],
+      "required": true
+    },
+    "targetId": {
+      "type": "string",
+      "required": true
+    },
+    "action": {
+      "type": "enumeration",
+      "enum": [
+        "approve",
+        "reject",
+        "hide",
+        "archive",
+        "restore"
+      ],
+      "required": true
+    },
+    "performedBy": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "text"
+    },
+    "snapshot": {
+      "type": "json"
+    },
+    "sourceSite": {
+      "type": "enumeration",
+      "enum": [
+        "main",
+        "store",
+        "fc"
+      ],
+      "required": true
+    }
+  }
+}

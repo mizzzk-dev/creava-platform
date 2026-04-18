@@ -32,6 +32,7 @@ import NotificationInterestButton from '@/modules/notifications/components/Notif
 import { createStoreCheckoutSession } from '@/modules/payments/api'
 import FavoriteToggleButton from '@/modules/personalization/components/FavoriteToggleButton'
 import { trackView } from '@/modules/personalization/storage'
+import CommunityEngagementPanel from '@/modules/community/components/CommunityEngagementPanel'
 
 function purchaseStatusToAvailability(status: PurchaseStatus): 'InStock' | 'OutOfStock' | 'PreOrder' {
   if (status === 'available') return 'InStock'
@@ -234,6 +235,8 @@ export default function StoreDetailPage() {
                   {product.description}
                 </p>
               )}
+
+              <CommunityEngagementPanel sourceSite="store" contentType="product" entityId={product.slug} />
 
               {/* FC 限定の説明 */}
               {product.accessStatus === 'fc_only' && (
