@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 import { factories } from '@strapi/strapi'
 import { mergeWithDefaults, selectFormDefinition } from '../../../utils/form-definitions'
+import { getOrCreateRequestId, withRequestId } from '../../../utils/request-meta'
 
 const MAX_FILE_BYTES = Number(process.env.INQUIRY_MAX_FILE_BYTES ?? 10 * 1024 * 1024)
 const MAX_FILES = Number(process.env.INQUIRY_MAX_FILES ?? 5)
@@ -387,6 +388,7 @@ export default factories.createCoreController(
   'api::inquiry-submission.inquiry-submission',
   ({ strapi }) => ({
     async publicSubmit(ctx) {
+      const requestId = getOrCreateRequestId(ctx)
       const body = ctx.request.body ?? {}
       const files = toArray<any>(ctx.request.files?.attachments)
 
@@ -546,7 +548,7 @@ export default factories.createCoreController(
           replyTo: email,
         })
       } catch (error) {
-        strapi.log.error(`[inquiry-submission] notify mail failed id=${entry.id}: ${(error as Error).message}`)
+        strapi.log.error(withRequestId(`[inquiry-submission] notify mail failed id=${entry.id}: ${(error as Error).message}`, requestId))
       }
 
       const envAutoReply = String(process.env.INQUIRY_ENABLE_AUTO_REPLY ?? 'false').toLowerCase() === 'true'
@@ -567,7 +569,7 @@ export default factories.createCoreController(
             }),
           })
         } catch (error) {
-          strapi.log.error(`[inquiry-submission] auto-reply failed id=${entry.id}: ${(error as Error).message}`)
+          strapi.log.error(withRequestId(`[inquiry-submission] auto-reply failed id=${entry.id}: ${(error as Error).message}`, requestId))
         }
       }
 
@@ -576,6 +578,7 @@ export default factories.createCoreController(
           id: entry.id,
           status: isSpam ? 'spam' : 'new',
           submittedAt,
+          requestId,
         },
       }
     },

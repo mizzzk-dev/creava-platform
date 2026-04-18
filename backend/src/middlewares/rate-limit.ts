@@ -1,5 +1,7 @@
 import type { Core } from '@strapi/strapi'
 
+import { getClientIpDigest, getOrCreateRequestId, withRequestId } from '../utils/request-meta'
+
 type HitState = {
   count: number
   resetAt: number
@@ -8,14 +10,6 @@ type HitState = {
 const windowMs = Number(process.env.RATE_LIMIT_WINDOW_MS ?? 60_000)
 const maxPerWindow = Number(process.env.RATE_LIMIT_MAX ?? 120)
 const store = new Map<string, HitState>()
-
-function getClientIp(ctx: any): string {
-  const forwarded = ctx.request.headers['x-forwarded-for']
-  if (typeof forwarded === 'string' && forwarded.length > 0) {
-    return forwarded.split(',')[0]?.trim() ?? ctx.ip
-  }
-  return ctx.ip
-}
 
 function shouldLimitPath(path: string): boolean {
   return path.startsWith('/api/')
@@ -29,7 +23,8 @@ export default (_config: unknown, { strapi }: { strapi: Core.Strapi }) => {
     }
 
     const now = Date.now()
-    const key = getClientIp(ctx)
+    const key = getClientIpDigest(ctx)
+    const requestId = getOrCreateRequestId(ctx)
     const current = store.get(key)
 
     if (!current || current.resetAt <= now) {
@@ -51,7 +46,7 @@ export default (_config: unknown, { strapi }: { strapi: Core.Strapi }) => {
           details: { retryAfterSeconds: retryAfter },
         },
       }
-      strapi.log.warn(`[rate-limit] blocked ip=${key} path=${ctx.path} count=${current.count}`)
+      strapi.log.warn(withRequestId(`[rate-limit] blocked ipHash=${key} path=${ctx.path} count=${current.count}`, requestId))
       return
     }
 

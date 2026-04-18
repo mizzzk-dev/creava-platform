@@ -1,5 +1,7 @@
 import type { Core } from '@strapi/strapi'
 
+import { getOrCreateRequestId, withRequestId } from '../utils/request-meta'
+
 type AnyError = Error & {
   status?: number
   statusCode?: number
@@ -18,8 +20,9 @@ export default (_config: unknown, { strapi }: { strapi: Core.Strapi }) => {
       if (!shouldForceJson(ctx.path)) return
 
       const contentType = ctx.response.get('content-type') || ''
+      const requestId = getOrCreateRequestId(ctx)
       if (typeof ctx.body === 'string' && contentType.includes('text/html')) {
-        strapi.log.error(`[json-api-error] HTML response intercepted: ${ctx.method} ${ctx.path}`)
+        strapi.log.error(withRequestId(`[json-api-error] HTML response intercepted: ${ctx.method} ${ctx.path}`, requestId))
         ctx.type = 'application/json'
         ctx.status = ctx.status >= 400 ? ctx.status : 500
         ctx.body = {
@@ -29,6 +32,7 @@ export default (_config: unknown, { strapi }: { strapi: Core.Strapi }) => {
             details: {
               path: ctx.path,
               method: ctx.method,
+              requestId,
             },
           },
         }
@@ -36,19 +40,22 @@ export default (_config: unknown, { strapi }: { strapi: Core.Strapi }) => {
     } catch (err) {
       const error = err as AnyError
       const status = error.status ?? error.statusCode ?? 500
+      const requestId = getOrCreateRequestId(ctx)
 
       if (!shouldForceJson(ctx.path)) {
         throw err
       }
 
-      strapi.log.error(`[json-api-error] ${ctx.method} ${ctx.path} failed: ${error.message}`)
+      strapi.log.error(withRequestId(`[json-api-error] ${ctx.method} ${ctx.path} failed: ${error.message}`, requestId))
       ctx.type = 'application/json'
       ctx.status = status
       ctx.body = {
         error: {
           name: error.name || 'StrapiRequestError',
           message: error.message || 'Unexpected error',
-          details: error.details ?? {},
+          details: process.env.NODE_ENV === 'production'
+            ? { requestId }
+            : { requestId, ...(error.details as Record<string, unknown> ?? {}) },
         },
       }
     }

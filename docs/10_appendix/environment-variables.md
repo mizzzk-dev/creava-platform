@@ -107,3 +107,20 @@
 
 ### DNS
 - 共通フォーム化による DNS 変更は不要。
+
+
+## 8. 監視運用（2026-04 追加）
+
+### backend runtime env
+- `READINESS_TIMEOUT_MS`: `/_ready` の DB 判定タイムアウト（ms）。
+- `CORS_ALLOW_CREDENTIALS`: CORS credentials 許可フラグ。
+- `AUDIT_IP_HASH_SALT`: request-audit / rate-limit 用 IP ハッシュソルト。
+
+### GitHub Environment Secrets
+- `MONITORING_BACKEND_HEALTH_URL`: 監視対象 backend の `/_health` URL。
+- `MONITORING_BACKEND_READY_URL`: 監視対象 backend の `/_ready` URL。
+
+### 補足
+- monitoring は `.github/workflows/ops-monitoring.yml` から参照される。
+- staging / production で URL を分離して設定すること。
+- 既存ドメインで完結するため DNS 変更は不要。

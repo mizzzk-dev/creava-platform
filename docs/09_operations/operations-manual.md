@@ -4,7 +4,7 @@
 - 対象: 日常運用担当
 - 目的: 開発環境構築〜日常更新〜障害初動を標準化
 - 前提: Node.js / npm 利用
-- 関連ドキュメント: [CMS運用マニュアル](./cms-manual.md), [デプロイ手順書](./deploy-manual.md)
+- 関連ドキュメント: [CMS運用マニュアル](./cms-manual.md), [デプロイ手順書](./deploy-manual.md), [本番運用ランブック](./production-reliability-runbook.md)
 
 ## 1. 開発環境立ち上げ
 
@@ -44,3 +44,10 @@
 ## 6. フォーム運用
 
 問い合わせ運用の詳細は [フォーム運用マニュアル](./form-operations-manual.md) を参照。
+
+
+## 7. 本番運用の基準
+
+- 監視対象・障害初動・復旧手順は [production-reliability-runbook](./production-reliability-runbook.md) を正とする。
+- リリース前後の確認は [release-checklist](../10_appendix/release-checklist.md) を必須とする。
+- 障害調査時は `x-request-id` を優先して frontend と backend を照合する。

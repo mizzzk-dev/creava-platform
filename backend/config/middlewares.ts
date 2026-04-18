@@ -7,12 +7,16 @@ const extraOrigins = (process.env.FRONTEND_URL ?? '')
   .map((s) => s.trim())
   .filter(Boolean);
 
+const allowCredentials = String(process.env.CORS_ALLOW_CREDENTIALS ?? 'false').toLowerCase() === 'true';
+
 const config: Core.Config.Middlewares = [
   'strapi::logger',
   'strapi::errors',
+  'global::request-id',
   'global::request-audit',
   'global::rate-limit',
   'global::json-api-error',
+  'global::ops-health',
   {
     name: 'strapi::security',
     config: {
@@ -35,6 +39,9 @@ const config: Core.Config.Middlewares = [
           geolocation: ["'none'"],
         },
       },
+      xssFilter: true,
+      noSniff: true,
+      hidePoweredBy: true,
     },
   },
   {
@@ -52,13 +59,13 @@ const config: Core.Config.Middlewares = [
         ...extraOrigins,
       ],
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
-      headers: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
-      credentials: false,
+      headers: ['Content-Type', 'Authorization', 'Origin', 'Accept', 'X-Request-Id'],
+      exposedHeaders: ['X-Request-Id', 'Retry-After'],
+      credentials: allowCredentials,
       keepHeaderOnError: true,
       maxAge: 86400,
     },
   },
-  'strapi::poweredBy',
   'strapi::query',
   {
     name: 'strapi::body',

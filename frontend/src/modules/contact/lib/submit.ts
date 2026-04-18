@@ -97,24 +97,41 @@ function getDefaultInquiryCategory(formType: string, requestType?: string): stri
   return 'general'
 }
 
-async function submitInquiry(formData: FormData): Promise<{ id: number; status: string; submittedAt: string }> {
+async function submitInquiry(formData: FormData): Promise<{ id: number; status: string; submittedAt: string; requestId?: string }> {
   const res = await fetch(`${getStrapiBaseUrl()}/api/inquiry-submissions/public`, {
     method: 'POST',
     body: formData,
   })
 
+  const requestId = res.headers.get('x-request-id') ?? undefined
+  const contentType = res.headers.get('content-type') ?? ''
+
   if (!res.ok) {
     let message = `HTTP ${res.status}`
-    try {
-      const json = await res.json() as { error?: { message?: string }; message?: string }
-      message = json.error?.message ?? json.message ?? message
-    } catch {
-      // noop
+    if (contentType.includes('application/json')) {
+      try {
+        const json = await res.json() as { error?: { message?: string }; message?: string }
+        message = json.error?.message ?? json.message ?? message
+      } catch {
+        // noop
+      }
+    } else {
+      const text = await res.text().catch(() => '')
+      if (/<!doctype html>|<html/i.test(text)) {
+        message = 'フォーム送信APIがHTMLを返しました。サーバー障害またはURL設定を確認してください。'
+      }
+    }
+    if (requestId) {
+      message = `${message} (requestId: ${requestId})`
     }
     throw new Error(message)
   }
 
-  const json = await res.json() as { data: { id: number; status: string; submittedAt: string } }
+  if (!contentType.includes('application/json')) {
+    throw new Error('フォーム送信APIのレスポンス形式が不正です。')
+  }
+
+  const json = await res.json() as { data: { id: number; status: string; submittedAt: string; requestId?: string } }
   return json.data
 }
 

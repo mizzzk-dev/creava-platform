@@ -1,0 +1,108 @@
+name: Ops Synthetic Monitoring
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: 'チェック対象環境'
+        required: true
+        default: production
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  resolve-environment:
+    runs-on: ubuntu-latest
+    outputs:
+      target_env: ${{ steps.env.outputs.target_env }}
+    steps:
+      - id: env
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "target_env=${{ github.event.inputs.target_env }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "target_env=production" >> "$GITHUB_OUTPUT"
+          fi
+
+  synthetic-check:
+    runs-on: ubuntu-latest
+    needs: resolve-environment
+    environment: ${{ needs.resolve-environment.outputs.target_env }}
+
+    steps:
+      - name: Resolve URLs
+        run: |
+          if [ "${{ needs.resolve-environment.outputs.target_env }}" = "production" ]; then
+            echo "MAIN_URL=https://mizzz.jp" >> "$GITHUB_ENV"
+            echo "STORE_URL=https://store.mizzz.jp" >> "$GITHUB_ENV"
+            echo "FC_URL=https://fc.mizzz.jp" >> "$GITHUB_ENV"
+          else
+            echo "MAIN_URL=https://stg.mizzz.jp" >> "$GITHUB_ENV"
+            echo "STORE_URL=https://store-stg.mizzz.jp" >> "$GITHUB_ENV"
+            echo "FC_URL=https://fc-stg.mizzz.jp" >> "$GITHUB_ENV"
+          fi
+
+      - name: Frontend route checks
+        run: |
+          set -euo pipefail
+
+          check_url () {
+            local name="$1"
+            local url="$2"
+            local keyword="$3"
+
+            echo "--- checking ${name}: ${url}"
+            body=$(mktemp)
+            code=$(curl -L --max-time 20 -sS -o "$body" -w "%{http_code}" "$url")
+
+            if [ "$code" != "200" ]; then
+              echo "::error::${name} status=${code}"
+              exit 1
+            fi
+
+            if ! grep -qi "$keyword" "$body"; then
+              echo "::error::${name} keyword '${keyword}' not found"
+              exit 1
+            fi
+
+            echo "${name} ok (${code})"
+          }
+
+          check_url "main-home" "$MAIN_URL" "mizzz"
+          check_url "store-home" "$STORE_URL" "store"
+          check_url "fc-home" "$FC_URL" "fanclub"
+          check_url "main-faq" "$MAIN_URL/faq" "faq"
+          check_url "main-contact" "$MAIN_URL/contact" "contact"
+
+      - name: Backend health checks
+        run: |
+          set -euo pipefail
+          HEALTH_URL="${{ secrets.MONITORING_BACKEND_HEALTH_URL }}"
+          READY_URL="${{ secrets.MONITORING_BACKEND_READY_URL }}"
+
+          if [ -z "$HEALTH_URL" ] || [ -z "$READY_URL" ]; then
+            echo "::error::MONITORING_BACKEND_HEALTH_URL / MONITORING_BACKEND_READY_URL が未設定です"
+            exit 1
+          fi
+
+          curl -fsS --max-time 20 "$HEALTH_URL" | tee /tmp/health.json
+          grep -q '"status":"ok"' /tmp/health.json
+
+          curl -fsS --max-time 20 "$READY_URL" | tee /tmp/ready.json
+          grep -Eq '"status":"ready"|"status":"degraded"' /tmp/ready.json
+
+      - name: Notify summary
+        if: always()
+        run: |
+          {
+            echo "## Ops Synthetic Monitoring"
+            echo "- target: ${{ needs.resolve-environment.outputs.target_env }}"
+            echo "- main: $MAIN_URL"
+            echo "- store: $STORE_URL"
+            echo "- fc: $FC_URL"
+            echo "- backend: health + ready"
+          } >> "$GITHUB_STEP_SUMMARY"
