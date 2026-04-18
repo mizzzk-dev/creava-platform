@@ -142,6 +142,50 @@
     },
     "shortHighlight": {
       "type": "string"
+    },
+    "editorialWorkflowStatus": {
+      "type": "enumeration",
+      "enum": [
+        "draft",
+        "review_pending",
+        "approved",
+        "scheduled",
+        "published",
+        "archived",
+        "expired"
+      ],
+      "default": "draft",
+      "required": true
+    },
+    "editorialChecklist": {
+      "type": "json"
+    },
+    "reviewComment": {
+      "type": "text"
+    },
+    "approvedBy": {
+      "type": "string"
+    },
+    "approvedAt": {
+      "type": "datetime"
+    },
+    "scheduledPublishAt": {
+      "type": "datetime"
+    },
+    "archiveAt": {
+      "type": "datetime"
+    },
+    "qualityScore": {
+      "type": "integer",
+      "min": 0,
+      "max": 100,
+      "default": 0
+    },
+    "qualityWarnings": {
+      "type": "json"
+    },
+    "translationCoverage": {
+      "type": "json"
     }
   }
 }

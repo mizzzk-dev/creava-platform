@@ -1,3 +1,11 @@
+import {
+  applyQualitySnapshot,
+  normalizeBaseEditorialFields,
+  validateEditorialDateRange,
+  validateWorkflowTransition,
+  warnPriorityConflict,
+} from '../../../../utils/editorial-workflow'
+
 interface StoreProductPayload {
   title?: string | null
   slug?: string | null
@@ -18,27 +26,14 @@ interface StoreProductPayload {
   seoTitle?: string | null
   seoDescription?: string | null
   ogImage?: unknown
-}
-
-function normalizeSlug(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-}
-
-
-function validateEditorialWindow(data: StoreProductPayload): void {
-  if (!data.startAt || !data.endAt) return
-  const start = new Date(data.startAt)
-  const end = new Date(data.endAt)
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return
-  if (start.getTime() > end.getTime()) {
-    throw new Error('公開開始日時 startAt は終了日時 endAt より前に設定してください。')
-  }
+  editorialWorkflowStatus?: 'draft' | 'review_pending' | 'approved' | 'scheduled' | 'published' | 'archived' | 'expired'
+  publishAt?: string | null
+  scheduledPublishAt?: string | null
+  approvedBy?: string | null
+  approvedAt?: string | null
+  archiveAt?: string | null
+  reviewComment?: string | null
+  translationCoverage?: Record<string, boolean> | null
 }
 
 function warnEditorialQuality(data: StoreProductPayload): void {
@@ -53,10 +48,6 @@ function warnEditorialQuality(data: StoreProductPayload): void {
   if ((data.seoTitle || data.seoDescription) && (data.ogImage === null || data.ogImage === undefined)) {
     strapi.log.warn('[store-product] SEO情報があるのに OGP画像が未設定です。共有時の見え方を確認してください。')
   }
-
-  if (typeof data.displayPriority === 'number' && data.displayPriority > 9000) {
-    strapi.log.warn('[store-product] displayPriority が極端に高い値です。優先度競合に注意してください。')
-  }
 }
 
 function ensureStoreProductData(data: StoreProductPayload, mode: 'create' | 'update') {
@@ -68,30 +59,14 @@ function ensureStoreProductData(data: StoreProductPayload, mode: 'create' | 'upd
     throw new Error('価格は 0 以上の数値で入力してください。')
   }
 
-  if (!data.title || !data.title.trim()) {
-    if (mode === 'create') {
-      throw new Error('商品タイトルは必須です。')
-    }
-  } else {
-    data.title = data.title.trim()
+  normalizeBaseEditorialFields(data)
+
+  if (!data.slug) {
+    throw new Error('slug が生成できませんでした。英数字のタイトルを設定してください。')
   }
 
   if (data.price !== undefined && (typeof data.price !== 'number' || Number.isNaN(data.price) || data.price < 0)) {
     throw new Error('価格は 0 以上の数値で入力してください。')
-  }
-
-  if (!data.slug || !data.slug.trim()) {
-    if (!data.title) {
-      if (mode === 'create') throw new Error('slug が生成できませんでした。英数字のタイトルを設定してください。')
-      return
-    }
-    data.slug = normalizeSlug(data.title)
-  } else {
-    data.slug = normalizeSlug(data.slug)
-  }
-
-  if (!data.slug) {
-    throw new Error('slug が生成できませんでした。英数字のタイトルを設定してください。')
   }
 
   if (data.previewImage === null || data.previewImage === undefined) {
@@ -106,8 +81,11 @@ function ensureStoreProductData(data: StoreProductPayload, mode: 'create' | 'upd
     strapi.log.warn('[store-product] coming_soon 商品の価格が 0 円です。意図した設定か確認してください。')
   }
 
-  validateEditorialWindow(data)
+  validateEditorialDateRange(data)
+  validateWorkflowTransition(data)
   warnEditorialQuality(data)
+  warnPriorityConflict(data, 'store-product')
+  applyQualitySnapshot(data)
 
   data.featured = Boolean(data.featured)
   data.isNewArrival = Boolean(data.isNewArrival)
@@ -118,14 +96,11 @@ function ensureStoreProductData(data: StoreProductPayload, mode: 'create' | 'upd
 
 export default {
   beforeCreate(event: { params: { data: StoreProductPayload } }) {
-    const data = event.params.data
-    ensureStoreProductData(data, 'create')
+    ensureStoreProductData(event.params.data, 'create')
   },
   beforeUpdate(event: { params: { data: StoreProductPayload } }) {
     const data = event.params.data
     if (!data) return
-    if (data.title || data.slug || data.price !== undefined || data.previewImage !== undefined || data.stock !== undefined || data.startAt !== undefined || data.endAt !== undefined || data.ctaText !== undefined || data.ctaLink !== undefined || data.displayPriority !== undefined || data.heroCopy !== undefined || data.heroVisual !== undefined || data.seoTitle !== undefined || data.seoDescription !== undefined || data.ogImage !== undefined) {
-      ensureStoreProductData(data, 'update')
-    }
+    ensureStoreProductData(data, 'update')
   },
 }
