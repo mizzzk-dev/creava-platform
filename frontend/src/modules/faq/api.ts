@@ -11,7 +11,7 @@ export function getFaqList(
   params?: StrapiQueryParams,
 ): Promise<StrapiListResponse<FAQItem>> {
   const merged = {
-    fields: ['question', 'answer', 'category', 'subcategory', 'sourceSite', 'tags', 'relatedForms', 'featured', 'isPublic', 'displayPriority', 'keywords', 'slug', 'seoTitle', 'seoDescription', 'order'],
+    fields: ['question', 'answer', 'category', 'subcategory', 'sourceSite', 'tags', 'relatedForms', 'featured', 'isPublic', 'displayPriority', 'keywords', 'slug', 'seoTitle', 'seoDescription', 'ogTitle', 'ogDescription', 'canonicalUrl', 'noindex', 'nofollow', 'breadcrumbLabel', 'structuredDataJson', 'order'],
     populate: ['relatedGuides', 'relatedProducts', 'relatedEvents', 'relatedNews', 'relatedFCContent'],
     sort: ['displayPriority:desc', 'sortOrder:asc', 'order:asc', 'updatedAt:desc'],
     pagination: { pageSize: 100, withCount: false },

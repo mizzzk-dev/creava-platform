@@ -1,8 +1,23 @@
 User-agent: *
 Allow: /
+
+# preview / auth / member pages
 Disallow: /preview
+Disallow: /callback
 Disallow: /login
 Disallow: /mypage
 Disallow: /member
 
-Sitemap: /sitemap.xml
+# checkout / cart / payment result pages
+Disallow: /cart
+Disallow: /store/cart
+Disallow: /checkout/
+
+# query-based duplicated listing paths
+Disallow: /*?*sort=
+Disallow: /*?*filter=
+Disallow: /*?*page=
+
+Sitemap: https://mizzz.jp/sitemap.xml
+Sitemap: https://store.mizzz.jp/sitemap.xml
+Sitemap: https://fc.mizzz.jp/sitemap.xml

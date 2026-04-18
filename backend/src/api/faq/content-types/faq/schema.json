@@ -62,7 +62,12 @@
     },
     "sourceSite": {
       "type": "enumeration",
-      "enum": ["main", "store", "fc", "all"],
+      "enum": [
+        "main",
+        "store",
+        "fc",
+        "all"
+      ],
       "default": "all",
       "required": true
     },
@@ -130,6 +135,29 @@
     "order": {
       "type": "integer",
       "default": 0
+    },
+    "ogTitle": {
+      "type": "string"
+    },
+    "ogDescription": {
+      "type": "text"
+    },
+    "canonicalUrl": {
+      "type": "string"
+    },
+    "noindex": {
+      "type": "boolean",
+      "default": false
+    },
+    "nofollow": {
+      "type": "boolean",
+      "default": false
+    },
+    "breadcrumbLabel": {
+      "type": "string"
+    },
+    "structuredDataJson": {
+      "type": "json"
     }
   }
 }

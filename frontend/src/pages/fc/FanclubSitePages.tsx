@@ -12,6 +12,8 @@ import { getSiteSettings } from '@/modules/settings/api'
 import { getFanclubList } from '@/modules/fanclub/api'
 import { createSectionVisibilityResolver, isWithinPublicationWindow, parseTopPageSections } from '@/lib/editorial'
 import PageHead from '@/components/seo/PageHead'
+import StructuredData from '@/components/seo/StructuredData'
+import SeoInternalLinkSection from '@/components/common/SeoInternalLinkSection'
 import { ROUTES } from '@/lib/routeConstants'
 import { useCurrentUser, useStrapiCollection, useStrapiSingle } from '@/hooks'
 import { useAuthClient } from '@/lib/auth/AuthProvider'
@@ -297,6 +299,37 @@ export function FanclubHomeHubPage() {
       <PageHead
         title={settings?.heroTitle?.trim() || t('seasonal.fc.title', { defaultValue: 'mizzz official fanclub' })}
         description="mizzz の公式ファンクラブ。ニュース、ブログ、動画、ギャラリー、チケット先行情報を会員向けに配信。"
+      />
+
+      <StructuredData
+        schema={{
+          type: 'CollectionPage',
+          name: 'mizzz official fanclub',
+          url: 'https://fc.mizzz.jp/',
+          description: 'join / guide / faq / members update の導線を持つファンクラブハブ',
+        }}
+      />
+      <StructuredData
+        schema={{
+          type: 'BreadcrumbList',
+          items: [
+            { name: 'mizzz official fanclub', url: 'https://fc.mizzz.jp/' },
+          ],
+        }}
+      />
+
+
+      <SeoInternalLinkSection
+        title="fanclub 回遊ハブ"
+        description="一般公開ページと会員向けページを分離しつつ、入会・継続・サポート導線を明確化します。"
+        items={[
+          { href: ROUTES.FC_JOIN, title: '入会', description: '料金・特典・登録フローを確認。' },
+          { href: ROUTES.FC_GUIDE, title: 'Guide', description: '入会後の使い方・トラブル解決手順。' },
+          { href: ROUTES.FAQ, title: 'FAQ', description: '決済・公開範囲・解約のよくある質問。' },
+          { href: ROUTES.FC_ABOUT, title: 'ファンクラブ概要', description: '提供価値と更新方針を把握。' },
+          { href: storeLink('/products'), title: '会員向けストア連携', description: '先行販売・会員特典の導線へ。' },
+          { href: ROUTES.FC_LEGAL, title: '法務ガイド', description: '継続課金・規約・プライバシーを確認。' },
+        ]}
       />
 
       {/* FC ヒーロー画像スライダー — CMS heroSlides または fcHeroImage で差し替え可能 */}

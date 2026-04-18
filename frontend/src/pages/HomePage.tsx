@@ -13,7 +13,10 @@ import ContactCTASection from '@/modules/home/components/ContactCTASection'
 import FanclubCTASection from '@/modules/home/components/FanclubCTASection'
 import GitHubTrustSection from '@/modules/home/components/GitHubTrustSection'
 import CaseStudyTeaserSection from '@/modules/home/components/CaseStudyTeaserSection'
-import { SITE_URL, SITE_NAME } from '@/lib/seo'
+import { SITE_URL, SITE_NAME, buildCanonicalUrl } from '@/lib/seo'
+import SeoInternalLinkSection from '@/components/common/SeoInternalLinkSection'
+import { ROUTES } from '@/lib/routeConstants'
+import { fanclubLink, storeLink } from '@/lib/siteLinks'
 import { getNewsList } from '@/modules/news/api'
 import { getBlogList } from '@/modules/blog/api'
 import { getEventsList } from '@/modules/events/api'
@@ -66,6 +69,38 @@ export default function HomePage() {
         }}
       />
 
+      <StructuredData
+        schema={{
+          type: 'Organization',
+          name: SITE_NAME,
+          url: buildCanonicalUrl('/'),
+        }}
+      />
+      <StructuredData
+        schema={{
+          type: 'ProfilePage',
+          name: 'mizzz profile',
+          url: buildCanonicalUrl('/about'),
+          description: t('seo.about'),
+        }}
+      />
+      <StructuredData
+        schema={{
+          type: 'ContactPage',
+          name: 'mizzz contact',
+          url: buildCanonicalUrl('/contact'),
+          description: t('seo.contact'),
+        }}
+      />
+      <StructuredData
+        schema={{
+          type: 'CollectionPage',
+          name: 'mizzz content hub',
+          url: buildCanonicalUrl('/'),
+          description: 'news / blog / events / faq / guide / store / fanclub への回遊ハブ',
+        }}
+      />
+
       <HeroSection />
       <AboutTeaserSection />
       <GitHubTrustSection />
@@ -77,6 +112,19 @@ export default function HomePage() {
       <StorePreviewSection />
       <ContactCTASection />
       <FanclubCTASection />
+
+      <SeoInternalLinkSection
+        title="main コンテンツハブ"
+        description="検索流入後の次行動を明確化するため、main / store / fc の横断導線を強化しています。"
+        items={[
+          { href: ROUTES.NEWS, title: 'News', description: '最新情報と重要なお知らせを一覧で確認。' },
+          { href: ROUTES.BLOG, title: 'Blog', description: '背景ストーリーや制作ノートを読む。' },
+          { href: ROUTES.EVENTS, title: 'Events', description: 'イベント情報と参加導線を確認。' },
+          { href: ROUTES.FAQ, title: 'FAQ / Guide', description: '疑問解消からお問い合わせ前チェックまで。' },
+          { href: storeLink('/products'), title: 'Store', description: '商品一覧・特集・購入導線へ。' },
+          { href: fanclubLink('/join'), title: 'Fanclub', description: '会員特典と入会フローへ。' },
+        ]}
+      />
     </div>
   )
 }

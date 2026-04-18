@@ -70,6 +70,15 @@ export interface StoreProductSummary {
   dashboardPriority?: number
   announcementBar?: boolean
   notificationCopy?: string | null
+  seoTitle?: string | null
+  seoDescription?: string | null
+  ogTitle?: string | null
+  ogDescription?: string | null
+  canonicalUrl?: string | null
+  noindex?: boolean
+  nofollow?: boolean
+  breadcrumbLabel?: string | null
+  structuredDataJson?: Record<string, unknown> | null
 }
 
 export interface RelatedContentLink {

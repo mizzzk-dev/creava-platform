@@ -7,6 +7,8 @@ import ProductCard from '@/modules/store/components/ProductCard'
 import SkeletonProductCard from '@/components/common/SkeletonProductCard'
 import ErrorState from '@/components/common/ErrorState'
 import PageHead from '@/components/seo/PageHead'
+import StructuredData from '@/components/seo/StructuredData'
+import SeoInternalLinkSection from '@/components/common/SeoInternalLinkSection'
 import { DEFAULT_COLLECTIONS, inferCollectionSlug } from '@/modules/store/lib/catalog'
 import { useStrapiCollection, useStrapiSingle } from '@/hooks'
 import { getNewsList } from '@/modules/news/api'
@@ -200,6 +202,28 @@ export default function StorefrontHomePage() {
     <section className="ds-container py-8 sm:py-12">
       <PageHead title="mizzz Official Store" description="mizzz公式オンラインストア。新商品・デジタル商品・お知らせをまとめて確認できます。" />
 
+      <StructuredData
+        schema={{
+          type: 'CollectionPage',
+          name: 'mizzz official store',
+          url: 'https://store.mizzz.jp/',
+          description: '商品一覧、特集、FAQ、ガイドへのストアハブページ',
+        }}
+      />
+      <StructuredData
+        schema={{
+          type: 'ItemList',
+          name: 'store featured links',
+          url: 'https://store.mizzz.jp/',
+          items: [
+            { position: 1, name: '全商品', url: 'https://store.mizzz.jp/products' },
+            { position: 2, name: 'Guide', url: 'https://store.mizzz.jp/guide' },
+            { position: 3, name: 'FAQ', url: 'https://store.mizzz.jp/faq' },
+            { position: 4, name: 'News', url: 'https://store.mizzz.jp/news' },
+          ],
+        }}
+      />
+
       {/* ビジュアル主役のヒーロー — CMS heroSlides で差し替え可能、未設定時はフォールバック */}
       <HeroImageSlider
         slides={heroSlides}
@@ -238,6 +262,20 @@ export default function StorefrontHomePage() {
           { label: 'ガイド', value: 'FAQ / 配送 / 返品導線を固定配置。' },
         ]}
       />
+
+      <SeoInternalLinkSection
+        title="store 回遊ハブ"
+        description="商品詳細へ進む前後の不安解消と、main / fanclub 連携導線をまとめています。"
+        items={[
+          { href: '/products', title: '全商品', description: 'カテゴリ横断で商品を比較して探す。' },
+          { href: '/guide', title: '購入ガイド', description: '配送・返品・購入フローの詳細を確認。' },
+          { href: '/faq', title: 'FAQ', description: '問い合わせ前のセルフサポート導線。' },
+          { href: '/news', title: 'ストアニュース', description: '新着・限定・再入荷情報を確認。' },
+          { href: fanclubLink('/join'), title: 'FC特典', description: '会員向け先行販売と特典情報へ。' },
+          { href: ROUTES.STORE_CONTACT, title: 'お問い合わせ', description: '購入前後のサポート導線。' },
+        ]}
+      />
+
       <EasterEggTrigger
         id="store-hero-seasonal-source"
         triggerCount={7}

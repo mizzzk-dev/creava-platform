@@ -194,6 +194,13 @@ export interface FAQItem extends StrapiBase {
   slug: string
   seoTitle?: string | null
   seoDescription?: string | null
+  ogTitle?: string | null
+  ogDescription?: string | null
+  canonicalUrl?: string | null
+  noindex?: boolean
+  nofollow?: boolean
+  breadcrumbLabel?: string | null
+  structuredDataJson?: Record<string, unknown> | null
   order: number
 }
 
@@ -216,6 +223,13 @@ export interface GuideItem extends StrapiBase {
   displayPriority: number
   seoTitle?: string | null
   seoDescription?: string | null
+  ogTitle?: string | null
+  ogDescription?: string | null
+  canonicalUrl?: string | null
+  noindex?: boolean
+  nofollow?: boolean
+  breadcrumbLabel?: string | null
+  structuredDataJson?: Record<string, unknown> | null
 }
 
 /**

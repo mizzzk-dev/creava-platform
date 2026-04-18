@@ -9,7 +9,7 @@ const ENDPOINT = API_ENDPOINTS.guides
 
 export function getGuideList(params?: StrapiQueryParams): Promise<StrapiListResponse<GuideItem>> {
   const merged = {
-    fields: ['title', 'slug', 'summary', 'body', 'locale', 'category', 'sourceSite', 'tags', 'featured', 'displayPriority', 'seoTitle', 'seoDescription'],
+    fields: ['title', 'slug', 'summary', 'body', 'locale', 'category', 'sourceSite', 'tags', 'featured', 'displayPriority', 'seoTitle', 'seoDescription', 'ogTitle', 'ogDescription', 'canonicalUrl', 'noindex', 'nofollow', 'breadcrumbLabel', 'structuredDataJson'],
     populate: ['relatedFAQs', 'relatedProducts', 'relatedEvents', 'relatedNews', 'relatedFCContent', 'coverImage'],
     sort: ['featured:desc', 'displayPriority:desc', 'updatedAt:desc'],
     pagination: { pageSize: 100, withCount: false },
