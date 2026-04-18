@@ -623,7 +623,17 @@
     },
     "authSetupRequired": "Setup required",
     "authTrySignIn": "Sign in with this method",
-    "authUnavailable": "Logto disabled"
+    "authUnavailable": "Logto disabled",
+    "accountCenterTitle": "Account settings hub",
+    "accountCenterLead": "Use Logto Hosted Account Center for security-sensitive settings, and keep notifications plus support guidance in this my page.",
+    "accountCenterProfile": "Manage profile",
+    "accountCenterSecurity": "Security settings",
+    "accountCenterSessions": "Session management",
+    "accountCenterLinked": "Linked accounts",
+    "accountCenterHostHint": "Hosted UI: password / MFA / passkey / linked identities / sessions",
+    "accountCenterCustomHint": "Custom UI: notification settings / CRM delivery preferences / FAQ-support paths / member guidance",
+    "accountCenterOpenAll": "Open Account Center",
+    "accountCenterUnavailable": "Cannot resolve Account Center URL because environment variables are missing."
   },
   "memberGuide": {
     "label": "Member Guide",

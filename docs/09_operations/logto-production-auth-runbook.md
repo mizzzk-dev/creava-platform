@@ -118,6 +118,36 @@ backend の payment controller で操作単位にスコープ検証を行う。
 - account linking は同一メールの誤統合リスクを考慮し、初期は慎重設定。
 - passkey / MFA は「導入余地を確保」し、次PRで段階導入する。
 
+## 7.1 Account Center 方針（Hosted UI と custom UI の責務分離）
+
+- **Hosted Account Center に寄せる領域（security-sensitive）**
+  - パスワード変更
+  - MFA 有効化/解除
+  - passkey 管理
+  - セッション一覧 / revoke
+  - linked identities（social 連携）
+- **mizzz custom UI に寄せる領域（体験導線）**
+  - `/member`（main/store/fc 共通）から Account Center への設定ハブ
+  - notification settings / CRM 配信設定 / support 導線
+  - 「どこで何を変更するか」の説明文（自己解決支援）
+
+> 方針: **設定は Logto 側、導線は mizzz 側**。  
+> main / store / fc で同じ概念と導線名を採用し、サイト差で混乱を増やさない。
+
+## 7.2 セッション管理運用（support/runbook）
+
+1. ユーザー問い合わせで「見覚えのない端末ログイン」を受けた場合:
+   - Account Center の sessions 画面へ案内。
+   - 「現在端末以外のセッションを終了」操作を優先案内。
+2. パスワード流出懸念がある場合:
+   - セッション revoke → パスワード変更 → MFA有効化の順で案内。
+3. social 連携誤操作（別アカウント化）の場合:
+   - 管理者が Management API で統合作業を即実施しない。
+   - 先に support で identity 所有確認（メール / 注文履歴 / 問い合わせ履歴）を行う。
+4. 復旧時の基本テンプレ:
+   - 「再ログインしてください」だけで終わらせず、
+   - 「どの端末を残すか」「再発防止（MFA/passkey）」まで案内する。
+
 ## 8. Management API / automation
 
 - M2M app を作成し、role assign / profile sync などの自動化余地を確保。
@@ -136,6 +166,7 @@ backend の payment controller で操作単位にスコープ検証を行う。
 - `VITE_LOGTO_CALLBACK_PATH`
 - `VITE_LOGTO_POST_LOGOUT_REDIRECT_URI`
 - `VITE_LOGTO_API_RESOURCE`
+- `VITE_LOGTO_ACCOUNT_CENTER_URL`
 - `VITE_LOGTO_ISSUER`
 - `VITE_LOGTO_MANAGEMENT_API_ENDPOINT`
 
@@ -157,6 +188,7 @@ backend の payment controller で操作単位にスコープ検証を行う。
 - `VITE_LOGTO_APP_ID_FC`
 - `VITE_LOGTO_APP_ID`（段階移行用）
 - `VITE_LOGTO_API_RESOURCE`
+- `VITE_LOGTO_ACCOUNT_CENTER_URL`
 - `VITE_LOGTO_ISSUER`
 - `VITE_LOGTO_MANAGEMENT_API_ENDPOINT`
 
@@ -178,6 +210,10 @@ backend の payment controller で操作単位にスコープ検証を行う。
   - token の scope claim と API 必要 scope 定義を突合
 - Management API が失敗
   - endpoint が custom domain ではなく default tenant endpoint か確認
+- Account Center が開けない / 画面遷移に失敗
+  - `VITE_LOGTO_ACCOUNT_CENTER_URL` の設定値を確認
+  - custom domain 利用時は TLS 証明書の有効期限・CNAME設定を確認
+  - passkey 利用時は `auth.mizzz.jp` 配下での運用整合を確認
 
 ## 12. Cloud / OSS 切替の備え
 

@@ -623,7 +623,17 @@
     },
     "authSetupRequired": "설정 필요",
     "authTrySignIn": "이 방법으로 로그인",
-    "authUnavailable": "Logto 미설정"
+    "authUnavailable": "Logto 미설정",
+    "accountCenterTitle": "계정 설정 허브",
+    "accountCenterLead": "보안 민감 설정은 Logto Hosted Account Center에서 안전하게 관리하고, 알림/지원 안내는 이 마이페이지에서 정리합니다.",
+    "accountCenterProfile": "프로필 관리",
+    "accountCenterSecurity": "보안 설정",
+    "accountCenterSessions": "세션 관리",
+    "accountCenterLinked": "연동 계정 관리",
+    "accountCenterHostHint": "Hosted UI: 비밀번호 변경 / MFA / passkey / 연동 계정 / 세션 관리",
+    "accountCenterCustomHint": "Custom UI: 알림 설정 / CRM 수신 설정 / FAQ·Support 동선 / 회원 안내 문구",
+    "accountCenterOpenAll": "Account Center 열기",
+    "accountCenterUnavailable": "환경 변수가 없어 Account Center URL을 만들 수 없습니다."
   },
   "memberGuide": {
     "label": "Member Guide",

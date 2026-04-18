@@ -623,7 +623,17 @@
     },
     "authSetupRequired": "要設定",
     "authTrySignIn": "この方法でログインする",
-    "authUnavailable": "Logto未設定"
+    "authUnavailable": "Logto未設定",
+    "accountCenterTitle": "アカウント設定ハブ",
+    "accountCenterLead": "セキュリティに関わる設定は Logto Hosted Account Center で安全に管理し、通知や導線はこのマイページで整理します。",
+    "accountCenterProfile": "プロフィール管理",
+    "accountCenterSecurity": "セキュリティ設定",
+    "accountCenterSessions": "セッション管理",
+    "accountCenterLinked": "連携アカウント管理",
+    "accountCenterHostHint": "Hosted UI: パスワード変更 / MFA / passkey / 連携アカウント / セッション管理",
+    "accountCenterCustomHint": "Custom UI: 通知設定 / CRM配信設定 / FAQ・Support導線 / 会員向け説明文",
+    "accountCenterOpenAll": "Account Center を開く",
+    "accountCenterUnavailable": "環境変数未設定のため Account Center URL を生成できません。"
   },
   "memberGuide": {
     "label": "Member Guide",

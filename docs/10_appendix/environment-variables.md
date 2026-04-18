@@ -33,8 +33,11 @@
 - `VITE_LOGTO_CALLBACK_PATH`
 - `VITE_LOGTO_POST_LOGOUT_REDIRECT_URI`
 - `VITE_LOGTO_API_RESOURCE`
+- `VITE_LOGTO_ACCOUNT_CENTER_URL`（例: `https://auth.mizzz.jp/account-center`）
 - `VITE_LOGTO_ISSUER`
 - `VITE_LOGTO_MANAGEMENT_API_ENDPOINT`（default tenant endpoint）
+
+> `VITE_LOGTO_ACCOUNT_CENTER_URL` 未設定時は frontend 側で `VITE_LOGTO_ENDPOINT + /account-center` をフォールバック利用する。
 
 ## 2. backend 変数（フォーム運用関連を含む）
 
@@ -79,6 +82,7 @@
 - `VITE_LOGTO_APP_ID_FC`
 - `VITE_LOGTO_APP_ID`
 - `VITE_LOGTO_API_RESOURCE`
+- `VITE_LOGTO_ACCOUNT_CENTER_URL`
 - `VITE_LOGTO_ISSUER`
 - `VITE_LOGTO_MANAGEMENT_API_ENDPOINT`
 - `VITE_SHOPIFY_STORE_DOMAIN`
@@ -111,7 +115,8 @@
 4. 自動返信を有効化する場合のみ `INQUIRY_ENABLE_AUTO_REPLY=true` を設定。
 
 ## 6. DNS 変更要否
-- 本施策は既存の `mizzz.jp / store.mizzz.jp / fc.mizzz.jp` と既存 Strapi API 内で完結するため、**DNS 追加・変更は不要**。
+- `auth.mizzz.jp` を既に運用している前提で env / docs / UI 導線のみ更新する場合は、**DNS 変更不要**。
+- `auth.mizzz.jp` を新規導入する場合のみ CNAME 追加が必要。
 
 ## 7. upload provider 切替（local → S3/R2）
 1. Strapi の upload provider 設定を `backend/config/plugins.ts` で切替。

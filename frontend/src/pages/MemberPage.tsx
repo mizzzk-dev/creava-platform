@@ -16,6 +16,7 @@ import { getCampaignList } from '@/modules/campaign/api'
 import type { CampaignSummary } from '@/modules/campaign/types'
 import { SITE_TYPE } from '@/lib/siteLinks'
 import { trackMizzzEvent } from '@/modules/analytics/tracking'
+import { resolveAccountCenterUrl } from '@/lib/auth/config'
 
 const MEMBER_BENEFITS = [
   'member.benefitEarly',
@@ -80,6 +81,13 @@ const ACCESS_ITEMS = [
     actionKey: 'member.quickContact',
   },
 ]
+
+const ACCOUNT_CENTER_ITEMS = [
+  { key: 'member.accountCenterProfile', path: '/profile', type: 'profile' },
+  { key: 'member.accountCenterSecurity', path: '/security', type: 'security' },
+  { key: 'member.accountCenterSessions', path: '/sessions', type: 'sessions' },
+  { key: 'member.accountCenterLinked', path: '/identities', type: 'linked_accounts' },
+] as const
 
 
 const POSTAL_CODE_PRESETS: Record<string, Pick<MemberShippingSettings, 'prefecture' | 'city' | 'addressLine'>> = {
@@ -340,6 +348,11 @@ export default function MemberPage() {
   ]) : null
 
   const supportTemplates = dashboardData ? buildSupportTemplates(dashboardData.orders) : []
+  const accountCenterLinks = useMemo(
+    () => ACCOUNT_CENTER_ITEMS.map((item) => ({ ...item, href: resolveAccountCenterUrl(item.path) })),
+    [],
+  )
+  const accountCenterRoot = useMemo(() => resolveAccountCenterUrl(), [])
   const loyaltyProfile = dashboardData ? buildLoyaltyProfile(dashboardData.loyaltyProfile) : null
   const locale = (typeof document !== 'undefined' ? document.documentElement.lang : 'ja').slice(0, 2)
   const visibleCampaigns = useMemo(() => {
@@ -482,6 +495,48 @@ export default function MemberPage() {
                 ))}
               </div>
               <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">{t('member.quickLinksHelp', { defaultValue: '不明点があれば FAQ を確認し、依頼相談は Contact から送信してください。' })}</p>
+            </div>
+          </div>
+
+          <div className="rounded border border-gray-200 p-5 dark:border-gray-800">
+            <p className="font-mono text-[11px] text-gray-400">account center</p>
+            <h2 className="mt-2 text-base font-semibold text-gray-900 dark:text-gray-100">{t('member.accountCenterTitle', { defaultValue: 'アカウント設定ハブ' })}</h2>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{t('member.accountCenterLead', { defaultValue: 'セキュリティに関わる設定は Logto Hosted Account Center で安全に管理し、通知や導線はこのマイページで整理します。' })}</p>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {accountCenterLinks.map((item) => (
+                <a
+                  key={item.key}
+                  href={item.href ?? '#'}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-disabled={!item.href}
+                  onClick={(event) => {
+                    if (!item.href) {
+                      event.preventDefault()
+                      return
+                    }
+                    trackMizzzEvent('mypage_shortcut_click', { destination: item.path, membershipState: loyaltyProfile?.membershipStatus ?? 'guest', module: 'account_center', settingType: item.type })
+                  }}
+                  className={`rounded border px-3 py-2 text-sm transition ${
+                    item.href
+                      ? 'border-gray-200 text-gray-700 hover:border-violet-300 hover:text-violet-600 dark:border-gray-700 dark:text-gray-200 dark:hover:border-violet-700 dark:hover:text-violet-300'
+                      : 'cursor-not-allowed border-gray-200 text-gray-400 opacity-70 dark:border-gray-800 dark:text-gray-500'
+                  }`}
+                >
+                  {t(item.key, { defaultValue: item.key })} ↗
+                </a>
+              ))}
+            </div>
+            <div className="mt-3 rounded border border-dashed border-gray-200 p-3 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
+              <p>{t('member.accountCenterHostHint', { defaultValue: 'Hosted UI: パスワード変更 / MFA / passkey / 連携アカウント / セッション管理' })}</p>
+              <p className="mt-1">{t('member.accountCenterCustomHint', { defaultValue: 'Custom UI: 通知設定 / CRM配信設定 / FAQ・Support導線 / 会員向け説明文' })}</p>
+              {accountCenterRoot ? (
+                <a href={accountCenterRoot} target="_blank" rel="noreferrer" className="mt-2 inline-flex text-violet-600 underline hover:text-violet-500 dark:text-violet-300 dark:hover:text-violet-200">
+                  {t('member.accountCenterOpenAll', { defaultValue: 'Account Center を開く' })} ↗
+                </a>
+              ) : (
+                <p className="mt-2 text-rose-600 dark:text-rose-300">{t('member.accountCenterUnavailable', { defaultValue: '環境変数未設定のため Account Center URL を生成できません。' })}</p>
+              )}
             </div>
           </div>
 
