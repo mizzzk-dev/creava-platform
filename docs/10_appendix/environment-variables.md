@@ -22,6 +22,7 @@
 | `VITE_PERSONALIZATION_MAX_HISTORY` | 閲覧履歴の保存上限 | 任意 | 任意 | 任意 |
 | `VITE_PERSONALIZATION_MAX_FAVORITES` | お気に入り保存上限 | 任意 | 任意 | 任意 |
 | `VITE_ANALYTICS_OPS_ENDPOINT` | 主要イベントをStrapiへ保存するエンドポイント | 任意 | 推奨 | 推奨 |
+| `VITE_PREVIEW_SECRET` | Strapi previewエントリー用シークレット | 必須 | 必須 | 必須 |
 
 ## 2. backend 変数（フォーム運用関連を含む）
 
@@ -54,10 +55,12 @@
 - `VITE_SHOPIFY_STORE_DOMAIN`
 - `VITE_SHOPIFY_STOREFRONT_TOKEN`
 - `VITE_STRIPE_PUBLISHABLE_KEY`
+- `VITE_PREVIEW_SECRET`
 - FTP 系 (`FTP_SERVER_*`, `FTP_USERNAME_*`, `FTP_PASSWORD_*`, `FTP_SERVER_DIR_*`)
 
 ### Backend deploy/runtime
 - `STRAPI_DEPLOY_TOKEN`
+- `STRAPI_PREVIEW_SECRET`（frontend `VITE_PREVIEW_SECRET` と同値）
 - `INQUIRY_IP_HASH_SALT`
 - `INQUIRY_OPS_TOKEN`
 - `ANALYTICS_OPS_TOKEN`

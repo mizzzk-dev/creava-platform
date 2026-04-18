@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { activatePreview } from '@/lib/preview'
 import { detailPath } from '@/lib/routeConstants'
 
@@ -7,29 +8,37 @@ import { detailPath } from '@/lib/routeConstants'
  * Strapi プレビューエントリーページ
  *
  * Strapi 管理画面の preview ボタンから遷移してくる
- * URL: /preview?secret=XXX&type=news-item&slug=my-slug
- *
- * 処理フロー:
- * 1. secret を検証
- * 2. 有効なら sessionStorage にプレビューフラグをセット
- * 3. コンテンツタイプに応じた詳細ページへリダイレクト
- * 4. 無効なら "/" へリダイレクト
+ * URL: /preview?secret=XXX&type=news-item&slug=my-slug&locale=ja&theme=dark
  */
 export default function PreviewPage() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
+  const { i18n } = useTranslation()
   const [error, setError] = useState(false)
 
   useEffect(() => {
     const secret = params.get('secret') ?? ''
     const type = params.get('type') ?? ''
     const slug = params.get('slug') ?? ''
+    const locale = normalizeLocale(params.get('locale'))
+    const theme = normalizeTheme(params.get('theme'))
 
     if (!activatePreview(secret)) {
       setError(true)
-      // 2 秒後にホームへ
       const t = setTimeout(() => navigate('/', { replace: true }), 2000)
       return () => clearTimeout(t)
+    }
+
+    if (locale) {
+      void i18n.changeLanguage(locale)
+    }
+
+    if (theme) {
+      try {
+        localStorage.setItem('theme', theme)
+      } catch {
+        // noop
+      }
     }
 
     const path = resolveDetailPath(type, slug)
@@ -61,6 +70,18 @@ function resolveDetailPath(type: string, slug: string): string {
     case 'event':           return detailPath.event(slug)
     case 'fanclub-content': return detailPath.fanclub(slug)
     case 'store-product':   return detailPath.product(slug)
+    case 'campaign':        return `/campaigns/${slug}`
+    case 'guide':           return `/support/guides/${slug}`
     default:                return '/'
   }
+}
+
+function normalizeLocale(raw: string | null): 'ja' | 'en' | 'ko' | null {
+  if (raw === 'ja' || raw === 'en' || raw === 'ko') return raw
+  return null
+}
+
+function normalizeTheme(raw: string | null): 'light' | 'dark' | null {
+  if (raw === 'light' || raw === 'dark') return raw
+  return null
 }

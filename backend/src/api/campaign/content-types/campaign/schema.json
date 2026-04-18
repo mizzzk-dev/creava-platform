@@ -12,38 +12,100 @@
   },
   "pluginOptions": {},
   "attributes": {
-    "title": { "type": "string", "required": true },
-    "slug": { "type": "uid", "targetField": "title", "required": true },
-    "campaignSlug": { "type": "string" },
-    "campaignLabel": { "type": "string" },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "title",
+      "required": true
+    },
+    "campaignSlug": {
+      "type": "string"
+    },
+    "campaignLabel": {
+      "type": "string"
+    },
     "campaignType": {
       "type": "enumeration",
-      "enum": ["feature", "drop", "launch", "restock", "benefit", "announcement"],
+      "enum": [
+        "feature",
+        "drop",
+        "launch",
+        "restock",
+        "benefit",
+        "announcement"
+      ],
       "default": "feature"
     },
-    "heroCopy": { "type": "text" },
+    "heroCopy": {
+      "type": "text"
+    },
     "heroVisual": {
       "type": "media",
       "multiple": false,
-      "allowedTypes": ["images"]
+      "allowedTypes": [
+        "images"
+      ]
     },
-    "shortHighlight": { "type": "text" },
-    "body": { "type": "richtext" },
-    "featured": { "type": "boolean", "default": false },
-    "pickup": { "type": "boolean", "default": false },
-    "isLimited": { "type": "boolean", "default": false },
-    "earlyAccess": { "type": "boolean", "default": false },
-    "membersOnly": { "type": "boolean", "default": false },
-    "specialOffer": { "type": "text" },
-    "displayPriority": { "type": "integer", "default": 0 },
-    "startAt": { "type": "datetime" },
-    "endAt": { "type": "datetime" },
-    "bannerLink": { "type": "string" },
-    "ctaText": { "type": "string" },
-    "ctaLink": { "type": "string" },
-    "topPageSections": { "type": "json" },
-    "sectionStyle": { "type": "string" },
-    "badgeStyleVariant": { "type": "string" },
+    "shortHighlight": {
+      "type": "text"
+    },
+    "body": {
+      "type": "richtext"
+    },
+    "featured": {
+      "type": "boolean",
+      "default": false
+    },
+    "pickup": {
+      "type": "boolean",
+      "default": false
+    },
+    "isLimited": {
+      "type": "boolean",
+      "default": false
+    },
+    "earlyAccess": {
+      "type": "boolean",
+      "default": false
+    },
+    "membersOnly": {
+      "type": "boolean",
+      "default": false
+    },
+    "specialOffer": {
+      "type": "text"
+    },
+    "displayPriority": {
+      "type": "integer",
+      "default": 0
+    },
+    "startAt": {
+      "type": "datetime"
+    },
+    "endAt": {
+      "type": "datetime"
+    },
+    "bannerLink": {
+      "type": "string"
+    },
+    "ctaText": {
+      "type": "string"
+    },
+    "ctaLink": {
+      "type": "string"
+    },
+    "topPageSections": {
+      "type": "json"
+    },
+    "sectionStyle": {
+      "type": "string"
+    },
+    "badgeStyleVariant": {
+      "type": "string"
+    },
     "relatedProducts": {
       "type": "relation",
       "relation": "manyToMany",
@@ -73,6 +135,50 @@
       "type": "relation",
       "relation": "manyToMany",
       "target": "api::fanclub-content.fanclub-content"
+    },
+    "editorialWorkflowStatus": {
+      "type": "enumeration",
+      "enum": [
+        "draft",
+        "review_pending",
+        "approved",
+        "scheduled",
+        "published",
+        "archived",
+        "expired"
+      ],
+      "default": "draft",
+      "required": true
+    },
+    "editorialChecklist": {
+      "type": "json"
+    },
+    "reviewComment": {
+      "type": "text"
+    },
+    "approvedBy": {
+      "type": "string"
+    },
+    "approvedAt": {
+      "type": "datetime"
+    },
+    "scheduledPublishAt": {
+      "type": "datetime"
+    },
+    "archiveAt": {
+      "type": "datetime"
+    },
+    "qualityScore": {
+      "type": "integer",
+      "min": 0,
+      "max": 100,
+      "default": 0
+    },
+    "qualityWarnings": {
+      "type": "json"
+    },
+    "translationCoverage": {
+      "type": "json"
     }
   }
 }

@@ -1,3 +1,11 @@
+import {
+  applyQualitySnapshot,
+  normalizeBaseEditorialFields,
+  validateEditorialDateRange,
+  validateWorkflowTransition,
+  warnPriorityConflict,
+} from '../../../../utils/editorial-workflow'
+
 interface FanclubPayload {
   title?: string | null
   slug?: string | null
@@ -12,28 +20,14 @@ interface FanclubPayload {
   seoTitle?: string | null
   seoDescription?: string | null
   ogImage?: unknown
-}
-
-function normalizeSlug(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-}
-
-function assertDateRange(data: FanclubPayload): void {
-  if (!data.startAt || !data.endAt) return
-
-  const start = new Date(data.startAt)
-  const end = new Date(data.endAt)
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return
-
-  if (start.getTime() > end.getTime()) {
-    throw new Error('公開開始日時 startAt は終了日時 endAt より前に設定してください。')
-  }
+  editorialWorkflowStatus?: 'draft' | 'review_pending' | 'approved' | 'scheduled' | 'published' | 'archived' | 'expired'
+  publishAt?: string | null
+  scheduledPublishAt?: string | null
+  approvedBy?: string | null
+  approvedAt?: string | null
+  archiveAt?: string | null
+  reviewComment?: string | null
+  translationCoverage?: Record<string, boolean> | null
 }
 
 function warnIncompleteEditorial(data: FanclubPayload): void {
@@ -43,10 +37,6 @@ function warnIncompleteEditorial(data: FanclubPayload): void {
 
   if ((data.ctaText && !data.ctaLink) || (!data.ctaText && data.ctaLink)) {
     strapi.log.warn('[fanclub-content] CTA text/link が片方のみ設定されています。導線切れを確認してください。')
-  }
-
-  if (typeof data.displayPriority === 'number' && data.displayPriority > 9000) {
-    strapi.log.warn('[fanclub-content] displayPriority が極端に高い値です。並び順競合に注意してください。')
   }
 
   if (data.heroCopy && (data.heroVisual === null || data.heroVisual === undefined)) {
@@ -65,22 +55,17 @@ function validateData(data: FanclubPayload, mode: 'create' | 'update'): void {
     throw new Error('タイトルは必須です。')
   }
 
-  if (data.title) {
-    data.title = data.title.trim()
-  }
-
-  if (data.slug) {
-    data.slug = normalizeSlug(data.slug)
-  } else if (data.title) {
-    data.slug = normalizeSlug(data.title)
-  }
+  normalizeBaseEditorialFields(data)
 
   if (mode === 'create' && !data.slug) {
     throw new Error('slug が生成できませんでした。英数字ベースのタイトルを設定してください。')
   }
 
-  assertDateRange(data)
+  validateEditorialDateRange(data)
+  validateWorkflowTransition(data)
+  warnPriorityConflict(data, 'fanclub-content')
   warnIncompleteEditorial(data)
+  applyQualitySnapshot(data)
 }
 
 export default {
