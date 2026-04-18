@@ -30,6 +30,31 @@ export default function SupportCenterPage() {
 
   const categories = useMemo(() => [{ key: 'all', label: t('support.filters.all') }, ...siteScopedCategories(site).map((item) => ({ key: item.key, label: t(item.labelKey) }))], [site, t])
 
+  const quickLinks = useMemo(() => {
+    if (site === 'store') {
+      return [
+        { to: '/guide', label: t('support.quickLinks.storeGuide') },
+        { to: '/shipping-policy', label: t('support.quickLinks.shipping') },
+        { to: '/returns', label: t('support.quickLinks.returns') },
+        { to: '/legal', label: t('support.quickLinks.legal') },
+      ]
+    }
+    if (site === 'fc') {
+      return [
+        { to: '/guide', label: t('support.quickLinks.fcGuide') },
+        { to: '/subscription-policy', label: t('support.quickLinks.subscription') },
+        { to: '/legal', label: t('support.quickLinks.legal') },
+        { to: '/faq', label: t('support.quickLinks.faq') },
+      ]
+    }
+    return [
+      { to: '/faq', label: t('support.quickLinks.faq') },
+      { to: '/events', label: t('support.quickLinks.events') },
+      { to: '/news', label: t('support.quickLinks.news') },
+      { to: '/legal/privacy-policy', label: t('support.quickLinks.privacy') },
+    ]
+  }, [site, t])
+
   const filteredFaqs = useMemo(() => {
     const keyword = search.trim().toLowerCase()
     return (faqs ?? []).filter((item) => {
@@ -52,6 +77,15 @@ export default function SupportCenterPage() {
     })
   }, [guides, site, category, search])
 
+  const featuredFaqs = useMemo(() => filteredFaqs.filter((item) => item.featured).slice(0, 3), [filteredFaqs])
+  const featuredGuides = useMemo(() => filteredGuides.filter((item) => item.featured).slice(0, 3), [filteredGuides])
+  const recentGuides = useMemo(
+    () => [...filteredGuides].sort((a, b) => String(b.updatedAt ?? '').localeCompare(String(a.updatedAt ?? ''))).slice(0, 4),
+    [filteredGuides],
+  )
+
+  const hasResults = filteredFaqs.length > 0 || filteredGuides.length > 0
+
   return (
     <section className="mx-auto max-w-5xl px-4 py-14">
       <PageHead title={t('support.title')} description={t('support.description')} />
@@ -60,6 +94,13 @@ export default function SupportCenterPage() {
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">support center</p>
         <h1 className="text-3xl font-semibold text-gray-900 dark:text-gray-100">{t('support.title')}</h1>
         <p className="text-sm text-gray-600 dark:text-gray-300">{t('support.description')}</p>
+        <div className="flex flex-wrap gap-2">
+          {quickLinks.map((link) => (
+            <Link key={link.to} to={link.to} className="rounded-full border border-gray-200 px-3 py-1 text-xs text-gray-600 hover:border-violet-400 hover:text-violet-600 dark:border-gray-700 dark:text-gray-300 dark:hover:border-violet-500 dark:hover:text-violet-300">
+              {link.label}
+            </Link>
+          ))}
+        </div>
       </header>
 
       <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
@@ -127,6 +168,66 @@ export default function SupportCenterPage() {
           )}
         </section>
       </div>
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        <section className="rounded-2xl border border-gray-200 p-5 dark:border-gray-800">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('support.featuredSection')}</h2>
+          <ul className="mt-4 space-y-2">
+            {featuredFaqs.map((item) => (
+              <li key={`featured-faq-${item.id}`} className="rounded-xl border border-gray-100 p-3 text-sm dark:border-gray-800">
+                <p className="font-medium text-gray-800 dark:text-gray-100">{item.question}</p>
+                <p className="mt-1 line-clamp-2 text-xs text-gray-500 dark:text-gray-300">{item.answer}</p>
+              </li>
+            ))}
+            {featuredGuides.map((item) => (
+              <li key={`featured-guide-${item.id}`} className="rounded-xl border border-gray-100 p-3 text-sm dark:border-gray-800">
+                <Link to={ROUTES.SUPPORT_GUIDE_DETAIL.replace(':slug', item.slug)} className="font-medium text-gray-800 hover:text-violet-500 dark:text-gray-100">
+                  {item.title}
+                </Link>
+                <p className="mt-1 line-clamp-2 text-xs text-gray-500 dark:text-gray-300">{item.summary ?? ''}</p>
+              </li>
+            ))}
+            {featuredFaqs.length + featuredGuides.length === 0 && <li className="text-sm text-gray-500">{t('support.emptyFeatured')}</li>}
+          </ul>
+        </section>
+
+        <section className="rounded-2xl border border-gray-200 p-5 dark:border-gray-800">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('support.recentSection')}</h2>
+          <ul className="mt-4 space-y-2">
+            {recentGuides.map((item) => (
+              <li key={`recent-guide-${item.id}`} className="rounded-xl border border-gray-100 p-3 text-sm dark:border-gray-800">
+                <Link to={ROUTES.SUPPORT_GUIDE_DETAIL.replace(':slug', item.slug)} className="font-medium text-gray-800 hover:text-violet-500 dark:text-gray-100">
+                  {item.title}
+                </Link>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-300">{item.summary ?? ''}</p>
+              </li>
+            ))}
+            {recentGuides.length === 0 && <li className="text-sm text-gray-500">{t('support.emptyRecent')}</li>}
+          </ul>
+        </section>
+      </div>
+
+      {!hasResults && (
+        <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50/50 p-5 dark:border-amber-900/70 dark:bg-amber-950/10">
+          <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-200">{t('support.noResultsTitle')}</h3>
+          <p className="mt-2 text-sm text-amber-800/80 dark:text-amber-300/80">{t('support.noResultsDescription')}</p>
+          <div className="mt-3 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setSearch('')
+                setCategory('all')
+              }}
+              className="rounded-full border border-amber-300 px-3 py-1 text-xs text-amber-800 hover:border-amber-500 dark:border-amber-700 dark:text-amber-300"
+            >
+              {t('support.resetFilters')}
+            </button>
+            <Link to={ROUTES.CONTACT} className="rounded-full border border-violet-300 px-3 py-1 text-xs text-violet-700 hover:border-violet-500 dark:border-violet-700 dark:text-violet-300">
+              {t('support.toContact')}
+            </Link>
+          </div>
+        </div>
+      )}
 
       <div className="mt-10 rounded-2xl border border-violet-200 bg-violet-50/40 p-5 dark:border-violet-800 dark:bg-violet-950/20">
         <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">{t('support.beforeContactTitle')}</h3>

@@ -10,7 +10,7 @@ const ENDPOINT = API_ENDPOINTS.guides
 export function getGuideList(params?: StrapiQueryParams): Promise<StrapiListResponse<GuideItem>> {
   const merged = {
     fields: ['title', 'slug', 'summary', 'body', 'locale', 'category', 'sourceSite', 'tags', 'featured', 'displayPriority', 'seoTitle', 'seoDescription'],
-    populate: ['relatedFAQs', 'relatedProducts', 'relatedEvents', 'relatedNews', 'coverImage'],
+    populate: ['relatedFAQs', 'relatedProducts', 'relatedEvents', 'relatedNews', 'relatedFCContent', 'coverImage'],
     sort: ['featured:desc', 'displayPriority:desc', 'updatedAt:desc'],
     pagination: { pageSize: 100, withCount: false },
     ...params,
@@ -26,7 +26,7 @@ export function getGuideList(params?: StrapiQueryParams): Promise<StrapiListResp
 
 export function getGuideBySlug(slug: string, params?: StrapiQueryParams): Promise<GuideItem | null> {
   return fetchBySlug<GuideItem>(ENDPOINT, slug, {
-    populate: ['relatedFAQs', 'relatedProducts', 'relatedEvents', 'relatedNews', 'coverImage'],
+    populate: ['relatedFAQs', 'relatedProducts', 'relatedEvents', 'relatedNews', 'relatedFCContent', 'coverImage'],
     ...params,
   }).catch((error) => {
     if (isStrapiForbiddenError(error) || (error instanceof StrapiApiError && (error.status === 0 || error.status === 408))) {

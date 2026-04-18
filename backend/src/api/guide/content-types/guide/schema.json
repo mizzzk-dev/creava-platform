@@ -50,6 +50,11 @@
       "relation": "manyToMany",
       "target": "api::news-item.news-item"
     },
+    "relatedFCContent": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::fanclub-content.fanclub-content"
+    },
     "featured": { "type": "boolean", "default": false },
     "displayPriority": { "type": "integer", "default": 0 },
     "slug": { "type": "uid", "targetField": "title", "required": true },

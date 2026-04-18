@@ -211,6 +211,7 @@ export interface GuideItem extends StrapiBase {
   relatedProducts?: Array<{ id: number; title: string; slug: string }> | null
   relatedEvents?: Array<{ id: number; title: string; slug: string }> | null
   relatedNews?: Array<{ id: number; title: string; slug: string }> | null
+  relatedFCContent?: Array<{ id: number; title: string; slug: string }> | null
   featured: boolean
   displayPriority: number
   seoTitle?: string | null

@@ -764,19 +764,55 @@
     "backToSupport": "Back to Support Center",
     "guideNotFound": "Guide not found.",
     "loadError": "Failed to load the guide.",
+    "featuredSection": "Featured help",
+    "recentSection": "Recently updated guides",
+    "emptyFeatured": "No featured help items yet.",
+    "emptyRecent": "No recently updated guides.",
+    "noResultsTitle": "No results found",
+    "noResultsDescription": "Try different keywords or categories, or use the quick links at the top.",
+    "resetFilters": "Reset filters",
+    "postSubmitHelpTitle": "Self-help after submission",
+    "postSubmitHelpDescription": "While waiting for a reply, check related help for additional guidance.",
+    "recommendedFaq": "Popular FAQ in this category",
+    "noRelatedFaq": "No related FAQ yet.",
     "filters": {
       "all": "All"
     },
+    "quickLinks": {
+      "faq": "FAQ",
+      "events": "Events",
+      "news": "News",
+      "privacy": "Privacy Policy",
+      "storeGuide": "Store Guide",
+      "shipping": "Shipping Policy",
+      "returns": "Returns & Exchanges",
+      "legal": "Legal",
+      "fcGuide": "Fanclub Guide",
+      "subscription": "Subscription Policy"
+    },
     "categories": {
       "mainGeneral": "General inquiries",
+      "mainSiteUsage": "How to use the site",
       "mainEvents": "Events",
-      "mainRequest": "Project / collaboration",
+      "mainProfile": "Profile / activity",
+      "mainNews": "How to read news",
+      "mainPrecheck": "Before contacting",
       "storeOrder": "Orders",
       "storePayment": "Payments",
       "storeShipping": "Shipping",
-      "fcAccount": "Signup / Login",
+      "storeReturns": "Returns / exchanges",
+      "storeDigital": "Digital goods",
+      "storeError": "Errors / issues",
+      "storeProduct": "Product specs",
+      "storeLegal": "Legal / policy",
+      "fcSignup": "Membership signup",
+      "fcLogin": "Login",
       "fcPayment": "FC payments",
-      "fcCancel": "Cancellation"
+      "fcBenefit": "Member benefits",
+      "fcContent": "Content viewing",
+      "fcCancel": "Cancellation",
+      "fcError": "Errors / issues",
+      "fcMembersOnly": "Members-only pages"
     }
   }
 }

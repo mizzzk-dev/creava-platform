@@ -764,19 +764,55 @@
     "backToSupport": "サポートセンターへ戻る",
     "guideNotFound": "ガイドが見つかりませんでした。",
     "loadError": "ガイドの取得に失敗しました。",
+    "featuredSection": "注目のヘルプ",
+    "recentSection": "最近更新されたガイド",
+    "emptyFeatured": "注目設定されたヘルプはありません。",
+    "emptyRecent": "最近更新されたガイドはありません。",
+    "noResultsTitle": "検索結果が見つかりませんでした",
+    "noResultsDescription": "キーワードやカテゴリを変更するか、サポートセンター上部のクイックリンクをお試しください。",
+    "resetFilters": "検索条件をリセット",
+    "postSubmitHelpTitle": "送信後の自己解決ガイド",
+    "postSubmitHelpDescription": "返信を待つ間に、関連ヘルプから追加情報を確認できます。",
+    "recommendedFaq": "このカテゴリでよく見られるFAQ",
+    "noRelatedFaq": "関連FAQはまだありません。",
     "filters": {
       "all": "すべて"
     },
+    "quickLinks": {
+      "faq": "FAQ一覧",
+      "events": "イベント情報",
+      "news": "お知らせ一覧",
+      "privacy": "プライバシーポリシー",
+      "storeGuide": "ストアガイド",
+      "shipping": "配送ポリシー",
+      "returns": "返品・交換",
+      "legal": "法務ガイド",
+      "fcGuide": "FCガイド",
+      "subscription": "継続課金ポリシー"
+    },
     "categories": {
       "mainGeneral": "一般お問い合わせ",
+      "mainSiteUsage": "サイトの見方",
       "mainEvents": "イベント関連",
-      "mainRequest": "仕事依頼・コラボ",
+      "mainProfile": "プロフィール・活動関連",
+      "mainNews": "お知らせの見方",
+      "mainPrecheck": "お問い合わせ前の確認事項",
       "storeOrder": "注文について",
       "storePayment": "支払いについて",
       "storeShipping": "配送について",
-      "fcAccount": "会員登録・ログイン",
+      "storeReturns": "返品・交換について",
+      "storeDigital": "デジタル商品について",
+      "storeError": "不具合・エラーについて",
+      "storeProduct": "商品仕様について",
+      "storeLegal": "特商法・ポリシー",
+      "fcSignup": "会員登録について",
+      "fcLogin": "ログインについて",
       "fcPayment": "FC決済",
-      "fcCancel": "退会・解約"
+      "fcBenefit": "会員特典について",
+      "fcContent": "コンテンツ閲覧について",
+      "fcCancel": "退会・解約について",
+      "fcError": "不具合・エラーについて",
+      "fcMembersOnly": "会員限定ページについて"
     }
   }
 }

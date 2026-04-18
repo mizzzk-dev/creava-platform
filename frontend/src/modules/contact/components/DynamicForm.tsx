@@ -118,12 +118,40 @@ export default function DynamicForm({ definition, sourcePage }: { definition: Fo
 
   if (status === 'success' || status === 'error') {
     const success = status === 'success'
+    const suggestedSupportLinks = definition.sourceSite === 'store'
+      ? [
+          { to: ROUTES.SUPPORT_CENTER, label: t('support.toSupportCenter') },
+          { to: '/guide', label: t('support.quickLinks.storeGuide') },
+          { to: '/faq', label: t('support.toFaq') },
+        ]
+      : definition.sourceSite === 'fc'
+        ? [
+            { to: ROUTES.SUPPORT_CENTER, label: t('support.toSupportCenter') },
+            { to: '/guide', label: t('support.quickLinks.fcGuide') },
+            { to: '/faq', label: t('support.toFaq') },
+          ]
+        : [
+            { to: ROUTES.SUPPORT_CENTER, label: t('support.toSupportCenter') },
+            { to: ROUTES.FAQ, label: t('support.toFaq') },
+          ]
+
     return (
       <div className="py-8 space-y-4">
         <p className={`font-mono text-sm ${success ? 'text-emerald-400' : 'text-red-400'}`}>
           {success ? pickLocale(definition.successMessage, i18n.language) : pickLocale(definition.failureMessage, i18n.language)}
         </p>
         {success ? <p className="text-xs text-gray-500">#{submittedId ?? '-'} / {new Date().toLocaleString()}</p> : null}
+        <div className="rounded-xl border border-cyan-800/50 bg-cyan-950/20 p-4">
+          <p className="text-xs text-cyan-300">{t('support.postSubmitHelpTitle')}</p>
+          <p className="mt-1 text-xs text-gray-400">{t('support.postSubmitHelpDescription')}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {suggestedSupportLinks.map((link) => (
+              <Link key={`${definition.formType}-${link.to}`} to={link.to} className="rounded-full border border-cyan-700/60 px-3 py-1 text-xs text-cyan-200 hover:border-cyan-400">
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </div>
         <div className="flex gap-3 text-xs font-mono">
           {success ? <button type="button" onClick={resetAll} className="text-gray-500 hover:text-gray-300">{t('contact.sendAnother')}</button> : <button type="button" onClick={() => { setStatus('idle'); setStep('confirm') }} className="text-gray-500 hover:text-gray-300">{t('contact.retry')}</button>}
           <Link to={ROUTES.CONTACT} className="text-gray-500 hover:text-gray-300">{t('contact.backToContactTop')}</Link>

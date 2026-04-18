@@ -764,19 +764,55 @@
     "backToSupport": "지원 센터로 돌아가기",
     "guideNotFound": "가이드를 찾을 수 없습니다.",
     "loadError": "가이드를 불러오지 못했습니다.",
+    "featuredSection": "추천 도움말",
+    "recentSection": "최근 업데이트 가이드",
+    "emptyFeatured": "추천 도움말이 없습니다.",
+    "emptyRecent": "최근 업데이트된 가이드가 없습니다.",
+    "noResultsTitle": "검색 결과가 없습니다",
+    "noResultsDescription": "키워드/카테고리를 변경하거나 상단 빠른 링크를 이용해 주세요.",
+    "resetFilters": "검색 조건 초기화",
+    "postSubmitHelpTitle": "전송 후 셀프 해결 가이드",
+    "postSubmitHelpDescription": "답변을 기다리는 동안 관련 도움말을 확인할 수 있습니다.",
+    "recommendedFaq": "이 카테고리에서 자주 보는 FAQ",
+    "noRelatedFaq": "관련 FAQ가 아직 없습니다.",
     "filters": {
       "all": "전체"
     },
+    "quickLinks": {
+      "faq": "FAQ",
+      "events": "이벤트",
+      "news": "공지사항",
+      "privacy": "개인정보처리방침",
+      "storeGuide": "스토어 가이드",
+      "shipping": "배송 정책",
+      "returns": "반품·교환",
+      "legal": "법무 안내",
+      "fcGuide": "팬클럽 가이드",
+      "subscription": "정기결제 정책"
+    },
     "categories": {
       "mainGeneral": "일반 문의",
+      "mainSiteUsage": "사이트 이용 방법",
       "mainEvents": "이벤트 관련",
-      "mainRequest": "업무 의뢰/콜라보",
+      "mainProfile": "프로필·활동 관련",
+      "mainNews": "공지 확인 방법",
+      "mainPrecheck": "문의 전 확인사항",
       "storeOrder": "주문 관련",
       "storePayment": "결제 관련",
       "storeShipping": "배송 관련",
-      "fcAccount": "가입/로그인",
+      "storeReturns": "반품·교환 관련",
+      "storeDigital": "디지털 상품 관련",
+      "storeError": "오류·문제 관련",
+      "storeProduct": "상품 사양 관련",
+      "storeLegal": "법무·정책 관련",
+      "fcSignup": "회원가입 관련",
+      "fcLogin": "로그인 관련",
       "fcPayment": "FC 결제",
-      "fcCancel": "해지/탈퇴"
+      "fcBenefit": "회원 혜택 관련",
+      "fcContent": "콘텐츠 이용 관련",
+      "fcCancel": "해지/탈퇴 관련",
+      "fcError": "오류·문제 관련",
+      "fcMembersOnly": "회원 전용 페이지 관련"
     }
   }
 }

@@ -16,6 +16,8 @@
 - FAQ 一覧: `/faq`
 - Guide 詳細: `/support/guides/:slug`
 - Contact 連携: `/contact` の各フォームに関連FAQ/Guideパネルを表示
+- 補助導線: FAQ/Guide の `featured`・更新日時を使った「注目」「最近更新」枠を表示
+- クイックリンク: main/store/fc で policy/legal/news/events への到達をサポートセンター上部に固定
 
 ## Strapi コンテンツモデル
 
@@ -27,7 +29,7 @@
 
 ### Guide（新規）
 - 主要項目: `title`, `summary`, `body`, `locale`, `category`, `sourceSite`, `tags`, `coverImage`
-- 関連項目: `relatedFAQs`, `relatedForms`, `relatedProducts`, `relatedEvents`, `relatedNews`
+- 関連項目: `relatedFAQs`, `relatedForms`, `relatedProducts`, `relatedEvents`, `relatedNews`, `relatedFCContent`
 - 表示制御: `featured`, `displayPriority`, `slug`
 - SEO: `seoTitle`, `seoDescription`
 
@@ -57,7 +59,16 @@
 ## 問い合わせ導線接続ルール
 - フォーム表示時に、`sourceSite` と `formType` を条件に関連FAQ/Guideを表示。
 - 解決しない場合はフォーム入力を継続。
-- 送信後の改善（サンクス面での関連導線強化）は次PR候補。
+- 送信成功/失敗画面でも Support Center・FAQ・Guide への再遷移導線を出す。
+
+## 検索/絞り込み運用ルール
+- Support Center の検索対象:
+  - FAQ: `question`, `answer`, `tags`, `keywords`
+  - Guide: `title`, `summary`, `body`, `tags`
+- 0件時の対応:
+  - キーワード/カテゴリのリセット導線を表示
+  - それでも解決しない場合の Contact 導線を表示
+- カテゴリ値は `modules/support/config.ts` と Strapi enum を一致させる（旧キーを混在させない）
 
 ## 内容更新の優先順位
 1. 問い合わせ頻度の高いトピック（注文/配送/ログイン/決済）
@@ -84,3 +95,8 @@
 - GitHub Secrets / Variables: **追加不要**
 - DNS: **変更不要**（既存ドメイン配下のルート追加のみ）
 - local / staging / production 差分: 既存 `VITE_SITE_TYPE` と Strapi 接続先差分のみ
+
+## よくある問い合わせをFAQ化する運用優先順位（site別）
+- main: 一般問い合わせ前確認 / event / profile・活動 / news導線
+- store: 注文 / 決済 / 配送 / 返品交換 / デジタル商品 / エラー
+- fc: 会員登録 / ログイン / 決済 / 特典 / 解約 / 会員限定閲覧
