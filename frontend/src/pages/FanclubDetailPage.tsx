@@ -17,6 +17,7 @@ import MemberGuideCard from '@/components/common/MemberGuideCard'
 import type { FanclubContent } from '@/types'
 import FavoriteToggleButton from '@/modules/personalization/components/FavoriteToggleButton'
 import { trackView } from '@/modules/personalization/storage'
+import CommunityEngagementPanel from '@/modules/community/components/CommunityEngagementPanel'
 
 export default function FanclubDetailPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -96,6 +97,7 @@ function FanclubDetailContent({ slug }: { slug: string | undefined }) {
             {item.body}
           </div>
         )}
+        <CommunityEngagementPanel sourceSite="fc" contentType="fanclub" entityId={item.slug} />
         <MemberGuideCard />
       </article>
     </ContentAccessGuard>

@@ -36,6 +36,11 @@ export const API_ENDPOINTS = {
   notificationPreferences: '/notification-preferences',
   lifecycleTemplates: '/lifecycle-templates',
   deliveryLogs: '/delivery-logs',
+  communityReactions: '/community-reactions',
+  participationLogs: '/participation-logs',
+  communityPosts: '/community-posts',
+  communityReports: '/community-reports',
+  moderationLogs: '/moderation-logs',
 
   // Single Types
   profile:         '/profile',

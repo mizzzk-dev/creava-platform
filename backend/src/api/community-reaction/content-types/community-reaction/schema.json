@@ -1,0 +1,64 @@
+{
+  "kind": "collectionType",
+  "collectionName": "community_reactions",
+  "info": {
+    "singularName": "community-reaction",
+    "pluralName": "community-reactions",
+    "displayName": "Community Reaction"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "userId": {
+      "type": "string"
+    },
+    "sourceSite": {
+      "type": "enumeration",
+      "enum": [
+        "main",
+        "store",
+        "fc"
+      ],
+      "required": true
+    },
+    "contentType": {
+      "type": "enumeration",
+      "enum": [
+        "event",
+        "fanclub",
+        "product",
+        "news",
+        "guide",
+        "campaign"
+      ],
+      "required": true
+    },
+    "entityId": {
+      "type": "string",
+      "required": true
+    },
+    "reactionType": {
+      "type": "enumeration",
+      "enum": [
+        "cheer",
+        "curious",
+        "joined"
+      ],
+      "required": true
+    },
+    "locale": {
+      "type": "string",
+      "default": "ja"
+    },
+    "userState": {
+      "type": "enumeration",
+      "enum": [
+        "guest",
+        "logged_in",
+        "member"
+      ],
+      "default": "guest"
+    }
+  }
+}
