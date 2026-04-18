@@ -1,0 +1,23 @@
+{
+  "kind": "collectionType",
+  "collectionName": "notification_preferences",
+  "info": {
+    "singularName": "notification-preference",
+    "pluralName": "notification-preferences",
+    "displayName": "NotificationPreference"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "userId": { "type": "string", "required": true },
+    "sourceSite": { "type": "enumeration", "enum": ["main", "store", "fc", "cross"], "default": "cross", "required": true },
+    "locale": { "type": "string", "default": "ja", "required": true },
+    "emailOptIn": { "type": "boolean", "default": true, "required": true },
+    "inAppOptIn": { "type": "boolean", "default": true, "required": true },
+    "themeConfig": { "type": "json", "required": true },
+    "unsubscribeToken": { "type": "uid", "targetField": "userId" },
+    "consentVersion": { "type": "string" },
+    "lastSyncedAt": { "type": "datetime" }
+  }
+}

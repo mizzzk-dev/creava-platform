@@ -33,6 +33,9 @@ export const API_ENDPOINTS = {
   favorites:       '/favorites',
   viewHistories:   '/view-histories',
   memberNotifications: '/member-notifications',
+  notificationPreferences: '/notification-preferences',
+  lifecycleTemplates: '/lifecycle-templates',
+  deliveryLogs: '/delivery-logs',
 
   // Single Types
   profile:         '/profile',

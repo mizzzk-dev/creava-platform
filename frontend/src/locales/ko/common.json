@@ -876,5 +876,23 @@
     "noFavorite": "즐겨찾기 후 추천이 표시됩니다.",
     "noNotification": "읽지 않은 알림이 없습니다.",
     "error": "검색 결과를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요."
+  },
+  "notificationPreference": {
+    "title": "수신 설정 센터",
+    "description": "main / store / fc 전반에서 채널 및 테마별 알림 수신 설정을 관리합니다.",
+    "trackingBadge": "추적 이벤트 활성화",
+    "enableAllInApp": "인앱 알림 일괄 ON/OFF",
+    "enableAllEmail": "이메일 알림 일괄 ON/OFF",
+    "themeFcUpdate": "FC 업데이트",
+    "themeMemberBenefit": "회원 혜택",
+    "themeStoreNewArrival": "스토어 신상품",
+    "themeFavoriteRelated": "즐겨찾기 연계",
+    "themeCampaign": "캠페인",
+    "themeEvent": "이벤트",
+    "themeSupportImportant": "지원 / 중요 공지",
+    "required": "필수 알림",
+    "unsubscribeHint": "선택 알림은 언제든지 중지할 수 있습니다. 중요 공지는 서비스 운영을 위해 유지됩니다.",
+    "optionalCount": "선택 알림 테마: {{count}}개",
+    "unsubscribeLink": "수신 해지 및 개인정보 처리방침 확인"
   }
 }

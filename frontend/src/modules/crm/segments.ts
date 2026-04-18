@@ -1,0 +1,23 @@
+import type { SegmentContext } from './types'
+
+export function buildEngagementSegment(lastActiveAt: string | null): SegmentContext['engagementSegment'] {
+  if (!lastActiveAt) return 'new'
+  const diff = Date.now() - new Date(lastActiveAt).getTime()
+  const days = diff / (24 * 60 * 60 * 1000)
+  if (days <= 7) return 'active'
+  if (days <= 30) return 'at_risk'
+  return 'dormant'
+}
+
+export function buildLifecycleScenarios(context: SegmentContext): string[] {
+  const scenarios = ['welcome']
+
+  if (context.engagementSegment === 'dormant') scenarios.push('inactivity_nudge')
+  if (context.membershipStatus === 'member' || context.membershipStatus === 'premium') scenarios.push('member_benefit')
+  if (context.favoriteCategories.length > 0) scenarios.push('favorite_related')
+  if (context.sourceSite === 'store') scenarios.push('store_new_arrival', 'campaign_announcement')
+  if (context.sourceSite === 'fc') scenarios.push('fc_update')
+  if (context.sourceSite === 'main') scenarios.push('event_update')
+
+  return scenarios
+}

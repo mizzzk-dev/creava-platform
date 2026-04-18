@@ -1,0 +1,26 @@
+{
+  "kind": "collectionType",
+  "collectionName": "delivery_logs",
+  "info": {
+    "singularName": "delivery-log",
+    "pluralName": "delivery-logs",
+    "displayName": "DeliveryLog"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "userId": { "type": "string", "required": true },
+    "templateKey": { "type": "string", "required": true },
+    "channel": { "type": "enumeration", "enum": ["in_app", "email"], "required": true },
+    "sourceSite": { "type": "enumeration", "enum": ["main", "store", "fc"], "required": true },
+    "locale": { "type": "string", "default": "ja", "required": true },
+    "status": { "type": "enumeration", "enum": ["pending", "sent", "failed", "skipped"], "default": "pending", "required": true },
+    "idempotencyKey": { "type": "uid", "targetField": "templateKey" },
+    "errorReason": { "type": "text" },
+    "sentAt": { "type": "datetime" },
+    "openedAt": { "type": "datetime" },
+    "clickedAt": { "type": "datetime" },
+    "payload": { "type": "json" }
+  }
+}

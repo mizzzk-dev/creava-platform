@@ -876,5 +876,23 @@
     "noFavorite": "お気に入り登録からおすすめを生成します。",
     "noNotification": "未読通知はありません。",
     "error": "検索結果の取得に失敗しました。時間をおいて再試行してください。"
+  },
+  "notificationPreference": {
+    "title": "配信設定センター",
+    "description": "main / store / fc を横断して、通知チャネルとテーマごとの受信設定を管理できます。",
+    "trackingBadge": "計測イベントを有効化",
+    "enableAllInApp": "サイト内通知を一括ON/OFF",
+    "enableAllEmail": "メール通知を一括ON/OFF",
+    "themeFcUpdate": "FC更新",
+    "themeMemberBenefit": "会員特典",
+    "themeStoreNewArrival": "ストア新着",
+    "themeFavoriteRelated": "お気に入り関連",
+    "themeCampaign": "キャンペーン",
+    "themeEvent": "イベント",
+    "themeSupportImportant": "サポート / 重要なお知らせ",
+    "required": "必須通知",
+    "unsubscribeHint": "任意通知はいつでも停止できます。重要なお知らせはサービス継続のため配信されます。",
+    "optionalCount": "任意通知テーマ: {{count}} 件",
+    "unsubscribeLink": "配信停止とプライバシーポリシーを確認"
   }
 }
