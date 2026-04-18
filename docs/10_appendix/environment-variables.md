@@ -78,3 +78,22 @@
 1. Strapi の upload provider 設定を `backend/config/plugins.ts` で切替。
 2. 添付メタデータは `attachmentMetadata` に保持されるため、保存先変更後も運用画面側の参照項目は維持可能。
 3. バケットライフサイクルで保持期間（例: 365 日）を設定し、`status=closed/spam` の長期データを段階削除する。
+
+## 追補: 共通フォームプラットフォーム（2026-04）
+
+### backend 追加推奨 env
+- `INQUIRY_NOTIFY_TO_MAIN_CONTACT`
+- `INQUIRY_NOTIFY_TO_MAIN_REQUEST`
+- `INQUIRY_NOTIFY_TO_MAIN_COLLABORATION`
+- `INQUIRY_NOTIFY_TO_MAIN_EVENT`
+- `INQUIRY_NOTIFY_TO_STORE_STORE_SUPPORT`
+- `INQUIRY_NOTIFY_TO_FC_FC_SUPPORT`
+
+> 未設定時は既存の `INQUIRY_NOTIFY_TO` にフォールバック。
+
+### GitHub Secrets（デプロイ時）
+- 上記 env を Secrets に追加し、backend デプロイ環境に同期する。
+- 命名例: `PROD_INQUIRY_NOTIFY_TO_MAIN_REQUEST`。
+
+### DNS
+- 共通フォーム化による DNS 変更は不要。

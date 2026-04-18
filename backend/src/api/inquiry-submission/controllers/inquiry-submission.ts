@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { factories } from '@strapi/strapi'
+import { mergeWithDefaults, selectFormDefinition } from '../../../utils/form-definitions'
 
 const MAX_FILE_BYTES = Number(process.env.INQUIRY_MAX_FILE_BYTES ?? 10 * 1024 * 1024)
 const MAX_FILES = Number(process.env.INQUIRY_MAX_FILES ?? 5)
@@ -9,7 +10,7 @@ const DUPLICATE_WINDOW_MS = Number(process.env.INQUIRY_DUPLICATE_WINDOW_MS ?? 90
 const CONTACT_REPLY_DAYS = Number(process.env.INQUIRY_REPLY_SLA_DAYS ?? 3)
 
 const ALLOWED_LOCALES = new Set(['ja', 'en', 'ko'])
-const ALLOWED_FORM_TYPES = new Set(['contact', 'request', 'restock', 'application', 'entry', 'collaboration'])
+const FALLBACK_FORM_TYPES = new Set(['contact', 'request', 'restock', 'application', 'entry', 'collaboration', 'event', 'store_support', 'fc_support'])
 
 const ALLOWED_MIME_TYPES = new Set([
   'application/pdf',
@@ -146,6 +147,39 @@ function scoreSpam(input: {
   }
 
   return { score, reason: reasons.length > 0 ? reasons.join(',') : null }
+}
+
+
+async function loadActiveFormDefinitions(strapi: any) {
+  const fromCms = await strapi.entityService.findMany('api::form-definition.form-definition', {
+    fields: [
+      'formType', 'formKey', 'formTitle', 'formDescription', 'sourceSite', 'isPublic', 'requiresAuth', 'fields',
+      'confirmEnabled', 'attachmentEnabled', 'allowedMimeTypes', 'maxFiles', 'maxFileSize', 'notificationTarget',
+      'autoReplyEnabled', 'successMessage', 'failureMessage', 'locale', 'displayPriority', 'isActive',
+      'defaultCategory', 'initialStatus', 'initialPriority',
+    ],
+    filters: { isActive: true },
+    publicationState: 'live',
+    limit: 200,
+  }).catch(() => [])
+
+  return mergeWithDefaults(fromCms as any[])
+}
+
+function resolveNotificationTargets(definition: any, sourceSite: string): string[] {
+  const routedKey = `INQUIRY_NOTIFY_TO_${sourceSite.toUpperCase()}_${String(definition?.formType ?? '').toUpperCase()}`
+  const routed = String(process.env[routedKey] ?? '').split(',').map((v) => v.trim()).filter(Boolean)
+  if (routed.length) return routed
+
+  const sourceOnly = String(process.env[`INQUIRY_NOTIFY_TO_${sourceSite.toUpperCase()}`] ?? '').split(',').map((v) => v.trim()).filter(Boolean)
+  if (sourceOnly.length) return sourceOnly
+
+  if (Array.isArray(definition?.notificationTarget) && definition.notificationTarget.length > 0) {
+    const list = definition.notificationTarget.map((v: unknown) => String(v).trim()).filter(Boolean)
+    if (list.length > 0) return list
+  }
+
+  return String(process.env.INQUIRY_NOTIFY_TO ?? '').split(',').map((emailAddress) => emailAddress.trim()).filter(Boolean)
 }
 
 function defaultCategoryBySite(site: 'main' | 'store' | 'fc' | 'unknown', formType: string): string {
@@ -367,8 +401,12 @@ export default factories.createCoreController(
       const sourcePage = normalizeText(body.sourcePage, 500)
       const locale = normalizeLocale(String(body.locale ?? 'ja'))
       const requestType = normalizeText(body.requestType, 80)
+      const definitions = await loadActiveFormDefinitions(strapi)
+      const formDefinition = selectFormDefinition(formType, sourceSite, definitions)
+      const allowedFormTypes = new Set(definitions.map((item) => item.formType))
+      const isAllowedType = allowedFormTypes.size > 0 ? allowedFormTypes.has(formType) : FALLBACK_FORM_TYPES.has(formType)
 
-      if (!ALLOWED_FORM_TYPES.has(formType)) {
+      if (!isAllowedType) {
         return ctx.badRequest('formType が不正です')
       }
 
@@ -388,17 +426,28 @@ export default factories.createCoreController(
         return ctx.badRequest('request の必須項目が不足しています')
       }
 
-      if (files.length > MAX_FILES) {
-        return ctx.badRequest(`添付ファイルは最大 ${MAX_FILES} 件までです`)
+      const allowAttachment = Boolean(formDefinition?.attachmentEnabled ?? true)
+      const maxFiles = Number(formDefinition?.maxFiles ?? MAX_FILES)
+      const maxFileBytes = Number(formDefinition?.maxFileSize ?? MAX_FILE_BYTES)
+      const allowedMimes = new Set(Array.isArray(formDefinition?.allowedMimeTypes) && formDefinition.allowedMimeTypes.length > 0
+        ? formDefinition.allowedMimeTypes
+        : Array.from(ALLOWED_MIME_TYPES))
+
+      if (!allowAttachment && files.length > 0) {
+        return ctx.badRequest('このフォームでは添付ファイルを利用できません')
+      }
+
+      if (files.length > maxFiles) {
+        return ctx.badRequest(`添付ファイルは最大 ${maxFiles} 件までです`)
       }
 
       for (const file of files) {
         const fileName = normalizeText(file.name, 260)
         const ext = extensionFromFilename(fileName)
-        if (file.size > MAX_FILE_BYTES) {
-          return ctx.badRequest(`ファイルサイズ上限は ${MAX_FILE_BYTES} bytes です`)
+        if (file.size > maxFileBytes) {
+          return ctx.badRequest(`ファイルサイズ上限は ${maxFileBytes} bytes です`)
         }
-        if (!ALLOWED_MIME_TYPES.has(file.type) || !ALLOWED_FILE_EXTENSIONS.has(ext)) {
+        if (!allowedMimes.has(file.type) || !ALLOWED_FILE_EXTENSIONS.has(ext)) {
           return ctx.badRequest(`許可されていないファイル形式です: ${file.type} (${ext || 'no-ext'})`)
         }
       }
@@ -418,7 +467,8 @@ export default factories.createCoreController(
       })
       const spamScore = spamAssessment.score + (burstSpam ? 10 : 0)
       const isSpam = burstSpam || spamScore >= 5
-      const inquiryCategory = normalizeCategory(sourceSite, formType, String(body.inquiryCategory ?? ''), requestType)
+      const fallbackCategory = String(formDefinition?.defaultCategory ?? '')
+      const inquiryCategory = normalizeCategory(sourceSite, formType, String(body.inquiryCategory ?? fallbackCategory), requestType)
 
       const uploaded = files.length
         ? await strapi.plugin('upload').service('upload').upload({
@@ -444,8 +494,8 @@ export default factories.createCoreController(
           locale,
           sourcePage,
           sourceSite,
-          status: isSpam ? 'spam' : 'new',
-          priority: isSpam ? 'low' : 'normal',
+          status: isSpam ? 'spam' : String(formDefinition?.initialStatus ?? 'new'),
+          priority: isSpam ? 'low' : String(formDefinition?.initialPriority ?? 'normal'),
           submittedAt,
           lastActionAt: submittedAt,
           replyStatus: formType === 'restock' ? 'not_required' : 'pending',
@@ -467,10 +517,7 @@ export default factories.createCoreController(
         },
       })
 
-      const notifyTo = String(process.env.INQUIRY_NOTIFY_TO ?? '')
-        .split(',')
-        .map((emailAddress) => emailAddress.trim())
-        .filter(Boolean)
+      const notifyTo = resolveNotificationTargets(formDefinition, sourceSite)
 
       const notifySubject = `[mizzz][${sourceSite}] 新規問い合わせ #${entry.id} ${inquiryCategory}`
       const notifyText = [
@@ -502,7 +549,8 @@ export default factories.createCoreController(
         strapi.log.error(`[inquiry-submission] notify mail failed id=${entry.id}: ${(error as Error).message}`)
       }
 
-      const enableAutoReply = String(process.env.INQUIRY_ENABLE_AUTO_REPLY ?? 'false').toLowerCase() === 'true'
+      const envAutoReply = String(process.env.INQUIRY_ENABLE_AUTO_REPLY ?? 'false').toLowerCase() === 'true'
+      const enableAutoReply = (formDefinition?.autoReplyEnabled ?? true) && envAutoReply
       if (enableAutoReply && formType !== 'restock' && !isSpam) {
         try {
           await sendNotificationMail(strapi, {
