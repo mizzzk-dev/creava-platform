@@ -7,6 +7,11 @@ export type AuthenticatedUser = {
   scopes: string[]
 }
 
+export function hasRequiredScopes(userScopes: string[], requiredScopes: string[]): boolean {
+  if (!requiredScopes.length) return true
+  return requiredScopes.every((scope) => userScopes.includes(scope))
+}
+
 type JwtHeader = {
   alg?: unknown
   kid?: unknown
@@ -176,4 +181,3 @@ export async function verifyLogtoToken(authorization: string | undefined): Promi
     scopes,
   }
 }
-

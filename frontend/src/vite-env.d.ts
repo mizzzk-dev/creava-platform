@@ -21,10 +21,15 @@ interface ImportMetaEnv {
   readonly VITE_STRAPI_RESPONSE_CACHE_STALE_TTL_MS?: string
   readonly VITE_STRAPI_USE_TOKEN_FOR_PUBLIC?: string
   readonly VITE_LOGTO_ENDPOINT?: string
+  readonly VITE_LOGTO_APP_ID_MAIN?: string
+  readonly VITE_LOGTO_APP_ID_STORE?: string
+  readonly VITE_LOGTO_APP_ID_FC?: string
   readonly VITE_LOGTO_APP_ID?: string
   readonly VITE_LOGTO_CALLBACK_PATH?: string
   readonly VITE_LOGTO_POST_LOGOUT_REDIRECT_URI?: string
   readonly VITE_LOGTO_API_RESOURCE?: string
+  readonly VITE_LOGTO_ISSUER?: string
+  readonly VITE_LOGTO_MANAGEMENT_API_ENDPOINT?: string
   readonly VITE_LOGTO_SOCIAL_GOOGLE_ENABLED?: string
   readonly VITE_LOGTO_SOCIAL_APPLE_ENABLED?: string
   readonly VITE_LOGTO_SOCIAL_X_ENABLED?: string

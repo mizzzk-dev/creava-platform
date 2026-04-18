@@ -1,4 +1,4 @@
-import { verifyLogtoToken, type AuthenticatedUser } from '../../../lib/auth/logto'
+import { hasRequiredScopes, verifyLogtoToken, type AuthenticatedUser } from '../../../lib/auth/logto'
 import { parseStripeWebhookEvent } from '../../../lib/stripe/webhook'
 import {
   createFanclubCheckoutSession,
@@ -27,6 +27,11 @@ async function requireAuthenticatedUser(ctx: any): Promise<AuthenticatedUser> {
   } catch (error) {
     throw new Error(`本人認証に失敗しました: ${(error as Error).message}`)
   }
+}
+
+function requireScopes(user: AuthenticatedUser, requiredScopes: string[], actionLabel: string): void {
+  if (hasRequiredScopes(user.scopes, requiredScopes)) return
+  throw new Error(`権限不足です: ${actionLabel} には ${requiredScopes.join(', ')} scope が必要です。`)
 }
 
 function toAuthUserId(metadata: Record<string, unknown>): string | null {
@@ -91,6 +96,7 @@ export default ({ strapi }) => ({
       if (!planId) return ctx.badRequest('planId は必須です。')
 
       const authUser = await requireAuthenticatedUser(ctx)
+      requireScopes(authUser, ['fanclub:checkout'], 'fanclub checkout')
 
       const plan = await strapi.documents('api::membership-plan.membership-plan').findOne({
         documentId: String(planId),
@@ -132,6 +138,7 @@ export default ({ strapi }) => ({
       const message = (error as Error).message
       strapi.log.error(`[payment] createFanclubCheckout failed: ${message}`)
       if (message.includes('本人認証')) return ctx.unauthorized(message)
+      if (message.includes('権限不足')) return ctx.forbidden(message)
       ctx.internalServerError('ファンクラブ決済セッション生成に失敗しました。')
     }
   },
@@ -139,6 +146,7 @@ export default ({ strapi }) => ({
   async createPortalSession(ctx) {
     try {
       const authUser = await requireAuthenticatedUser(ctx)
+      requireScopes(authUser, ['fanclub:portal'], 'customer portal')
 
       const latestSubscription = await strapi.documents('api::subscription-record.subscription-record').findFirst({
         filters: {
@@ -162,6 +170,7 @@ export default ({ strapi }) => ({
       const message = (error as Error).message
       strapi.log.error(`[payment] createPortalSession failed: ${message}`)
       if (message.includes('本人認証')) return ctx.unauthorized(message)
+      if (message.includes('権限不足')) return ctx.forbidden(message)
       ctx.internalServerError('ポータルセッション生成に失敗しました。')
     }
   },

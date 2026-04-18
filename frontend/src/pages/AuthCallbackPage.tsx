@@ -15,8 +15,8 @@ export default function AuthCallbackPage() {
     }
 
     void handleCallback()
-      .then(() => {
-        navigate('/', { replace: true })
+      .then((redirectPath) => {
+        navigate(redirectPath, { replace: true })
       })
       .catch(() => {
         navigate(isFanclubSite ? '/login' : '/member', { replace: true })

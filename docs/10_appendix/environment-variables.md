@@ -24,6 +24,18 @@
 | `VITE_ANALYTICS_OPS_ENDPOINT` | 主要イベントをStrapiへ保存するエンドポイント | 任意 | 推奨 | 推奨 |
 | `VITE_PREVIEW_SECRET` | Strapi previewエントリー用シークレット | 必須 | 必須 | 必須 |
 
+### frontend 認証（Logto）詳細
+- `VITE_LOGTO_ENDPOINT`（Hosted Sign-in: custom domain 推奨）
+- `VITE_LOGTO_APP_ID_MAIN`
+- `VITE_LOGTO_APP_ID_STORE`
+- `VITE_LOGTO_APP_ID_FC`
+- `VITE_LOGTO_APP_ID`（段階移行用フォールバック）
+- `VITE_LOGTO_CALLBACK_PATH`
+- `VITE_LOGTO_POST_LOGOUT_REDIRECT_URI`
+- `VITE_LOGTO_API_RESOURCE`
+- `VITE_LOGTO_ISSUER`
+- `VITE_LOGTO_MANAGEMENT_API_ENDPOINT`（default tenant endpoint）
+
 ## 2. backend 変数（フォーム運用関連を含む）
 
 | 変数 | 用途 | 必須度 |
@@ -47,14 +59,28 @@
 | `RATE_LIMIT_WINDOW_MS` / `RATE_LIMIT_MAX` | API全体レート制限 | 推奨 |
 | `AUDIT_WINDOW_MS` / `AUDIT_404_THRESHOLD` | 監査ログ閾値 | 推奨 |
 
+### backend 認可（Logto）詳細
+- `LOGTO_ISSUER`
+- `LOGTO_JWKS_URI`
+- `LOGTO_API_RESOURCE`
+- `LOGTO_REQUIRED_SCOPES`
+- `LOGTO_MANAGEMENT_API_ENDPOINT`（default tenant endpoint）
+- `LOGTO_M2M_APP_ID`
+- `LOGTO_M2M_APP_SECRET`
+
 ## 3. GitHub Secrets（推奨一覧）
 
 ### Frontend build/deploy
 - `VITE_STRAPI_API_URL`
 - `VITE_STRAPI_API_TOKEN`
 - `VITE_LOGTO_ENDPOINT`
+- `VITE_LOGTO_APP_ID_MAIN`
+- `VITE_LOGTO_APP_ID_STORE`
+- `VITE_LOGTO_APP_ID_FC`
 - `VITE_LOGTO_APP_ID`
 - `VITE_LOGTO_API_RESOURCE`
+- `VITE_LOGTO_ISSUER`
+- `VITE_LOGTO_MANAGEMENT_API_ENDPOINT`
 - `VITE_SHOPIFY_STORE_DOMAIN`
 - `VITE_SHOPIFY_STOREFRONT_TOKEN`
 - `VITE_STRIPE_PUBLISHABLE_KEY`
@@ -110,6 +136,10 @@
 
 ### DNS
 - 共通フォーム化による DNS 変更は不要。
+
+## 9. Logto custom domain 運用の DNS 注意点
+- `auth.mizzz.jp` を新規利用する場合のみ DNS 追加が必要（CNAME）。
+- 既に `auth.mizzz.jp` 運用済みで、今回の env / CI / docs 整理だけを実施する場合は **DNS変更不要**。
 
 
 ## 8. 監視運用（2026-04 追加）

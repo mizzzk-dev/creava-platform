@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { useCurrentUser } from '@/hooks'
 import { useAuthClient } from '@/lib/auth/AuthProvider'
+import { HAS_LOGTO } from '@/lib/auth/config'
 
 /**
  * ログイン / ログアウトボタン（Logto）
@@ -43,6 +44,6 @@ function AuthButtonWithAuth() {
 /**
  * VITE_LOGTO_APP_ID 未設定時は認証ボタンを非表示にする
  */
-export default import.meta.env.VITE_LOGTO_APP_ID
+export default HAS_LOGTO
   ? AuthButtonWithAuth
   : function AuthButtonDisabled() { return null }
