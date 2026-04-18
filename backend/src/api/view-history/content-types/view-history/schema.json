@@ -1,0 +1,23 @@
+{
+  "kind": "collectionType",
+  "collectionName": "view_histories",
+  "info": {
+    "singularName": "view-history",
+    "pluralName": "view-histories",
+    "displayName": "ViewHistory"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "userId": { "type": "string" },
+    "sessionId": { "type": "string" },
+    "entityKind": { "type": "enumeration", "enum": ["product", "fanclub", "news", "blog", "event", "guide", "faq"], "required": true },
+    "entitySlug": { "type": "string", "required": true },
+    "title": { "type": "string", "required": true },
+    "href": { "type": "string", "required": true },
+    "sourceSite": { "type": "enumeration", "enum": ["main", "store", "fc"], "default": "main", "required": true },
+    "locale": { "type": "string", "default": "ja" },
+    "viewedAt": { "type": "datetime", "required": true }
+  }
+}

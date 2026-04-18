@@ -814,5 +814,8 @@
       "fcError": "오류·문제 관련",
       "fcMembersOnly": "회원 전용 페이지 관련"
     }
-  }
+  },
+  "favoriteAdd": "즐겨찾기에 추가",
+  "favoriteSaved": "즐겨찾기 완료",
+  "delete": "삭제"
 }

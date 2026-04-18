@@ -30,6 +30,9 @@ export const API_ENDPOINTS = {
   awards:          '/awards',
   faqs:            '/faqs',
   guides:          '/guides',
+  favorites:       '/favorites',
+  viewHistories:   '/view-histories',
+  memberNotifications: '/member-notifications',
 
   // Single Types
   profile:         '/profile',

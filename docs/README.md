@@ -1,6 +1,6 @@
 # プロジェクトドキュメントハブ
 
-- 更新日: 2026-04-10
+- 更新日: 2026-04-18
 - 対象: `creava-platform` の frontend / backend / docs
 - 目的: 未経験者でも「構成・実装・運用・保守」の全体像を理解できるようにする
 - 前提: 本書は実装コード（`frontend/src`, `backend/src`, `backend/config`, `.github/workflows`）を基準に作成
@@ -50,6 +50,7 @@
 - [デプロイ手順書](./09_operations/deploy-manual.md)
 - [トラブルシューティング](./09_operations/troubleshooting.md)
 - [フォーム運用マニュアル](./09_operations/form-operations-manual.md)
+- [パーソナライズ導線運用メモ](./personalization-notification-center.md)
 
 ### 付録
 - [環境変数一覧](./10_appendix/environment-variables.md)

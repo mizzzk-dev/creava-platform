@@ -1,0 +1,23 @@
+{
+  "kind": "collectionType",
+  "collectionName": "favorites",
+  "info": {
+    "singularName": "favorite",
+    "pluralName": "favorites",
+    "displayName": "Favorite"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "userId": { "type": "string", "required": true },
+    "entityKind": { "type": "enumeration", "enum": ["product", "fanclub", "news", "blog", "event", "guide", "faq"], "required": true },
+    "entitySlug": { "type": "string", "required": true },
+    "title": { "type": "string", "required": true },
+    "href": { "type": "string", "required": true },
+    "sourceSite": { "type": "enumeration", "enum": ["main", "store", "fc"], "default": "main", "required": true },
+    "locale": { "type": "string", "default": "ja" },
+    "visibility": { "type": "enumeration", "enum": ["private", "member", "public"], "default": "private" },
+    "priority": { "type": "integer", "default": 0 }
+  }
+}

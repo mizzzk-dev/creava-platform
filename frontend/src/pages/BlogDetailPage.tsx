@@ -16,6 +16,8 @@ import SkeletonDetail from '@/components/common/SkeletonDetail'
 import Badge from '@/components/common/Badge'
 import type { BlogPost } from '@/types'
 import { trackViewHistory } from '@/modules/store/lib/commerceOptimization'
+import FavoriteToggleButton from '@/modules/personalization/components/FavoriteToggleButton'
+import { trackView } from '@/modules/personalization/storage'
 
 export default function BlogDetailPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -26,6 +28,7 @@ export default function BlogDetailPage() {
   useEffect(() => {
     if (!item) return
     trackViewHistory('blog', item.slug)
+    trackView({ kind: 'blog', slug: item.slug, title: item.title, href: ROUTES.BLOG_DETAIL.replace(':slug', item.slug), sourceSite: 'main' })
   }, [item])
 
   return (
@@ -94,6 +97,12 @@ export default function BlogDetailPage() {
               <h1 className="text-3xl font-semibold tracking-tight text-gray-900">
                 {item.title}
               </h1>
+              <div className="mt-3">
+                <FavoriteToggleButton
+                  location="blog_detail"
+                  item={{ kind: 'blog', slug: item.slug, title: item.title, href: ROUTES.BLOG_DETAIL.replace(':slug', item.slug), sourceSite: 'main' }}
+                />
+              </div>
 
               {item.publishAt && (
                 <p className="mt-2 font-mono text-xs text-gray-400">{formatDate(item.publishAt)}</p>

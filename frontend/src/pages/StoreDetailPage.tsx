@@ -30,6 +30,8 @@ import { trackViewHistory } from '@/modules/store/lib/commerceOptimization'
 import { trackCtaClick } from '@/modules/analytics/tracking'
 import NotificationInterestButton from '@/modules/notifications/components/NotificationInterestButton'
 import { createStoreCheckoutSession } from '@/modules/payments/api'
+import FavoriteToggleButton from '@/modules/personalization/components/FavoriteToggleButton'
+import { trackView } from '@/modules/personalization/storage'
 
 function purchaseStatusToAvailability(status: PurchaseStatus): 'InStock' | 'OutOfStock' | 'PreOrder' {
   if (status === 'available') return 'InStock'
@@ -63,7 +65,8 @@ export default function StoreDetailPage() {
   useEffect(() => {
     if (!product) return
     trackViewHistory('product', product.slug)
-  }, [product])
+    trackView({ kind: 'product', slug: product.slug, title: product.title, href: detailPath.product(product.slug), sourceSite: 'store' }, user?.id)
+  }, [product, user?.id])
 
   const purchaseSummary =
     product?.purchaseStatus === 'soldout'
@@ -177,6 +180,12 @@ export default function StoreDetailPage() {
               <h1 className="text-2xl font-semibold leading-snug text-gray-900 dark:text-gray-100 sm:text-3xl">
                 {product.title}
               </h1>
+              <div className="mt-3">
+                <FavoriteToggleButton
+                  location="store_detail"
+                  item={{ kind: 'product', slug: product.slug, title: product.title, href: detailPath.product(product.slug), sourceSite: 'store' }}
+                />
+              </div>
 
               <p className="mt-4 font-mono text-xl text-gray-700 dark:text-gray-200">{purchaseSummary}</p>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">

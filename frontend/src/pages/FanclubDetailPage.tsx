@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useSlugDetail } from '@/hooks'
@@ -14,6 +15,8 @@ import PageHead from '@/components/seo/PageHead'
 import SkeletonDetail from '@/components/common/SkeletonDetail'
 import MemberGuideCard from '@/components/common/MemberGuideCard'
 import type { FanclubContent } from '@/types'
+import FavoriteToggleButton from '@/modules/personalization/components/FavoriteToggleButton'
+import { trackView } from '@/modules/personalization/storage'
 
 export default function FanclubDetailPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -41,6 +44,11 @@ function FanclubDetailContent({ slug }: { slug: string | undefined }) {
     getFanclubDetail,
     slug,
   )
+
+  useEffect(() => {
+    if (!item) return
+    trackView({ kind: 'fanclub', slug: item.slug, title: item.title, href: ROUTES.FANCLUB_DETAIL.replace(':slug', item.slug), sourceSite: 'fc' })
+  }, [item])
 
   if (loading) return <SkeletonDetail />
   if (error) return <ErrorState message={error} />
@@ -72,6 +80,12 @@ function FanclubDetailContent({ slug }: { slug: string | undefined }) {
           <h1 className="text-3xl font-semibold tracking-tight text-gray-900">
             {item.title}
           </h1>
+          <div className="mt-3">
+            <FavoriteToggleButton
+              location="fanclub_detail"
+              item={{ kind: 'fanclub', slug: item.slug, title: item.title, href: ROUTES.FANCLUB_DETAIL.replace(':slug', item.slug), sourceSite: 'fc' }}
+            />
+          </div>
           {item.publishAt && (
             <p className="mt-2 font-mono text-xs text-gray-400">{formatDate(item.publishAt)}</p>
           )}

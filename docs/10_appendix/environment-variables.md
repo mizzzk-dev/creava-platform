@@ -1,6 +1,6 @@
 # 環境変数設定手順書（フォーム運用基盤強化版）
 
-- 更新日: 2026-04-17
+- 更新日: 2026-04-18
 - 対象: frontend / backend / GitHub Actions
 - 目的: 問い合わせ運用（通知・CSV・スパム対策・添付運用）を環境差分込みで安全に運用する
 - 関連: [フォーム運用マニュアル](../09_operations/form-operations-manual.md), [deploy-manual](../09_operations/deploy-manual.md)
@@ -19,6 +19,8 @@
 | `VITE_LOGTO_*` | 認証 | 任意 | 必須 | 必須 |
 | `VITE_SHOPIFY_*` | store 商品取得 | 任意 | 必須 | 必須 |
 | `VITE_STRIPE_PUBLISHABLE_KEY` | 決済公開キー | 任意 | 必須 | 必須 |
+| `VITE_PERSONALIZATION_MAX_HISTORY` | 閲覧履歴の保存上限 | 任意 | 任意 | 任意 |
+| `VITE_PERSONALIZATION_MAX_FAVORITES` | お気に入り保存上限 | 任意 | 任意 | 任意 |
 
 ## 2. backend 変数（フォーム運用関連を含む）
 
