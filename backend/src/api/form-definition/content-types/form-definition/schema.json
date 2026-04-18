@@ -1,0 +1,41 @@
+{
+  "kind": "collectionType",
+  "collectionName": "form_definitions",
+  "info": {
+    "singularName": "form-definition",
+    "pluralName": "form-definitions",
+    "displayName": "Form Definition"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "formType": { "type": "string", "required": true },
+    "formKey": { "type": "uid", "targetField": "formType", "required": true },
+    "formTitle": { "type": "json", "required": true },
+    "formDescription": { "type": "json" },
+    "sourceSite": {
+      "type": "enumeration",
+      "enum": ["main", "store", "fc", "all"],
+      "default": "all"
+    },
+    "isPublic": { "type": "boolean", "default": true },
+    "requiresAuth": { "type": "boolean", "default": false },
+    "fields": { "type": "json", "required": true },
+    "confirmEnabled": { "type": "boolean", "default": true },
+    "attachmentEnabled": { "type": "boolean", "default": true },
+    "allowedMimeTypes": { "type": "json" },
+    "maxFiles": { "type": "integer", "default": 5 },
+    "maxFileSize": { "type": "integer", "default": 10485760 },
+    "notificationTarget": { "type": "json" },
+    "autoReplyEnabled": { "type": "boolean", "default": true },
+    "successMessage": { "type": "json" },
+    "failureMessage": { "type": "json" },
+    "locale": { "type": "json" },
+    "displayPriority": { "type": "integer", "default": 100 },
+    "isActive": { "type": "boolean", "default": true },
+    "defaultCategory": { "type": "string" },
+    "initialStatus": { "type": "string", "default": "new" },
+    "initialPriority": { "type": "string", "default": "normal" }
+  }
+}

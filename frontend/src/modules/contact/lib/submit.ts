@@ -31,7 +31,18 @@ export interface RestockPayload {
   locale: string
 }
 
-const ALLOWED_TYPES = [
+export interface GenericFormSubmitPayload {
+  formType: string
+  inquiryCategory?: string
+  locale: string
+  sourcePage: string
+  honeypot?: string
+  policyAgree?: boolean
+  fields: Record<string, string | boolean | number | undefined>
+  files?: File[]
+}
+
+const DEFAULT_ALLOWED_TYPES = [
   'application/pdf',
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -48,9 +59,9 @@ const ALLOWED_TYPES = [
 const MAX_FILE_BYTES = 10 * 1024 * 1024
 const MAX_FILES = 5
 
-export function validateFile(file: File): string | null {
-  if (file.size > MAX_FILE_BYTES) return 'fileTooLarge'
-  if (!ALLOWED_TYPES.includes(file.type)) return 'fileType'
+export function validateFile(file: File, allowedTypes = DEFAULT_ALLOWED_TYPES, maxFileBytes = MAX_FILE_BYTES): string | null {
+  if (file.size > maxFileBytes) return 'fileTooLarge'
+  if (!allowedTypes.includes(file.type)) return 'fileType'
   return null
 }
 
@@ -60,14 +71,13 @@ function getStrapiBaseUrl(): string {
   return baseUrl.replace(/\/$/, '')
 }
 
-function getSourceSite(): 'main' | 'store' | 'fc' | 'unknown' {
+export function getSourceSite(): 'main' | 'store' | 'fc' | 'unknown' {
   const siteType = String(import.meta.env.VITE_SITE_TYPE ?? '').toLowerCase()
   if (siteType === 'main' || siteType === 'store' || siteType === 'fc') return siteType
   return 'unknown'
 }
 
-
-function getDefaultInquiryCategory(formType: 'contact' | 'request' | 'restock', requestType?: string): string {
+function getDefaultInquiryCategory(formType: string, requestType?: string): string {
   const site = getSourceSite()
 
   if (formType === 'restock') return 'restock'
@@ -78,10 +88,15 @@ function getDefaultInquiryCategory(formType: 'contact' | 'request' | 'restock', 
     return 'project_request'
   }
 
+  if (formType === 'store_support') return 'order'
+  if (formType === 'fc_support') return 'membership'
+  if (formType === 'collaboration') return 'collaboration'
+  if (formType === 'event') return 'event'
   if (site === 'store') return 'product'
   if (site === 'fc') return 'member_support'
   return 'general'
 }
+
 async function submitInquiry(formData: FormData): Promise<{ id: number; status: string; submittedAt: string }> {
   const res = await fetch(`${getStrapiBaseUrl()}/api/inquiry-submissions/public`, {
     method: 'POST',
@@ -103,75 +118,85 @@ async function submitInquiry(formData: FormData): Promise<{ id: number; status: 
   return json.data
 }
 
-function appendCommon(fd: FormData, values: Record<string, string | boolean | number | undefined>, files?: File[]) {
+function appendCommon(fd: FormData, values: Record<string, string | boolean | number | undefined>, files?: File[], maxFiles = MAX_FILES) {
   Object.entries(values).forEach(([key, value]) => {
     if (value === undefined || value === null) return
     fd.append(key, String(value))
   })
 
-  ;(files ?? []).slice(0, MAX_FILES).forEach((file) => {
+  ;(files ?? []).slice(0, maxFiles).forEach((file) => {
     fd.append('attachments', file, file.name)
   })
 }
 
-export async function submitContact(payload: ContactPayload & { locale: string; sourcePage: string }) {
+export async function submitGenericForm(payload: GenericFormSubmitPayload & { maxFiles?: number }) {
   const fd = new FormData()
   appendCommon(fd, {
-    formType: 'contact',
-    inquiryCategory: getDefaultInquiryCategory('contact'),
-    name: payload.name,
-    email: payload.email,
-    subject: payload.subject,
-    message: payload.message,
-    phone: payload.phone ?? '',
-    policyAgree: payload.policyAgree,
+    formType: payload.formType,
+    inquiryCategory: payload.inquiryCategory ?? getDefaultInquiryCategory(payload.formType, String(payload.fields.requestType ?? '')),
     locale: payload.locale,
     sourcePage: payload.sourcePage,
     sourceSite: getSourceSite(),
     website: payload.honeypot ?? '',
-  }, payload.files)
+    policyAgree: payload.policyAgree ?? false,
+    ...payload.fields,
+  }, payload.files, payload.maxFiles)
 
   return submitInquiry(fd)
+}
+
+export async function submitContact(payload: ContactPayload & { locale: string; sourcePage: string }) {
+  return submitGenericForm({
+    formType: 'contact',
+    locale: payload.locale,
+    sourcePage: payload.sourcePage,
+    honeypot: payload.honeypot,
+    policyAgree: payload.policyAgree,
+    files: payload.files,
+    fields: {
+      name: payload.name,
+      email: payload.email,
+      subject: payload.subject,
+      message: payload.message,
+      phone: payload.phone ?? '',
+    },
+  })
 }
 
 export async function submitRequest(payload: RequestPayload & { locale: string; sourcePage: string }) {
-  const fd = new FormData()
-  appendCommon(fd, {
+  return submitGenericForm({
     formType: 'request',
-    inquiryCategory: getDefaultInquiryCategory('request', payload.requestType),
-    name: payload.name,
-    companyOrOrganization: payload.company,
-    email: payload.email,
-    message: payload.detail,
-    phone: payload.phone ?? '',
-    policyAgree: payload.policyAgree,
     locale: payload.locale,
     sourcePage: payload.sourcePage,
-    sourceSite: getSourceSite(),
-    website: payload.honeypot ?? '',
-    requestType: payload.requestType,
-    budget: payload.budget,
-    deadline: payload.deadline,
-  }, payload.files)
-
-  return submitInquiry(fd)
+    honeypot: payload.honeypot,
+    policyAgree: payload.policyAgree,
+    files: payload.files,
+    fields: {
+      name: payload.name,
+      companyOrOrganization: payload.company,
+      email: payload.email,
+      message: payload.detail,
+      phone: payload.phone ?? '',
+      requestType: payload.requestType,
+      budget: payload.budget,
+      deadline: payload.deadline,
+    },
+  })
 }
 
 export async function submitRestock(payload: RestockPayload & { sourcePage: string }) {
-  const fd = new FormData()
-  appendCommon(fd, {
+  return submitGenericForm({
     formType: 'restock',
-    inquiryCategory: getDefaultInquiryCategory('restock'),
-    email: payload.email,
     locale: payload.locale,
     sourcePage: payload.sourcePage,
-    sourceSite: getSourceSite(),
     policyAgree: true,
-    productId: payload.productId,
-    productSlug: payload.productSlug,
-    productTitle: payload.productTitle,
+    fields: {
+      email: payload.email,
+      productId: payload.productId,
+      productSlug: payload.productSlug,
+      productTitle: payload.productTitle,
+    },
   })
-  return submitInquiry(fd)
 }
 
-export { MAX_FILES }
+export { MAX_FILES, MAX_FILE_BYTES, DEFAULT_ALLOWED_TYPES }

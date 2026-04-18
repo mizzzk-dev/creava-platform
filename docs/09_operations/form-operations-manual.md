@@ -143,3 +143,32 @@ npm run dev:frontend
 - 413: `UPLOAD_MAX_FILE_SIZE_BYTES` か `INQUIRY_MAX_FILE_BYTES` 超過
 - 429: グローバル rate-limit または burst 制限
 - メール未送信: SMTP設定または provider 未設定（保存は継続）
+
+## 12. 共通フォームプラットフォーム運用（2026-04 拡張）
+
+### 12.1 追加された formType（初期セット）
+- main: `contact`, `request`, `collaboration`, `event`
+- store: `store_support`
+- fc: `fc_support`
+- 既存: `restock`, `application`, `entry`
+
+### 12.2 Strapi でフォーム定義を追加する手順
+1. Strapi 管理画面で `Form Definition` を追加。
+2. `formType`, `formKey`, `sourceSite`, `fields`, `notificationTarget`, `isActive` を設定。
+3. 必要に応じて `attachmentEnabled`, `allowedMimeTypes`, `maxFiles`, `maxFileSize` を設定。
+4. Publish 後、`GET /api/form-definitions/public` で反映確認。
+
+### 12.3 通知ルーティング
+通知先は次の優先順で解決される。
+1. `INQUIRY_NOTIFY_TO_<SITE>_<FORMTYPE>`
+2. `INQUIRY_NOTIFY_TO_<SITE>`
+3. form definition の `notificationTarget`
+4. `INQUIRY_NOTIFY_TO`
+
+### 12.4 DNS 変更
+- 本拡張は既存ドメイン配下 (`mizzz.jp`, `store.mizzz.jp`, `fc.mizzz.jp`) の API/UI 拡張のみ。
+- **DNS 追加・変更は不要**。
+
+### 12.5 SMTP / captcha
+- SMTP は既存 email plugin 設定を継続利用。
+- captcha は現時点未導入。必要なら次段で `captchaToken` フィールド追加のみで拡張可能。
