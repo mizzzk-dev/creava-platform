@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useSlugDetail } from '@/hooks'
@@ -13,11 +14,18 @@ import PageHead from '@/components/seo/PageHead'
 import SkeletonDetail from '@/components/common/SkeletonDetail'
 import Badge from '@/components/common/Badge'
 import type { Event } from '@/types'
+import FavoriteToggleButton from '@/modules/personalization/components/FavoriteToggleButton'
+import { trackView } from '@/modules/personalization/storage'
 
 export default function EventDetailPage() {
   const { slug } = useParams<{ slug: string }>()
   const { t } = useTranslation()
   const { item, loading, error, notFound } = useSlugDetail<Event>(getEventDetail, slug)
+
+  useEffect(() => {
+    if (!item) return
+    trackView({ kind: 'event', slug: item.slug, title: item.title, href: ROUTES.EVENT_DETAIL.replace(':slug', item.slug), sourceSite: 'main' })
+  }, [item])
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-20">
@@ -51,6 +59,12 @@ export default function EventDetailPage() {
               <h1 className="text-3xl font-semibold tracking-tight text-gray-900">
                 {item.title}
               </h1>
+              <div className="mt-3">
+                <FavoriteToggleButton
+                  location="event_detail"
+                  item={{ kind: 'event', slug: item.slug, title: item.title, href: ROUTES.EVENT_DETAIL.replace(':slug', item.slug), sourceSite: 'main' }}
+                />
+              </div>
 
               <dl className="mt-4 space-y-1.5">
                 {item.startAt && (

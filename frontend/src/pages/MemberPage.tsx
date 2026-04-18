@@ -8,6 +8,7 @@ import { ROUTES } from '@/lib/routeConstants'
 import { clearWithdrawRequest, getMemberAccountSettings, getMemberDashboard, requestWithdraw, updateMemberAccountSettings, updateMemberPreferences } from '@/modules/member/api'
 import type { MemberAccountSettings, MemberDashboardData, MemberOrderStatus, MemberPaymentSettings, MemberShippingSettings, ShipmentStatus } from '@/modules/member/types'
 import { buildCrmSegments, buildLtvDashboard, buildSupportTemplates } from '@/modules/store/lib/commerceOptimization'
+import MyPagePersonalizationPanel from '@/modules/personalization/components/MyPagePersonalizationPanel'
 
 const MEMBER_BENEFITS = [
   'member.benefitEarly',
@@ -470,8 +471,10 @@ export default function MemberPage() {
                   <span>{t(todo, { defaultValue: todo })}</span>
                 </li>
               ))}
-            </ul>
+              </ul>
           </div>
+
+          <MyPagePersonalizationPanel />
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded border border-gray-200 p-5 dark:border-gray-800">

@@ -1,0 +1,31 @@
+{
+  "kind": "collectionType",
+  "collectionName": "member_notifications",
+  "info": {
+    "singularName": "member-notification",
+    "pluralName": "member-notifications",
+    "displayName": "MemberNotification"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "userId": { "type": "string", "required": true },
+    "notificationType": {
+      "type": "enumeration",
+      "enum": ["fc_update", "member_benefit", "store_new_arrival", "featured_item", "event_update", "announcement", "system", "support", "mypage"],
+      "required": true
+    },
+    "priority": { "type": "enumeration", "enum": ["normal", "high"], "default": "normal", "required": true },
+    "sourceSite": { "type": "enumeration", "enum": ["main", "store", "fc"], "default": "main", "required": true },
+    "category": { "type": "string", "required": true },
+    "title": { "type": "string", "required": true },
+    "body": { "type": "text", "required": true },
+    "href": { "type": "string" },
+    "locale": { "type": "string", "default": "ja" },
+    "isRead": { "type": "boolean", "default": false, "required": true },
+    "readAt": { "type": "datetime" },
+    "visibleFrom": { "type": "datetime" },
+    "visibleTo": { "type": "datetime" }
+  }
+}

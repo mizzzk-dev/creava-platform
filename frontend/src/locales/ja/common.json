@@ -814,5 +814,8 @@
       "fcError": "不具合・エラーについて",
       "fcMembersOnly": "会員限定ページについて"
     }
-  }
+  },
+  "favoriteAdd": "お気に入りに追加",
+  "favoriteSaved": "お気に入り済み",
+  "delete": "削除"
 }

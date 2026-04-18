@@ -17,6 +17,8 @@ import Badge from '@/components/common/Badge'
 import SnsLinks from '@/components/common/SnsLinks'
 import type { NewsItem } from '@/types'
 import { trackViewHistory } from '@/modules/store/lib/commerceOptimization'
+import FavoriteToggleButton from '@/modules/personalization/components/FavoriteToggleButton'
+import { trackView } from '@/modules/personalization/storage'
 
 export default function NewsDetailPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -27,6 +29,7 @@ export default function NewsDetailPage() {
   useEffect(() => {
     if (!item) return
     trackViewHistory('news', item.slug)
+    trackView({ kind: 'news', slug: item.slug, title: item.title, href: ROUTES.NEWS_DETAIL.replace(':slug', item.slug), sourceSite: 'main' })
   }, [item])
 
   return (
@@ -95,6 +98,12 @@ export default function NewsDetailPage() {
               <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 leading-snug">
                 {item.title}
               </h1>
+              <div className="mt-3">
+                <FavoriteToggleButton
+                  location="news_detail"
+                  item={{ kind: 'news', slug: item.slug, title: item.title, href: ROUTES.NEWS_DETAIL.replace(':slug', item.slug), sourceSite: 'main' }}
+                />
+              </div>
 
               {/* 公開日 — 主軸として表示 */}
               {item.publishAt && (
