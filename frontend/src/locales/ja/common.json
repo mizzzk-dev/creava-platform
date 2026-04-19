@@ -954,5 +954,39 @@
     "pushEnableAction": "Pushを有効化",
     "pushEnabled": "Push有効化済み",
     "pushPermissionState": "状態: {{state}}"
+  },
+  "experience": {
+    "eyebrow": "experience highlight",
+    "errorHint": "時間をおいて再試行するか、FAQ・お問い合わせから解決方法をご確認ください。",
+    "main": {
+      "title": "main / store / fanclub をつなぐブランドハブ",
+      "description": "初訪問でも再訪でも、いま見るべき情報と次の行動が自然につながるように、導線を再整理しています。",
+      "highlightStoryTitle": "World View と活動の文脈を先に伝える",
+      "highlightStoryDesc": "作品・ニュース・イベントの点をつなぎ、ブランド体験として読める構成に。",
+      "highlightRoutingTitle": "main → store / fanclub の回遊を明確化",
+      "highlightRoutingDesc": "比較検討、購入、入会の導線をページ下部まで継続して提示。",
+      "highlightTrustTitle": "相談前の不安を減らす情報整理",
+      "highlightTrustDesc": "FAQ / Guide / Contact 導線を分断せず、迷いなく到達できる構造に。"
+    },
+    "store": {
+      "title": "売り場感と安心感を両立するストア体験",
+      "description": "商品が少ない時でも価値が伝わるように、特集・ガイド・会員導線を組み合わせた編集構成に刷新しました。",
+      "highlightSalesTitle": "特集・新着・限定を先頭で可視化",
+      "highlightSalesDesc": "ピックアップやキャンペーン導線を固定し、購入判断までの迷いを短縮。",
+      "highlightGuideTitle": "購入前の不安をガイド導線で解消",
+      "highlightGuideDesc": "配送・返品・FAQ・問い合わせをワンフローで確認できます。",
+      "highlightMemberTitle": "FC特典への自然なブリッジ",
+      "highlightMemberDesc": "先行販売や会員特典にすぐ遷移できる横断CTAを追加。"
+    },
+    "fc": {
+      "title": "継続したくなる会員体験を、毎週の更新で可視化",
+      "description": "Join / Login / MyPage を迷わず進める設計に加え、限定感と特典価値が見える情報配置へアップデートしました。",
+      "highlightWeeklyTitle": "今週更新を先頭で案内",
+      "highlightWeeklyDesc": "再訪時に最初に見るべきコンテンツが即座に把握できます。",
+      "highlightBenefitTitle": "会員特典・先行価値を視覚化",
+      "highlightBenefitDesc": "限定・先行・会員ストアの導線をカードとCTAで統合。",
+      "highlightSupportTitle": "入会前後の不安を減らす支援導線",
+      "highlightSupportDesc": "FAQ / Guide / お問い合わせに迷わず移動できる構成。"
+    }
   }
 }

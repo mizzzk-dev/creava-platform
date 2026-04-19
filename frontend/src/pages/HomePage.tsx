@@ -15,6 +15,7 @@ import GitHubTrustSection from '@/modules/home/components/GitHubTrustSection'
 import CaseStudyTeaserSection from '@/modules/home/components/CaseStudyTeaserSection'
 import { SITE_URL, SITE_NAME, buildCanonicalUrl } from '@/lib/seo'
 import SeoInternalLinkSection from '@/components/common/SeoInternalLinkSection'
+import ExperienceHighlightsSection from '@/components/common/ExperienceHighlightsSection'
 import { ROUTES } from '@/lib/routeConstants'
 import { fanclubLink, storeLink } from '@/lib/siteLinks'
 import { getNewsList } from '@/modules/news/api'
@@ -112,6 +113,35 @@ export default function HomePage() {
       <StorePreviewSection />
       <ContactCTASection />
       <FanclubCTASection />
+
+
+      <ExperienceHighlightsSection
+        site="main"
+        title={t('experience.main.title', { defaultValue: 'main / store / fanclub をつなぐブランドハブ' })}
+        description={t('experience.main.description', { defaultValue: '初訪問でも再訪でも、いま見るべき情報と次の行動が自然につながるように、導線を再整理しています。' })}
+        highlights={[
+          {
+            id: 'main-story',
+            title: t('experience.main.highlightStoryTitle', { defaultValue: 'World View と活動の文脈を先に伝える' }),
+            description: t('experience.main.highlightStoryDesc', { defaultValue: '作品・ニュース・イベントの点をつなぎ、ブランド体験として読める構成に。' }),
+          },
+          {
+            id: 'main-routing',
+            title: t('experience.main.highlightRoutingTitle', { defaultValue: 'main → store / fanclub の回遊を明確化' }),
+            description: t('experience.main.highlightRoutingDesc', { defaultValue: '比較検討、購入、入会の導線をページ下部まで継続して提示。' }),
+          },
+          {
+            id: 'main-trust',
+            title: t('experience.main.highlightTrustTitle', { defaultValue: '相談前の不安を減らす情報整理' }),
+            description: t('experience.main.highlightTrustDesc', { defaultValue: 'FAQ / Guide / Contact 導線を分断せず、迷いなく到達できる構造に。' }),
+          },
+        ]}
+        ctas={[
+          { label: t('nav.store'), to: storeLink('/products') },
+          { label: t('nav.fanclub'), to: fanclubLink('/join') },
+          { label: t('nav.contact'), to: ROUTES.CONTACT, style: 'secondary' },
+        ]}
+      />
 
       <SeoInternalLinkSection
         title="main コンテンツハブ"

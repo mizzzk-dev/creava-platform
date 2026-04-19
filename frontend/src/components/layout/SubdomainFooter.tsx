@@ -42,6 +42,13 @@ export default function SubdomainFooter({ legalLinks }: SubdomainFooterProps) {
               <li><NavLink to={ROUTES.FAQ} onClick={() => trackCtaClick('footer', 'faq')}>{t('nav.faq')}</NavLink></li>
               <li><NavLink to={ROUTES.SUPPORT_CENTER} onClick={() => trackCtaClick('footer', 'support_center')}>{t('support.title')}</NavLink></li>
             </ul>
+            <div className="mt-4 rounded-2xl border border-gray-200 bg-gray-50/70 p-3 dark:border-gray-800 dark:bg-gray-900/60">
+              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-gray-500">next action</p>
+              <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                <NavLink to={ROUTES.DISCOVERY} onClick={() => trackCtaClick('footer', 'to_discovery')} className="rounded-full border border-gray-300 px-2.5 py-1 text-gray-600 hover:border-gray-500 dark:border-gray-700 dark:text-gray-300">{t('nav.discovery')}</NavLink>
+                <NavLink to={ROUTES.CONTACT} onClick={() => trackCtaClick('footer', 'to_contact')} className="rounded-full border border-gray-300 px-2.5 py-1 text-gray-600 hover:border-gray-500 dark:border-gray-700 dark:text-gray-300">{t('nav.contact')}</NavLink>
+              </div>
+            </div>
           </div>
 
           <div>

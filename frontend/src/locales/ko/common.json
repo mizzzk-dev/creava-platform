@@ -954,5 +954,39 @@
     "pushEnableAction": "Push 활성화",
     "pushEnabled": "Push 활성화됨",
     "pushPermissionState": "상태: {{state}}"
+  },
+  "experience": {
+    "eyebrow": "experience highlight",
+    "errorHint": "잠시 후 다시 시도하거나 FAQ / 문의하기에서 해결 방법을 확인해 주세요.",
+    "main": {
+      "title": "main / store / fanclub을 연결하는 브랜드 허브",
+      "description": "첫 방문과 재방문 모두에서 다음 행동으로 자연스럽게 이어지도록 동선을 재정리했습니다.",
+      "highlightStoryTitle": "월드뷰와 활동 맥락을 먼저 전달",
+      "highlightStoryDesc": "작품·뉴스·이벤트를 하나의 브랜드 경험으로 읽히게 구성했습니다.",
+      "highlightRoutingTitle": "main → store / fanclub 이동 동선 명확화",
+      "highlightRoutingDesc": "탐색, 구매, 가입 동선을 페이지 하단까지 끊김 없이 제공합니다.",
+      "highlightTrustTitle": "문의 전 불안 요소 완화",
+      "highlightTrustDesc": "FAQ / Guide / Contact를 하나의 지원 흐름으로 연결했습니다."
+    },
+    "store": {
+      "title": "판매 매력과 신뢰를 함께 주는 스토어 경험",
+      "description": "상품 수가 적어도 특집·가이드·멤버십 동선으로 정보 가치를 유지하도록 구성했습니다.",
+      "highlightSalesTitle": "특집·신규·한정 정보를 상단 고정",
+      "highlightSalesDesc": "픽업과 캠페인 진입점을 고정해 구매 판단 시간을 줄입니다.",
+      "highlightGuideTitle": "구매 전 불안 요소 해소",
+      "highlightGuideDesc": "배송·반품·FAQ·문의를 한 흐름에서 확인할 수 있습니다.",
+      "highlightMemberTitle": "팬클럽 혜택으로 자연스럽게 연결",
+      "highlightMemberDesc": "선공개/멤버 혜택으로 이어지는 교차 CTA를 강화했습니다."
+    },
+    "fc": {
+      "title": "계속 머물고 싶은 멤버십 경험 강화",
+      "description": "Join / Login / MyPage 동선을 단순화하고 한정 혜택 가치를 더 명확히 보여줍니다.",
+      "highlightWeeklyTitle": "이번 주 업데이트를 최상단에",
+      "highlightWeeklyDesc": "재방문 시 새 콘텐츠를 즉시 확인할 수 있습니다.",
+      "highlightBenefitTitle": "멤버 전용 혜택 시각화",
+      "highlightBenefitDesc": "한정·선공개·멤버 스토어 동선을 카드와 CTA로 통합했습니다.",
+      "highlightSupportTitle": "가입 전후 지원 동선 강화",
+      "highlightSupportDesc": "FAQ / Guide / 문의하기로 빠르게 이동할 수 있습니다."
+    }
   }
 }
