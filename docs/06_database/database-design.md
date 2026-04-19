@@ -1,6 +1,6 @@
 # DB設計書
 
-- 更新日: 2026-04-10
+- 更新日: 2026-04-19
 - 対象: Strapi Content Types / DB
 - 目的: モデルの役割、主要カラム、relation、公開状態を説明
 - 前提: 開発SQLite / 本番PostgreSQL
@@ -26,6 +26,8 @@
 | `checkout-attempt` | 決済開始ログ | `checkoutType`, `status`, `idempotencyKey` |
 | `payment-record` | 決済結果 | `paymentStatus`, `amountTotal`, `currency` |
 | `subscription-record` | 課金契約履歴 | `subscriptionStatus`, `membershipType` |
+| `order` | 受注/配送/返品運用 | `orderStatus`, `paymentStatus`, `refundStatus`, `returnStatus` |
+| `revenue-record` | 会計集計用正規化イベント | `revenueType`, `revenueStatus`, `grossAmount`, `netAmount`, `refundAmount`, `reportPeriod` |
 | `webhook-event-log` | webhook監査 | `eventId`, `eventType`, `status` |
 
 ## 3. 公開状態/表示状態の整理
@@ -45,7 +47,8 @@
 1. CMSで商品登録（draft）
 2. publish して公開
 3. checkout開始時に `checkout-attempt` 作成
-4. webhookで `payment-record` / `subscription-record` 更新
+4. webhookで `payment-record` / `order` / `subscription-record` 更新
+5. webhookイベントから `revenue-record` を upsert（idempotency key 付き）
 
 ## 6. ER図（概念）
 

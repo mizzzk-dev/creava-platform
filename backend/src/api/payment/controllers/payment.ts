@@ -1,6 +1,7 @@
 import { hasRequiredScopes, verifyLogtoToken, type AuthenticatedUser } from '../../../lib/auth/logto'
 import { parseStripeWebhookEvent } from '../../../lib/stripe/webhook'
 import { normalizeStripeSubscriptionState } from '../../../lib/billing/subscription-state'
+import { upsertRevenueRecord } from '../../../lib/finance/revenue'
 import {
   createFanclubCheckoutSession,
   createStoreCheckoutSession,
@@ -73,6 +74,13 @@ async function syncAppUserMembership(strapi: any, authUserId: string | null, inp
 
 function toOrderNumber(sessionId: string): string {
   return `MZ-${sessionId.replace('cs_', '').slice(0, 12).toUpperCase()}`
+}
+
+function toIsoDateFromUnix(raw: unknown): string {
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    return new Date(raw * 1000).toISOString()
+  }
+  return new Date().toISOString()
 }
 
 async function commitInventoryForStoreOrder(strapi: any, metadata: Record<string, unknown>): Promise<{ status: string; reason?: string | null }> {
@@ -353,6 +361,14 @@ export default ({ strapi }) => ({
       const authUserId = toAuthUserId(metadata)
 
       if (event.type === 'checkout.session.completed') {
+        const amountTotal = Number(object.amount_total ?? 0)
+        const amountSubtotal = Number(object.amount_subtotal ?? amountTotal)
+        const amountTax = Number(object.total_details && typeof object.total_details === 'object' ? (object.total_details as Record<string, unknown>).amount_tax ?? 0 : 0)
+        const amountDiscount = Number(object.total_details && typeof object.total_details === 'object' ? (object.total_details as Record<string, unknown>).amount_discount ?? 0 : 0)
+        const currency = typeof object.currency === 'string' ? object.currency.toUpperCase() : 'JPY'
+        const checkoutKind = metadata.checkoutKind === 'fanclub' ? 'fanclub' : 'store'
+        const sourceSite = checkoutKind === 'fanclub' ? 'fc' : 'store'
+
         await strapi.documents('api::payment-record.payment-record').create({
           data: {
             provider: 'stripe',
@@ -362,10 +378,36 @@ export default ({ strapi }) => ({
             authUserId,
             clerkUserId: authUserId,
             paymentIntentId: typeof object.payment_intent === 'string' ? object.payment_intent : null,
-            amountTotal: Number(object.amount_total ?? 0),
-            currency: typeof object.currency === 'string' ? object.currency.toUpperCase() : 'JPY',
+            amountTotal,
+            currency,
             metadata,
           },
+        })
+
+        await upsertRevenueRecord(strapi, {
+          eventIdempotencyKey: `stripe:${event.id}:${String(object.id ?? '')}:checkout-completed`,
+          revenueType: checkoutKind === 'fanclub' ? 'fc_subscription' : 'store_order',
+          revenueSource: checkoutKind,
+          revenueStatus: 'recognized',
+          financialEventType: event.type,
+          financialEventAt: new Date().toISOString(),
+          sourceSite,
+          grossAmount: amountTotal,
+          netAmount: amountTotal,
+          discountAmount: amountDiscount,
+          shippingFee: Number(metadata.shippingFee ?? 0),
+          taxAmount: amountTax,
+          refundAmount: 0,
+          partialRefundAmount: 0,
+          currency,
+          orderId: checkoutKind === 'store' ? String(object.id ?? '') : null,
+          subscriptionId: checkoutKind === 'fanclub' ? String(object.subscription ?? '') : null,
+          paymentId: typeof object.payment_intent === 'string' ? object.payment_intent : null,
+          userId: authUserId,
+          campaignId: typeof metadata.campaignId === 'string' ? metadata.campaignId : null,
+          couponId: typeof metadata.couponId === 'string' ? metadata.couponId : null,
+          loyaltyImpactState: typeof metadata.loyaltyImpactState === 'string' ? metadata.loyaltyImpactState : null,
+          metadata,
         })
 
         if (metadata.checkoutKind === 'store') {
@@ -376,6 +418,81 @@ export default ({ strapi }) => ({
             webhookEventId: event.id,
           })
         }
+      }
+
+      if (event.type === 'charge.refunded') {
+        const amountRefunded = Number(object.amount_refunded ?? 0)
+        const amountCharged = Number(object.amount ?? 0)
+        const isPartialRefund = amountRefunded > 0 && amountRefunded < amountCharged
+        const paymentIntentId = typeof object.payment_intent === 'string' ? object.payment_intent : null
+        const currency = typeof object.currency === 'string' ? object.currency.toUpperCase() : 'JPY'
+
+        if (paymentIntentId) {
+          const targetOrders = await strapi.documents('api::order.order').findMany({
+            filters: { paymentIntentId: { $eq: paymentIntentId } },
+            limit: 5,
+            sort: ['createdAt:desc'],
+          })
+
+          for (const order of targetOrders) {
+            await strapi.documents('api::order.order').update({
+              documentId: order.documentId,
+              data: {
+                paymentStatus: isPartialRefund ? 'partially_refunded' : 'refunded',
+                refundStatus: isPartialRefund ? 'partially_refunded' : 'refunded',
+                returnStatus: order.returnStatus === 'none' ? order.returnStatus : 'refunded',
+                syncState: 'in_sync',
+                webhookSyncedAt: new Date().toISOString(),
+                metadata: {
+                  ...(order.metadata ?? {}),
+                  latestRefundEventId: event.id,
+                  latestRefundId: String(object.id ?? ''),
+                },
+              },
+            })
+          }
+        }
+
+        await upsertRevenueRecord(strapi, {
+          eventIdempotencyKey: `stripe:${event.id}:${String(object.id ?? '')}:charge-refunded`,
+          revenueType: isPartialRefund ? 'partial_refund' : 'refund',
+          revenueSource: 'store',
+          revenueStatus: 'reversed',
+          financialEventType: event.type,
+          financialEventAt: toIsoDateFromUnix(object.created),
+          sourceSite: 'store',
+          grossAmount: 0,
+          netAmount: -Math.abs(amountRefunded),
+          refundAmount: isPartialRefund ? 0 : Math.abs(amountRefunded),
+          partialRefundAmount: isPartialRefund ? Math.abs(amountRefunded) : 0,
+          currency,
+          paymentId: paymentIntentId,
+          refundId: String(object.id ?? ''),
+          userId: authUserId,
+          metadata,
+        })
+      }
+
+      if (event.type === 'invoice.payment_failed') {
+        const subscriptionId = typeof object.subscription === 'string' ? object.subscription : null
+        const amountDue = Number(object.amount_due ?? 0)
+        const currency = typeof object.currency === 'string' ? object.currency.toUpperCase() : 'JPY'
+        await upsertRevenueRecord(strapi, {
+          eventIdempotencyKey: `stripe:${event.id}:${String(object.id ?? '')}:invoice-payment-failed`,
+          revenueType: 'fc_subscription',
+          revenueSource: 'fanclub',
+          revenueStatus: 'failed',
+          financialEventType: event.type,
+          financialEventAt: toIsoDateFromUnix(object.created),
+          sourceSite: 'fc',
+          grossAmount: amountDue,
+          netAmount: 0,
+          currency,
+          subscriptionId,
+          paymentId: typeof object.payment_intent === 'string' ? object.payment_intent : null,
+          userId: authUserId,
+          metadata,
+        })
       }
 
       if (event.type === 'customer.subscription.created' || event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {

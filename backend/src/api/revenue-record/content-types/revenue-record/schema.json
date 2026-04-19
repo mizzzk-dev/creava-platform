@@ -1,0 +1,82 @@
+{
+  "kind": "collectionType",
+  "collectionName": "revenue_records",
+  "info": {
+    "singularName": "revenue-record",
+    "pluralName": "revenue-records",
+    "displayName": "Revenue Record"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "revenueType": {
+      "type": "enumeration",
+      "enum": [
+        "store_order",
+        "fc_subscription",
+        "refund",
+        "partial_refund",
+        "shipping",
+        "discount_adjustment",
+        "manual_adjustment"
+      ],
+      "required": true
+    },
+    "revenueSource": {
+      "type": "enumeration",
+      "enum": ["store", "fanclub", "main", "cross"],
+      "required": true,
+      "default": "store"
+    },
+    "revenueStatus": {
+      "type": "enumeration",
+      "enum": ["recognized", "pending", "reversed", "failed", "canceled"],
+      "required": true,
+      "default": "pending"
+    },
+    "recognizedAt": { "type": "datetime" },
+    "grossAmount": { "type": "integer", "default": 0 },
+    "netAmount": { "type": "integer", "default": 0 },
+    "discountAmount": { "type": "integer", "default": 0 },
+    "shippingFee": { "type": "integer", "default": 0 },
+    "taxAmount": { "type": "integer", "default": 0 },
+    "refundAmount": { "type": "integer", "default": 0 },
+    "partialRefundAmount": { "type": "integer", "default": 0 },
+    "currency": { "type": "string", "default": "JPY" },
+    "sourceSite": {
+      "type": "enumeration",
+      "enum": ["main", "store", "fc", "cross"],
+      "default": "store"
+    },
+    "orderId": { "type": "string" },
+    "subscriptionId": { "type": "string" },
+    "paymentId": { "type": "string" },
+    "refundId": { "type": "string" },
+    "userId": { "type": "string" },
+    "campaignId": { "type": "string" },
+    "couponId": { "type": "string" },
+    "loyaltyImpactState": { "type": "string" },
+    "reportPeriod": { "type": "string" },
+    "summaryState": {
+      "type": "enumeration",
+      "enum": ["raw", "summarized", "excluded"],
+      "default": "raw"
+    },
+    "syncState": {
+      "type": "enumeration",
+      "enum": ["in_sync", "pending", "failed", "duplicate_ignored"],
+      "default": "in_sync"
+    },
+    "sourceOfTruth": {
+      "type": "enumeration",
+      "enum": ["stripe_webhook", "internal_adjustment", "backfill"],
+      "default": "stripe_webhook"
+    },
+    "financialEventType": { "type": "string" },
+    "financialEventAt": { "type": "datetime" },
+    "settlementState": { "type": "string" },
+    "eventIdempotencyKey": { "type": "string", "unique": true },
+    "metadata": { "type": "json" }
+  }
+}

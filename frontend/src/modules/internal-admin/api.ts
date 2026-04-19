@@ -34,6 +34,26 @@ export type InternalLookupUser = {
   lastSyncedAt: string | null
 }
 
+export type InternalRevenueSummary = {
+  count: number
+  currency: string
+  totals: {
+    gross: number
+    net: number
+    refund: number
+    shipping: number
+    discount: number
+    tax: number
+  }
+  counts: {
+    failed: number
+    canceled: number
+    refunded: number
+  }
+  bySourceSite: Array<{ sourceSite: string; gross: number; net: number; refund: number; records: number }>
+  byRevenueType: Array<{ revenueType: string; gross: number; net: number; refund: number; records: number }>
+}
+
 function getApiBaseUrl(): string {
   const baseUrl = import.meta.env.VITE_STRAPI_API_URL
   if (!baseUrl) throw new Error('VITE_STRAPI_API_URL が未設定です。')
@@ -83,5 +103,22 @@ export function useInternalAdminApi() {
     updateAccountStatus: async (logtoUserId: string, nextStatus: string, reason: string) => withToken((token) => internalFetch<any>(`/internal/users/${encodeURIComponent(logtoUserId)}/account-status`, token, { method: 'POST', body: JSON.stringify({ nextStatus, reason }) })),
     resetNotificationPreference: async (logtoUserId: string, reason: string) => withToken((token) => internalFetch<any>(`/internal/users/${encodeURIComponent(logtoUserId)}/notification-reset`, token, { method: 'POST', body: JSON.stringify({ reason }) })),
     searchOrders: async (query: string) => withToken((token) => internalFetch<{ count: number; items: InternalOrderLookupItem[] }>(`/internal/orders/lookup?query=${encodeURIComponent(query)}`, token)),
+    getRevenueSummary: async (sourceSite?: string) => withToken((token) => internalFetch<InternalRevenueSummary>(`/internal/revenue/summary${sourceSite ? `?sourceSite=${encodeURIComponent(sourceSite)}` : ''}`, token)),
+    downloadRevenueCsv: async (sourceSite?: string) => withToken(async (token) => {
+      const path = `/internal/revenue/export.csv${sourceSite ? `?sourceSite=${encodeURIComponent(sourceSite)}` : ''}`
+      const response = await fetch(`${getApiBaseUrl()}/api${path}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!response.ok) throw new Error(`CSV エクスポートに失敗しました: ${response.status}`)
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `revenue-records-${new Date().toISOString().slice(0, 10)}.csv`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    }),
   }
 }
