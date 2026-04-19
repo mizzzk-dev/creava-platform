@@ -186,3 +186,17 @@
 - `POST /api/user-sync/provision` は Bearer token で認証し、`GET /api/user-sync/support/lookup` は `x-ops-token` で保護する。
 - Logto Cloud の Management API は引き続き default tenant endpoint を使い、custom domain (`auth.mizzz.jp`) はエンドユーザー認証 UI 用に限定する。
 - 既存 `auth.mizzz.jp` を使う構成では DNS変更不要。
+
+## 9. workflow / playbook automation 追加（2026-04-19）
+
+### backend runtime env
+- `PLAYBOOK_APPROVAL_AUDIENCE_THRESHOLD`: audience 規模が閾値以上の場合に approval を強制するための基準値。
+- `PLAYBOOK_SAFE_MODE_DEFAULT`: `true` の場合、playbook 実行 API は safe mode を既定で有効化。
+- `PLAYBOOK_RETRY_LIMIT`: action retry の最大試行回数（metadata と run 表示で利用）。
+
+### GitHub Secrets / Variables
+- 既存 backend デプロイ secret 群に追加して staging/production で環境分離する。
+- 実行 token（Logto internal role）と playbook env は責務分離し、同じ secret 値を使い回さない。
+
+### 補足
+- 今回の playbook console 追加は既存ドメインと API で完結するため **DNS変更不要**。

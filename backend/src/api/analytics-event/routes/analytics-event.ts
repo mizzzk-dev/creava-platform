@@ -42,5 +42,23 @@ export default {
       handler: 'analytics-event.internalBiReport',
       config: { auth: false },
     },
+    {
+      method: 'GET',
+      path: '/internal/automation/playbooks',
+      handler: 'analytics-event.internalAutomationPlaybooks',
+      config: { auth: false },
+    },
+    {
+      method: 'GET',
+      path: '/internal/automation/runs',
+      handler: 'analytics-event.internalAutomationRuns',
+      config: { auth: false },
+    },
+    {
+      method: 'POST',
+      path: '/internal/automation/run',
+      handler: 'analytics-event.internalAutomationRun',
+      config: { auth: false },
+    },
   ],
 }

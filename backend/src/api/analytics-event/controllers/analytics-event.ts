@@ -10,6 +10,9 @@ const BI_ALERT_MIN_VOLUME = Number(process.env.BI_ALERT_MIN_VOLUME ?? 20)
 const BI_ALERT_DROP_RATIO = Number(process.env.BI_ALERT_DROP_RATIO ?? 0.2)
 const BI_ALERT_SPIKE_RATIO = Number(process.env.BI_ALERT_SPIKE_RATIO ?? 0.35)
 const BI_FORECAST_HORIZON_DAYS = Number(process.env.BI_FORECAST_HORIZON_DAYS ?? 14)
+const PLAYBOOK_APPROVAL_AUDIENCE_THRESHOLD = Number(process.env.PLAYBOOK_APPROVAL_AUDIENCE_THRESHOLD ?? 200)
+const PLAYBOOK_SAFE_MODE_DEFAULT = String(process.env.PLAYBOOK_SAFE_MODE_DEFAULT ?? 'true').toLowerCase() !== 'false'
+const PLAYBOOK_RETRY_LIMIT = Number(process.env.PLAYBOOK_RETRY_LIMIT ?? 3)
 
 const ALLOWED_EVENTS = new Set([
   'page_view', 'cta_click', 'nav_click', 'hero_click', 'card_click',
@@ -155,6 +158,14 @@ function toSeverity(delta: number): 'low' | 'medium' | 'high' {
   if (absolute >= 0.35) return 'high'
   if (absolute >= 0.2) return 'medium'
   return 'low'
+}
+
+function daysAgo(days: number): Date {
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+}
+
+function sumBy<T>(rows: T[], getter: (row: T) => number): number {
+  return rows.reduce((acc, row) => acc + getter(row), 0)
 }
 
 export default factories.createCoreController('api::analytics-event.analytics-event', ({ strapi }) => ({
@@ -972,6 +983,292 @@ export default factories.createCoreController('api::analytics-event.analytics-ev
       if (message.includes('Internal permission denied')) return ctx.forbidden('internal BI report の権限がありません。')
       strapi.log.error(`[analytics-event] internalBiReport failed: ${message}`)
       return ctx.internalServerError('BI report の生成に失敗しました。')
+    }
+  },
+
+  async internalAutomationPlaybooks(ctx) {
+    try {
+      await requireInternalPermission(ctx, 'internal.user.read')
+      const from = parseDateInput(ctx.query.from) ?? daysAgo(14)
+      const mid = new Date(from.getTime() + 7 * 24 * 60 * 60 * 1000)
+      const to = parseDateInput(ctx.query.to) ?? new Date()
+
+      const [subscriptions, inquiries, revenues, deliveries, events] = await Promise.all([
+        strapi.documents('api::subscription-record.subscription-record').findMany({
+          fields: ['billingStatus', 'subscriptionStatus', 'updatedAt', 'sourceSite'],
+          limit: BI_MAX_FETCH_ROWS,
+          sort: ['updatedAt:desc'],
+        }),
+        strapi.documents('api::inquiry-submission.inquiry-submission').findMany({
+          fields: ['submittedAt', 'inquiryCategory', 'sourceSite'],
+          limit: BI_MAX_FETCH_ROWS,
+          sort: ['submittedAt:desc'],
+        }),
+        strapi.documents('api::revenue-record.revenue-record').findMany({
+          fields: ['financialEventAt', 'grossAmount', 'refundAmount', 'partialRefundAmount', 'sourceSite'],
+          limit: BI_MAX_FETCH_ROWS,
+          sort: ['financialEventAt:desc'],
+        }),
+        strapi.documents('api::delivery-log.delivery-log').findMany({
+          fields: ['sentAt', 'status', 'sourceSite'],
+          limit: BI_MAX_FETCH_ROWS,
+          sort: ['sentAt:desc'],
+        }),
+        strapi.documents('api::analytics-event.analytics-event').findMany({
+          fields: ['eventAt', 'eventName', 'sourceSite'],
+          limit: BI_MAX_FETCH_ROWS,
+          sort: ['eventAt:desc'],
+        }),
+      ])
+
+      const subRows = (subscriptions as Array<Record<string, unknown>>).filter((row) => withinRange(row.updatedAt, from, to))
+      const inquiryRows = (inquiries as Array<Record<string, unknown>>).filter((row) => withinRange(row.submittedAt, from, to))
+      const revenueRows = (revenues as Array<Record<string, unknown>>).filter((row) => withinRange(row.financialEventAt, from, to))
+      const deliveryRows = (deliveries as Array<Record<string, unknown>>).filter((row) => withinRange(row.sentAt, from, to))
+      const eventRows = (events as Array<Record<string, unknown>>).filter((row) => withinRange(row.eventAt, from, to))
+      const prevRange = { from, to: mid }
+      const latestRange = { from: mid, to }
+      const inRange = (value: unknown, range: { from: Date; to: Date }) => withinRange(value, range.from, range.to)
+
+      const previousPaymentFailures = subRows.filter((row) => row.billingStatus === 'failed' && inRange(row.updatedAt, prevRange)).length
+      const latestPaymentFailures = subRows.filter((row) => row.billingStatus === 'failed' && inRange(row.updatedAt, latestRange)).length
+      const previousSupportCases = inquiryRows.filter((row) => inRange(row.submittedAt, prevRange)).length
+      const latestSupportCases = inquiryRows.filter((row) => inRange(row.submittedAt, latestRange)).length
+      const previousRefundRate = (() => {
+        const rows = revenueRows.filter((row) => inRange(row.financialEventAt, prevRange))
+        const gross = sumBy(rows, (row) => numberValue(row.grossAmount))
+        const refund = sumBy(rows, (row) => numberValue(row.refundAmount) + numberValue(row.partialRefundAmount))
+        return gross > 0 ? refund / gross : 0
+      })()
+      const latestRefundRate = (() => {
+        const rows = revenueRows.filter((row) => inRange(row.financialEventAt, latestRange))
+        const gross = sumBy(rows, (row) => numberValue(row.grossAmount))
+        const refund = sumBy(rows, (row) => numberValue(row.refundAmount) + numberValue(row.partialRefundAmount))
+        return gross > 0 ? refund / gross : 0
+      })()
+      const previousCtr = (() => {
+        const rows = deliveryRows.filter((row) => inRange(row.sentAt, prevRange))
+        const sent = rows.filter((row) => row.status === 'sent').length
+        const clicked = rows.filter((row) => row.status === 'clicked').length
+        return sent > 0 ? clicked / sent : 0
+      })()
+      const latestCtr = (() => {
+        const rows = deliveryRows.filter((row) => inRange(row.sentAt, latestRange))
+        const sent = rows.filter((row) => row.status === 'sent').length
+        const clicked = rows.filter((row) => row.status === 'clicked').length
+        return sent > 0 ? clicked / sent : 0
+      })()
+      const previousCheckoutStarts = eventRows.filter((row) => row.eventName === 'cart_click' && inRange(row.eventAt, prevRange)).length
+      const latestCheckoutStarts = eventRows.filter((row) => row.eventName === 'cart_click' && inRange(row.eventAt, latestRange)).length
+
+      const highSupportCategory = (Object.entries(inquiryRows.reduce((acc: Record<string, number>, row) => {
+        const key = String(row.inquiryCategory ?? 'unknown')
+        acc[key] = (acc[key] ?? 0) + 1
+        return acc
+      }, {})) as Array<[string, number]>).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'unknown'
+
+      const playbooks = [
+        {
+          playbookKey: 'billing-failed-payment-recovery',
+          title: 'failed payment 急増時の回復導線提案',
+          ownerTeam: 'finance',
+          severity: 'high',
+          runMode: 'auto_with_approval',
+          sourceSite: 'cross',
+          triggerSource: 'billing_event',
+          triggerValue: { current: latestPaymentFailures, baseline: previousPaymentFailures, ratio: safeRatio(latestPaymentFailures, Math.max(previousPaymentFailures, 1)) },
+          conditionSet: { paymentFailureCount: { gte: 10 }, conversionDropPercent: { gte: 20 } },
+          action: ['recovery_message_suggestion', 'support_task_create', 'manual_review_queue_add'],
+          approvalStep: ['finance_lead', 'support_lead'],
+          approvalRequired: true,
+        },
+        {
+          playbookKey: 'support-surge-faq-guidance',
+          title: 'support 急増時のFAQ/Guide更新タスク',
+          ownerTeam: 'support',
+          severity: 'medium',
+          runMode: 'auto_safe',
+          sourceSite: 'cross',
+          triggerSource: 'support_case_surge',
+          triggerValue: { current: latestSupportCases, baseline: previousSupportCases, ratio: safeRatio(latestSupportCases, Math.max(previousSupportCases, 1)), category: highSupportCategory },
+          conditionSet: { unresolvedDuration: { gteHours: 12 }, supportCategory: highSupportCategory },
+          action: ['faq_update_task_create', 'guide_update_task_create', 'routing_recommendation'],
+          approvalStep: [],
+          approvalRequired: false,
+        },
+        {
+          playbookKey: 'campaign-ctr-drop-review',
+          title: 'campaign CTR 低下時の見直し提案',
+          ownerTeam: 'crm',
+          severity: 'medium',
+          runMode: 'suggested',
+          sourceSite: 'main',
+          triggerSource: 'crm_campaign_degradation',
+          triggerValue: { current: latestCtr, baseline: previousCtr, ratio: safeRatio(latestCtr, Math.max(previousCtr, 0.0001)) },
+          conditionSet: { notificationCTR: { drop: BI_ALERT_DROP_RATIO } },
+          action: ['campaign_review_task_create', 'template_switch_suggestion'],
+          approvalStep: ['crm_lead'],
+          approvalRequired: false,
+        },
+        {
+          playbookKey: 'checkout-drop-growth-review',
+          title: 'checkout 開始率低下時のgrowth調査',
+          ownerTeam: 'growth',
+          severity: 'high',
+          runMode: 'suggested',
+          sourceSite: 'store',
+          triggerSource: 'kpi_alert',
+          triggerValue: { current: latestCheckoutStarts, baseline: previousCheckoutStarts, ratio: safeRatio(latestCheckoutStarts, Math.max(previousCheckoutStarts, 1)) },
+          conditionSet: { sourceSite: 'store', campaignScope: 'all' },
+          action: ['growth_review_task_create', 'dashboard_pin'],
+          approvalStep: [],
+          approvalRequired: false,
+        },
+        {
+          playbookKey: 'refund-spike-finance-review',
+          title: 'refund率急増時のfinance review',
+          ownerTeam: 'finance',
+          severity: 'high',
+          runMode: 'auto_with_approval',
+          sourceSite: 'store',
+          triggerSource: 'order_refund_event',
+          triggerValue: { current: latestRefundRate, baseline: previousRefundRate, ratio: safeRatio(latestRefundRate, Math.max(previousRefundRate, 0.0001)) },
+          conditionSet: { refundRate: { spike: BI_ALERT_SPIKE_RATIO } },
+          action: ['finance_alert_create', 'campaign_pause_suggestion', 'manual_override_queue_add'],
+          approvalStep: ['finance_lead'],
+          approvalRequired: true,
+        },
+      ].map((playbook) => {
+        const ratio = numberValue((playbook.triggerValue as Record<string, unknown>).ratio)
+        const triggered = (playbook.severity === 'high' && Math.abs(ratio) >= BI_ALERT_DROP_RATIO) || (playbook.severity !== 'high' && Math.abs(ratio) >= 0.15)
+        return {
+          ...playbook,
+          workflow: 'ops-automation-v1',
+          retryPolicy: { maxAttempts: PLAYBOOK_RETRY_LIMIT, backoffMs: 30000 },
+          runGuard: {
+            dryRun: true,
+            safeMode: PLAYBOOK_SAFE_MODE_DEFAULT,
+            cooldownWindow: 'PT4H',
+            deduplicationKey: `${playbook.playbookKey}:${toIsoDay(to.toISOString())}`,
+            rateLimitRule: '20 actions / 10min',
+            audienceSizeGuard: PLAYBOOK_APPROVAL_AUDIENCE_THRESHOLD,
+          },
+          executionState: triggered ? (playbook.approvalRequired ? 'pending_approval' : 'suggested') : 'skipped',
+          triggered,
+        }
+      })
+
+      const pendingApprovals = playbooks.filter((item) => item.triggered && item.approvalRequired).map((item) => ({
+        playbookKey: item.playbookKey,
+        title: item.title,
+        ownerTeam: item.ownerTeam,
+        approvalStatus: 'pending',
+        approvalStep: item.approvalStep,
+        reason: `${item.triggerSource} で閾値超過`,
+      }))
+
+      ctx.body = {
+        range: { from: from.toISOString(), to: to.toISOString() },
+        triggerSourceCatalog: ['kpi_alert', 'anomaly_detection', 'billing_event', 'order_refund_event', 'support_case_surge', 'crm_campaign_degradation', 'manual_operator_trigger'],
+        runModeCatalog: ['manual', 'suggested', 'auto_safe', 'auto_with_approval', 'disabled'],
+        playbooks,
+        pendingApprovals,
+      }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Internal permission denied')) return ctx.forbidden('internal automation playbook の権限がありません。')
+      strapi.log.error(`[analytics-event] internalAutomationPlaybooks failed: ${message}`)
+      return ctx.internalServerError('playbook 一覧の取得に失敗しました。')
+    }
+  },
+
+  async internalAutomationRuns(ctx) {
+    try {
+      await requireInternalPermission(ctx, 'internal.audit.read')
+      const logs = await strapi.documents('api::internal-audit-log.internal-audit-log').findMany({
+        filters: { targetType: { $eq: 'playbook-execution' } },
+        fields: ['targetId', 'action', 'status', 'reason', 'sourceSite', 'metadata', 'createdAt', 'actorLogtoUserId'],
+        limit: 100,
+        sort: ['createdAt:desc'],
+      })
+
+      const items = (logs as Array<Record<string, unknown>>).map((row) => ({
+        executionRun: String(row.targetId ?? ''),
+        actionStatus: row.status,
+        action: row.action,
+        sourceSite: row.sourceSite,
+        reason: row.reason,
+        actorLogtoUserId: row.actorLogtoUserId,
+        createdAt: row.createdAt,
+        metadata: row.metadata ?? {},
+      }))
+
+      ctx.body = { count: items.length, items }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Internal permission denied')) return ctx.forbidden('internal automation run の権限がありません。')
+      strapi.log.error(`[analytics-event] internalAutomationRuns failed: ${message}`)
+      return ctx.internalServerError('playbook 実行履歴の取得に失敗しました。')
+    }
+  },
+
+  async internalAutomationRun(ctx) {
+    try {
+      const access = await requireInternalPermission(ctx, 'internal.playbook.run')
+      const body = (ctx.request.body ?? {}) as Record<string, unknown>
+      const playbookKey = sanitizeText(body.playbookKey, 120)
+      if (!playbookKey) return ctx.badRequest('playbookKey は必須です。')
+      const runMode = sanitizeText(body.runMode, 40) ?? 'manual'
+      const dryRun = body.dryRun !== false
+      const sourceSite = sanitizeSourceSite(body.sourceSite)
+      const reason = sanitizeText(body.reason, 240) ?? 'manual trigger'
+      const approvalRequired = Boolean((body.approvalRequired ?? (playbookKey.includes('billing') || playbookKey.includes('refund'))))
+      const actionStatus = approvalRequired ? 'denied' : 'success'
+      const executionRun = `${playbookKey}:${Date.now()}`
+      const metadata = {
+        workflow: 'ops-automation-v1',
+        runMode,
+        dryRun,
+        safeMode: PLAYBOOK_SAFE_MODE_DEFAULT,
+        retryPolicy: { maxAttempts: PLAYBOOK_RETRY_LIMIT, backoffMs: 30000 },
+        idempotencyKey: `${playbookKey}:${toIsoDay(new Date().toISOString())}:${sourceSite}`,
+        approvalStatus: approvalRequired ? 'pending' : 'not_required',
+        rollbackHint: approvalRequired ? '承認前のため適用なし' : '実行済み action の taskId を参照して差し戻し',
+      }
+
+      await strapi.documents('api::internal-audit-log.internal-audit-log').create({
+        data: {
+          actorLogtoUserId: access.authUser.userId,
+          actorInternalRoles: access.internalRoles,
+          targetType: 'playbook-execution',
+          targetId: executionRun,
+          action: `playbook:${playbookKey}`,
+          status: actionStatus,
+          reason,
+          sourceSite: sourceSite === 'unknown' ? 'cross' : sourceSite,
+          beforeState: { executionState: 'pending' },
+          afterState: { executionState: approvalRequired ? 'pending_approval' : (dryRun ? 'dry_run_completed' : 'succeeded') },
+          metadata,
+          requestId: String(ctx.request.headers['x-request-id'] ?? ''),
+        },
+      })
+
+      ctx.body = {
+        executionRun,
+        playbookKey,
+        runMode,
+        dryRun,
+        sourceSite,
+        actionStatus: approvalRequired ? 'pending_approval' : (dryRun ? 'dry_run_completed' : 'succeeded'),
+        approvalStatus: approvalRequired ? 'pending' : 'not_required',
+        failureReason: approvalRequired ? 'dangerous action のため承認待ちへ移送' : null,
+        retryPolicy: { maxAttempts: PLAYBOOK_RETRY_LIMIT, attempts: 0 },
+      }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Internal permission denied')) return ctx.forbidden('internal automation run の権限がありません。')
+      strapi.log.error(`[analytics-event] internalAutomationRun failed: ${message}`)
+      return ctx.internalServerError('playbook 実行に失敗しました。')
     }
   },
 

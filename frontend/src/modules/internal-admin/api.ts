@@ -180,6 +180,60 @@ export type InternalBiReport = {
   }
 }
 
+export type InternalAutomationPlaybook = {
+  playbookKey: string
+  title: string
+  ownerTeam: string
+  severity: string
+  runMode: 'manual' | 'suggested' | 'auto_safe' | 'auto_with_approval' | 'disabled'
+  sourceSite: string
+  triggerSource: string
+  triggerValue: Record<string, unknown>
+  conditionSet: Record<string, unknown>
+  action: string[]
+  approvalStep: string[]
+  approvalRequired: boolean
+  workflow: string
+  retryPolicy: { maxAttempts: number; backoffMs: number }
+  runGuard: Record<string, unknown>
+  executionState: string
+  triggered: boolean
+}
+
+export type InternalAutomationPlaybooksResponse = {
+  range: { from: string; to: string }
+  triggerSourceCatalog: string[]
+  runModeCatalog: string[]
+  playbooks: InternalAutomationPlaybook[]
+  pendingApprovals: Array<{ playbookKey: string; title: string; ownerTeam: string; approvalStatus: string; approvalStep: string[]; reason: string }>
+}
+
+export type InternalAutomationRunsResponse = {
+  count: number
+  items: Array<{
+    executionRun: string
+    actionStatus: string
+    action: string
+    sourceSite: string
+    reason: string
+    actorLogtoUserId: string
+    createdAt: string
+    metadata: Record<string, unknown>
+  }>
+}
+
+export type InternalAutomationRunResponse = {
+  executionRun: string
+  playbookKey: string
+  runMode: string
+  dryRun: boolean
+  sourceSite: string
+  actionStatus: string
+  approvalStatus: string
+  failureReason: string | null
+  retryPolicy: { maxAttempts: number; attempts: number }
+}
+
 function getApiBaseUrl(): string {
   const baseUrl = import.meta.env.VITE_STRAPI_API_URL
   if (!baseUrl) throw new Error('VITE_STRAPI_API_URL が未設定です。')
@@ -256,6 +310,10 @@ export function useInternalAdminApi() {
       if (to) query.set('to', to)
       return internalFetch<InternalBiReport>(`/internal/bi/report?${query.toString()}`, token)
     }),
+    getAutomationPlaybooks: async () => withToken((token) => internalFetch<InternalAutomationPlaybooksResponse>('/internal/automation/playbooks', token)),
+    getAutomationRuns: async () => withToken((token) => internalFetch<InternalAutomationRunsResponse>('/internal/automation/runs', token)),
+    runAutomationPlaybook: async (payload: { playbookKey: string; runMode?: string; dryRun?: boolean; sourceSite?: string; reason?: string; approvalRequired?: boolean }) =>
+      withToken((token) => internalFetch<InternalAutomationRunResponse>('/internal/automation/run', token, { method: 'POST', body: JSON.stringify(payload) })),
     downloadBiCsv: async (from?: string, to?: string) => withToken(async (token) => {
       const query = new URLSearchParams()
       if (from) query.set('from', from)

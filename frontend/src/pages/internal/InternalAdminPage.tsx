@@ -9,6 +9,9 @@ import {
   type InternalBiCohorts,
   type InternalBiAlerts,
   type InternalBiReport,
+  type InternalAutomationPlaybooksResponse,
+  type InternalAutomationRunsResponse,
+  type InternalAutomationRunResponse,
 } from '@/modules/internal-admin/api'
 
 export default function InternalAdminPage() {
@@ -28,6 +31,9 @@ export default function InternalAdminPage() {
   const [biCohorts, setBiCohorts] = useState<InternalBiCohorts | null>(null)
   const [biAlerts, setBiAlerts] = useState<InternalBiAlerts | null>(null)
   const [biReport, setBiReport] = useState<InternalBiReport | null>(null)
+  const [automationPlaybooks, setAutomationPlaybooks] = useState<InternalAutomationPlaybooksResponse | null>(null)
+  const [automationRuns, setAutomationRuns] = useState<InternalAutomationRunsResponse | null>(null)
+  const [automationRunResult, setAutomationRunResult] = useState<InternalAutomationRunResponse | null>(null)
 
   if (!isSignedIn) return <section className="mx-auto max-w-4xl px-4 py-16">ログインが必要です。</section>
   if (user?.role !== 'admin') return <section className="mx-auto max-w-4xl px-4 py-16">internal admin は管理者ロールのみアクセスできます。</section>
@@ -135,6 +141,89 @@ export default function InternalAdminPage() {
               failed: {revenueSummary.counts.failed} / canceled: {revenueSummary.counts.canceled} / refunded: {revenueSummary.counts.refunded}
             </p>
             <pre className="overflow-auto rounded bg-gray-50 p-3 dark:bg-gray-900">{JSON.stringify({ bySourceSite: revenueSummary.bySourceSite, byRevenueType: revenueSummary.byRevenueType }, null, 2)}</pre>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-6 rounded border border-gray-200 p-4 dark:border-gray-800">
+        <p className="text-xs text-gray-500">workflow / playbook automation console</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setMessage(null)
+              api.getAutomationPlaybooks().then(setAutomationPlaybooks).catch((e: Error) => setMessage(e.message))
+            }}
+            className="rounded bg-gray-900 px-3 py-2 text-sm text-white"
+          >Playbook一覧更新</button>
+          <button
+            type="button"
+            onClick={() => {
+              setMessage(null)
+              api.getAutomationRuns().then(setAutomationRuns).catch((e: Error) => setMessage(e.message))
+            }}
+            className="rounded border border-gray-300 px-3 py-2 text-sm"
+          >実行履歴更新</button>
+        </div>
+        {automationPlaybooks && (
+          <div className="mt-3 space-y-3 text-xs">
+            <p className="text-gray-500">
+              range: {automationPlaybooks.range.from} ~ {automationPlaybooks.range.to} / pendingApproval: {automationPlaybooks.pendingApprovals.length}
+            </p>
+            <ul className="space-y-2">
+              {automationPlaybooks.playbooks.map((item) => (
+                <li key={item.playbookKey} className="rounded border border-gray-200 p-3 dark:border-gray-700">
+                  <p className="font-medium">{item.title}</p>
+                  <p className="text-gray-500">{item.playbookKey} / {item.ownerTeam} / {item.runMode} / state:{item.executionState}</p>
+                  <p className="text-gray-500">trigger:{item.triggerSource} / severity:{item.severity} / approval:{item.approvalRequired ? 'required' : 'none'}</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className="rounded border border-gray-300 px-2 py-1 text-xs"
+                      onClick={() => {
+                        setMessage(null)
+                        api.runAutomationPlaybook({
+                          playbookKey: item.playbookKey,
+                          runMode: 'manual',
+                          dryRun: true,
+                          sourceSite: item.sourceSite,
+                          reason: 'internal admin dry-run',
+                          approvalRequired: item.approvalRequired,
+                        }).then(setAutomationRunResult).catch((e: Error) => setMessage(e.message))
+                      }}
+                    >dry-run</button>
+                    <button
+                      type="button"
+                      className="rounded border border-amber-400 px-2 py-1 text-xs text-amber-700"
+                      onClick={() => {
+                        setMessage(null)
+                        api.runAutomationPlaybook({
+                          playbookKey: item.playbookKey,
+                          runMode: item.runMode,
+                          dryRun: false,
+                          sourceSite: item.sourceSite,
+                          reason: 'internal admin execute',
+                          approvalRequired: item.approvalRequired,
+                        }).then(setAutomationRunResult).catch((e: Error) => setMessage(e.message))
+                      }}
+                    >実行</button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <pre className="overflow-auto rounded bg-gray-50 p-3 dark:bg-gray-900">{JSON.stringify({ pendingApprovals: automationPlaybooks.pendingApprovals }, null, 2)}</pre>
+          </div>
+        )}
+        {automationRuns && (
+          <div className="mt-3 text-xs">
+            <p className="text-gray-500">run count: {automationRuns.count}</p>
+            <pre className="overflow-auto rounded bg-gray-50 p-3 dark:bg-gray-900">{JSON.stringify(automationRuns.items.slice(0, 10), null, 2)}</pre>
+          </div>
+        )}
+        {automationRunResult && (
+          <div className="mt-3 text-xs">
+            <p className="font-medium">latest run: {automationRunResult.executionRun}</p>
+            <pre className="overflow-auto rounded bg-gray-50 p-3 dark:bg-gray-900">{JSON.stringify(automationRunResult, null, 2)}</pre>
           </div>
         )}
       </div>
