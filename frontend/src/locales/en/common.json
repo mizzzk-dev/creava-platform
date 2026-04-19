@@ -954,5 +954,39 @@
     "pushEnableAction": "Enable push",
     "pushEnabled": "Push enabled",
     "pushPermissionState": "Status: {{state}}"
+  },
+  "experience": {
+    "eyebrow": "experience highlight",
+    "errorHint": "Please retry in a moment, or check FAQ / Contact for help.",
+    "main": {
+      "title": "A brand hub connecting main / store / fanclub",
+      "description": "We reorganized key paths so first-time and returning visitors can understand what to see and where to go next.",
+      "highlightStoryTitle": "Lead with world view and activity context",
+      "highlightStoryDesc": "Works, news, and events are connected as one coherent brand narrative.",
+      "highlightRoutingTitle": "Clear routing from main to store / fanclub",
+      "highlightRoutingDesc": "Discovery, purchase, and membership actions remain visible throughout the page.",
+      "highlightTrustTitle": "Reduce friction before inquiry",
+      "highlightTrustDesc": "FAQ / Guide / Contact are linked in one continuous support flow."
+    },
+    "store": {
+      "title": "Store experience balancing excitement and reassurance",
+      "description": "Even with fewer products, editorial blocks, guide links, and member bridges keep the storefront meaningful.",
+      "highlightSalesTitle": "Feature new / limited / pickup at the top",
+      "highlightSalesDesc": "Fixed campaign and pickup entry points shorten the path to purchase decisions.",
+      "highlightGuideTitle": "Resolve concerns before purchase",
+      "highlightGuideDesc": "Shipping, returns, FAQ, and contact are connected in one support flow.",
+      "highlightMemberTitle": "Natural bridge to fanclub benefits",
+      "highlightMemberDesc": "Cross-site CTAs guide visitors to early access and member perks."
+    },
+    "fc": {
+      "title": "Membership experience that encourages continuity",
+      "description": "Join / Login / MyPage flow is simplified while benefit value and exclusivity become clearer.",
+      "highlightWeeklyTitle": "Weekly updates visible first",
+      "highlightWeeklyDesc": "Returning members can instantly see what is newly available this week.",
+      "highlightBenefitTitle": "Visualize member-only benefits",
+      "highlightBenefitDesc": "Limited access, early access, and member store routes are integrated in one area.",
+      "highlightSupportTitle": "Support flow before and after joining",
+      "highlightSupportDesc": "Users can move quickly to FAQ / Guide / Contact without confusion."
+    }
   }
 }

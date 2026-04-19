@@ -39,6 +39,7 @@ import SemanticBadge from '@/components/common/ui/SemanticBadge'
 import SectionReveal from '@/components/common/SectionReveal'
 import CuratedBentoSection from '@/components/common/CuratedBentoSection'
 import VisualHeroSection from '@/components/common/VisualHeroSection'
+import ExperienceHighlightsSection from '@/components/common/ExperienceHighlightsSection'
 import HeroImageSlider, { type HeroSlide } from '@/components/common/HeroImageSlider'
 import ImageFeatureTile from '@/components/common/ImageFeatureTile'
 import { normalizeHeroSlides } from '@/lib/heroSlides'
@@ -367,6 +368,35 @@ export function FanclubHomeHubPage() {
           { label: '今週の更新', value: '動画・ブログ・イベント情報を順次公開' },
           { label: '限定特典', value: '先行案内 / FC限定公開 / 会員向け販売導線' },
           { label: 'FAQ', value: '入会・解約・公開範囲の案内を常設' },
+        ]}
+      />
+
+
+      <ExperienceHighlightsSection
+        site="fanclub"
+        title={t('experience.fc.title', { defaultValue: '継続したくなる会員体験を、毎週の更新で可視化' })}
+        description={t('experience.fc.description', { defaultValue: 'Join / Login / MyPage を迷わず進める設計に加え、限定感と特典価値が見える情報配置へアップデートしました。' })}
+        highlights={[
+          {
+            id: 'fc-highlight-1',
+            title: t('experience.fc.highlightWeeklyTitle', { defaultValue: '今週更新を先頭で案内' }),
+            description: t('experience.fc.highlightWeeklyDesc', { defaultValue: '再訪時に最初に見るべきコンテンツが即座に把握できます。' }),
+          },
+          {
+            id: 'fc-highlight-2',
+            title: t('experience.fc.highlightBenefitTitle', { defaultValue: '会員特典・先行価値を視覚化' }),
+            description: t('experience.fc.highlightBenefitDesc', { defaultValue: '限定・先行・会員ストアの導線をカードとCTAで統合。' }),
+          },
+          {
+            id: 'fc-highlight-3',
+            title: t('experience.fc.highlightSupportTitle', { defaultValue: '入会前後の不安を減らす支援導線' }),
+            description: t('experience.fc.highlightSupportDesc', { defaultValue: 'FAQ / Guide / お問い合わせに迷わず移動できる構成。' }),
+          },
+        ]}
+        ctas={[
+          { label: t('subdomain.fanclubNav.join'), to: ROUTES.FC_JOIN },
+          { label: t('subdomain.fanclubNav.mypage'), to: ROUTES.FC_MYPAGE, style: 'secondary' },
+          { label: t('nav.faq'), to: ROUTES.FAQ, style: 'secondary' },
         ]}
       />
 

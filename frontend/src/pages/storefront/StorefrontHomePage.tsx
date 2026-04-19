@@ -27,6 +27,7 @@ import { isCampaignActive } from '@/modules/campaign/lib'
 import SectionReveal from '@/components/common/SectionReveal'
 import CuratedBentoSection from '@/components/common/CuratedBentoSection'
 import VisualHeroSection from '@/components/common/VisualHeroSection'
+import ExperienceHighlightsSection from '@/components/common/ExperienceHighlightsSection'
 import HeroImageSlider, { type HeroSlide } from '@/components/common/HeroImageSlider'
 import ImageFeatureTile from '@/components/common/ImageFeatureTile'
 import { buildStoreHeroFallbackSlides, normalizeHeroSlides } from '@/lib/heroSlides'
@@ -260,6 +261,35 @@ export default function StorefrontHomePage() {
           { label: 'キャンペーン', value: 'limited / trending をカードで再編集。' },
           { label: '会員導線', value: 'FC先行や特典導線を常時表示。' },
           { label: 'ガイド', value: 'FAQ / 配送 / 返品導線を固定配置。' },
+        ]}
+      />
+
+
+      <ExperienceHighlightsSection
+        site="store"
+        title={t('experience.store.title', { defaultValue: '売り場感と安心感を両立するストア体験' })}
+        description={t('experience.store.description', { defaultValue: '商品が少ない時でも価値が伝わるように、特集・ガイド・会員導線を組み合わせた編集構成に刷新しました。' })}
+        highlights={[
+          {
+            id: 'store-highlight-1',
+            title: t('experience.store.highlightSalesTitle', { defaultValue: '特集・新着・限定を先頭で可視化' }),
+            description: t('experience.store.highlightSalesDesc', { defaultValue: 'ピックアップやキャンペーン導線を固定し、購入判断までの迷いを短縮。' }),
+          },
+          {
+            id: 'store-highlight-2',
+            title: t('experience.store.highlightGuideTitle', { defaultValue: '購入前の不安をガイド導線で解消' }),
+            description: t('experience.store.highlightGuideDesc', { defaultValue: '配送・返品・FAQ・問い合わせをワンフローで確認できます。' }),
+          },
+          {
+            id: 'store-highlight-3',
+            title: t('experience.store.highlightMemberTitle', { defaultValue: 'FC特典への自然なブリッジ' }),
+            description: t('experience.store.highlightMemberDesc', { defaultValue: '先行販売や会員特典にすぐ遷移できる横断CTAを追加。' }),
+          },
+        ]}
+        ctas={[
+          { label: t('store.heroCtaPrimary', { defaultValue: '今すぐ購入する' }), to: '/products' },
+          { label: 'Guide / FAQ', to: '/guide', style: 'secondary' },
+          { label: 'FC Join', to: fanclubLink(ROUTES.FC_JOIN), style: 'secondary' },
         ]}
       />
 
