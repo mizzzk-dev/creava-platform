@@ -1,5 +1,5 @@
-export type MemberOrderStatus = 'placed' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
-export type ShipmentStatus = 'label_created' | 'in_transit' | 'out_for_delivery' | 'delivered'
+export type MemberOrderStatus = 'pending' | 'paid' | 'preparing' | 'shipped' | 'delivered' | 'cancelled' | 'refund_in_progress' | 'refunded' | 'exception'
+export type ShipmentStatus = 'not_shipped' | 'preparing' | 'in_transit' | 'delivered' | 'returned' | 'exception'
 export type NoticeAudience = 'all' | 'member'
 export type NoticePriority = 'high' | 'normal'
 

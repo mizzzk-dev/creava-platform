@@ -70,7 +70,29 @@ export async function getMemberBillingSummary(authToken: string): Promise<Member
   }
 }
 
-export async function getMemberDashboard(isMember: boolean): Promise<MemberDashboardData> {
+
+async function getMemberOrdersAndShipments(authToken: string): Promise<Pick<MemberDashboardData, 'orders' | 'shipments'>> {
+  const baseUrl = import.meta.env.VITE_STRAPI_API_URL
+  if (!baseUrl) return { orders: [], shipments: [] }
+
+  const headers = {
+    Accept: 'application/json',
+    Authorization: `Bearer ${authToken}`,
+  }
+
+  const [orderRes, shipmentRes] = await Promise.all([
+    fetch(`${baseUrl.replace(/\/$/, '')}/api/orders/me?pageSize=${MEMBER_PAGE_SIZE}`, { headers }),
+    fetch(`${baseUrl.replace(/\/$/, '')}/api/orders/me/shipments?pageSize=${MEMBER_PAGE_SIZE}`, { headers }),
+  ])
+
+  if (!orderRes.ok || !shipmentRes.ok) {
+    throw new Error('注文情報の取得に失敗しました。')
+  }
+
+  const [orderJson, shipmentJson] = await Promise.all([orderRes.json() as Promise<{ data: MemberDashboardData['orders'] }>, shipmentRes.json() as Promise<{ data: MemberDashboardData['shipments'] }>])
+  return { orders: orderJson.data ?? [], shipments: shipmentJson.data ?? [] }
+}
+export async function getMemberDashboard(isMember: boolean, authToken?: string | null): Promise<MemberDashboardData> {
   if (USE_MOCK) {
     const mock = createMockMemberDashboardData(isMember)
     const saved = loadMemberPreferences()
@@ -82,15 +104,19 @@ export async function getMemberDashboard(isMember: boolean): Promise<MemberDashb
   }
 
   try {
-    const [orders, shipments, notices, auditLogs] = await Promise.all([
-      fetchCollection<MemberDashboardData['orders'][number]>(API_ENDPOINTS.memberOrders, {
-        sort: ['orderedAt:desc'],
-        pagination: { pageSize: MEMBER_PAGE_SIZE },
-      }),
-      fetchCollection<MemberDashboardData['shipments'][number]>(API_ENDPOINTS.memberShipments, {
-        sort: ['lastSyncedAt:desc'],
-        pagination: { pageSize: MEMBER_PAGE_SIZE },
-      }),
+    const [orderData, notices, auditLogs] = await Promise.all([
+      authToken
+        ? getMemberOrdersAndShipments(authToken)
+        : Promise.all([
+          fetchCollection<MemberDashboardData['orders'][number]>(API_ENDPOINTS.memberOrders, {
+            sort: ['orderedAt:desc'],
+            pagination: { pageSize: MEMBER_PAGE_SIZE },
+          }),
+          fetchCollection<MemberDashboardData['shipments'][number]>(API_ENDPOINTS.memberShipments, {
+            sort: ['lastSyncedAt:desc'],
+            pagination: { pageSize: MEMBER_PAGE_SIZE },
+          }),
+        ]).then(([orders, shipments]) => ({ orders: orders.data, shipments: shipments.data })),
       fetchCollection<MemberDashboardData['notices'][number]>(API_ENDPOINTS.memberNotices, {
         sort: ['publishedAt:desc'],
         pagination: { pageSize: MEMBER_PAGE_SIZE },
@@ -103,8 +129,8 @@ export async function getMemberDashboard(isMember: boolean): Promise<MemberDashb
 
     const saved = loadMemberPreferences()
     return {
-      orders: orders.data,
-      shipments: shipments.data,
+      orders: orderData.orders,
+      shipments: orderData.shipments,
       notices: notices.data,
       preferences: saved ?? { newsletterOptIn: true, loginAlertOptIn: true },
       auditLogs: auditLogs.data,

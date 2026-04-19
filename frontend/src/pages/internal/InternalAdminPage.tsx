@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useCurrentUser } from '@/hooks'
-import { useInternalAdminApi, type InternalLookupUser } from '@/modules/internal-admin/api'
+import { useInternalAdminApi, type InternalLookupUser, type InternalOrderLookupItem } from '@/modules/internal-admin/api'
 
 export default function InternalAdminPage() {
   const { user, isSignedIn } = useCurrentUser()
@@ -11,6 +11,8 @@ export default function InternalAdminPage() {
   const [reason, setReason] = useState('')
   const [status, setStatus] = useState('suspended')
   const [message, setMessage] = useState<string | null>(null)
+  const [orderQuery, setOrderQuery] = useState('')
+  const [orders, setOrders] = useState<InternalOrderLookupItem[]>([])
 
   if (!isSignedIn) return <section className="mx-auto max-w-4xl px-4 py-16">ログインが必要です。</section>
   if (user?.role !== 'admin') return <section className="mx-auto max-w-4xl px-4 py-16">internal admin は管理者ロールのみアクセスできます。</section>
@@ -47,6 +49,32 @@ export default function InternalAdminPage() {
                 <p>{item.primaryEmail ?? item.logtoUserId}</p>
                 <p className="text-xs text-gray-500">{item.membershipStatus} / {item.accountStatus} / {item.sourceSite}</p>
               </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+
+
+      <div className="mt-6 rounded border border-gray-200 p-4 dark:border-gray-800">
+        <p className="text-xs text-gray-500">order lookup</p>
+        <div className="mt-2 flex gap-2">
+          <input value={orderQuery} onChange={(e) => setOrderQuery(e.target.value)} placeholder="orderNumber / email / userId / paymentIntentId" className="w-full rounded border border-gray-300 px-3 py-2 text-sm" />
+          <button
+            type="button"
+            onClick={() => {
+              setMessage(null)
+              api.searchOrders(orderQuery).then((res) => setOrders(res.items)).catch((e: Error) => setMessage(e.message))
+            }}
+            className="rounded bg-gray-900 px-3 py-2 text-sm text-white"
+          >検索</button>
+        </div>
+        <ul className="mt-3 space-y-2 text-xs">
+          {orders.map((item) => (
+            <li key={item.id} className="rounded border border-gray-200 p-3 dark:border-gray-700">
+              <p className="font-medium">{item.orderNumber}</p>
+              <p className="text-gray-500">{item.paymentStatus} / {item.orderStatus} / {item.fulfillmentStatus} / {item.shipmentStatus} / return:{item.returnStatus}</p>
+              <p className="text-gray-500">{item.totalAmount} {item.currency} · {item.email ?? item.userId ?? '-'}</p>
             </li>
           ))}
         </ul>

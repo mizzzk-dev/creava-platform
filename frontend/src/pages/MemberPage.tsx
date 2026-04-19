@@ -135,7 +135,8 @@ export default function MemberPage() {
     setDashboardLoading(true)
     setDashboardError(null)
 
-    getMemberDashboard(canViewMemberNotices)
+    authClient.getAccessToken()
+      .then((token) => getMemberDashboard(canViewMemberNotices, token))
       .then((data) => {
         if (!cancelled) {
           setDashboardData(data)
@@ -155,7 +156,7 @@ export default function MemberPage() {
     return () => {
       cancelled = true
     }
-  }, [canViewMemberNotices, isLoaded, isSignedIn, t])
+  }, [authClient, canViewMemberNotices, isLoaded, isSignedIn, t])
 
   useEffect(() => {
     let cancelled = false

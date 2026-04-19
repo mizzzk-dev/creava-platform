@@ -69,6 +69,124 @@ async function syncAppUserMembership(strapi: any, authUserId: string | null, inp
   })
 }
 
+
+
+function toOrderNumber(sessionId: string): string {
+  return `MZ-${sessionId.replace('cs_', '').slice(0, 12).toUpperCase()}`
+}
+
+async function commitInventoryForStoreOrder(strapi: any, metadata: Record<string, unknown>): Promise<{ status: string; reason?: string | null }> {
+  const productDocumentId = typeof metadata.productDocumentId === 'string' ? metadata.productDocumentId : null
+  const quantity = Number(metadata.quantity ?? 1)
+  if (!productDocumentId || !Number.isFinite(quantity) || quantity <= 0) {
+    return { status: 'none', reason: 'missing_product_or_quantity' }
+  }
+
+  const product = await strapi.documents('api::store-product.store-product').findOne({ documentId: productDocumentId, status: 'published' })
+  if (!product) {
+    return { status: 'failed', reason: 'product_not_found' }
+  }
+
+  const currentStock = Number(product.stock ?? 0)
+  if (currentStock < quantity) {
+    return { status: 'failed', reason: 'insufficient_stock' }
+  }
+
+  const nextStock = Math.max(0, currentStock - quantity)
+  await strapi.documents('api::store-product.store-product').update({
+    documentId: product.documentId,
+    data: {
+      stock: nextStock,
+      stockStatus: nextStock <= 0 ? 'out_of_stock' : nextStock <= 5 ? 'low_stock' : 'in_stock',
+    },
+    status: 'published',
+  })
+
+  return { status: 'committed' }
+}
+
+async function upsertStoreOrderFromCheckout(strapi: any, input: {
+  sessionObject: Record<string, unknown>
+  metadata: Record<string, unknown>
+  authUserId: string | null
+  webhookEventId: string
+}): Promise<void> {
+  const sessionId = typeof input.sessionObject.id === 'string' ? input.sessionObject.id : ''
+  if (!sessionId) return
+
+  const existingOrder = await strapi.documents('api::order.order').findFirst({
+    filters: { checkoutSessionId: { $eq: sessionId } },
+  })
+
+  const now = new Date().toISOString()
+  const quantity = Number(input.metadata.quantity ?? 1)
+  const lineItems = [
+    {
+      productDocumentId: input.metadata.productDocumentId ?? null,
+      productId: input.metadata.productId ?? null,
+      title: typeof input.metadata.productTitle === 'string' ? input.metadata.productTitle : 'store item',
+      quantity: Number.isFinite(quantity) ? Math.max(1, Math.round(quantity)) : 1,
+      itemType: 'physical',
+      unitPrice: Number(input.sessionObject.amount_total ?? 0),
+    },
+  ]
+
+  const inventoryResult: { status: string; reason?: string | null } = existingOrder
+    ? { status: existingOrder.inventoryCommitState ?? 'none', reason: null }
+    : await commitInventoryForStoreOrder(strapi, input.metadata)
+
+  const orderPayload = {
+    provider: 'stripe',
+    sourceSite: 'store',
+    orderNumber: existingOrder?.orderNumber ?? toOrderNumber(sessionId),
+    orderStatus: inventoryResult.status === 'failed' ? 'exception' : 'confirmed',
+    paymentStatus: 'paid',
+    fulfillmentStatus: inventoryResult.status === 'failed' ? 'failed' : 'preparing',
+    shipmentStatus: 'not_shipped',
+    returnStatus: 'none',
+    refundStatus: 'none',
+    inventoryReservationState: 'none',
+    inventoryCommitState: inventoryResult.status === 'committed' ? 'committed' : inventoryResult.status === 'failed' ? 'rolled_back' : 'none',
+    userId: input.authUserId,
+    billingCustomerId: typeof input.sessionObject.customer === 'string' ? input.sessionObject.customer : null,
+    customerId: typeof input.sessionObject.customer === 'string' ? input.sessionObject.customer : null,
+    email: typeof input.sessionObject.customer_details === 'object' && input.sessionObject.customer_details && typeof (input.sessionObject.customer_details as any).email === 'string'
+      ? (input.sessionObject.customer_details as any).email
+      : null,
+    checkoutSessionId: sessionId,
+    paymentIntentId: typeof input.sessionObject.payment_intent === 'string' ? input.sessionObject.payment_intent : null,
+    currency: typeof input.sessionObject.currency === 'string' ? input.sessionObject.currency.toUpperCase() : 'JPY',
+    amountTotal: Number(input.sessionObject.amount_total ?? 0),
+    subtotal: Number(input.sessionObject.amount_subtotal ?? 0),
+    totalAmount: Number(input.sessionObject.amount_total ?? 0),
+    lineItems,
+    fulfillmentMethod: 'shipping',
+    locale: typeof input.metadata.locale === 'string' ? input.metadata.locale : 'ja',
+    syncState: inventoryResult.status === 'failed' ? 'needs_manual_review' : 'in_sync',
+    auditMetadata: {
+      sourceOfTruth: 'stripe_webhook',
+      lastWebhookEventId: input.webhookEventId,
+      inventoryReason: inventoryResult.reason ?? null,
+    },
+    metadata: input.metadata,
+    orderedAt: now,
+    paidAt: now,
+    webhookSyncedAt: now,
+  }
+
+  if (existingOrder?.documentId) {
+    await strapi.documents('api::order.order').update({
+      documentId: existingOrder.documentId,
+      data: {
+        ...orderPayload,
+        syncVersion: Number(existingOrder.syncVersion ?? 1) + 1,
+      },
+    })
+    return
+  }
+
+  await strapi.documents('api::order.order').create({ data: orderPayload })
+}
 export default ({ strapi }) => ({
   async createStoreCheckout(ctx) {
     try {
@@ -249,6 +367,15 @@ export default ({ strapi }) => ({
             metadata,
           },
         })
+
+        if (metadata.checkoutKind === 'store') {
+          await upsertStoreOrderFromCheckout(strapi, {
+            sessionObject: object,
+            metadata,
+            authUserId,
+            webhookEventId: event.id,
+          })
+        }
       }
 
       if (event.type === 'customer.subscription.created' || event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
