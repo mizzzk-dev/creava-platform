@@ -1,5 +1,25 @@
 import { useAuthClient } from '@/lib/auth/AuthProvider'
 
+
+
+export type InternalOrderLookupItem = {
+  id: number
+  orderNumber: string
+  userId: string | null
+  billingCustomerId: string | null
+  email: string | null
+  paymentStatus: string
+  orderStatus: string
+  fulfillmentStatus: string
+  shipmentStatus: string
+  returnStatus: string
+  refundStatus: string
+  totalAmount: number
+  currency: string
+  orderedAt: string
+  syncState: string
+}
+
 export type InternalLookupUser = {
   appUserId: string
   logtoUserId: string
@@ -62,5 +82,6 @@ export function useInternalAdminApi() {
     getUserSummary: async (logtoUserId: string) => withToken((token) => internalFetch<any>(`/internal/users/${encodeURIComponent(logtoUserId)}/summary`, token)),
     updateAccountStatus: async (logtoUserId: string, nextStatus: string, reason: string) => withToken((token) => internalFetch<any>(`/internal/users/${encodeURIComponent(logtoUserId)}/account-status`, token, { method: 'POST', body: JSON.stringify({ nextStatus, reason }) })),
     resetNotificationPreference: async (logtoUserId: string, reason: string) => withToken((token) => internalFetch<any>(`/internal/users/${encodeURIComponent(logtoUserId)}/notification-reset`, token, { method: 'POST', body: JSON.stringify({ reason }) })),
+    searchOrders: async (query: string) => withToken((token) => internalFetch<{ count: number; items: InternalOrderLookupItem[] }>(`/internal/orders/lookup?query=${encodeURIComponent(query)}`, token)),
   }
 }
