@@ -2,7 +2,7 @@ import type { AccountStatus, AppUser, MembershipStatus } from '@/types'
 
 export type OnboardingStatus = 'not_started' | 'in_progress' | 'completed' | 'skipped'
 export type ProfileCompletionStatus = 'not_started' | 'in_progress' | 'completed'
-export type EntitlementState = 'none' | 'eligible' | 'active' | 'limited' | 'revoked'
+export type EntitlementState = 'inactive' | 'active' | 'limited' | 'grace' | 'blocked'
 export type LifecycleStage =
   | 'guest'
   | 'authenticated_non_member'
@@ -17,6 +17,9 @@ export type UserLifecycleSummary = {
   profileCompletionStatus: ProfileCompletionStatus
   entitlementState: EntitlementState
   lifecycleStage: LifecycleStage
+  membershipStatus: MembershipStatus
+  subscriptionState: AppUser['subscriptionState']
+  billingState: AppUser['billingState']
   firstLoginAt: string | null
   lastLoginAt: string | null
   joinedAt: string | null
@@ -69,17 +72,20 @@ export function lifecycleFromClaims(user: AppUser, claims: Record<string, unknow
       ? 'active'
       : claims.entitlementState === 'limited'
         ? 'limited'
-        : claims.entitlementState === 'revoked'
-          ? 'revoked'
-          : claims.entitlementState === 'eligible'
-            ? 'eligible'
-            : 'none',
+        : claims.entitlementState === 'grace'
+          ? 'grace'
+          : claims.entitlementState === 'blocked'
+            ? 'blocked'
+            : 'inactive',
     lifecycleStage: resolveLifecycleStage({
       isSignedIn: true,
       membershipStatus: user.membershipStatus,
       accountStatus: user.accountStatus,
       onboardingStatus,
     }),
+    membershipStatus: user.membershipStatus,
+    subscriptionState: user.subscriptionState,
+    billingState: user.billingState,
     firstLoginAt: typeof claims.firstLoginAt === 'string' ? claims.firstLoginAt : null,
     lastLoginAt: typeof claims.lastLoginAt === 'string' ? claims.lastLoginAt : null,
     joinedAt: typeof claims.joinedAt === 'string' ? claims.joinedAt : null,

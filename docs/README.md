@@ -1,6 +1,6 @@
 # プロジェクトドキュメントハブ
 
-- 更新日: 2026-04-18
+- 更新日: 2026-04-19
 - 対象: `creava-platform` の frontend / backend / docs
 - 目的: 未経験者でも「構成・実装・運用・保守」の全体像を理解できるようにする
 - 前提: 本書は実装コード（`frontend/src`, `backend/src`, `backend/config`, `.github/workflows`）を基準に作成
@@ -51,6 +51,7 @@
 - [トラブルシューティング](./09_operations/troubleshooting.md)
 - [Logto 本番運用ランブック](./09_operations/logto-production-auth-runbook.md)
 - [統一認証基盤を前提にした user lifecycle / onboarding / 会員導線整備 (2026-04-19)](./user-lifecycle-membership-onboarding-foundation-2026-04-19.md)
+- [membershipStatus / entitlement / subscription / notification / CRM 同期基盤整備 (2026-04-19)](./membership-entitlement-subscription-sync-foundation-2026-04-19.md)
 - [Logto ユーザー同期/プロビジョニング基盤 (2026-04-18)](./logto-user-sync-foundation-2026-04-18.md)
 - [internal admin / support / 監査ログ 基盤整備 (2026-04-18)](./internal-admin-support-audit-foundation-2026-04-18.md)
 - [フォーム運用マニュアル](./09_operations/form-operations-manual.md)

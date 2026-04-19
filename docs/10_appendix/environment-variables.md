@@ -1,6 +1,6 @@
 # 環境変数設定手順書（フォーム運用基盤強化版）
 
-- 更新日: 2026-04-18
+- 更新日: 2026-04-19
 - 対象: frontend / backend / GitHub Actions
 - 目的: 問い合わせ運用（通知・CSV・スパム対策・添付運用）を環境差分込みで安全に運用する
 - 関連: [フォーム運用マニュアル](../09_operations/form-operations-manual.md), [deploy-manual](../09_operations/deploy-manual.md)
@@ -20,6 +20,7 @@
 | `VITE_USER_SYNC_ENABLED` | user provisioning bridge の有効化 | 任意 | 任意 | 任意 |
 | `VITE_USER_LIFECYCLE_ONBOARDING_ENABLED` | lifecycle/onboarding UI 表示フラグ | 任意 | 推奨 | 推奨 |
 | `VITE_ONBOARDING_REMINDER_DAYS` | onboarding 再表示までの日数 | 任意 | 任意 | 推奨 |
+| `VITE_MEMBERSHIP_STATE_SYNC_INTERVAL_SEC` | frontend で state summary を再同期する間隔（秒） | 任意 | 推奨 | 推奨 |
 | `VITE_SHOPIFY_*` | store 商品取得 | 任意 | 必須 | 必須 |
 | `VITE_STRIPE_PUBLISHABLE_KEY` | 決済公開キー | 任意 | 必須 | 必須 |
 | `VITE_PERSONALIZATION_MAX_HISTORY` | 閲覧履歴の保存上限 | 任意 | 任意 | 任意 |
@@ -57,6 +58,8 @@
 | `INQUIRY_IP_HASH_SALT` | IPハッシュソルト | 必須 |
 | `INQUIRY_OPS_TOKEN` | CSV/検索/集計 API 保護トークン | 必須 |
 | `ANALYTICS_OPS_TOKEN` | analytics ops summary API 保護トークン | 推奨 |
+| `USER_STATE_RECONCILE_INTERVAL_MIN` | user state 再同期ジョブ間隔（分） | 推奨 |
+| `USER_STATE_SYNC_MAX_DRIFT_MINUTES` | state stale 判定の許容ドリフト（分） | 推奨 |
 | `REVENUE_EXPORT_MAX_ROWS` | revenue CSV export 上限行数（internal admin 用） | 任意 |
 | `BI_DEFAULT_RANGE_DAYS` | internal BI overview/cohort の既定集計期間（日） | 任意 |
 | `BI_MAX_FETCH_ROWS` | BI集計時の1ドメインあたり最大取得行数（メモリ保護） | 任意 |
@@ -85,6 +88,8 @@
 - `LOGTO_M2M_APP_SECRET`
 - `LOGTO_USER_SYNC_OPS_TOKEN`（support lookup API 用）
 - `USER_LIFECYCLE_GRACE_NOTICE_DAYS`（grace 通知表示のしきい値日数）
+- `USER_STATE_RECONCILE_INTERVAL_MIN`
+- `USER_STATE_SYNC_MAX_DRIFT_MINUTES`
 
 ## 3. GitHub Secrets（推奨一覧）
 
@@ -100,6 +105,7 @@
 - `VITE_LOGTO_ACCOUNT_CENTER_URL`
 - `VITE_LOGTO_ISSUER`
 - `VITE_LOGTO_MANAGEMENT_API_ENDPOINT`
+- `VITE_MEMBERSHIP_STATE_SYNC_INTERVAL_SEC`
 - `VITE_SHOPIFY_STORE_DOMAIN`
 - `VITE_SHOPIFY_STOREFRONT_TOKEN`
 - `VITE_STRIPE_PUBLISHABLE_KEY`
@@ -122,6 +128,8 @@
 - `INQUIRY_NOTIFY_TO`（通知を使う場合）
 - SMTP で必要な Secret（`SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM`）
 - `LOGTO_USER_SYNC_OPS_TOKEN`（user lookup API 用。staging/prod で分離）
+- `USER_STATE_RECONCILE_INTERVAL_MIN`
+- `USER_STATE_SYNC_MAX_DRIFT_MINUTES`
 
 ## 4. GitHub Variables（推奨一覧）
 - `VITE_SNS_X_URL`

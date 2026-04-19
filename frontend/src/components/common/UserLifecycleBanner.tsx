@@ -39,7 +39,7 @@ function resolveMessage(user: AppUser | null, lifecycle: UserLifecycleSummary | 
       description: t('lifecycle.graceDescription', { defaultValue: '会員体験を継続するため、更新手続きをご確認ください。' }),
       ctaLabel: t('lifecycle.renew', { defaultValue: '更新を確認する' }),
       ctaTo: ROUTES.MEMBER,
-      event: 'renewal_cta_click',
+      event: 'renew_cta_click',
     }
   }
 
@@ -59,7 +59,7 @@ function resolveMessage(user: AppUser | null, lifecycle: UserLifecycleSummary | 
       description: t('lifecycle.memberDescription', { defaultValue: '限定コンテンツ・先行販売・会員向け案内を活用してください。' }),
       ctaLabel: t('nav.member'),
       ctaTo: ROUTES.MEMBER,
-      event: 'status_banner_click',
+      event: 'status_based_banner_click',
     }
   }
 

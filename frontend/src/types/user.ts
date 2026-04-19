@@ -19,6 +19,12 @@ export type ContractStatus =
   | 'canceled'
   | 'expired'
 
+export type SubscriptionState = 'none' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired'
+
+export type BillingState = 'clear' | 'pending' | 'failed' | 'refunded' | 'disputed'
+
+export type EntitlementState = 'inactive' | 'active' | 'limited' | 'grace' | 'blocked'
+
 /**
  * 認証クレームの拡張項目
  */
@@ -26,6 +32,9 @@ export interface UserPublicMetadata {
   role: UserRole
   memberPlan?: MemberPlan
   contractStatus?: ContractStatus
+  subscriptionState?: SubscriptionState
+  billingState?: BillingState
+  entitlementState?: EntitlementState
   membershipStatus?: MembershipStatus
   accountStatus?: AccountStatus
   internalRole?: InternalRole
@@ -42,6 +51,9 @@ export interface AppUser {
   role: UserRole
   memberPlan: MemberPlan
   contractStatus: ContractStatus
+  subscriptionState: SubscriptionState
+  billingState: BillingState
+  entitlementState: EntitlementState
   membershipStatus: MembershipStatus
   accountStatus: AccountStatus
   internalRole: InternalRole

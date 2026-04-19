@@ -1,4 +1,4 @@
-import type { AccountStatus, AppUser, ContractStatus, InternalRole, MemberPlan, MembershipStatus, UserRole } from '@/types'
+import type { AccountStatus, AppUser, BillingState, ContractStatus, EntitlementState, InternalRole, MemberPlan, MembershipStatus, SubscriptionState, UserRole } from '@/types'
 
 export interface LogtoClaimsLike {
   sub?: unknown
@@ -11,6 +11,9 @@ export interface LogtoClaimsLike {
   contractStatus?: unknown
   membershipStatus?: unknown
   accountStatus?: unknown
+  subscriptionState?: unknown
+  billingState?: unknown
+  entitlementState?: unknown
   accessLevel?: unknown
   internalRole?: unknown
   [key: string]: unknown
@@ -34,6 +37,32 @@ function deriveMembershipStatus(raw: unknown, role: UserRole, plan: MemberPlan, 
   if (role === 'admin' || role === 'member' || role === 'premium') return 'member'
   if (plan === 'paid' || plan === 'premium') return 'member'
   return 'non_member'
+}
+
+
+function resolveSubscriptionState(raw: unknown): SubscriptionState {
+  if (raw === 'trialing') return 'trialing'
+  if (raw === 'active') return 'active'
+  if (raw === 'past_due') return 'past_due'
+  if (raw === 'canceled') return 'canceled'
+  if (raw === 'expired') return 'expired'
+  return 'none'
+}
+
+function resolveBillingState(raw: unknown): BillingState {
+  if (raw === 'pending') return 'pending'
+  if (raw === 'failed') return 'failed'
+  if (raw === 'refunded') return 'refunded'
+  if (raw === 'disputed') return 'disputed'
+  return 'clear'
+}
+
+function deriveEntitlementState(raw: unknown, membershipStatus: MembershipStatus): EntitlementState {
+  if (raw === 'active') return 'active'
+  if (raw === 'limited') return 'limited'
+  if (raw === 'grace') return 'grace'
+  if (raw === 'blocked') return 'blocked'
+  return membershipStatus === 'member' ? 'active' : membershipStatus === 'grace' ? 'grace' : 'inactive'
 }
 
 function resolveAccountStatus(raw: unknown): AccountStatus {
@@ -103,6 +132,8 @@ export function toAppUserFromLogtoClaims(claims: LogtoClaimsLike): AppUser {
   const memberPlan = resolveMemberPlan(claims.memberPlan)
   const membershipStatus = deriveMembershipStatus(claims.membershipStatus, role, memberPlan, contractStatus)
   const accessLevel = resolveAccessLevel(claims.accessLevel)
+  const subscriptionState = resolveSubscriptionState(claims.subscriptionState)
+  const billingState = resolveBillingState(claims.billingState)
 
   return {
     id: userId,
@@ -110,6 +141,9 @@ export function toAppUserFromLogtoClaims(claims: LogtoClaimsLike): AppUser {
     role,
     memberPlan,
     contractStatus,
+    subscriptionState,
+    billingState,
+    entitlementState: deriveEntitlementState(claims.entitlementState, membershipStatus),
     membershipStatus,
     accountStatus: resolveAccountStatus(claims.accountStatus),
     accessLevel,

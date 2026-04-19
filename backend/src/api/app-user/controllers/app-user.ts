@@ -103,6 +103,8 @@ function buildLifecycleSummary(appUser: any, latestSubscription: any, latestEnti
   const profileCompletionStatus = normalizeProfileCompletionStatus(appUser?.profileCompletionState)
   const membershipStatus = latestEntitlement?.membershipStatus ?? appUser?.membershipStatus ?? 'non_member'
   const accountStatus = appUser?.accountStatus ?? 'active'
+  const subscriptionState = latestSubscription?.subscriptionStatus ?? 'none'
+  const billingState = latestSubscription?.billingStatus ?? 'clear'
 
   return {
     onboardingStatus,
@@ -111,7 +113,9 @@ function buildLifecycleSummary(appUser: any, latestSubscription: any, latestEnti
     membershipStatus,
     accountStatus,
     accessLevel: latestEntitlement?.accessLevel ?? appUser?.accessLevel ?? 'logged_in',
-    entitlementState: latestEntitlement?.entitlementState ?? 'none',
+    entitlementState: latestEntitlement?.entitlementState ?? 'inactive',
+    subscriptionState,
+    billingState,
     firstLoginAt: appUser?.firstLoginAt ?? null,
     lastLoginAt: appUser?.lastLoginAt ?? null,
     joinedAt: latestSubscription?.startAt ?? null,
@@ -121,6 +125,8 @@ function buildLifecycleSummary(appUser: any, latestSubscription: any, latestEnti
     suspendedAt: accountStatus === 'suspended' || membershipStatus === 'suspended' ? (appUser?.updatedAt ?? null) : null,
     reactivatedAt: accountStatus === 'active' && membershipStatus === 'member' ? (latestSubscription?.updatedAt ?? null) : null,
     sourceSite: appUser?.sourceSite ?? 'cross',
+    statusReason: latestSubscription?.statusReason ?? latestEntitlement?.statusReason ?? null,
+    statusUpdatedAt: latestSubscription?.updatedAt ?? latestEntitlement?.updatedAt ?? appUser?.updatedAt ?? null,
   }
 }
 

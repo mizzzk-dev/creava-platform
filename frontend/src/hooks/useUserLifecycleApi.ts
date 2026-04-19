@@ -10,6 +10,11 @@ export type UserLifecycleApiSummary = {
   membershipStatus: string
   accountStatus: string
   accessLevel: string
+  entitlementState: string
+  subscriptionState: string
+  billingState: string
+  statusReason: string | null
+  statusUpdatedAt: string | null
   firstLoginAt: string | null
   lastLoginAt: string | null
   joinedAt: string | null
@@ -67,6 +72,8 @@ export function useUserLifecycleApi() {
             sourceSite: next.sourceSite,
             userState: lifecycle?.lifecycleStage ?? 'unknown',
             membershipStatus: user?.membershipStatus ?? 'unknown',
+            entitlementState: next.entitlementState,
+            subscriptionState: next.subscriptionState,
           })
         }
       })
