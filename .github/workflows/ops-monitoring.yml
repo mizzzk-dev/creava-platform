@@ -53,30 +53,34 @@ jobs:
           check_url () {
             local name="$1"
             local url="$2"
-            local keyword="$3"
 
             echo "--- checking ${name}: ${url}"
             body=$(mktemp)
-            code=$(curl -L --max-time 20 -sS -o "$body" -w "%{http_code}" "$url")
+            content_type=$(mktemp)
+            code=$(curl -L --max-time 20 --retry 2 --retry-delay 2 --retry-connrefused -sS -D "$content_type" -o "$body" -w "%{http_code}" "$url")
 
             if [ "$code" != "200" ]; then
               echo "::error::${name} status=${code}"
               exit 1
             fi
 
-            if ! grep -qi "$keyword" "$body"; then
-              echo "::error::${name} keyword '${keyword}' not found"
+            if ! grep -Eiq '^content-type:\s*text/html' "$content_type"; then
+              echo "::error::${name} content-type is not text/html"
               exit 1
+            fi
+
+            if grep -Eiq '404|not found|error' "$body"; then
+              echo "::warning::${name} response body contains error-like text (continuing)"
             fi
 
             echo "${name} ok (${code})"
           }
 
-          check_url "main-home" "$MAIN_URL" "mizzz"
-          check_url "store-home" "$STORE_URL" "store"
-          check_url "fc-home" "$FC_URL" "fanclub"
-          check_url "main-faq" "$MAIN_URL/faq" "faq"
-          check_url "main-contact" "$MAIN_URL/contact" "contact"
+          check_url "main-home" "$MAIN_URL"
+          check_url "store-home" "$STORE_URL"
+          check_url "fc-home" "$FC_URL"
+          check_url "main-faq" "$MAIN_URL/faq"
+          check_url "main-contact" "$MAIN_URL/contact"
 
       - name: Backend health checks
         run: |

@@ -64,7 +64,7 @@ jobs:
           STRAPI_DEPLOY_TOKEN: ${{ secrets.STRAPI_DEPLOY_TOKEN }}
 
       - name: Deploy to Strapi Cloud
-        run: npm run deploy
+        run: npm run deploy -- --force --env "${{ inputs.target_env }}"
         env:
           STRAPI_DEPLOY_TOKEN: ${{ secrets.STRAPI_DEPLOY_TOKEN }}
 
