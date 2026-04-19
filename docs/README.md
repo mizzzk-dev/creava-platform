@@ -61,6 +61,7 @@
 - [CRM/ライフサイクル配信・配信設定センター基盤 (2026-04-18)](./crm-lifecycle-delivery-center-foundation-2026-04-18.md)
 - [課金/サブスク/Entitlement 運用基盤整備 (2026-04-18)](./subscription-entitlement-operations-foundation-2026-04-18.md)
 - [売上/返金/レポーティング基盤整備 (2026-04-19)](./financial-reporting-revenue-foundation-2026-04-19.md)
+- [データ基盤 / BI / KPI 統合基盤整備 (2026-04-19)](./data-platform-bi-kpi-foundation-2026-04-19.md)
 - [PWA / モバイル app-like 基盤整備 (2026-04-18)](./pwa-mobile-foundation-2026-04-18.md)
 - [コミュニティ参加 / UGC / モデレーション基盤 (2026-04-18)](./community-participation-foundation-2026-04-18.md)
 

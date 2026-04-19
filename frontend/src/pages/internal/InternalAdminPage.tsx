@@ -1,6 +1,13 @@
 import { useState } from 'react'
 import { useCurrentUser } from '@/hooks'
-import { useInternalAdminApi, type InternalLookupUser, type InternalOrderLookupItem, type InternalRevenueSummary } from '@/modules/internal-admin/api'
+import {
+  useInternalAdminApi,
+  type InternalLookupUser,
+  type InternalOrderLookupItem,
+  type InternalRevenueSummary,
+  type InternalBiOverview,
+  type InternalBiCohorts,
+} from '@/modules/internal-admin/api'
 
 export default function InternalAdminPage() {
   const { user, isSignedIn } = useCurrentUser()
@@ -15,6 +22,8 @@ export default function InternalAdminPage() {
   const [orders, setOrders] = useState<InternalOrderLookupItem[]>([])
   const [revenueSite, setRevenueSite] = useState<'all' | 'store' | 'fc'>('all')
   const [revenueSummary, setRevenueSummary] = useState<InternalRevenueSummary | null>(null)
+  const [biOverview, setBiOverview] = useState<InternalBiOverview | null>(null)
+  const [biCohorts, setBiCohorts] = useState<InternalBiCohorts | null>(null)
 
   if (!isSignedIn) return <section className="mx-auto max-w-4xl px-4 py-16">ログインが必要です。</section>
   if (user?.role !== 'admin') return <section className="mx-auto max-w-4xl px-4 py-16">internal admin は管理者ロールのみアクセスできます。</section>
@@ -122,6 +131,59 @@ export default function InternalAdminPage() {
               failed: {revenueSummary.counts.failed} / canceled: {revenueSummary.counts.canceled} / refunded: {revenueSummary.counts.refunded}
             </p>
             <pre className="overflow-auto rounded bg-gray-50 p-3 dark:bg-gray-900">{JSON.stringify({ bySourceSite: revenueSummary.bySourceSite, byRevenueType: revenueSummary.byRevenueType }, null, 2)}</pre>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-6 rounded border border-gray-200 p-4 dark:border-gray-800">
+        <p className="text-xs text-gray-500">data platform / BI overview</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setMessage(null)
+              api.getBiOverview().then(setBiOverview).catch((e: Error) => setMessage(e.message))
+            }}
+            className="rounded bg-gray-900 px-3 py-2 text-sm text-white"
+          >BI集計更新</button>
+          <button
+            type="button"
+            onClick={() => {
+              setMessage(null)
+              api.getBiCohorts().then(setBiCohorts).catch((e: Error) => setMessage(e.message))
+            }}
+            className="rounded border border-gray-300 px-3 py-2 text-sm"
+          >Cohort集計更新</button>
+          <button
+            type="button"
+            onClick={() => {
+              setMessage(null)
+              api.downloadBiCsv().catch((e: Error) => setMessage(e.message))
+            }}
+            className="rounded border border-gray-300 px-3 py-2 text-sm"
+          >BI CSV export</button>
+        </div>
+        {biOverview && (
+          <div className="mt-3 space-y-3 text-xs">
+            <p className="text-gray-500">range: {biOverview.range.from} ~ {biOverview.range.to}</p>
+            <p className="font-medium">
+              sessions: {biOverview.kpi.acquisition.sessions.toLocaleString()} / newUsers: {biOverview.kpi.acquisition.newUsers.toLocaleString()} / net: {biOverview.kpi.revenue.net.toLocaleString()} / support: {biOverview.kpi.support.totalInquiries.toLocaleString()}
+            </p>
+            <p className="text-gray-500">
+              CVR(checkout→purchase): {(biOverview.kpi.conversion.purchaseCompleteRate * 100).toFixed(1)}% / refundRate: {(biOverview.kpi.revenue.refundRate * 100).toFixed(2)}% / formCompletion: {(biOverview.kpi.conversion.formCompletionRate * 100).toFixed(1)}%
+            </p>
+            <pre className="overflow-auto rounded bg-gray-50 p-3 dark:bg-gray-900">{JSON.stringify({
+              bySite: biOverview.summaryTable.bySite,
+              byCampaign: biOverview.summaryTable.byCampaign,
+              supportByCategory: biOverview.kpi.support.byCategory,
+              freshnessState: biOverview.freshnessState,
+            }, null, 2)}</pre>
+          </div>
+        )}
+        {biCohorts && (
+          <div className="mt-3 space-y-2 text-xs">
+            <p className="text-gray-500">cohort windows: {biCohorts.retentionWindow.join(', ')}</p>
+            <pre className="overflow-auto rounded bg-gray-50 p-3 dark:bg-gray-900">{JSON.stringify(biCohorts.cohorts, null, 2)}</pre>
           </div>
         )}
       </div>

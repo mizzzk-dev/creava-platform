@@ -54,6 +54,8 @@
 | `INQUIRY_OPS_TOKEN` | CSV/検索/集計 API 保護トークン | 必須 |
 | `ANALYTICS_OPS_TOKEN` | analytics ops summary API 保護トークン | 推奨 |
 | `REVENUE_EXPORT_MAX_ROWS` | revenue CSV export 上限行数（internal admin 用） | 任意 |
+| `BI_DEFAULT_RANGE_DAYS` | internal BI overview/cohort の既定集計期間（日） | 任意 |
+| `BI_MAX_FETCH_ROWS` | BI集計時の1ドメインあたり最大取得行数（メモリ保護） | 任意 |
 | `ANALYTICS_IP_HASH_SALT` | analytics IPハッシュソルト | 推奨 |
 | `INQUIRY_NOTIFY_TO` | 管理通知メール宛先（カンマ区切り） | 任意 |
 | `INQUIRY_ENABLE_AUTO_REPLY` | 自動返信有効化 (`true/false`) | 任意 |
@@ -101,6 +103,8 @@
 - `INQUIRY_IP_HASH_SALT`
 - `INQUIRY_OPS_TOKEN`
 - `ANALYTICS_OPS_TOKEN`
+- `BI_DEFAULT_RANGE_DAYS`
+- `BI_MAX_FETCH_ROWS`
 - `ANALYTICS_IP_HASH_SALT`
 - `INQUIRY_NOTIFY_TO`（通知を使う場合）
 - SMTP で必要な Secret（`SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM`）
