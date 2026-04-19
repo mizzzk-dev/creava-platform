@@ -70,6 +70,94 @@
     },
     "metadata": {
       "type": "json"
+    },
+    "subscriptionPlan": {
+      "type": "string"
+    },
+    "billingStatus": {
+      "type": "enumeration",
+      "enum": [
+        "ok",
+        "past_due",
+        "unpaid",
+        "failed",
+        "not_started"
+      ],
+      "default": "not_started",
+      "required": true
+    },
+    "entitlementState": {
+      "type": "enumeration",
+      "enum": [
+        "active",
+        "grace_period",
+        "inactive"
+      ],
+      "default": "inactive",
+      "required": true
+    },
+    "entitlementSet": {
+      "type": "json"
+    },
+    "currentPeriodStart": {
+      "type": "datetime"
+    },
+    "currentPeriodEnd": {
+      "type": "datetime"
+    },
+    "cancelAtPeriodEnd": {
+      "type": "boolean",
+      "default": false
+    },
+    "canceledAt": {
+      "type": "datetime"
+    },
+    "renewalDate": {
+      "type": "datetime"
+    },
+    "trialState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "active",
+        "ended"
+      ],
+      "default": "none"
+    },
+    "gracePeriodState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "active",
+        "expired"
+      ],
+      "default": "none"
+    },
+    "syncState": {
+      "type": "enumeration",
+      "enum": [
+        "in_sync",
+        "pending",
+        "failed"
+      ],
+      "default": "in_sync"
+    },
+    "syncVersion": {
+      "type": "integer",
+      "default": 1,
+      "min": 1
+    },
+    "sourceOfTruth": {
+      "type": "enumeration",
+      "enum": [
+        "stripe_webhook",
+        "manual_support_override",
+        "backfill"
+      ],
+      "default": "stripe_webhook"
+    },
+    "lastBillingEventAt": {
+      "type": "datetime"
     }
   }
 }

@@ -1,5 +1,6 @@
 import { hasRequiredScopes, verifyLogtoToken, type AuthenticatedUser } from '../../../lib/auth/logto'
 import { parseStripeWebhookEvent } from '../../../lib/stripe/webhook'
+import { normalizeStripeSubscriptionState } from '../../../lib/billing/subscription-state'
 import {
   createFanclubCheckoutSession,
   createStoreCheckoutSession,
@@ -37,6 +38,35 @@ function requireScopes(user: AuthenticatedUser, requiredScopes: string[], action
 function toAuthUserId(metadata: Record<string, unknown>): string | null {
   const userId = metadata.authUserId ?? metadata.userId ?? metadata.clerkUserId
   return typeof userId === 'string' && userId && userId !== 'guest' ? userId : null
+}
+
+function toPlanAccessLevel(raw: unknown): 'member' | 'premium' {
+  return raw === 'premium' ? 'premium' : 'member'
+}
+
+async function syncAppUserMembership(strapi: any, authUserId: string | null, input: {
+  membershipStatus: 'guest' | 'active' | 'grace_period' | 'paused' | 'cancelled'
+  accessLevel: 'public' | 'logged_in' | 'member' | 'premium' | 'admin'
+  membershipPlan: 'free' | 'standard' | 'premium'
+}) {
+  if (!authUserId) return
+
+  const appUser = await strapi.documents('api::app-user.app-user').findFirst({
+    filters: { logtoUserId: { $eq: authUserId } },
+  })
+
+  if (!appUser) return
+
+  await strapi.documents('api::app-user.app-user').update({
+    documentId: appUser.documentId,
+    data: {
+      membershipStatus: input.membershipStatus,
+      membershipPlan: input.membershipPlan,
+      accessLevel: appUser.accessLevel === 'admin' ? 'admin' : input.accessLevel,
+      loyaltyState: input.membershipStatus === 'active' ? 'member_active' : appUser.loyaltyState,
+      lastSyncedAt: new Date().toISOString(),
+    },
+  })
 }
 
 export default ({ strapi }) => ({
@@ -176,6 +206,7 @@ export default ({ strapi }) => ({
   },
 
   async stripeWebhook(ctx) {
+    let webhookLog: any = null
     try {
       const event = parseStripeWebhookEvent(ctx)
 
@@ -187,7 +218,7 @@ export default ({ strapi }) => ({
         return
       }
 
-      const webhookLog = await strapi.documents('api::webhook-event-log.webhook-event-log').create({
+      webhookLog = await strapi.documents('api::webhook-event-log.webhook-event-log').create({
         data: {
           provider: 'stripe',
           eventId: event.id,
@@ -221,19 +252,109 @@ export default ({ strapi }) => ({
       }
 
       if (event.type === 'customer.subscription.created' || event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
-        await strapi.documents('api::subscription-record.subscription-record').create({
-          data: {
-            provider: 'stripe',
-            authUserId,
-            clerkUserId: authUserId,
-            customerId: typeof object.customer === 'string' ? object.customer : null,
-            subscriptionId: typeof object.id === 'string' ? object.id : null,
-            subscriptionStatus: typeof object.status === 'string' ? object.status : 'incomplete',
-            membershipType: typeof metadata.membershipType === 'string' ? metadata.membershipType : 'paid',
-            accessLevel: typeof metadata.accessLevel === 'string' ? metadata.accessLevel : 'paid',
-            billingCycle: typeof metadata.billingCycle === 'string' ? metadata.billingCycle : 'monthly',
-            metadata,
+        const planAccessLevel = toPlanAccessLevel(metadata.accessLevel)
+        const normalized = normalizeStripeSubscriptionState(object, planAccessLevel)
+        const subscriptionId = typeof object.id === 'string' ? object.id : null
+        const filters: Record<string, unknown> = { provider: { $eq: 'stripe' } }
+        if (subscriptionId) filters.subscriptionId = { $eq: subscriptionId }
+
+        const lastRecord = await strapi.documents('api::subscription-record.subscription-record').findFirst({
+          filters,
+          sort: ['createdAt:desc'],
+        })
+
+        const payload = {
+          provider: 'stripe',
+          authUserId,
+          clerkUserId: authUserId,
+          customerId: typeof object.customer === 'string' ? object.customer : null,
+          subscriptionId,
+          subscriptionPlan: typeof metadata.subscriptionPlan === 'string' ? metadata.subscriptionPlan : null,
+          subscriptionStatus: normalized.subscriptionStatus,
+          billingStatus: normalized.billingStatus,
+          entitlementState: normalized.entitlementState,
+          entitlementSet: {
+            fanclub_core: normalized.entitlementState !== 'inactive',
+            fanclub_limited: normalized.entitlementState === 'active',
           },
+          membershipType: planAccessLevel === 'premium' ? 'premium' : 'paid',
+          accessLevel: planAccessLevel,
+          billingCycle: typeof metadata.billingCycle === 'string' ? metadata.billingCycle : 'monthly',
+          currentPeriodStart: normalized.currentPeriodStart,
+          currentPeriodEnd: normalized.currentPeriodEnd,
+          startAt: normalized.currentPeriodStart,
+          endAt: normalized.currentPeriodEnd,
+          cancelAtPeriodEnd: normalized.cancelAtPeriodEnd,
+          canceledAt: normalized.canceledAt,
+          trialState: normalized.subscriptionStatus === 'trialing' ? 'active' : 'none',
+          gracePeriodState: normalized.gracePeriodState,
+          syncState: 'in_sync',
+          sourceOfTruth: 'stripe_webhook',
+          syncVersion: Number(lastRecord?.syncVersion ?? 0) + 1,
+          lastBillingEventAt: new Date().toISOString(),
+          metadata,
+        }
+
+        if (lastRecord?.documentId) {
+          await strapi.documents('api::subscription-record.subscription-record').update({
+            documentId: lastRecord.documentId,
+            data: payload,
+          })
+        } else {
+          await strapi.documents('api::subscription-record.subscription-record').create({ data: payload })
+        }
+
+        if (authUserId) {
+          const existingEntitlement = await strapi.documents('api::entitlement-record.entitlement-record').findFirst({
+            filters: {
+              authUserId: { $eq: authUserId },
+              billingProvider: { $eq: 'stripe' },
+              ...(subscriptionId ? { subscriptionId: { $eq: subscriptionId } } : {}),
+            },
+            sort: ['createdAt:desc'],
+          })
+
+          const entitlementPayload = {
+            authUserId,
+            billingProvider: 'stripe',
+            subscriptionId,
+            subscriptionPlan: typeof metadata.subscriptionPlan === 'string' ? metadata.subscriptionPlan : null,
+            entitlementState: normalized.entitlementState,
+            entitlementSet: {
+              fanclub_core: normalized.entitlementState !== 'inactive',
+              fanclub_limited: normalized.entitlementState === 'active',
+            },
+            accessLevel: normalized.accessLevel,
+            membershipStatus: normalized.membershipStatus,
+            campaignEligibility: {
+              lifecycle: normalized.membershipStatus,
+              billingStatus: normalized.billingStatus,
+            },
+            earlyAccessEligibility: normalized.entitlementState === 'active',
+            sourceOfTruth: 'stripe_webhook',
+            syncState: 'in_sync',
+            syncVersion: Number(existingEntitlement?.syncVersion ?? 0) + 1,
+            lastBillingEventAt: new Date().toISOString(),
+            currentPeriodStart: normalized.currentPeriodStart,
+            currentPeriodEnd: normalized.currentPeriodEnd,
+            renewalDate: normalized.renewalDate,
+            metadata,
+          }
+
+          if (existingEntitlement?.documentId) {
+            await strapi.documents('api::entitlement-record.entitlement-record').update({
+              documentId: existingEntitlement.documentId,
+              data: entitlementPayload,
+            })
+          } else {
+            await strapi.documents('api::entitlement-record.entitlement-record').create({ data: entitlementPayload })
+          }
+        }
+
+        await syncAppUserMembership(strapi, authUserId, {
+          membershipStatus: normalized.membershipStatus,
+          accessLevel: normalized.accessLevel,
+          membershipPlan: planAccessLevel === 'premium' ? 'premium' : 'standard',
         })
       }
 
@@ -246,7 +367,17 @@ export default ({ strapi }) => ({
 
       ctx.body = { received: true }
     } catch (error) {
-      strapi.log.error(`[payment] stripeWebhook failed: ${(error as Error).message}`)
+      const message = (error as Error).message
+      strapi.log.error(`[payment] stripeWebhook failed: ${message}`)
+      if (webhookLog?.documentId) {
+        await strapi.documents('api::webhook-event-log.webhook-event-log').update({
+          documentId: webhookLog.documentId,
+          data: {
+            status: 'failed',
+            errorMessage: message,
+          },
+        })
+      }
       ctx.status = 400
       ctx.body = { error: { message: 'Webhook 処理に失敗しました。' } }
     }
