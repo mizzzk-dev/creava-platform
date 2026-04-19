@@ -168,6 +168,13 @@ async function findLatestSubscription(strapi: any, logtoUserId: string) {
   })
 }
 
+async function findLatestEntitlement(strapi: any, logtoUserId: string) {
+  return strapi.documents('api::entitlement-record.entitlement-record').findFirst({
+    filters: { authUserId: { $eq: logtoUserId } },
+    sort: ['createdAt:desc'],
+  })
+}
+
 async function ensureNotificationPreference(strapi: any, logtoUserId: string, sourceSite: SiteType, locale: string, nowIso: string): Promise<void> {
   const existing = await strapi.documents('api::notification-preference.notification-preference').findFirst({
     filters: { userId: { $eq: logtoUserId } },
@@ -231,13 +238,15 @@ async function buildUserSummary(strapi: any, logtoUserId: string) {
   const appUser = await strapi.documents('api::app-user.app-user').findFirst({ filters: { logtoUserId: { $eq: logtoUserId } } })
   if (!appUser) return null
 
-  const [notificationPreference, inquirySubmissions, moderationLogs, favorites, viewHistories, reports] = await Promise.all([
+  const [notificationPreference, inquirySubmissions, moderationLogs, favorites, viewHistories, reports, latestSubscription, latestEntitlement] = await Promise.all([
     strapi.documents('api::notification-preference.notification-preference').findFirst({ filters: { userId: { $eq: logtoUserId } } }),
     strapi.documents('api::inquiry-submission.inquiry-submission').findMany({ filters: { email: { $eqi: appUser.primaryEmail ?? '' } }, limit: 10, sort: ['submittedAt:desc'] }),
     strapi.documents('api::moderation-log.moderation-log').findMany({ filters: { performedBy: { $eq: logtoUserId } }, limit: 10, sort: ['createdAt:desc'] }),
     strapi.documents('api::favorite.favorite').findMany({ filters: { userId: { $eq: logtoUserId } }, limit: 10, sort: ['updatedAt:desc'] }),
     strapi.documents('api::view-history.view-history').findMany({ filters: { userId: { $eq: logtoUserId } }, limit: 10, sort: ['viewedAt:desc'] }),
     strapi.documents('api::community-report.community-report').findMany({ filters: { reporterUserId: { $eq: logtoUserId } }, limit: 10, sort: ['createdAt:desc'] }),
+    findLatestSubscription(strapi, logtoUserId),
+    findLatestEntitlement(strapi, logtoUserId),
   ])
 
   return {
@@ -273,6 +282,30 @@ async function buildUserSummary(strapi: any, logtoUserId: string) {
         favoriteCount: favorites.length,
         recentHistoryCount: viewHistories.length,
       },
+      billing: latestSubscription
+        ? {
+          billingProvider: latestSubscription.provider,
+          subscriptionId: latestSubscription.subscriptionId,
+          subscriptionStatus: latestSubscription.subscriptionStatus,
+          billingStatus: latestSubscription.billingStatus ?? 'not_started',
+          currentPeriodEnd: latestSubscription.currentPeriodEnd ?? latestSubscription.endAt ?? null,
+          cancelAtPeriodEnd: Boolean(latestSubscription.cancelAtPeriodEnd),
+          canceledAt: latestSubscription.canceledAt ?? null,
+          syncState: latestSubscription.syncState ?? 'unknown',
+          syncVersion: latestSubscription.syncVersion ?? null,
+          sourceOfTruth: latestSubscription.sourceOfTruth ?? 'unknown',
+        }
+        : null,
+      entitlement: latestEntitlement
+        ? {
+          entitlementState: latestEntitlement.entitlementState,
+          entitlementSet: latestEntitlement.entitlementSet ?? {},
+          accessLevel: latestEntitlement.accessLevel,
+          membershipStatus: latestEntitlement.membershipStatus,
+          earlyAccessEligibility: Boolean(latestEntitlement.earlyAccessEligibility),
+          campaignEligibility: latestEntitlement.campaignEligibility ?? {},
+        }
+        : null,
     },
     related: {
       inquiries: inquirySubmissions,
@@ -358,10 +391,21 @@ export default ({ strapi }) => ({
       })
       if (!appUser) return ctx.notFound('app user が未プロビジョニングです。')
 
-      const latestSubscription = await findLatestSubscription(strapi, authUser.userId)
+      const [latestSubscription, latestEntitlement] = await Promise.all([
+        findLatestSubscription(strapi, authUser.userId),
+        findLatestEntitlement(strapi, authUser.userId),
+      ])
       const notificationPreference = await strapi.documents('api::notification-preference.notification-preference').findFirst({
         filters: { userId: { $eq: authUser.userId } },
       })
+
+      const membership = latestEntitlement
+        ? {
+          membershipPlan: appUser.membershipPlan,
+          membershipStatus: latestEntitlement.membershipStatus,
+          accessLevel: latestEntitlement.accessLevel,
+        }
+        : toMembershipSummary(latestSubscription)
 
       ctx.body = {
         appUser,
@@ -370,7 +414,32 @@ export default ({ strapi }) => ({
           email: authUser.email,
           scopes: authUser.scopes,
         },
-        membership: toMembershipSummary(latestSubscription),
+        membership,
+        billingSummary: latestSubscription
+          ? {
+            subscriptionStatus: latestSubscription.subscriptionStatus,
+            billingStatus: latestSubscription.billingStatus ?? 'not_started',
+            currentPeriodStart: latestSubscription.currentPeriodStart ?? latestSubscription.startAt ?? null,
+            currentPeriodEnd: latestSubscription.currentPeriodEnd ?? latestSubscription.endAt ?? null,
+            cancelAtPeriodEnd: Boolean(latestSubscription.cancelAtPeriodEnd),
+            canceledAt: latestSubscription.canceledAt ?? null,
+            renewalDate: latestSubscription.renewalDate ?? latestSubscription.currentPeriodEnd ?? latestSubscription.endAt ?? null,
+            syncState: latestSubscription.syncState ?? 'unknown',
+            syncVersion: latestSubscription.syncVersion ?? null,
+            sourceOfTruth: latestSubscription.sourceOfTruth ?? 'unknown',
+            lastBillingEventAt: latestSubscription.lastBillingEventAt ?? null,
+          }
+          : null,
+        entitlementSummary: latestEntitlement
+          ? {
+            entitlementState: latestEntitlement.entitlementState,
+            entitlementSet: latestEntitlement.entitlementSet ?? {},
+            earlyAccessEligibility: Boolean(latestEntitlement.earlyAccessEligibility),
+            campaignEligibility: latestEntitlement.campaignEligibility ?? {},
+            sourceOfTruth: latestEntitlement.sourceOfTruth ?? 'unknown',
+            syncState: latestEntitlement.syncState ?? 'unknown',
+          }
+          : null,
         notificationPreference,
       }
     } catch (error) {

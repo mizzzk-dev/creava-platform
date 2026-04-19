@@ -5,7 +5,7 @@ import PageHead from '@/components/seo/PageHead'
 import SocialAuthProviderStatus from '@/components/auth/SocialAuthProviderStatus'
 import { useCurrentUser } from '@/hooks'
 import { ROUTES } from '@/lib/routeConstants'
-import { clearWithdrawRequest, getMemberAccountSettings, getMemberDashboard, requestWithdraw, updateMemberAccountSettings } from '@/modules/member/api'
+import { clearWithdrawRequest, getMemberAccountSettings, getMemberBillingSummary, getMemberDashboard, requestWithdraw, updateMemberAccountSettings, type MemberBillingSummary } from '@/modules/member/api'
 import type { MemberAccountSettings, MemberDashboardData, MemberOrderStatus, MemberPaymentSettings, MemberShippingSettings, ShipmentStatus } from '@/modules/member/types'
 import { buildCrmSegments, buildLtvDashboard, buildSupportTemplates } from '@/modules/store/lib/commerceOptimization'
 import MyPagePersonalizationPanel from '@/modules/personalization/components/MyPagePersonalizationPanel'
@@ -17,6 +17,7 @@ import type { CampaignSummary } from '@/modules/campaign/types'
 import { SITE_TYPE } from '@/lib/siteLinks'
 import { trackMizzzEvent } from '@/modules/analytics/tracking'
 import { resolveAccountCenterUrl } from '@/lib/auth/config'
+import { useAuthClient } from '@/lib/auth/AuthProvider'
 
 const MEMBER_BENEFITS = [
   'member.benefitEarly',
@@ -104,6 +105,7 @@ function maskUserId(userId: string): string {
 export default function MemberPage() {
   const { t } = useTranslation()
   const { user, isLoaded, isSignedIn } = useCurrentUser()
+  const authClient = useAuthClient()
   const [dashboardData, setDashboardData] = useState<MemberDashboardData | null>(null)
   const [accountSettings, setAccountSettings] = useState<MemberAccountSettings | null>(null)
   const [dashboardLoading, setDashboardLoading] = useState(false)
@@ -113,6 +115,7 @@ export default function MemberPage() {
   const [accountSavedAt, setAccountSavedAt] = useState<string | null>(null)
   const [cardValidationErrors, setCardValidationErrors] = useState<Record<string, string>>({})
   const [campaigns, setCampaigns] = useState<CampaignSummary[]>([])
+  const [billingSummary, setBillingSummary] = useState<MemberBillingSummary | null>(null)
   const role = user?.role ?? 'guest'
   const isMember = role === 'member'
   const isAdmin = role === 'admin'
@@ -184,6 +187,28 @@ export default function MemberPage() {
         setDashboardError(t('member.accountSaveError', { defaultValue: '会員情報の読み込みに失敗しました。' }))
       })
   }, [isLoaded, isSignedIn, t, user?.email])
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) {
+      setBillingSummary(null)
+      return
+    }
+    let cancelled = false
+    authClient.getAccessToken()
+      .then((token) => {
+        if (!token) return null
+        return getMemberBillingSummary(token)
+      })
+      .then((res) => {
+        if (!cancelled && res) setBillingSummary(res)
+      })
+      .catch(() => {
+        if (!cancelled) setBillingSummary(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [authClient, isLoaded, isSignedIn])
 
   const visibleNotices = useMemo(() => {
     if (!dashboardData) return []
@@ -734,6 +759,21 @@ export default function MemberPage() {
 
                 <section className="rounded border border-gray-200 p-4 dark:border-gray-700 lg:col-span-2">
                   <NotificationPreferenceCenter location="member_page" />
+                </section>
+
+                <section className="rounded border border-gray-200 p-4 dark:border-gray-700 lg:col-span-2">
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Billing / Entitlement</h2>
+                  <div className="mt-3 grid gap-2 text-xs text-gray-600 dark:text-gray-300 sm:grid-cols-2">
+                    <p>membershipStatus: <span className="font-mono">{billingSummary?.membership.membershipStatus ?? '-'}</span></p>
+                    <p>accessLevel: <span className="font-mono">{billingSummary?.membership.accessLevel ?? '-'}</span></p>
+                    <p>subscriptionStatus: <span className="font-mono">{billingSummary?.billingSummary?.subscriptionStatus ?? '-'}</span></p>
+                    <p>billingStatus: <span className="font-mono">{billingSummary?.billingSummary?.billingStatus ?? '-'}</span></p>
+                    <p>renewalDate: <span className="font-mono">{billingSummary?.billingSummary?.renewalDate ? formatDateTime(billingSummary.billingSummary.renewalDate) : '-'}</span></p>
+                    <p>entitlementState: <span className="font-mono">{billingSummary?.entitlementSummary?.entitlementState ?? '-'}</span></p>
+                    <p className="sm:col-span-2">entitlementSet: <span className="break-all font-mono">{JSON.stringify(billingSummary?.entitlementSummary?.entitlementSet ?? {})}</span></p>
+                    <p>syncState: <span className="font-mono">{billingSummary?.billingSummary?.syncState ?? '-'}</span></p>
+                    <p>sourceOfTruth: <span className="font-mono">{billingSummary?.billingSummary?.sourceOfTruth ?? '-'}</span></p>
+                  </div>
                 </section>
 
                 <section className="rounded border border-gray-200 p-4 dark:border-gray-700">

@@ -9,6 +9,67 @@ import { StrapiApiError } from '@/lib/api/client'
 const USE_MOCK = !import.meta.env.VITE_STRAPI_API_URL
 const MEMBER_PAGE_SIZE = 10
 
+export type MemberBillingSummary = {
+  membership: {
+    membershipPlan: 'free' | 'standard' | 'premium'
+    membershipStatus: 'guest' | 'active' | 'grace_period' | 'paused' | 'cancelled'
+    accessLevel: 'public' | 'logged_in' | 'member' | 'premium' | 'admin'
+  }
+  billingSummary: {
+    subscriptionStatus: string
+    billingStatus: string
+    currentPeriodStart: string | null
+    currentPeriodEnd: string | null
+    cancelAtPeriodEnd: boolean
+    canceledAt: string | null
+    renewalDate: string | null
+    syncState: string
+    sourceOfTruth: string
+  } | null
+  entitlementSummary: {
+    entitlementState: string
+    entitlementSet: Record<string, boolean>
+    earlyAccessEligibility: boolean
+    sourceOfTruth: string
+    syncState: string
+  } | null
+}
+
+export async function getMemberBillingSummary(authToken: string): Promise<MemberBillingSummary> {
+  const baseUrl = import.meta.env.VITE_STRAPI_API_URL
+  if (!baseUrl) {
+    return {
+      membership: { membershipPlan: 'free', membershipStatus: 'guest', accessLevel: 'logged_in' },
+      billingSummary: null,
+      entitlementSummary: null,
+    }
+  }
+
+  const response = await fetch(`${baseUrl.replace(/\/$/, '')}/api/user-sync/me`, {
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${authToken}`,
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error(`billing summary API error: ${response.status}`)
+  }
+
+  const contentType = response.headers.get('content-type') ?? ''
+  if (!contentType.includes('application/json')) {
+    const raw = await response.text()
+    throw new Error(`billing summary API content-type が不正です: ${contentType} (${raw.slice(0, 120)})`)
+  }
+
+  const json = await response.json() as any
+  return {
+    membership: json.membership,
+    billingSummary: json.billingSummary ?? null,
+    entitlementSummary: json.entitlementSummary ?? null,
+  }
+}
+
 export async function getMemberDashboard(isMember: boolean): Promise<MemberDashboardData> {
   if (USE_MOCK) {
     const mock = createMockMemberDashboardData(isMember)

@@ -1,0 +1,32 @@
+{
+  "kind": "collectionType",
+  "collectionName": "entitlement_records",
+  "info": {
+    "singularName": "entitlement-record",
+    "pluralName": "entitlement-records",
+    "displayName": "Entitlement Record"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "authUserId": { "type": "string", "required": true },
+    "billingProvider": { "type": "enumeration", "enum": ["stripe"], "default": "stripe", "required": true },
+    "subscriptionId": { "type": "string" },
+    "subscriptionPlan": { "type": "string" },
+    "entitlementState": { "type": "enumeration", "enum": ["active", "grace_period", "inactive"], "default": "inactive", "required": true },
+    "entitlementSet": { "type": "json", "required": true },
+    "accessLevel": { "type": "enumeration", "enum": ["public", "logged_in", "member", "premium", "admin"], "default": "logged_in", "required": true },
+    "membershipStatus": { "type": "enumeration", "enum": ["guest", "active", "grace_period", "paused", "cancelled"], "default": "guest", "required": true },
+    "campaignEligibility": { "type": "json" },
+    "earlyAccessEligibility": { "type": "boolean", "default": false },
+    "sourceOfTruth": { "type": "enumeration", "enum": ["stripe_webhook", "manual_support_override", "backfill"], "default": "stripe_webhook", "required": true },
+    "syncState": { "type": "enumeration", "enum": ["in_sync", "pending", "failed"], "default": "in_sync", "required": true },
+    "syncVersion": { "type": "integer", "default": 1, "min": 1 },
+    "lastBillingEventAt": { "type": "datetime" },
+    "currentPeriodStart": { "type": "datetime" },
+    "currentPeriodEnd": { "type": "datetime" },
+    "renewalDate": { "type": "datetime" },
+    "metadata": { "type": "json" }
+  }
+}
