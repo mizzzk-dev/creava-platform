@@ -103,6 +103,62 @@ function maskUserId(userId: string): string {
   return `${userId.slice(0, 5)}...${userId.slice(-3)}`
 }
 
+
+function formatStateLabel(state: string): string {
+  const labels: Record<string, string> = {
+    active: '有効',
+    pending: '確認待ち',
+    restricted: '制限中',
+    suspended: '停止中',
+    non_member: '未入会',
+    member: '会員',
+    grace: '猶予期間',
+    canceled: '解約済み',
+    expired: '期限切れ',
+    completed: '更新完了',
+    upcoming: '更新前',
+    due: '更新期限',
+    failed: '更新失敗',
+    not_applicable: '対象外',
+    reactivated: '再開済み',
+    clear: '正常',
+    pending_review: '確認中',
+  }
+  return labels[state] ?? state
+}
+
+function buildLifecycleActions(summary: ReturnType<typeof useUserLifecycleApi>): Array<{ key: string; to: string; event: string }> {
+  if (!summary) return []
+  if (summary.accountStatus === 'suspended' || summary.accountStatus === 'restricted') {
+    return [{ key: 'member.lifecycleActionSupport', to: ROUTES.CONTACT, event: 'support_from_renewal_state' }]
+  }
+  if (summary.billingState === 'failed' || summary.renewalState === 'failed') {
+    return [
+      { key: 'member.lifecycleActionPaymentFix', to: ROUTES.MEMBER, event: 'payment_fix_cta_click' },
+      { key: 'member.lifecycleActionSupport', to: ROUTES.CONTACT, event: 'support_from_renewal_state' },
+    ]
+  }
+  if (summary.renewalState === 'grace' || summary.membershipStatus === 'grace') {
+    return [
+      { key: 'member.lifecycleActionRecover', to: ROUTES.MEMBER, event: 'grace_recovery_cta_click' },
+      { key: 'member.lifecycleActionHelp', to: ROUTES.STORE_GUIDE, event: 'renewal_help_click' },
+    ]
+  }
+  if (summary.renewalState === 'upcoming' || summary.renewalState === 'due') {
+    return [
+      { key: 'member.lifecycleActionRenew', to: ROUTES.MEMBER, event: 'renewal_cta_click' },
+      { key: 'member.lifecycleActionBenefits', to: ROUTES.FANCLUB, event: 'member_value_block_view' },
+    ]
+  }
+  if (summary.membershipStatus === 'expired' || summary.membershipStatus === 'canceled' || summary.renewalState === 'expired') {
+    return [
+      { key: 'member.lifecycleActionRejoin', to: ROUTES.FANCLUB, event: 'rejoin_cta_click' },
+      { key: 'member.lifecycleActionSupport', to: ROUTES.CONTACT, event: 'support_from_renewal_state' },
+    ]
+  }
+  return [{ key: 'member.lifecycleActionBenefits', to: ROUTES.FANCLUB, event: 'member_value_block_view' }]
+}
+
 export default function MemberPage() {
   const { t } = useTranslation()
   const { user, lifecycle, isLoaded, isSignedIn } = useCurrentUser()
@@ -126,6 +182,7 @@ export default function MemberPage() {
   const progressTotal = roleTodo.length
   const progressDone = isAdmin ? progressTotal : isMember ? 2 : isSignedIn ? 1 : 0
   const progressPercent = Math.round((progressDone / progressTotal) * 100)
+  const lifecycleActions = buildLifecycleActions(lifecycleSummary)
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn) {
@@ -437,10 +494,31 @@ export default function MemberPage() {
             <div className="rounded border border-gray-200 p-5 dark:border-gray-800">
               <p className="font-mono text-[11px] text-gray-400">account summary</p>
               <div className="mt-3 grid gap-2 text-sm text-gray-600 dark:text-gray-300 sm:grid-cols-2">
-                <p>{t('member.accountStatusLabel', { defaultValue: 'アカウント状態' })}: <span className="font-medium">{lifecycleSummary.accountStatus}</span></p>
-                <p>{t('member.membershipStatusLabel', { defaultValue: '会員状態' })}: <span className="font-medium">{lifecycleSummary.membershipStatus}</span></p>
-                <p>{t('member.onboardingStatusLabel', { defaultValue: 'オンボーディング' })}: <span className="font-medium">{lifecycleSummary.onboardingStatus}</span></p>
+                <p>{t('member.accountStatusLabel', { defaultValue: 'アカウント状態' })}: <span className="font-medium">{formatStateLabel(lifecycleSummary.accountStatus)}</span></p>
+                <p>{t('member.membershipStatusLabel', { defaultValue: '会員状態' })}: <span className="font-medium">{formatStateLabel(lifecycleSummary.membershipStatus)}</span></p>
+                <p>{t('member.renewalStateLabel', { defaultValue: '更新状態' })}: <span className="font-medium">{formatStateLabel(lifecycleSummary.renewalState)}</span></p>
+                <p>{t('member.billingStateLabel', { defaultValue: '課金状態' })}: <span className="font-medium">{formatStateLabel(lifecycleSummary.billingState)}</span></p>
                 <p>{t('member.lifecycleStageLabel', { defaultValue: 'ライフサイクル段階' })}: <span className="font-medium">{lifecycleSummary.lifecycleStage}</span></p>
+                <p>{t('member.nextBillingLabel', { defaultValue: '次回課金予定' })}: <span className="font-medium">{lifecycleSummary.nextBillingAt ? formatDateTime(lifecycleSummary.nextBillingAt) : '-'}</span></p>
+                <p>{t('member.graceEndsLabel', { defaultValue: '猶予終了予定' })}: <span className="font-medium">{lifecycleSummary.graceEndsAt ? formatDateTime(lifecycleSummary.graceEndsAt) : '-'}</span></p>
+                <p>{t('member.statusReasonLabel', { defaultValue: '状態理由' })}: <span className="font-medium">{lifecycleSummary.statusReason ?? '-'}</span></p>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {lifecycleActions.map((action) => (
+                  <Link
+                    key={action.key}
+                    to={action.to}
+                    className="inline-flex rounded-full border border-cyan-300 px-3 py-1.5 text-xs font-semibold text-cyan-700 transition hover:bg-cyan-50 dark:border-cyan-700 dark:text-cyan-200 dark:hover:bg-cyan-950/30"
+                    onClick={() => trackMizzzEvent(action.event, {
+                      sourceSite: SITE_TYPE,
+                      membershipStatus: lifecycleSummary.membershipStatus,
+                      renewalState: lifecycleSummary.renewalState,
+                      lifecycleStage: lifecycleSummary.lifecycleStage,
+                    })}
+                  >
+                    {t(action.key, { defaultValue: action.key })}
+                  </Link>
+                ))}
               </div>
               {lifecycleSummary.onboardingStatus !== 'completed' && (
                 <div className="mt-3 rounded bg-violet-50 px-3 py-2 text-xs text-violet-700 dark:bg-violet-950/30 dark:text-violet-200">

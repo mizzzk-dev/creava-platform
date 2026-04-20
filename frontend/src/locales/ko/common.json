@@ -633,7 +633,19 @@
     "accountCenterHostHint": "Hosted UI: 비밀번호 변경 / MFA / passkey / 연동 계정 / 세션 관리",
     "accountCenterCustomHint": "Custom UI: 알림 설정 / CRM 수신 설정 / FAQ·Support 동선 / 회원 안내 문구",
     "accountCenterOpenAll": "Account Center 열기",
-    "accountCenterUnavailable": "환경 변수가 없어 Account Center URL을 만들 수 없습니다."
+    "accountCenterUnavailable": "환경 변수가 없어 Account Center URL을 만들 수 없습니다.",
+    "renewalStateLabel": "갱신 상태",
+    "billingStateLabel": "결제 상태",
+    "nextBillingLabel": "다음 결제 예정일",
+    "graceEndsLabel": "유예 종료 예정",
+    "statusReasonLabel": "상태 사유",
+    "lifecycleActionSupport": "고객지원 문의",
+    "lifecycleActionPaymentFix": "결제 정보 수정",
+    "lifecycleActionRecover": "재개 절차 진행",
+    "lifecycleActionHelp": "갱신 가이드 보기",
+    "lifecycleActionRenew": "갱신 내용 확인",
+    "lifecycleActionBenefits": "멤버 혜택 확인",
+    "lifecycleActionRejoin": "재가입하기"
   },
   "memberGuide": {
     "label": "Member Guide",
@@ -1050,6 +1062,15 @@
     "continueOnboarding": "초기 설정 계속",
     "nonMemberTitle": "멤버십으로 더 깊은 경험을 이용할 수 있습니다.",
     "nonMemberDescription": "먼저 main / store / fc를 둘러본 뒤 필요할 때 자연스럽게 가입하세요.",
-    "join": "멤버 혜택 보기"
+    "join": "멤버 혜택 보기",
+    "renewalSoonTitle": "갱신 시점이 다가오고 있습니다.",
+    "renewalSoonDescription": "다음 결제일, 멤버 혜택, 최근 업데이트를 확인한 뒤 무리 없이 계속 이용할지 결정하세요.",
+    "renewalSoonCta": "갱신 내용 확인",
+    "graceCta": "재개 절차 확인",
+    "paymentFailedTitle": "결제 정보 확인이 필요합니다.",
+    "paymentFailedDescription": "결제 정보를 수정하면 멤버 경험을 중단 없이 다시 이용할 수 있습니다.",
+    "paymentFixCta": "결제 정보 수정",
+    "reactivatedTitle": "다시 오신 것을 환영합니다. 멤버십이 재개되었습니다.",
+    "reactivatedDescription": "최근 업데이트, 한정 콘텐츠, 혜택을 확인하고 재개 후 경험을 이어가세요."
   }
 }

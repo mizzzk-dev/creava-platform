@@ -36,6 +36,11 @@ const ALLOWED_EVENTS = new Set([
   'theme_toggle', 'locale_switch',
   'cart_click', 'join_click', 'event_calendar_click',
   'campaign_click', 'error_state_view', 'retry_click', 'empty_state_view', 'api_failure',
+  'renewal_banner_view', 'renewal_cta_click', 'renewal_summary_view',
+  'grace_notice_view', 'grace_recovery_cta_click', 'payment_fix_cta_click',
+  'rejoin_banner_view', 'rejoin_cta_click', 'reactivation_success',
+  'member_value_block_view', 'renewal_help_click', 'support_from_renewal_state',
+  'lifecycle_message_sent', 'lifecycle_message_clicked', 'winback_offer_view', 'winback_offer_click',
 ])
 
 function sanitizeText(value: unknown, maxLength = 120): string | undefined {

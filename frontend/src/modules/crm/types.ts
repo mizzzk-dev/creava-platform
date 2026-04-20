@@ -1,8 +1,9 @@
 export type UserState = 'guest' | 'logged_in'
-export type MembershipStatus = 'non_member' | 'member' | 'premium' | 'paused' | 'cancelled'
+export type MembershipStatus = 'non_member' | 'member' | 'grace' | 'canceled' | 'expired' | 'suspended'
 export type MembershipPlan = 'free' | 'standard' | 'premium'
 export type SourceSite = 'main' | 'store' | 'fc'
 export type DeliveryChannel = 'in_app' | 'email'
+export type RenewalState = 'not_applicable' | 'upcoming' | 'due' | 'grace' | 'completed' | 'failed' | 'expired' | 'reactivated'
 
 export type NotificationTheme =
   | 'fc_update'
@@ -28,6 +29,8 @@ export interface SegmentContext {
   earlyAccessEligible: boolean
   loyaltyState: 'cold' | 'active' | 'loyal' | 'dormant'
   engagementSegment: 'new' | 'active' | 'at_risk' | 'dormant'
+  renewalState?: RenewalState
+  lifecycleMessageState?: 'idle' | 'renewal_pending' | 'grace_notice_sent' | 'winback_sent' | 'suppressed'
   supportIntentSegment?: 'none' | 'high'
   dormantUserSegment?: 'none' | '14d' | '30d' | '60d'
 }

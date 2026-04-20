@@ -13,7 +13,10 @@ export function buildLifecycleScenarios(context: SegmentContext): string[] {
   const scenarios = ['welcome']
 
   if (context.engagementSegment === 'dormant') scenarios.push('inactivity_nudge')
-  if (context.membershipStatus === 'member' || context.membershipStatus === 'premium') scenarios.push('member_benefit')
+  if (context.membershipStatus === 'member') scenarios.push('member_benefit')
+  if (context.membershipStatus === 'grace' || context.renewalState === 'grace') scenarios.push('grace_recovery')
+  if (context.renewalState === 'upcoming' || context.renewalState === 'due') scenarios.push('renewal_nudge')
+  if (context.membershipStatus === 'expired' || context.membershipStatus === 'canceled' || context.renewalState === 'expired') scenarios.push('winback_offer')
   if (context.favoriteCategories.length > 0) scenarios.push('favorite_related')
   if (context.sourceSite === 'store') scenarios.push('store_new_arrival', 'campaign_announcement')
   if (context.sourceSite === 'fc') scenarios.push('fc_update')

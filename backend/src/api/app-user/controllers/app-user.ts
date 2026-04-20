@@ -89,13 +89,38 @@ function resolveLifecycleStage(params: {
   accountStatus: string
   membershipStatus: string
   onboardingStatus: 'not_started' | 'in_progress' | 'completed' | 'skipped'
+  renewalState?: string
 }): string {
   if (params.accountStatus === 'suspended' || params.accountStatus === 'restricted' || params.membershipStatus === 'suspended') return 'suspended_user'
   if (params.onboardingStatus === 'not_started' || params.onboardingStatus === 'in_progress') return 'onboarding_user'
+  if (params.renewalState === 'upcoming' && params.membershipStatus === 'member') return 'renewal_soon_member'
+  if (params.renewalState === 'reactivated' && params.membershipStatus === 'member') return 'reactivated_member'
   if (params.membershipStatus === 'member') return 'active_member'
   if (params.membershipStatus === 'grace') return 'grace_member'
-  if (params.membershipStatus === 'expired' || params.membershipStatus === 'canceled') return 'inactive_member'
+  if (params.membershipStatus === 'expired' || params.membershipStatus === 'canceled') return 'expired_member'
   return 'authenticated_non_member'
+}
+
+function deriveRenewalState(params: { membershipStatus: string; subscriptionState: string; billingState: string; reactivatedAt?: string | null }): string {
+  if (params.reactivatedAt) return 'reactivated'
+  if (params.membershipStatus === 'grace') return 'grace'
+  if (params.membershipStatus === 'expired' || params.membershipStatus === 'canceled') return 'expired'
+  if (params.billingState === 'failed' || params.subscriptionState === 'past_due') return 'failed'
+  if (params.subscriptionState === 'active' && params.membershipStatus === 'member') return 'completed'
+  return 'not_applicable'
+}
+
+function deriveRenewalWindowState(params: { renewalState: string; renewalDueAt: string | null; graceEndsAt: string | null }): string {
+  if (params.renewalState === 'grace') return 'grace_window'
+  if (params.renewalState === 'expired') return 'rejoin_window'
+  if (!params.renewalDueAt) return params.renewalState === 'not_applicable' ? 'inactive' : 'normal'
+  const due = new Date(params.renewalDueAt).getTime()
+  if (Number.isNaN(due)) return 'normal'
+  const diffDays = (due - Date.now()) / (1000 * 60 * 60 * 24)
+  if (diffDays <= 0) return 'due_now'
+  if (diffDays <= 7) return 'renewal_soon'
+  if (params.graceEndsAt) return 'grace_window'
+  return 'normal'
 }
 
 function buildLifecycleSummary(appUser: any, latestSubscription: any, latestEntitlement: any) {
@@ -105,30 +130,55 @@ function buildLifecycleSummary(appUser: any, latestSubscription: any, latestEnti
   const accountStatus = appUser?.accountStatus ?? 'active'
   const subscriptionState = latestSubscription?.subscriptionStatus ?? 'none'
   const billingState = latestSubscription?.billingStatus ?? 'clear'
+  const renewalDueAt = latestSubscription?.renewalDate ?? latestSubscription?.currentPeriodEnd ?? latestSubscription?.endAt ?? null
+  const graceEndsAt = latestSubscription?.currentPeriodEnd ?? latestSubscription?.endAt ?? appUser?.graceEndsAt ?? null
+  const reactivatedAt = appUser?.reactivatedAt ?? null
+  const renewalState = deriveRenewalState({ membershipStatus, subscriptionState, billingState, reactivatedAt })
+  const renewalWindowState = deriveRenewalWindowState({ renewalState, renewalDueAt, graceEndsAt })
+  const lifecycleMessageState = renewalState === 'grace'
+    ? 'grace_notice_sent'
+    : renewalState === 'expired'
+      ? 'winback_sent'
+      : renewalState === 'upcoming' || renewalWindowState === 'renewal_soon'
+        ? 'renewal_pending'
+        : 'idle'
 
   return {
     onboardingStatus,
     profileCompletionStatus,
-    lifecycleStage: resolveLifecycleStage({ accountStatus, membershipStatus, onboardingStatus }),
+    lifecycleStage: resolveLifecycleStage({ accountStatus, membershipStatus, onboardingStatus, renewalState }),
     membershipStatus,
     accountStatus,
     accessLevel: latestEntitlement?.accessLevel ?? appUser?.accessLevel ?? 'logged_in',
     entitlementState: latestEntitlement?.entitlementState ?? 'inactive',
     subscriptionState,
     billingState,
+    renewalState,
+    renewalWindowState,
+    lifecycleMessageState,
+    reactivationEligibility: membershipStatus === 'grace' || membershipStatus === 'expired' || membershipStatus === 'canceled',
+    winbackEligibility: membershipStatus === 'expired' || membershipStatus === 'canceled',
     firstLoginAt: appUser?.firstLoginAt ?? null,
     lastLoginAt: appUser?.lastLoginAt ?? null,
-    joinedAt: latestSubscription?.startAt ?? null,
-    renewedAt: latestSubscription?.renewalDate ?? latestSubscription?.currentPeriodEnd ?? null,
-    canceledAt: latestSubscription?.canceledAt ?? null,
-    graceEndsAt: latestSubscription?.currentPeriodEnd ?? latestSubscription?.endAt ?? null,
+    joinedAt: latestSubscription?.startAt ?? appUser?.joinedAt ?? null,
+    renewedAt: latestSubscription?.renewalDate ?? latestSubscription?.currentPeriodEnd ?? appUser?.renewedAt ?? null,
+    canceledAt: latestSubscription?.canceledAt ?? appUser?.canceledAt ?? null,
+    graceEndsAt,
+    renewalDueAt,
+    nextBillingAt: latestSubscription?.currentPeriodEnd ?? latestSubscription?.renewalDate ?? null,
     suspendedAt: accountStatus === 'suspended' || membershipStatus === 'suspended' ? (appUser?.updatedAt ?? null) : null,
-    reactivatedAt: accountStatus === 'active' && membershipStatus === 'member' ? (latestSubscription?.updatedAt ?? null) : null,
+    reactivatedAt: accountStatus === 'active' && membershipStatus === 'member' ? (reactivatedAt ?? latestSubscription?.updatedAt ?? null) : null,
+    expiredAt: membershipStatus === 'expired' ? (latestSubscription?.endAt ?? latestSubscription?.updatedAt ?? appUser?.updatedAt ?? null) : null,
+    paymentFailureAt: billingState === 'failed' ? (latestSubscription?.lastBillingEventAt ?? latestSubscription?.updatedAt ?? null) : null,
     sourceSite: appUser?.sourceSite ?? 'cross',
     statusReason: latestSubscription?.statusReason ?? latestEntitlement?.statusReason ?? null,
     statusUpdatedAt: latestSubscription?.updatedAt ?? latestEntitlement?.updatedAt ?? appUser?.updatedAt ?? null,
+    lastRetentionMessageAt: appUser?.lastRetentionMessageAt ?? null,
+    lastRenewalNoticeAt: appUser?.lastRenewalNoticeAt ?? null,
+    lastWinbackNoticeAt: appUser?.lastWinbackNoticeAt ?? null,
   }
 }
+
 
 function normalizeMembershipStatus(status: MembershipStatus): MembershipStatus {
   if (status === 'guest') return 'non_member'
@@ -450,6 +500,7 @@ export default ({ strapi }) => ({
             accountStatus: existing.accountStatus,
             membershipStatus: membership.membershipStatus,
             onboardingStatus: normalizeOnboardingStatus(existing.onboardingState),
+            renewalState: membership.membershipStatus === 'member' ? 'completed' : membership.membershipStatus === 'grace' ? 'grace' : 'not_applicable',
           }),
           entitlementState: membership.membershipStatus === 'member' || membership.membershipStatus === 'grace' ? 'active' : 'none',
           suspendedAt: membership.membershipStatus === 'suspended' ? nowIso : existing.suspendedAt ?? null,

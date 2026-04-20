@@ -21,6 +21,10 @@
 | `VITE_USER_LIFECYCLE_ONBOARDING_ENABLED` | lifecycle/onboarding UI 表示フラグ | 任意 | 推奨 | 推奨 |
 | `VITE_ONBOARDING_REMINDER_DAYS` | onboarding 再表示までの日数 | 任意 | 任意 | 推奨 |
 | `VITE_MEMBERSHIP_STATE_SYNC_INTERVAL_SEC` | frontend で state summary を再同期する間隔（秒） | 任意 | 推奨 | 推奨 |
+| `VITE_RENEWAL_REMINDER_DAYS` | renewal前 notice 表示開始日数 | 任意 | 推奨 | 推奨 |
+| `VITE_GRACE_RECOVERY_DAYS` | grace recovery 導線の既定表示日数 | 任意 | 推奨 | 推奨 |
+| `VITE_WINBACK_WINDOW_DAYS` | expired/canceled 向け win-back 導線表示日数 | 任意 | 推奨 | 推奨 |
+| `VITE_LIFECYCLE_MESSAGE_COOLDOWN_HOURS` | lifecycle message の最小再送間隔 | 任意 | 推奨 | 推奨 |
 | `VITE_SHOPIFY_*` | store 商品取得 | 任意 | 必須 | 必須 |
 | `VITE_STRIPE_PUBLISHABLE_KEY` | 決済公開キー | 任意 | 必須 | 必須 |
 | `VITE_PERSONALIZATION_MAX_HISTORY` | 閲覧履歴の保存上限 | 任意 | 任意 | 任意 |

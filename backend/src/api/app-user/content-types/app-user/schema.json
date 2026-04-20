@@ -213,6 +213,9 @@
         "active_member",
         "grace_member",
         "inactive_member",
+        "renewal_soon_member",
+        "expired_member",
+        "reactivated_member",
         "suspended_user"
       ],
       "default": "authenticated_non_member",
@@ -232,6 +235,15 @@
     },
     "acquisitionSource": {
       "type": "string"
+    },
+    "lastRetentionMessageAt": {
+      "type": "datetime"
+    },
+    "lastRenewalNoticeAt": {
+      "type": "datetime"
+    },
+    "lastWinbackNoticeAt": {
+      "type": "datetime"
     }
   }
 }

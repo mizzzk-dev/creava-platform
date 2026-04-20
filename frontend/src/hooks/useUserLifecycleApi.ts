@@ -24,6 +24,18 @@ export type UserLifecycleApiSummary = {
   suspendedAt: string | null
   reactivatedAt: string | null
   sourceSite: string
+  renewalState: string
+  renewalWindowState: string
+  lifecycleMessageState: string
+  renewalDueAt: string | null
+  nextBillingAt: string | null
+  expiredAt: string | null
+  paymentFailureAt: string | null
+  reactivationEligibility: boolean
+  winbackEligibility: boolean
+  lastRetentionMessageAt: string | null
+  lastRenewalNoticeAt: string | null
+  lastWinbackNoticeAt: string | null
 }
 
 function resolveApiBaseUrl(): string | null {
@@ -68,12 +80,14 @@ export function useUserLifecycleApi() {
         const next = json.lifecycleSummary
         if (next) {
           setSummary(next)
-          trackMizzzEvent('account_summary_view', {
+          trackMizzzEvent('renewal_summary_view', {
             sourceSite: next.sourceSite,
             userState: lifecycle?.lifecycleStage ?? 'unknown',
             membershipStatus: user?.membershipStatus ?? 'unknown',
             entitlementState: next.entitlementState,
             subscriptionState: next.subscriptionState,
+            renewalState: next.renewalState,
+            lifecycleMessageState: next.lifecycleMessageState,
           })
         }
       })

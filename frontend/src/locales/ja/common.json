@@ -633,7 +633,19 @@
     "accountCenterHostHint": "Hosted UI: パスワード変更 / MFA / passkey / 連携アカウント / セッション管理",
     "accountCenterCustomHint": "Custom UI: 通知設定 / CRM配信設定 / FAQ・Support導線 / 会員向け説明文",
     "accountCenterOpenAll": "Account Center を開く",
-    "accountCenterUnavailable": "環境変数未設定のため Account Center URL を生成できません。"
+    "accountCenterUnavailable": "環境変数未設定のため Account Center URL を生成できません。",
+    "renewalStateLabel": "更新状態",
+    "billingStateLabel": "課金状態",
+    "nextBillingLabel": "次回課金予定",
+    "graceEndsLabel": "猶予終了予定",
+    "statusReasonLabel": "状態理由",
+    "lifecycleActionSupport": "サポートへ相談",
+    "lifecycleActionPaymentFix": "支払い情報を更新",
+    "lifecycleActionRecover": "再開手続きを進める",
+    "lifecycleActionHelp": "更新ガイドを見る",
+    "lifecycleActionRenew": "更新内容を確認",
+    "lifecycleActionBenefits": "会員特典を確認",
+    "lifecycleActionRejoin": "再入会する"
   },
   "memberGuide": {
     "label": "Member Guide",
@@ -1050,6 +1062,15 @@
     "continueOnboarding": "初期設定を続ける",
     "nonMemberTitle": "会員登録でさらに深い体験を利用できます。",
     "nonMemberDescription": "まずは main / store / fc を回遊し、気になる特典が見つかったら入会を検討してください。",
-    "join": "会員特典を見る"
+    "join": "会員特典を見る",
+    "renewalSoonTitle": "更新時期が近づいています。",
+    "renewalSoonDescription": "次回更新日・会員特典・最近の更新内容を確認し、無理のない範囲で継続を検討してください。",
+    "renewalSoonCta": "更新内容を確認する",
+    "graceCta": "再開手続きを確認する",
+    "paymentFailedTitle": "決済確認が必要です。",
+    "paymentFailedDescription": "支払い情報を更新すると、会員体験を中断せず再開できます。",
+    "paymentFixCta": "支払い情報を更新する",
+    "reactivatedTitle": "おかえりなさい。会員ステータスを再開しました。",
+    "reactivatedDescription": "最近の更新・限定公開・特典を確認して、再開後の体験を活用してください。"
   }
 }

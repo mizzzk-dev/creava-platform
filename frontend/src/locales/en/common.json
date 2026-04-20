@@ -633,7 +633,19 @@
     "accountCenterHostHint": "Hosted UI: password / MFA / passkey / linked identities / sessions",
     "accountCenterCustomHint": "Custom UI: notification settings / CRM delivery preferences / FAQ-support paths / member guidance",
     "accountCenterOpenAll": "Open Account Center",
-    "accountCenterUnavailable": "Cannot resolve Account Center URL because environment variables are missing."
+    "accountCenterUnavailable": "Cannot resolve Account Center URL because environment variables are missing.",
+    "renewalStateLabel": "Renewal status",
+    "billingStateLabel": "Billing status",
+    "nextBillingLabel": "Next billing date",
+    "graceEndsLabel": "Grace period ends",
+    "statusReasonLabel": "Status reason",
+    "lifecycleActionSupport": "Contact support",
+    "lifecycleActionPaymentFix": "Fix payment",
+    "lifecycleActionRecover": "Recover membership",
+    "lifecycleActionHelp": "Open renewal guide",
+    "lifecycleActionRenew": "Review renewal",
+    "lifecycleActionBenefits": "See member benefits",
+    "lifecycleActionRejoin": "Rejoin membership"
   },
   "memberGuide": {
     "label": "Member Guide",
@@ -1050,6 +1062,15 @@
     "continueOnboarding": "Continue setup",
     "nonMemberTitle": "Membership unlocks deeper experiences.",
     "nonMemberDescription": "Explore main / store / fc first, then join when a benefit matches your interest.",
-    "join": "See member benefits"
+    "join": "See member benefits",
+    "renewalSoonTitle": "Your renewal window is approaching.",
+    "renewalSoonDescription": "Check your next billing date, member benefits, and recent updates before deciding to continue.",
+    "renewalSoonCta": "Review renewal details",
+    "graceCta": "Review recovery steps",
+    "paymentFailedTitle": "Payment update is required.",
+    "paymentFailedDescription": "Update your payment method to restore your member experience without interruption.",
+    "paymentFixCta": "Update payment method",
+    "reactivatedTitle": "Welcome back. Your membership has been reactivated.",
+    "reactivatedDescription": "Check recent updates, limited content, and perks to restart smoothly."
   }
 }
