@@ -4,13 +4,16 @@ import { useTranslation } from 'react-i18next'
 import PageHead from '@/components/seo/PageHead'
 import ErrorState from '@/components/common/ErrorState'
 import SkeletonListItem from '@/components/common/SkeletonListItem'
-import { useStrapiCollection } from '@/hooks'
+import { useCurrentUser, useStrapiCollection } from '@/hooks'
+import { resolveBenefitExperienceState } from '@/lib/auth/benefitState'
+import { buildBenefitPresentation } from '@/lib/auth/benefitPresentation'
 import { getFaqList } from '@/modules/faq/api'
 import { getGuideList } from '@/modules/faq/guideApi'
 import { ROUTES } from '@/lib/routeConstants'
 import { isFanclubSite, isMainSite, isStoreSite } from '@/lib/siteLinks'
 import type { FAQItem, GuideItem, SourceSite } from '@/types'
 import { siteScopedCategories } from '@/modules/support/config'
+import { trackMizzzEvent } from '@/modules/analytics/tracking'
 
 const detectSite = (): SourceSite => {
   if (isStoreSite) return 'store'
@@ -21,9 +24,13 @@ const detectSite = (): SourceSite => {
 
 export default function SupportCenterPage() {
   const { t } = useTranslation()
+  const { user, lifecycle } = useCurrentUser()
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('all')
   const site = detectSite()
+  const sourceSite = site === 'all' ? 'main' : site
+  const benefitState = resolveBenefitExperienceState({ user, lifecycle, sourceSite })
+  const benefitPresentation = buildBenefitPresentation(benefitState)
 
   const { items: faqs, loading: faqLoading, error: faqError, refetch: refetchFaq } = useStrapiCollection<FAQItem>(() => getFaqList())
   const { items: guides, loading: guideLoading, error: guideError, refetch: refetchGuide } = useStrapiCollection<GuideItem>(() => getGuideList())
@@ -232,6 +239,29 @@ export default function SupportCenterPage() {
       <div className="mt-10 rounded-2xl border border-violet-200 bg-violet-50/40 p-5 dark:border-violet-800 dark:bg-violet-950/20">
         <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">{t('support.beforeContactTitle')}</h3>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{t('support.beforeContactDescription')}</p>
+        <div className="mt-3 rounded-xl border border-violet-200/80 bg-white/80 p-3 text-xs text-violet-900 dark:border-violet-900/60 dark:bg-gray-950/40 dark:text-violet-100">
+          <p className="font-semibold">{benefitPresentation.title}</p>
+          <p className="mt-1">{benefitPresentation.description}</p>
+          <div className="mt-2 flex flex-wrap gap-3">
+            <Link
+              to={ROUTES.MEMBER}
+              onClick={() => {
+                trackMizzzEvent('support_from_benefit_state', {
+                  sourceSite,
+                  membershipStatus: benefitState.membershipStatus,
+                  entitlementState: benefitState.entitlementState,
+                  benefitVisibilityState: benefitState.benefitVisibilityState,
+                  accessGateState: benefitState.accessGateState,
+                  earlyAccessState: benefitState.earlyAccessState,
+                  cta: benefitPresentation.primaryAction,
+                })
+              }}
+              className="text-violet-700 underline dark:text-violet-300"
+            >
+              {t('memberValue.openBenefitHub', { defaultValue: 'マイページで特典を確認' })}
+            </Link>
+          </div>
+        </div>
         <Link to={ROUTES.CONTACT} className="mt-3 inline-flex text-sm text-violet-600 hover:text-violet-500 dark:text-violet-300">
           {t('support.toContact')}
         </Link>

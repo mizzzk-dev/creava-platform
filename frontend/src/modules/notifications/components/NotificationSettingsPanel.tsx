@@ -1,12 +1,18 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useCurrentUser } from '@/hooks'
+import { resolveBenefitExperienceState } from '@/lib/auth/benefitState'
+import { buildBenefitPresentation } from '@/lib/auth/benefitPresentation'
 import { ROUTES } from '@/lib/routeConstants'
-import { trackCtaClick } from '@/modules/analytics/tracking'
+import { trackCtaClick, trackMizzzEvent } from '@/modules/analytics/tracking'
 import { useNotificationSubscriptions } from '@/modules/notifications/hooks/useNotificationSubscriptions'
 
 export default function NotificationSettingsPanel({ location }: { location: string }) {
   const { t } = useTranslation()
+  const { user, lifecycle } = useCurrentUser()
   const { subscriptions, activeCount, preference, setActive, updatePreference } = useNotificationSubscriptions()
+  const benefitState = resolveBenefitExperienceState({ user, lifecycle, sourceSite: 'fc' })
+  const benefitPresentation = buildBenefitPresentation(benefitState)
 
   return (
     <article className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900/70">
@@ -30,6 +36,11 @@ export default function NotificationSettingsPanel({ location }: { location: stri
           <span>{t('common.notifyRestock', { defaultValue: '再入荷通知を受け取る' })}</span>
           <input type="checkbox" checked={preference.storeRestock} onChange={(e) => updatePreference({ ...preference, storeRestock: e.target.checked })} />
         </label>
+      </div>
+
+      <div className="mt-4 rounded-xl border border-violet-200 bg-violet-50/70 p-3 text-xs text-violet-800 dark:border-violet-900/60 dark:bg-violet-950/30 dark:text-violet-200">
+        <p className="font-semibold">{benefitPresentation.title}</p>
+        <p className="mt-1">{benefitPresentation.description}</p>
       </div>
 
       <div className="mt-4 space-y-2">
@@ -58,9 +69,28 @@ export default function NotificationSettingsPanel({ location }: { location: stri
         )}
       </div>
 
-      <Link to={ROUTES.CONTACT} onClick={() => trackCtaClick(location, 'notification_contact_support')} className="mt-4 inline-flex text-xs text-gray-500 underline dark:text-gray-400">
+      <div className="mt-4 flex flex-wrap gap-3 text-xs">
+        <Link
+          to={ROUTES.MEMBER}
+          onClick={() => {
+            trackMizzzEvent('benefit_prompt_clicked', {
+              location,
+              sourceSite: 'member',
+              cta: benefitPresentation.primaryAction,
+              membershipStatus: benefitState.membershipStatus,
+              lifecycleStage: benefitState.lifecycleStage,
+              entitlementState: benefitState.entitlementState,
+              benefitVisibilityState: benefitState.benefitVisibilityState,
+            })
+          }}
+          className="inline-flex text-violet-700 underline dark:text-violet-300"
+        >
+          {t('memberValue.openBenefitHub', { defaultValue: 'マイページで特典を確認' })}
+        </Link>
+        <Link to={ROUTES.CONTACT} onClick={() => trackCtaClick(location, 'notification_contact_support')} className="inline-flex text-gray-500 underline dark:text-gray-400">
         {t('common.notificationSupportLink', { defaultValue: '通知に関するお問い合わせ' })}
-      </Link>
+        </Link>
+      </div>
     </article>
   )
 }

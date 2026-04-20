@@ -329,6 +329,32 @@ export default function InternalAdminPage() {
       {selectedUser && (
         <div className="mt-6 rounded border border-gray-200 p-4 dark:border-gray-800">
           <h2 className="text-lg font-medium">User Summary</h2>
+          <div className="mt-3 grid gap-2 text-xs md:grid-cols-3">
+            <div className="rounded border border-violet-200 bg-violet-50/60 p-2 dark:border-violet-900/60 dark:bg-violet-950/20">
+              <p className="text-gray-500 dark:text-gray-300">membership / entitlement</p>
+              <p className="mt-1 font-medium">
+                {(selectedUser.userSummary?.membershipStatus ?? selectedUser.appUser?.membershipStatus ?? '-')}
+                {' / '}
+                {(selectedUser.userSummary?.entitlementState ?? selectedUser.userSummary?.membership?.entitlementState ?? '-')}
+              </p>
+            </div>
+            <div className="rounded border border-violet-200 bg-violet-50/60 p-2 dark:border-violet-900/60 dark:bg-violet-950/20">
+              <p className="text-gray-500 dark:text-gray-300">subscription / billing</p>
+              <p className="mt-1 font-medium">
+                {(selectedUser.userSummary?.subscriptionState ?? selectedUser.userSummary?.membership?.subscriptionState ?? '-')}
+                {' / '}
+                {(selectedUser.userSummary?.billingState ?? selectedUser.userSummary?.membership?.billingState ?? '-')}
+              </p>
+            </div>
+            <div className="rounded border border-violet-200 bg-violet-50/60 p-2 dark:border-violet-900/60 dark:bg-violet-950/20">
+              <p className="text-gray-500 dark:text-gray-300">benefit visibility / gate</p>
+              <p className="mt-1 font-medium">
+                {(selectedUser.userSummary?.benefitVisibilityState ?? '-')}
+                {' / '}
+                {(selectedUser.userSummary?.accessGateState ?? '-')}
+              </p>
+            </div>
+          </div>
           <pre className="mt-2 overflow-auto rounded bg-gray-50 p-3 text-xs dark:bg-gray-900">{JSON.stringify(selectedUser.userSummary, null, 2)}</pre>
 
           <div className="mt-4 rounded border border-rose-300 p-3 dark:border-rose-800">

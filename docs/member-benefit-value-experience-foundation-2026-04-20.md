@@ -37,7 +37,9 @@
 ## 6. notification / CRM / support / internal admin 接続整理
 - CRM segment context に `benefitVisibilityState` / `accessGateState` / `earlyAccessState` / `personalizationState` を追加。
 - lifecycle scenarios に `benefit_teaser` / `early_access_prompt` / `cross_site_value` を追加し、価値訴求条件を強化。
-- support / internal admin は今PRでは API 仕様変更なし（UI側で段階対応予定）。
+- notification center で同じ normalized benefit state を使って、状態別メッセージ（join / renew / reactivate / explore）を出し分け。
+- support center の問い合わせ前ブロックで benefit state を要約し、`support_from_benefit_state` 計測とマイページ導線を追加。
+- internal admin の User Summary に benefit visibility / access gate の要約表示を追加し、support 問い合わせ時の状態確認を容易化。
 
 ## 7. loyalty / campaign / content value 接続整理
 - member value panel を横断導線として導入し、loyalty/campaign ブロックの上流に置ける状態を作成。
@@ -45,6 +47,7 @@
 
 ## 8. 計測追加内容
 - 追加イベント: `member_benefit_block_view`, `member_benefit_cta_click`, `benefit_hub_view`。
+- 追加イベント: `benefit_prompt_clicked`, `support_from_benefit_state`。
 - イベント共通属性: `sourceSite`, `lifecycleStage`, `membershipStatus`, `entitlementState`, `benefitVisibilityState`。
 - 既存候補イベント（`member_only_teaser_view` / `early_access_block_view` / `rejoin_value_block_view`）は CTA payload の `eventLabel` として送出。
 
@@ -58,21 +61,11 @@
 - `npm run test:frontend`
 - `npm run build:frontend`
 
-## 11. 追加 / 修正ファイル一覧
-- `frontend/src/lib/auth/benefitState.ts`
-- `frontend/src/components/common/MemberValueExperiencePanel.tsx`
-- `frontend/src/pages/HomePage.tsx`
-- `frontend/src/pages/StorePage.tsx`
-- `frontend/src/pages/FanclubPage.tsx`
-- `frontend/src/pages/MemberPage.tsx`
-- `frontend/src/modules/personalization/components/MyPagePersonalizationPanel.tsx`
-- `frontend/src/modules/crm/types.ts`
-- `frontend/src/modules/crm/segments.ts`
-- `frontend/src/lib/auth/lifecycle.ts`
-- `frontend/.env.example`
-- `frontend/.env.production.example`
-- `backend/.env.example`
-- `docs/10_appendix/environment-variables.md`
+## 11. 追加 / 修正ファイル一覧（今回PR）
+- `frontend/src/lib/auth/benefitPresentation.ts`
+- `frontend/src/modules/notifications/components/NotificationSettingsPanel.tsx`
+- `frontend/src/pages/support/SupportCenterPage.tsx`
+- `frontend/src/pages/internal/InternalAdminPage.tsx`
 - `docs/member-benefit-value-experience-foundation-2026-04-20.md`
 
 ## 12. 残課題
