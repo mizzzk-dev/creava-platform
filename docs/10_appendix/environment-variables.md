@@ -25,6 +25,10 @@
 | `VITE_GRACE_RECOVERY_DAYS` | grace recovery 導線の既定表示日数 | 任意 | 推奨 | 推奨 |
 | `VITE_WINBACK_WINDOW_DAYS` | expired/canceled 向け win-back 導線表示日数 | 任意 | 推奨 | 推奨 |
 | `VITE_LIFECYCLE_MESSAGE_COOLDOWN_HOURS` | lifecycle message の最小再送間隔 | 任意 | 推奨 | 推奨 |
+| `VITE_MEMBER_BENEFIT_HUB_ENABLED` | member benefit hub UI の有効化 | 任意 | 推奨 | 推奨 |
+| `VITE_MEMBER_VALUE_PROMPT_COOLDOWN_HOURS` | member value prompt の再表示クールダウン | 任意 | 推奨 | 推奨 |
+| `VITE_MEMBER_EARLY_ACCESS_TEASER_DAYS` | 先行公開 teaser の表示開始日数 | 任意 | 推奨 | 推奨 |
+| `VITE_MEMBER_GRACE_VALUE_MESSAGE_DAYS` | grace向け価値訴求ブロック表示日数 | 任意 | 推奨 | 推奨 |
 | `VITE_SHOPIFY_*` | store 商品取得 | 任意 | 必須 | 必須 |
 | `VITE_STRIPE_PUBLISHABLE_KEY` | 決済公開キー | 任意 | 必須 | 必須 |
 | `VITE_PERSONALIZATION_MAX_HISTORY` | 閲覧履歴の保存上限 | 任意 | 任意 | 任意 |
@@ -64,6 +68,11 @@
 | `ANALYTICS_OPS_TOKEN` | analytics ops summary API 保護トークン | 推奨 |
 | `USER_STATE_RECONCILE_INTERVAL_MIN` | user state 再同期ジョブ間隔（分） | 推奨 |
 | `USER_STATE_SYNC_MAX_DRIFT_MINUTES` | state stale 判定の許容ドリフト（分） | 推奨 |
+| `BENEFIT_PROMPT_COOLDOWN_HOURS` | benefit prompt 再送間隔（時間） | 推奨 |
+| `BENEFIT_PROMPT_DAILY_CAP` | benefit prompt 1日上限回数 | 推奨 |
+| `EARLY_ACCESS_PREVIEW_DAYS` | early access preview の既定日数 | 推奨 |
+| `EARLY_ACCESS_PUBLIC_RELEASE_BUFFER_HOURS` | public release 切替バッファ（時間） | 任意 |
+| `BENEFIT_TEASER_DEDUPE_HOURS` | teaser の重複表示抑制間隔（時間） | 推奨 |
 | `REVENUE_EXPORT_MAX_ROWS` | revenue CSV export 上限行数（internal admin 用） | 任意 |
 | `BI_DEFAULT_RANGE_DAYS` | internal BI overview/cohort の既定集計期間（日） | 任意 |
 | `BI_MAX_FETCH_ROWS` | BI集計時の1ドメインあたり最大取得行数（メモリ保護） | 任意 |
@@ -94,6 +103,11 @@
 - `USER_LIFECYCLE_GRACE_NOTICE_DAYS`（grace 通知表示のしきい値日数）
 - `USER_STATE_RECONCILE_INTERVAL_MIN`
 - `USER_STATE_SYNC_MAX_DRIFT_MINUTES`
+- `BENEFIT_PROMPT_COOLDOWN_HOURS`
+- `BENEFIT_PROMPT_DAILY_CAP`
+- `EARLY_ACCESS_PREVIEW_DAYS`
+- `EARLY_ACCESS_PUBLIC_RELEASE_BUFFER_HOURS`
+- `BENEFIT_TEASER_DEDUPE_HOURS`
 
 ## 3. GitHub Secrets（推奨一覧）
 
@@ -110,6 +124,10 @@
 - `VITE_LOGTO_ISSUER`
 - `VITE_LOGTO_MANAGEMENT_API_ENDPOINT`
 - `VITE_MEMBERSHIP_STATE_SYNC_INTERVAL_SEC`
+- `VITE_MEMBER_BENEFIT_HUB_ENABLED`
+- `VITE_MEMBER_VALUE_PROMPT_COOLDOWN_HOURS`
+- `VITE_MEMBER_EARLY_ACCESS_TEASER_DAYS`
+- `VITE_MEMBER_GRACE_VALUE_MESSAGE_DAYS`
 - `VITE_SHOPIFY_STORE_DOMAIN`
 - `VITE_SHOPIFY_STOREFRONT_TOKEN`
 - `VITE_STRIPE_PUBLISHABLE_KEY`
@@ -134,6 +152,11 @@
 - `LOGTO_USER_SYNC_OPS_TOKEN`（user lookup API 用。staging/prod で分離）
 - `USER_STATE_RECONCILE_INTERVAL_MIN`
 - `USER_STATE_SYNC_MAX_DRIFT_MINUTES`
+- `BENEFIT_PROMPT_COOLDOWN_HOURS`
+- `BENEFIT_PROMPT_DAILY_CAP`
+- `EARLY_ACCESS_PREVIEW_DAYS`
+- `EARLY_ACCESS_PUBLIC_RELEASE_BUFFER_HOURS`
+- `BENEFIT_TEASER_DEDUPE_HOURS`
 
 ## 4. GitHub Variables（推奨一覧）
 - `VITE_SNS_X_URL`
