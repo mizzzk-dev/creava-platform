@@ -4,11 +4,15 @@ import { useTranslation } from 'react-i18next'
 import { useCurrentUser } from '@/hooks'
 import { fanclubLink, storeLink } from '@/lib/siteLinks'
 import { ROUTES } from '@/lib/routeConstants'
+import { resolveBenefitExperienceState } from '@/lib/auth/benefitState'
+import { trackMizzzEvent } from '@/modules/analytics/tracking'
 import { usePersonalization } from '../hooks/usePersonalization'
 
 export default function MyPagePersonalizationPanel() {
   const { t } = useTranslation()
-  const { user } = useCurrentUser()
+  const { user, lifecycle } = useCurrentUser()
+  const benefitState = resolveBenefitExperienceState({ user, lifecycle, sourceSite: 'fc' })
+
   const {
     favorites,
     history,
@@ -33,7 +37,7 @@ export default function MyPagePersonalizationPanel() {
   ]
 
   return (
-    <section className="rounded border border-gray-200 p-5 dark:border-gray-800">
+    <section onMouseEnter={() => trackMizzzEvent('benefit_hub_view', { sourceSite: 'member', membershipStatus: benefitState.membershipStatus, entitlementState: benefitState.entitlementState, benefitVisibilityState: benefitState.benefitVisibilityState })} className="rounded border border-gray-200 p-5 dark:border-gray-800">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
           {t('member.personalizationTitle', { defaultValue: 'お気に入り / 閲覧履歴 / 通知センター' })}
@@ -105,6 +109,10 @@ export default function MyPagePersonalizationPanel() {
             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{t('member.notificationEmpty', { defaultValue: '通知はまだありません。' })}</p>
           )}
         </article>
+      </div>
+
+      <div className="mt-3 rounded border border-violet-200 bg-violet-50/60 p-3 text-xs text-violet-800 dark:border-violet-900/60 dark:bg-violet-950/20 dark:text-violet-200">
+        {t('memberValue.hubSummary', { defaultValue: '現在の特典表示: {{visibility}} / 先行公開: {{early}}', visibility: benefitState.benefitVisibilityState, early: benefitState.earlyAccessState })}
       </div>
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">

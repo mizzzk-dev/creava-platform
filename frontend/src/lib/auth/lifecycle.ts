@@ -47,6 +47,8 @@ export type UserLifecycleSummary = {
   lastWinbackNoticeAt: string | null
   statusReason: string | null
   statusUpdatedAt: string | null
+  lastBenefitPromptAt: string | null
+  lastMemberValueShownAt: string | null
   sourceSite: 'main' | 'store' | 'fc' | 'cross'
 }
 
@@ -158,6 +160,8 @@ export function lifecycleFromClaims(user: AppUser, claims: Record<string, unknow
     lastWinbackNoticeAt: typeof claims.lastWinbackNoticeAt === 'string' ? claims.lastWinbackNoticeAt : null,
     statusReason: typeof claims.statusReason === 'string' ? claims.statusReason : null,
     statusUpdatedAt: typeof claims.statusUpdatedAt === 'string' ? claims.statusUpdatedAt : null,
+    lastBenefitPromptAt: typeof claims.lastBenefitPromptAt === 'string' ? claims.lastBenefitPromptAt : null,
+    lastMemberValueShownAt: typeof claims.lastMemberValueShownAt === 'string' ? claims.lastMemberValueShownAt : null,
     sourceSite: claims.sourceSite === 'main' || claims.sourceSite === 'store' || claims.sourceSite === 'fc' ? claims.sourceSite : 'cross',
   }
 }

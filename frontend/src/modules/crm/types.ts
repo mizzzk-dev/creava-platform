@@ -33,6 +33,10 @@ export interface SegmentContext {
   lifecycleMessageState?: 'idle' | 'renewal_pending' | 'grace_notice_sent' | 'winback_sent' | 'suppressed'
   supportIntentSegment?: 'none' | 'high'
   dormantUserSegment?: 'none' | '14d' | '30d' | '60d'
+  benefitVisibilityState?: 'hidden' | 'teaser' | 'visible' | 'emphasized' | 'member_only'
+  accessGateState?: 'public' | 'logged_in_only' | 'member_only' | 'entitled_only' | 'temporarily_blocked'
+  earlyAccessState?: 'none' | 'preview' | 'early_access' | 'public_release'
+  personalizationState?: 'none' | 'basic' | 'member' | 'cross_site'
 }
 
 export interface ThemePreference {
