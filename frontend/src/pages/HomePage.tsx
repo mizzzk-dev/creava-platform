@@ -28,6 +28,7 @@ import { getProducts } from '@/modules/store/api'
 import UserLifecycleBanner from '@/components/common/UserLifecycleBanner'
 import MemberValueExperiencePanel from '@/components/common/MemberValueExperiencePanel'
 import MemberProgressHub from '@/components/common/MemberProgressHub'
+import CampaignPersonalizationPanel from '@/components/common/CampaignPersonalizationPanel'
 
 export default function HomePage() {
   const { t, i18n } = useTranslation()
@@ -123,6 +124,7 @@ export default function HomePage() {
       <div className="mx-auto max-w-5xl space-y-4 px-4 py-4">
         <MemberValueExperiencePanel sourceSite="main" compact />
         <MemberProgressHub sourceSite="main" />
+        <CampaignPersonalizationPanel sourceSite="main" />
       </div>
       <FeaturedWorksSection />
       <CaseStudyTeaserSection />

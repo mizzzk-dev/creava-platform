@@ -41,6 +41,7 @@ import HiddenQuote from '@/modules/playful/components/HiddenQuote'
 import EasterEggTrigger from '@/modules/playful/components/EasterEggTrigger'
 import UserLifecycleBanner from '@/components/common/UserLifecycleBanner'
 import MemberProgressHub from '@/components/common/MemberProgressHub'
+import CampaignPersonalizationPanel from '@/components/common/CampaignPersonalizationPanel'
 
 export default function StorefrontHomePage() {
   const { i18n, t } = useTranslation()
@@ -207,8 +208,9 @@ export default function StorefrontHomePage() {
       <PageHead title="mizzz Official Store" description="mizzz公式オンラインストア。新商品・デジタル商品・お知らせをまとめて確認できます。" />
 
       <UserLifecycleBanner user={user} lifecycle={lifecycle} context="store" />
-      <div className="mt-4">
+      <div className="mt-4 space-y-4">
         <MemberProgressHub sourceSite="store" />
+        <CampaignPersonalizationPanel sourceSite="store" />
       </div>
 
       <StructuredData

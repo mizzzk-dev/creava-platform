@@ -26,6 +26,11 @@ export interface SegmentContext {
   emailOptIn: boolean
   inAppOptIn: boolean
   campaignEligibility: string[]
+  campaignEligibilityState?: 'ineligible' | 'eligible' | 'prioritized' | 'excluded' | 'cooldown'
+  seasonalEligibilityState?: 'none' | 'teaser' | 'eligible' | 'highlighted' | 'expired'
+  seasonalPerkState?: 'none' | 'teaser' | 'available' | 'highlighted' | 'expired'
+  offerVisibilityState?: 'hidden' | 'teaser' | 'visible' | 'emphasized' | 'member_priority'
+  recommendationState?: 'generic' | 'lifecycle' | 'rank' | 'interest' | 'reactivation'
   earlyAccessEligible: boolean
   loyaltyState: 'cold' | 'active' | 'loyal' | 'dormant'
   engagementSegment: 'new' | 'active' | 'at_risk' | 'dormant'

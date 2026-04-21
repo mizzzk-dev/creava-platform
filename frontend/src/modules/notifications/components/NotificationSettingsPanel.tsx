@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useCurrentUser } from '@/hooks'
 import { resolveBenefitExperienceState } from '@/lib/auth/benefitState'
 import { buildBenefitPresentation } from '@/lib/auth/benefitPresentation'
+import { resolveCampaignPersonalizationState } from '@/lib/auth/campaignPersonalizationState'
 import { ROUTES } from '@/lib/routeConstants'
 import { trackCtaClick, trackMizzzEvent } from '@/modules/analytics/tracking'
 import { useNotificationSubscriptions } from '@/modules/notifications/hooks/useNotificationSubscriptions'
@@ -13,6 +14,7 @@ export default function NotificationSettingsPanel({ location }: { location: stri
   const { subscriptions, activeCount, preference, setActive, updatePreference } = useNotificationSubscriptions()
   const benefitState = resolveBenefitExperienceState({ user, lifecycle, sourceSite: 'fc' })
   const benefitPresentation = buildBenefitPresentation(benefitState)
+  const campaignState = resolveCampaignPersonalizationState({ user, lifecycle, sourceSite: 'member' })
 
   return (
     <article className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900/70">
@@ -41,6 +43,7 @@ export default function NotificationSettingsPanel({ location }: { location: stri
       <div className="mt-4 rounded-xl border border-violet-200 bg-violet-50/70 p-3 text-xs text-violet-800 dark:border-violet-900/60 dark:bg-violet-950/30 dark:text-violet-200">
         <p className="font-semibold">{benefitPresentation.title}</p>
         <p className="mt-1">{benefitPresentation.description}</p>
+        <p className="mt-2 text-[11px]">campaign: {campaignState.campaignEligibilityState} / seasonal: {campaignState.seasonalEligibilityState}</p>
       </div>
 
       <div className="mt-4 space-y-2">

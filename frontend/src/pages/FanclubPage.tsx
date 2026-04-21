@@ -23,6 +23,7 @@ import CmsVisualShowcaseSection from '@/components/common/CmsVisualShowcaseSecti
 import UserLifecycleBanner from '@/components/common/UserLifecycleBanner'
 import MemberValueExperiencePanel from '@/components/common/MemberValueExperiencePanel'
 import MemberProgressHub from '@/components/common/MemberProgressHub'
+import CampaignPersonalizationPanel from '@/components/common/CampaignPersonalizationPanel'
 
 export default function FanclubPage() {
   const { t, i18n } = useTranslation()
@@ -46,6 +47,7 @@ export default function FanclubPage() {
         />
         <MemberValueExperiencePanel sourceSite="fc" />
         <MemberProgressHub sourceSite="fc" />
+        <CampaignPersonalizationPanel sourceSite="fc" />
         <FanclubGuard>
           <FanclubContentSections />
         </FanclubGuard>

@@ -56,6 +56,7 @@
 - [membershipStatus / entitlement / subscription / notification / CRM 同期基盤整備 (2026-04-19)](./membership-entitlement-subscription-sync-foundation-2026-04-19.md)
 - [renewal / lifecycle messaging / win-back 基盤整備 (2026-04-19)](./renewal-lifecycle-retention-foundation-2026-04-19.md)
 - [会員ランク/継続バッジ/ミッション/特典段階化 基盤整備 (2026-04-20)](./member-rank-progression-foundation-2026-04-20.md)
+- [会員ランク連動キャンペーン / シーズナル特典 / パーソナライズ施策 基盤整備 (2026-04-21)](./member-campaign-personalization-foundation-2026-04-21.md)
 - [Logto ユーザー同期/プロビジョニング基盤 (2026-04-18)](./logto-user-sync-foundation-2026-04-18.md)
 - [internal admin / support / 監査ログ 基盤整備 (2026-04-18)](./internal-admin-support-audit-foundation-2026-04-18.md)
 - [フォーム運用マニュアル](./09_operations/form-operations-manual.md)

@@ -5,6 +5,7 @@ import { useCurrentUser } from '@/hooks'
 import { fanclubLink, storeLink } from '@/lib/siteLinks'
 import { ROUTES } from '@/lib/routeConstants'
 import { resolveBenefitExperienceState } from '@/lib/auth/benefitState'
+import { resolveCampaignPersonalizationState } from '@/lib/auth/campaignPersonalizationState'
 import { trackMizzzEvent } from '@/modules/analytics/tracking'
 import { usePersonalization } from '../hooks/usePersonalization'
 
@@ -12,6 +13,7 @@ export default function MyPagePersonalizationPanel() {
   const { t } = useTranslation()
   const { user, lifecycle } = useCurrentUser()
   const benefitState = resolveBenefitExperienceState({ user, lifecycle, sourceSite: 'fc' })
+  const campaignState = resolveCampaignPersonalizationState({ user, lifecycle, sourceSite: 'member' })
 
   const {
     favorites,
@@ -113,6 +115,7 @@ export default function MyPagePersonalizationPanel() {
 
       <div className="mt-3 rounded border border-violet-200 bg-violet-50/60 p-3 text-xs text-violet-800 dark:border-violet-900/60 dark:bg-violet-950/20 dark:text-violet-200">
         {t('memberValue.hubSummary', { defaultValue: '現在の特典表示: {{visibility}} / 先行公開: {{early}}', visibility: benefitState.benefitVisibilityState, early: benefitState.earlyAccessState })}
+        <p className="mt-2">施策状態: {campaignState.campaignEligibilityState} / 表示優先度: {campaignState.offerVisibilityState} / 次アクション: {campaignState.nextBestActionLabel}</p>
       </div>
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">

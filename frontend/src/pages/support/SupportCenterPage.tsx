@@ -5,9 +5,11 @@ import PageHead from '@/components/seo/PageHead'
 import ErrorState from '@/components/common/ErrorState'
 import SkeletonListItem from '@/components/common/SkeletonListItem'
 import MemberProgressHub from '@/components/common/MemberProgressHub'
+import CampaignPersonalizationPanel from '@/components/common/CampaignPersonalizationPanel'
 import { useCurrentUser, useStrapiCollection } from '@/hooks'
 import { resolveBenefitExperienceState } from '@/lib/auth/benefitState'
 import { buildBenefitPresentation } from '@/lib/auth/benefitPresentation'
+import { resolveCampaignPersonalizationState } from '@/lib/auth/campaignPersonalizationState'
 import { getFaqList } from '@/modules/faq/api'
 import { getGuideList } from '@/modules/faq/guideApi'
 import { ROUTES } from '@/lib/routeConstants'
@@ -32,6 +34,7 @@ export default function SupportCenterPage() {
   const sourceSite = site === 'all' ? 'main' : site
   const benefitState = resolveBenefitExperienceState({ user, lifecycle, sourceSite })
   const benefitPresentation = buildBenefitPresentation(benefitState)
+  const campaignState = resolveCampaignPersonalizationState({ user, lifecycle, sourceSite: 'support' })
 
   const { items: faqs, loading: faqLoading, error: faqError, refetch: refetchFaq } = useStrapiCollection<FAQItem>(() => getFaqList())
   const { items: guides, loading: guideLoading, error: guideError, refetch: refetchGuide } = useStrapiCollection<GuideItem>(() => getGuideList())
@@ -98,8 +101,9 @@ export default function SupportCenterPage() {
     <section className="mx-auto max-w-5xl px-4 py-14">
       <PageHead title={t('support.title')} description={t('support.description')} />
 
-      <div className="mb-6">
+      <div className="mb-6 space-y-4">
         <MemberProgressHub sourceSite="support" />
+        <CampaignPersonalizationPanel sourceSite="support" />
       </div>
 
       <header className="space-y-4">
@@ -259,6 +263,14 @@ export default function SupportCenterPage() {
                   accessGateState: benefitState.accessGateState,
                   earlyAccessState: benefitState.earlyAccessState,
                   cta: benefitPresentation.primaryAction,
+                })
+                trackMizzzEvent('support_from_campaign_state', {
+                  sourceSite,
+                  membershipStatus: campaignState.membershipStatus,
+                  lifecycleStage: campaignState.lifecycleStage,
+                  campaignEligibilityState: campaignState.campaignEligibilityState,
+                  seasonalEligibilityState: campaignState.seasonalEligibilityState,
+                  recommendationState: campaignState.recommendationState,
                 })
               }}
               className="text-violet-700 underline dark:text-violet-300"
