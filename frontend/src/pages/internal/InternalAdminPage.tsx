@@ -58,16 +58,16 @@ export default function InternalAdminPage() {
         </div>
         <ul className="mt-3 space-y-2 text-sm">
           {users.map((item) => (
-            <li key={item.logtoUserId} className="rounded border border-gray-200 p-3 dark:border-gray-700">
+            <li key={item.authUserId} className="rounded border border-gray-200 p-3 dark:border-gray-700">
               <button
                 type="button"
                 className="w-full text-left"
                 onClick={() => {
                   setMessage(null)
-                  api.getUserSummary(item.logtoUserId).then(setSelectedUser).catch((e: Error) => setMessage(e.message))
+                  api.getUserSummary(item.authUserId).then(setSelectedUser).catch((e: Error) => setMessage(e.message))
                 }}
               >
-                <p>{item.primaryEmail ?? item.logtoUserId}</p>
+                <p>{item.primaryEmail ?? item.authUserId}</p>
                 <p className="text-xs text-gray-500">{item.membershipStatus} / {item.accountStatus} / {item.lifecycleStage} / {item.sourceSite}</p>
               </button>
             </li>
@@ -371,7 +371,7 @@ export default function InternalAdminPage() {
                 type="button"
                 className="rounded border border-rose-400 px-3 py-2 text-sm text-rose-700"
                 onClick={() => {
-                  api.updateAccountStatus(selectedUser.appUser.logtoUserId, status, reason)
+                  api.updateAccountStatus(selectedUser.appUser.authUserId ?? selectedUser.appUser.supabaseUserId ?? selectedUser.appUser.logtoUserId, status, reason)
                     .then(() => setMessage('accountStatus を更新しました。'))
                     .catch((e: Error) => setMessage(e.message))
                 }}
@@ -380,7 +380,7 @@ export default function InternalAdminPage() {
                 type="button"
                 className="rounded border border-amber-400 px-3 py-2 text-sm text-amber-700"
                 onClick={() => {
-                  api.resetNotificationPreference(selectedUser.appUser.logtoUserId, reason)
+                  api.resetNotificationPreference(selectedUser.appUser.authUserId ?? selectedUser.appUser.supabaseUserId ?? selectedUser.appUser.logtoUserId, reason)
                     .then(() => setMessage('notificationPreference をリセットしました。'))
                     .catch((e: Error) => setMessage(e.message))
                 }}

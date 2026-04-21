@@ -1,6 +1,6 @@
-# 環境変数設定手順書（フォーム運用基盤強化版）
+# 環境変数設定手順書（Supabase Auth / user domain 同期対応版）
 
-- 更新日: 2026-04-19
+- 更新日: 2026-04-21
 - 対象: frontend / backend / GitHub Actions
 - 目的: 問い合わせ運用（通知・CSV・スパム対策・添付運用）を環境差分込みで安全に運用する
 - 関連: [フォーム運用マニュアル](../09_operations/form-operations-manual.md), [deploy-manual](../09_operations/deploy-manual.md)
@@ -16,7 +16,12 @@
 | `VITE_FANCLUB_SITE_URL` | fanclub URL | 任意 | 必須 | 必須 |
 | `VITE_STRAPI_API_URL` | 問い合わせ送信先/コンテンツAPI | 必須 | 必須 | 必須 |
 | `VITE_STRAPI_API_TOKEN` | 公開コンテンツ取得トークン | 任意 | 推奨 | 推奨 |
-| `VITE_LOGTO_*` | 認証 | 任意 | 必須 | 必須 |
+| `VITE_AUTH_PROVIDER` | 認証プロバイダ切替（`supabase` 推奨） | 必須 | 必須 | 必須 |
+| `VITE_SUPABASE_URL` | Supabase project URL | 必須 | 必須 | 必須 |
+| `VITE_SUPABASE_ANON_KEY` | frontend 公開用 anon key | 必須 | 必須 | 必須 |
+| `VITE_SUPABASE_OAUTH_DEFAULT_PROVIDER` | 既定 OAuth provider | 任意 | 任意 | 任意 |
+| `VITE_SUPABASE_PROJECT_REF` | account center導線や運用表示用 project ref | 任意 | 任意 | 任意 |
+| `VITE_LOGTO_*` | 旧認証互換（移行期間のみ） | 任意 | 任意 | 任意 |
 | `VITE_USER_SYNC_ENABLED` | user provisioning bridge の有効化 | 任意 | 任意 | 任意 |
 | `VITE_USER_LIFECYCLE_ONBOARDING_ENABLED` | lifecycle/onboarding UI 表示フラグ | 任意 | 推奨 | 推奨 |
 | `VITE_ONBOARDING_REMINDER_DAYS` | onboarding 再表示までの日数 | 任意 | 任意 | 推奨 |
@@ -41,7 +46,16 @@
 | `VITE_ANALYTICS_OPS_ENDPOINT` | 主要イベントをStrapiへ保存するエンドポイント | 任意 | 推奨 | 推奨 |
 | `VITE_PREVIEW_SECRET` | Strapi previewエントリー用シークレット | 必須 | 必須 | 必須 |
 
-### frontend 認証（Logto）詳細
+### frontend 認証（Supabase）詳細
+- `VITE_AUTH_PROVIDER=supabase`
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+- `VITE_SUPABASE_OAUTH_DEFAULT_PROVIDER`
+- `VITE_SUPABASE_PROJECT_REF`
+
+> `SUPABASE_SERVICE_ROLE_KEY` は backend のみで使用し、frontend に設定しないこと。
+
+### frontend 認証（Logto, 互換）詳細
 - `VITE_LOGTO_ENDPOINT`（Hosted Sign-in: custom domain 推奨）
 - `VITE_LOGTO_APP_ID_MAIN`
 - `VITE_LOGTO_APP_ID_STORE`
@@ -118,6 +132,13 @@
 - `MISSION_PROGRESS_SYNC_INTERVAL_MIN`
 - `ACHIEVEMENT_HIGHLIGHT_ENABLED`
 - `PERK_UNLOCK_MESSAGE_COOLDOWN_HOURS`
+
+### backend 認可（Supabase）詳細
+- `AUTH_PROVIDER`（`supabase` または移行期 `dual`）
+- `SUPABASE_JWT_ISSUER`
+- `SUPABASE_JWKS_URI`
+- `SUPABASE_JWT_AUDIENCE`
+- `SUPABASE_SERVICE_ROLE_KEY`（trusted server 限定。frontend 露出禁止）
 - `PERSONALIZED_PERK_ENABLED`
 - `RANK_GRACE_RETENTION_DAYS`
 

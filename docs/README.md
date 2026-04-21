@@ -51,6 +51,7 @@
 - [トラブルシューティング](./09_operations/troubleshooting.md)
 - [Logto 本番運用ランブック](./09_operations/logto-production-auth-runbook.md)
 - [Supabase Auth 単一認証基盤移行計画 (2026-04-21)](./09_operations/supabase-auth-migration-plan-2026-04-21.md)
+- [Supabase Auth 前提 user domain 同期 / RLS / mypage 連携ランブック (2026-04-21)](./09_operations/supabase-user-domain-sync-runbook-2026-04-21.md)
 - [統一認証基盤を前提にした user lifecycle / onboarding / 会員導線整備 (2026-04-19)](./user-lifecycle-membership-onboarding-foundation-2026-04-19.md)
 - [membershipStatus / entitlement / subscription / notification / CRM 同期基盤整備 (2026-04-19)](./membership-entitlement-subscription-sync-foundation-2026-04-19.md)
 - [renewal / lifecycle messaging / win-back 基盤整備 (2026-04-19)](./renewal-lifecycle-retention-foundation-2026-04-19.md)

@@ -22,7 +22,9 @@ export type InternalOrderLookupItem = {
 
 export type InternalLookupUser = {
   appUserId: string
+  authUserId: string
   logtoUserId: string
+  supabaseUserId?: string | null
   primaryEmail: string | null
   username: string | null
   membershipStatus: string
@@ -282,9 +284,9 @@ export function useInternalAdminApi() {
 
   return {
     searchUsers: async (query: string) => withToken((token) => internalFetch<{ count: number; users: InternalLookupUser[] }>(`/internal/users/lookup?email=${encodeURIComponent(query)}`, token)),
-    getUserSummary: async (logtoUserId: string) => withToken((token) => internalFetch<any>(`/internal/users/${encodeURIComponent(logtoUserId)}/summary`, token)),
-    updateAccountStatus: async (logtoUserId: string, nextStatus: string, reason: string) => withToken((token) => internalFetch<any>(`/internal/users/${encodeURIComponent(logtoUserId)}/account-status`, token, { method: 'POST', body: JSON.stringify({ nextStatus, reason }) })),
-    resetNotificationPreference: async (logtoUserId: string, reason: string) => withToken((token) => internalFetch<any>(`/internal/users/${encodeURIComponent(logtoUserId)}/notification-reset`, token, { method: 'POST', body: JSON.stringify({ reason }) })),
+    getUserSummary: async (authUserId: string) => withToken((token) => internalFetch<any>(`/internal/users/${encodeURIComponent(authUserId)}/summary`, token)),
+    updateAccountStatus: async (authUserId: string, nextStatus: string, reason: string) => withToken((token) => internalFetch<any>(`/internal/users/${encodeURIComponent(authUserId)}/account-status`, token, { method: 'POST', body: JSON.stringify({ nextStatus, reason }) })),
+    resetNotificationPreference: async (authUserId: string, reason: string) => withToken((token) => internalFetch<any>(`/internal/users/${encodeURIComponent(authUserId)}/notification-reset`, token, { method: 'POST', body: JSON.stringify({ reason }) })),
     searchOrders: async (query: string) => withToken((token) => internalFetch<{ count: number; items: InternalOrderLookupItem[] }>(`/internal/orders/lookup?query=${encodeURIComponent(query)}`, token)),
     getRevenueSummary: async (sourceSite?: string) => withToken((token) => internalFetch<InternalRevenueSummary>(`/internal/revenue/summary${sourceSite ? `?sourceSite=${encodeURIComponent(sourceSite)}` : ''}`, token)),
     getBiOverview: async (from?: string, to?: string) => withToken((token) => {

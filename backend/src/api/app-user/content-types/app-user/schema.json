@@ -359,9 +359,12 @@
         "eligible",
         "active",
         "limited",
-        "revoked"
+        "revoked",
+        "inactive",
+        "grace",
+        "blocked"
       ],
-      "default": "none",
+      "default": "inactive",
       "required": true
     },
     "acquisitionSource": {
@@ -379,6 +382,42 @@
     "supabaseUserId": {
       "type": "string",
       "unique": true
+    },
+    "authUserId": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "email": {
+      "type": "email"
+    },
+    "subscriptionState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "trialing",
+        "active",
+        "past_due",
+        "canceled",
+        "expired"
+      ],
+      "default": "none",
+      "required": true
+    },
+    "billingState": {
+      "type": "enumeration",
+      "enum": [
+        "clear",
+        "pending",
+        "failed",
+        "refunded",
+        "disputed"
+      ],
+      "default": "clear",
+      "required": true
+    },
+    "statusUpdatedAt": {
+      "type": "datetime"
     }
   }
 }

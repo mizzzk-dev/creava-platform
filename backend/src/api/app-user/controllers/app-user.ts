@@ -246,9 +246,11 @@ function buildSeedData(authUserId: string, claims: NormalizedClaims, sourceSite:
   const completedFields = [claims.displayName, claims.email, claims.avatarUrl].filter(Boolean).length
 
   return {
+    authUserId,
     authIdentity: process.env.AUTH_PROVIDER === 'supabase' ? 'supabase' : 'logto',
     supabaseUserId: authUserId,
     logtoUserId: authUserId,
+    email: claims.email,
     primaryEmail: claims.email,
     primaryPhone: claims.phone,
     username: claims.username,
@@ -277,7 +279,9 @@ function buildSeedData(authUserId: string, claims: NormalizedClaims, sourceSite:
     profileCompletionState: completedFields >= 3 ? 'complete' : completedFields > 0 ? 'partial' : 'empty',
     onboardingState: 'not_started',
     lifecycleStage: membership.membershipStatus === 'member' ? 'active_member' : membership.membershipStatus === 'grace' ? 'grace_member' : 'authenticated_non_member',
-    entitlementState: membership.membershipStatus === 'member' || membership.membershipStatus === 'grace' ? 'active' : 'none',
+    entitlementState: membership.membershipStatus === 'member' || membership.membershipStatus === 'grace' ? 'active' : 'inactive',
+    subscriptionState: 'none',
+    billingState: 'clear',
     joinedAt: membership.membershipStatus === 'member' || membership.membershipStatus === 'grace' ? nowIso : null,
     renewedAt: null,
     canceledAt: null,
@@ -288,6 +292,7 @@ function buildSeedData(authUserId: string, claims: NormalizedClaims, sourceSite:
     linkedProviders: claims.linkedProviders,
     firstLoginAt: nowIso,
     lastLoginAt: nowIso,
+    statusUpdatedAt: nowIso,
     accountStatus: 'active',
     mergeState: 'none',
     supportFlags: {
@@ -296,7 +301,7 @@ function buildSeedData(authUserId: string, claims: NormalizedClaims, sourceSite:
       blockedReason: null,
     },
     fieldSources: {
-      identityFields: 'logto',
+      identityFields: process.env.AUTH_PROVIDER === 'supabase' ? 'supabase-auth' : 'logto',
       businessFields: 'app',
       membership: 'subscription-record',
       notificationPreference: 'app',
@@ -391,7 +396,15 @@ async function createInternalAuditLog(strapi: any, payload: {
 }
 
 async function buildUserSummary(strapi: any, logtoUserId: string) {
-  const appUser = await strapi.documents('api::app-user.app-user').findFirst({ filters: { logtoUserId: { $eq: logtoUserId } } })
+  const appUser = await strapi.documents('api::app-user.app-user').findFirst({
+    filters: {
+      $or: [
+        { authUserId: { $eq: logtoUserId } },
+        { supabaseUserId: { $eq: logtoUserId } },
+        { logtoUserId: { $eq: logtoUserId } },
+      ],
+    },
+  })
   if (!appUser) return null
 
   const [notificationPreference, inquirySubmissions, moderationLogs, favorites, viewHistories, reports, latestSubscription, latestEntitlement] = await Promise.all([
@@ -500,7 +513,13 @@ export default ({ strapi }) => ({
       const membership = toMembershipSummary(latestSubscription)
 
       const existing = await strapi.documents('api::app-user.app-user').findFirst({
-        filters: { logtoUserId: { $eq: authUser.userId } },
+        filters: {
+          $or: [
+            { authUserId: { $eq: authUser.userId } },
+            { supabaseUserId: { $eq: authUser.userId } },
+            { logtoUserId: { $eq: authUser.userId } },
+          ],
+        },
       })
 
       if (!existing) {
@@ -539,7 +558,10 @@ export default ({ strapi }) => ({
             onboardingStatus: normalizeOnboardingStatus(existing.onboardingState),
             renewalState: membership.membershipStatus === 'member' ? 'completed' : membership.membershipStatus === 'grace' ? 'grace' : 'not_applicable',
           }),
-          entitlementState: membership.membershipStatus === 'member' || membership.membershipStatus === 'grace' ? 'active' : 'none',
+          entitlementState: membership.membershipStatus === 'member' || membership.membershipStatus === 'grace' ? 'active' : 'inactive',
+          subscriptionState: latestSubscription?.subscriptionStatus ?? existing.subscriptionState ?? 'none',
+          billingState: latestSubscription?.billingStatus ?? existing.billingState ?? 'clear',
+          statusUpdatedAt: nowIso,
           suspendedAt: membership.membershipStatus === 'suspended' ? nowIso : existing.suspendedAt ?? null,
           renewedAt: membership.membershipStatus === 'member' ? nowIso : existing.renewedAt ?? null,
           ...deriveMemberProgressSeed(membership.membershipStatus),
@@ -569,7 +591,13 @@ export default ({ strapi }) => ({
     try {
       const authUser = await requireAuthUser(ctx)
       const appUser = await strapi.documents('api::app-user.app-user').findFirst({
-        filters: { logtoUserId: { $eq: authUser.userId } },
+        filters: {
+          $or: [
+            { authUserId: { $eq: authUser.userId } },
+            { supabaseUserId: { $eq: authUser.userId } },
+            { logtoUserId: { $eq: authUser.userId } },
+          ],
+        },
       })
       if (!appUser) return ctx.notFound('app user が未プロビジョニングです。')
 
@@ -594,7 +622,8 @@ export default ({ strapi }) => ({
       ctx.body = {
         appUser,
         auth: {
-          logtoUserId: authUser.userId,
+          authUserId: authUser.userId,
+          supabaseUserId: authUser.userId,
           email: authUser.email,
           scopes: authUser.scopes,
         },
@@ -656,13 +685,14 @@ export default ({ strapi }) => ({
   async supportLookup(ctx) {
     if (!assertOpsToken(ctx)) return ctx.unauthorized('ops token が不正です。')
 
-    const { email, logtoUserId, appUserId } = ctx.query ?? {}
-    if (!email && !logtoUserId && !appUserId) {
-      return ctx.badRequest('email, logtoUserId, appUserId のいずれかが必要です。')
+    const { email, authUserId, logtoUserId, appUserId } = ctx.query ?? {}
+    if (!email && !authUserId && !logtoUserId && !appUserId) {
+      return ctx.badRequest('email, authUserId, logtoUserId, appUserId のいずれかが必要です。')
     }
 
     const filters: Record<string, unknown>[] = []
     if (typeof email === 'string' && email) filters.push({ primaryEmail: { $eqi: email } })
+    if (typeof authUserId === 'string' && authUserId) filters.push({ authUserId: { $eq: authUserId } })
     if (typeof logtoUserId === 'string' && logtoUserId) filters.push({ logtoUserId: { $eq: logtoUserId } })
     if (typeof appUserId === 'string' && appUserId) filters.push({ appUserId: { $eq: appUserId } })
 
@@ -681,13 +711,14 @@ export default ({ strapi }) => ({
   async internalLookup(ctx) {
     try {
       const access = await requireInternalPermission(ctx, 'internal.user.read')
-      const { email, logtoUserId, appUserId } = ctx.query ?? {}
-      if (!email && !logtoUserId && !appUserId) {
-        return ctx.badRequest('email, logtoUserId, appUserId のいずれかが必要です。')
+      const { email, authUserId, logtoUserId, appUserId } = ctx.query ?? {}
+      if (!email && !authUserId && !logtoUserId && !appUserId) {
+        return ctx.badRequest('email, authUserId, logtoUserId, appUserId のいずれかが必要です。')
       }
 
       const filters: Record<string, unknown>[] = []
       if (typeof email === 'string' && email) filters.push({ primaryEmail: { $eqi: email } })
+      if (typeof authUserId === 'string' && authUserId) filters.push({ authUserId: { $eq: authUserId } })
       if (typeof logtoUserId === 'string' && logtoUserId) filters.push({ logtoUserId: { $eq: logtoUserId } })
       if (typeof appUserId === 'string' && appUserId) filters.push({ appUserId: { $eq: appUserId } })
 
@@ -702,7 +733,9 @@ export default ({ strapi }) => ({
         internalRoles: access.internalRoles,
         users: users.map((user: any) => ({
           appUserId: user.appUserId,
+          authUserId: user.authUserId ?? user.supabaseUserId ?? user.logtoUserId,
           logtoUserId: user.logtoUserId,
+          supabaseUserId: user.supabaseUserId,
           primaryEmail: user.primaryEmail,
           username: user.username,
           membershipStatus: user.membershipStatus,
@@ -736,10 +769,10 @@ export default ({ strapi }) => ({
   async internalSummary(ctx) {
     try {
       await requireInternalPermission(ctx, 'internal.user.read')
-      const logtoUserId = String(ctx.params.logtoUserId ?? '').trim()
-      if (!logtoUserId) return ctx.badRequest('logtoUserId が必要です。')
+      const authUserId = String(ctx.params.authUserId ?? ctx.params.logtoUserId ?? '').trim()
+      if (!authUserId) return ctx.badRequest('authUserId が必要です。')
 
-      const summary = await buildUserSummary(strapi, logtoUserId)
+      const summary = await buildUserSummary(strapi, authUserId)
       if (!summary) return ctx.notFound('対象ユーザーが見つかりません。')
 
       ctx.body = summary
@@ -755,15 +788,19 @@ export default ({ strapi }) => ({
     const requestId = String(ctx.request.headers['x-request-id'] ?? '') || null
     try {
       const access = await requireInternalPermission(ctx, 'internal.account.status.update')
-      const logtoUserId = String(ctx.params.logtoUserId ?? '').trim()
+      const authUserId = String(ctx.params.authUserId ?? ctx.params.logtoUserId ?? '').trim()
       const reason = String(ctx.request.body?.reason ?? '').trim()
       const nextStatus = String(ctx.request.body?.nextStatus ?? '').trim()
 
-      if (!logtoUserId || !reason || !nextStatus) {
-        return ctx.badRequest('logtoUserId, reason, nextStatus が必要です。')
+      if (!authUserId || !reason || !nextStatus) {
+        return ctx.badRequest('authUserId, reason, nextStatus が必要です。')
       }
 
-      const user = await strapi.documents('api::app-user.app-user').findFirst({ filters: { logtoUserId: { $eq: logtoUserId } } })
+      const user = await strapi.documents('api::app-user.app-user').findFirst({
+        filters: {
+          $or: [{ authUserId: { $eq: authUserId } }, { supabaseUserId: { $eq: authUserId } }, { logtoUserId: { $eq: authUserId } }],
+        },
+      })
       if (!user) return ctx.notFound('対象ユーザーが見つかりません。')
 
       const updated = await strapi.documents('api::app-user.app-user').update({
@@ -775,7 +812,7 @@ export default ({ strapi }) => ({
         actorLogtoUserId: access.authUser.userId,
         actorInternalRoles: access.internalRoles,
         targetType: 'app-user',
-        targetId: logtoUserId,
+        targetId: authUserId,
         action: 'account_status_update',
         status: 'success',
         reason,
@@ -790,7 +827,7 @@ export default ({ strapi }) => ({
         ok: true,
         dangerousOperation: true,
         user: {
-          logtoUserId,
+          authUserId,
           accountStatus: updated.accountStatus,
         },
       }
@@ -807,12 +844,12 @@ export default ({ strapi }) => ({
     const requestId = String(ctx.request.headers['x-request-id'] ?? '') || null
     try {
       const access = await requireInternalPermission(ctx, 'internal.notification.reset')
-      const logtoUserId = String(ctx.params.logtoUserId ?? '').trim()
+      const authUserId = String(ctx.params.authUserId ?? ctx.params.logtoUserId ?? '').trim()
       const reason = String(ctx.request.body?.reason ?? '').trim()
-      if (!logtoUserId || !reason) return ctx.badRequest('logtoUserId, reason が必要です。')
+      if (!authUserId || !reason) return ctx.badRequest('authUserId, reason が必要です。')
 
       const preference = await strapi.documents('api::notification-preference.notification-preference').findFirst({
-        filters: { userId: { $eq: logtoUserId } },
+        filters: { userId: { $eq: authUserId } },
       })
 
       if (!preference) return ctx.notFound('notification preference が見つかりません。')
@@ -834,7 +871,7 @@ export default ({ strapi }) => ({
         actorLogtoUserId: access.authUser.userId,
         actorInternalRoles: access.internalRoles,
         targetType: 'notification-preference',
-        targetId: logtoUserId,
+        targetId: authUserId,
         action: 'notification_preference_reset',
         status: 'success',
         reason,
