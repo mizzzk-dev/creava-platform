@@ -1,4 +1,4 @@
-import { verifyLogtoToken, type AuthenticatedUser } from './logto'
+import { verifyAccessToken, type AuthenticatedUser } from './provider'
 
 export type InternalRole =
   | 'super_admin'
@@ -67,7 +67,7 @@ export type InternalAccessContext = {
 }
 
 export async function requireInternalPermission(ctx: any, permission: InternalPermission): Promise<InternalAccessContext> {
-  const authUser = await verifyLogtoToken(ctx.request.headers.authorization)
+  const authUser = await verifyAccessToken(ctx.request.headers.authorization)
   const internalRoles = normalizeInternalRoles(authUser.claims.roles)
   const permissions = Array.from(new Set(internalRoles.flatMap((role) => ROLE_PERMISSIONS[role] ?? [])))
 

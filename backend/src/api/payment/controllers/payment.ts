@@ -1,4 +1,4 @@
-import { hasRequiredScopes, verifyLogtoToken, type AuthenticatedUser } from '../../../lib/auth/logto'
+import { hasRequiredScopes, verifyAccessToken, type AuthenticatedUser } from '../../../lib/auth/provider'
 import { parseStripeWebhookEvent } from '../../../lib/stripe/webhook'
 import { normalizeStripeSubscriptionState } from '../../../lib/billing/subscription-state'
 import { upsertRevenueRecord } from '../../../lib/finance/revenue'
@@ -25,7 +25,7 @@ function parseStripeMetadata(object: Record<string, unknown>): Record<string, un
 
 async function requireAuthenticatedUser(ctx: any): Promise<AuthenticatedUser> {
   try {
-    return await verifyLogtoToken(ctx.request.headers.authorization)
+    return await verifyAccessToken(ctx.request.headers.authorization)
   } catch (error) {
     throw new Error(`本人認証に失敗しました: ${(error as Error).message}`)
   }

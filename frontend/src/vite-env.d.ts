@@ -20,6 +20,11 @@ interface ImportMetaEnv {
   readonly VITE_STRAPI_RESPONSE_CACHE_TTL_MS?: string
   readonly VITE_STRAPI_RESPONSE_CACHE_STALE_TTL_MS?: string
   readonly VITE_STRAPI_USE_TOKEN_FOR_PUBLIC?: string
+  readonly VITE_AUTH_PROVIDER?: 'logto' | 'supabase'
+  readonly VITE_SUPABASE_URL?: string
+  readonly VITE_SUPABASE_ANON_KEY?: string
+  readonly VITE_SUPABASE_OAUTH_DEFAULT_PROVIDER?: string
+  readonly VITE_SUPABASE_PROJECT_REF?: string
   readonly VITE_LOGTO_ENDPOINT?: string
   readonly VITE_LOGTO_APP_ID_MAIN?: string
   readonly VITE_LOGTO_APP_ID_STORE?: string

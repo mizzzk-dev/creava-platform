@@ -5,7 +5,7 @@
     "singularName": "app-user",
     "pluralName": "app-users",
     "displayName": "AppUser",
-    "description": "Logto identity と mizzz 業務データを接続するユーザードメイン"
+    "description": "認証ID（Supabase Auth中心）と mizzz 業務データを接続するユーザードメイン"
   },
   "options": {
     "draftAndPublish": false
@@ -13,15 +13,16 @@
   "attributes": {
     "appUserId": {
       "type": "uid",
-      "targetField": "logtoUserId",
+      "targetField": "supabaseUserId",
       "required": true
     },
     "authIdentity": {
       "type": "enumeration",
       "enum": [
+        "supabase",
         "logto"
       ],
-      "default": "logto",
+      "default": "supabase",
       "required": true
     },
     "logtoUserId": {
@@ -374,6 +375,10 @@
     },
     "lastWinbackNoticeAt": {
       "type": "datetime"
+    },
+    "supabaseUserId": {
+      "type": "string",
+      "unique": true
     }
   }
 }

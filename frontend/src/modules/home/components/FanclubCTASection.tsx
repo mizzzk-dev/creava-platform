@@ -9,7 +9,9 @@ import { useHomeCtaAnalytics } from '@/modules/analytics/useHomeCtaAnalytics'
 import ParticleField from '@/components/common/ParticleField'
 import { SplitWords } from '@/components/common/KineticText'
 
-const HAS_LOGTO = Boolean(import.meta.env.VITE_LOGTO_APP_ID)
+const HAS_AUTH = (import.meta.env.VITE_AUTH_PROVIDER?.trim() ?? 'logto') === 'supabase'
+  ? Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY)
+  : Boolean(import.meta.env.VITE_LOGTO_APP_ID || import.meta.env.VITE_LOGTO_APP_ID_UNIFIED)
 
 function BenefitsList() {
   const { t } = useTranslation()
@@ -226,4 +228,4 @@ function FanclubCTASectionNoAuth() {
   )
 }
 
-export default HAS_LOGTO ? FanclubCTASectionWithAuth : FanclubCTASectionNoAuth
+export default HAS_AUTH ? FanclubCTASectionWithAuth : FanclubCTASectionNoAuth

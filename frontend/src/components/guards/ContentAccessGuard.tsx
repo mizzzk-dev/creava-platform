@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCurrentUser, useContentAccess } from '@/hooks'
 import { useAuthClient } from '@/lib/auth/AuthProvider'
-import { HAS_LOGTO } from '@/lib/auth/config'
+import { HAS_AUTH } from '@/lib/auth/config'
 import RestrictedNotice from '@/components/common/RestrictedNotice'
 import type { ContentBase } from '@/types'
 
@@ -52,6 +52,6 @@ function ContentAccessGuardNoAuth({ item, children }: Props) {
   return <>{children}</>
 }
 
-export default HAS_LOGTO
+export default HAS_AUTH
   ? ContentAccessGuardWithAuth
   : ContentAccessGuardNoAuth

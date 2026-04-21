@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { HAS_LOGTO } from '@/lib/auth/config'
+import { HAS_AUTH } from '@/lib/auth/config'
 import { isFanclubSite } from '@/lib/siteLinks'
 import { useAuthClient } from '@/lib/auth/AuthProvider'
 import { trackMizzzEvent } from '@/modules/analytics/tracking'
@@ -10,7 +10,7 @@ export default function AuthCallbackPage() {
   const { handleCallback } = useAuthClient()
 
   useEffect(() => {
-    if (!HAS_LOGTO) {
+    if (!HAS_AUTH) {
       navigate('/', { replace: true })
       return
     }

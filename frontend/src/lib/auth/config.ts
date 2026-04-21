@@ -1,5 +1,12 @@
 import { SITE_TYPE } from '@/lib/siteLinks'
 
+export const AUTH_PROVIDER = (import.meta.env.VITE_AUTH_PROVIDER?.trim() ?? 'logto') as 'logto' | 'supabase'
+
+export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL?.trim() ?? ''
+export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() ?? ''
+export const SUPABASE_OAUTH_DEFAULT_PROVIDER = import.meta.env.VITE_SUPABASE_OAUTH_DEFAULT_PROVIDER?.trim() ?? 'google'
+export const SUPABASE_PROJECT_REF = import.meta.env.VITE_SUPABASE_PROJECT_REF?.trim() ?? ''
+
 export const LOGTO_ENDPOINT = import.meta.env.VITE_LOGTO_ENDPOINT?.trim() ?? ''
 const LOGTO_APP_ID_UNIFIED = import.meta.env.VITE_LOGTO_APP_ID_UNIFIED?.trim() ?? ''
 const LOGTO_APP_ID_MAIN = import.meta.env.VITE_LOGTO_APP_ID_MAIN?.trim() ?? ''
@@ -22,12 +29,17 @@ function resolveAppIdBySiteType(): string {
 
 export const LOGTO_APP_ID = resolveAppIdBySiteType()
 export const HAS_LOGTO = Boolean(LOGTO_ENDPOINT && LOGTO_APP_ID)
+export const HAS_SUPABASE = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY)
+export const HAS_AUTH = AUTH_PROVIDER === 'supabase' ? HAS_SUPABASE : HAS_LOGTO
 
 export function resolveLogtoCallbackUrl(): string {
   return new URL(LOGTO_CALLBACK_PATH, window.location.origin).toString()
 }
 
 export function resolvePostLogoutRedirectUrl(): string {
+  if (AUTH_PROVIDER === 'supabase') {
+    return window.location.origin
+  }
   if (LOGTO_POST_LOGOUT_REDIRECT_URI) return LOGTO_POST_LOGOUT_REDIRECT_URI
   return window.location.origin
 }
@@ -42,6 +54,12 @@ function toAbsoluteUrlOrNull(url: string): URL | null {
 }
 
 export function resolveAccountCenterUrl(path?: string): string | null {
+  if (AUTH_PROVIDER === 'supabase' && SUPABASE_PROJECT_REF) {
+    const base = toAbsoluteUrlOrNull(`https://supabase.com/dashboard/project/${SUPABASE_PROJECT_REF}/auth/users`)
+    if (!base) return null
+    return base.toString()
+  }
+
   const rawBase = LOGTO_ACCOUNT_CENTER_URL || `${LOGTO_ENDPOINT}/account-center`
   const base = toAbsoluteUrlOrNull(rawBase)
   if (!base) return null

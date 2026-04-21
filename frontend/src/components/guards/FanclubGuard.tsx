@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCurrentUser } from '@/hooks'
 import { useAuthClient } from '@/lib/auth/AuthProvider'
-import { HAS_LOGTO } from '@/lib/auth/config'
+import { HAS_AUTH } from '@/lib/auth/config'
 import { isMemberUser } from '@/lib/auth/membership'
 import RestrictedNotice from '@/components/common/RestrictedNotice'
 
@@ -51,6 +51,6 @@ function FanclubGuardNoAuth() {
   return <RestrictedNotice variant="not_signed_in" onSignIn={() => {}} />
 }
 
-export default HAS_LOGTO
+export default HAS_AUTH
   ? FanclubGuardWithAuth
   : FanclubGuardNoAuth

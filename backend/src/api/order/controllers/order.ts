@@ -1,5 +1,5 @@
 import { factories } from '@strapi/strapi'
-import { verifyLogtoToken } from '../../../lib/auth/logto'
+import { verifyAccessToken } from '../../../lib/auth/provider'
 import { requireInternalPermission } from '../../../lib/auth/internal-access'
 
 type UserFacingOrderStatus = 'pending' | 'paid' | 'preparing' | 'shipped' | 'delivered' | 'canceled' | 'refund_in_progress' | 'refunded' | 'exception'
@@ -70,7 +70,7 @@ function toInt(raw: unknown, fallback: number): number {
 export default factories.createCoreController('api::order.order', ({ strapi }) => ({
   async myOrders(ctx) {
     try {
-      const authUser = await verifyLogtoToken(ctx.request.headers.authorization)
+      const authUser = await verifyAccessToken(ctx.request.headers.authorization)
       const pageSize = toInt(ctx.query.pageSize, 20)
 
       const orders = await strapi.documents('api::order.order').findMany({
@@ -93,7 +93,7 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
 
   async myShipments(ctx) {
     try {
-      const authUser = await verifyLogtoToken(ctx.request.headers.authorization)
+      const authUser = await verifyAccessToken(ctx.request.headers.authorization)
       const pageSize = toInt(ctx.query.pageSize, 20)
 
       const orders = await strapi.documents('api::order.order').findMany({

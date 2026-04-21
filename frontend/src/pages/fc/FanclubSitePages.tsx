@@ -17,7 +17,7 @@ import SeoInternalLinkSection from '@/components/common/SeoInternalLinkSection'
 import { ROUTES } from '@/lib/routeConstants'
 import { useCurrentUser, useStrapiCollection, useStrapiSingle } from '@/hooks'
 import { useAuthClient } from '@/lib/auth/AuthProvider'
-import { HAS_LOGTO } from '@/lib/auth/config'
+import { HAS_AUTH } from '@/lib/auth/config'
 import { canAccessByRole, type VisibilityScope } from '@/lib/auth/membership'
 import { trackCtaClick } from '@/modules/analytics/tracking'
 import { useProductList } from '@/modules/store/hooks/useProductList'
@@ -790,7 +790,7 @@ function FanclubLoginActionsNoAuth() {
   )
 }
 
-const FanclubLoginActions = HAS_LOGTO
+const FanclubLoginActions = HAS_AUTH
   ? FanclubLoginActionsWithAuth
   : FanclubLoginActionsNoAuth
 

@@ -1,4 +1,4 @@
-import { verifyLogtoToken, type AuthenticatedUser } from '../../../lib/auth/logto'
+import { verifyAccessToken, type AuthenticatedUser } from '../../../lib/auth/provider'
 import { requireInternalPermission, type InternalRole } from '../../../lib/auth/internal-access'
 
 type SiteType = 'main' | 'store' | 'fc' | 'cross'
@@ -242,12 +242,13 @@ function deriveMemberProgressSeed(membershipStatus: MembershipStatus) {
   }
 }
 
-function buildSeedData(logtoUserId: string, claims: NormalizedClaims, sourceSite: SiteType, membership: { membershipPlan: MembershipPlan; membershipStatus: MembershipStatus; accessLevel: AccessLevel }, nowIso: string) {
+function buildSeedData(authUserId: string, claims: NormalizedClaims, sourceSite: SiteType, membership: { membershipPlan: MembershipPlan; membershipStatus: MembershipStatus; accessLevel: AccessLevel }, nowIso: string) {
   const completedFields = [claims.displayName, claims.email, claims.avatarUrl].filter(Boolean).length
 
   return {
-    authIdentity: 'logto',
-    logtoUserId,
+    authIdentity: process.env.AUTH_PROVIDER === 'supabase' ? 'supabase' : 'logto',
+    supabaseUserId: authUserId,
+    logtoUserId: authUserId,
     primaryEmail: claims.email,
     primaryPhone: claims.phone,
     username: claims.username,
@@ -313,26 +314,26 @@ function assertOpsToken(ctx: any): boolean {
 }
 
 async function requireAuthUser(ctx: any): Promise<AuthenticatedUser> {
-  return verifyLogtoToken(ctx.request.headers.authorization)
+  return verifyAccessToken(ctx.request.headers.authorization)
 }
 
-async function findLatestSubscription(strapi: any, logtoUserId: string) {
+async function findLatestSubscription(strapi: any, authUserId: string) {
   return strapi.documents('api::subscription-record.subscription-record').findFirst({
-    filters: { authUserId: { $eq: logtoUserId } },
+    filters: { authUserId: { $eq: authUserId } },
     sort: ['createdAt:desc'],
   })
 }
 
-async function findLatestEntitlement(strapi: any, logtoUserId: string) {
+async function findLatestEntitlement(strapi: any, authUserId: string) {
   return strapi.documents('api::entitlement-record.entitlement-record').findFirst({
-    filters: { authUserId: { $eq: logtoUserId } },
+    filters: { authUserId: { $eq: authUserId } },
     sort: ['createdAt:desc'],
   })
 }
 
-async function ensureNotificationPreference(strapi: any, logtoUserId: string, sourceSite: SiteType, locale: string, nowIso: string): Promise<void> {
+async function ensureNotificationPreference(strapi: any, authUserId: string, sourceSite: SiteType, locale: string, nowIso: string): Promise<void> {
   const existing = await strapi.documents('api::notification-preference.notification-preference').findFirst({
-    filters: { userId: { $eq: logtoUserId } },
+    filters: { userId: { $eq: authUserId } },
   })
 
   if (existing) {
@@ -345,7 +346,7 @@ async function ensureNotificationPreference(strapi: any, logtoUserId: string, so
 
   await strapi.documents('api::notification-preference.notification-preference').create({
     data: {
-      userId: logtoUserId,
+      userId: authUserId,
       sourceSite,
       locale,
       emailOptIn: true,
