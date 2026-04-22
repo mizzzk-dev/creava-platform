@@ -367,6 +367,120 @@ export type InternalOperationsSafeActionResponse = {
   explanation: string
 }
 
+export type InternalScheduledChecksResponse = {
+  triggerMode: string
+  sourceSite: string
+  checkCount: number
+  detectedAlerts: number
+  checks: Array<{
+    scheduledCheckType: string
+    sourceArea: string
+    scheduledCheckState: string
+    detectedCount: number
+    alertState: string
+    alertSeverity: string
+    alertPriority: string
+    lastCheckedAt: string
+    nextRecommendedAction: string
+  }>
+}
+
+export type InternalIncidentDashboardResponse = {
+  sourceOfTruth: Record<string, string>
+  scheduledCheckSummary: {
+    scheduledCheckState: string
+    scheduledCheckTypeCount: number
+    lastCheckedAt: string | null
+    lastTriggeredAt: string | null
+    staleCheckCount: number
+  }
+  alertSummary: {
+    totalCount: number
+    detectedCount: number
+    criticalCount: number
+    nextRecommendedAction: string
+    items: Array<{
+      alertId: string
+      alertType: string
+      alertSeverity: string
+      alertPriority: string
+      alertState: string
+      alertReason: string
+      sourceArea: string
+      detectedCount: number
+      requiresReviewState: string
+    }>
+  }
+  incidentSummary: {
+    totalCount: number
+    unresolvedCount: number
+    blockedCount: number
+    staleCount: number
+    escalatedCount: number
+    nextRecommendedAction: string
+    items: Array<{
+      incidentId: string
+      incidentType: string
+      incidentSeverity: string
+      incidentPriority: string
+      incidentState: string
+      incidentOwnerState: string
+      incidentResolutionState: string
+      escalationState: string
+      blockedState: string
+      nextRecommendedAction: string
+      sourceArea: string
+      createdAt: string
+    }>
+  }
+  approvalSummary: {
+    totalCount: number
+    pendingCount: number
+    rejectedCount: number
+    lastApprovedAt: string | null
+    items: Array<{
+      approvalId: string
+      approvalType: string
+      approvalState: string
+      approvalReason: string
+      approvalActor: string
+      requiresApprovalState: string
+      createdAt: string
+    }>
+  }
+  batchOperationSummary: {
+    totalCount: number
+    pendingApprovalCount: number
+    runningCount: number
+    failedCount: number
+    lastExecutedAt: string | null
+    items: Array<{
+      batchOperationId: string
+      batchOperationType: string
+      batchOperationScope: string
+      batchOperationState: string
+      batchOperationPreviewState: string
+      batchOperationDryRunState: string
+      batchOperationResultState: string
+      requiresApprovalState: string
+      lastExecutedAt: string
+    }>
+  }
+  escalationSummary: {
+    totalCount: number
+    activeCount: number
+    completedCount: number
+    items: Array<{
+      escalationId: string
+      escalationState: string
+      escalationReason: string
+      escalationTarget: string
+      incidentId: string
+      createdAt: string
+    }>
+  }
+}
+
 function getApiBaseUrl(): string {
   const baseUrl = import.meta.env.VITE_STRAPI_API_URL
   if (!baseUrl) throw new Error('VITE_STRAPI_API_URL が未設定です。')
@@ -452,6 +566,27 @@ export function useInternalAdminApi() {
     }),
     runSafeOperation: async (payload: { actionType: string; sourceArea: string; reason: string; dryRun?: boolean; confirmed?: boolean; targetEntityType?: string; targetEntityId?: string }) =>
       withToken((token) => internalFetch<InternalOperationsSafeActionResponse>('/internal/operations/safe-action', token, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })),
+    runScheduledChecks: async (payload?: { triggerMode?: string; sourceSite?: string }) =>
+      withToken((token) => internalFetch<InternalScheduledChecksResponse>('/internal/operations/scheduled-checks/run', token, {
+        method: 'POST',
+        body: JSON.stringify(payload ?? {}),
+      })),
+    getIncidentDashboard: async () => withToken((token) => internalFetch<InternalIncidentDashboardResponse>('/internal/incidents/dashboard', token)),
+    runIncidentTriage: async (payload: { actionType: 'acknowledge' | 'create_incident' | 'escalate' | 'resolve'; incidentId?: string; incidentType?: string; incidentSeverity?: string; incidentPriority?: string; sourceArea?: string; reason: string; escalationTarget?: string }) =>
+      withToken((token) => internalFetch<any>('/internal/incidents/triage', token, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })),
+    runApprovalAction: async (payload: { approvalId?: string; approvalType?: string; approvalState: 'pending' | 'approved' | 'rejected' | 'expired'; targetActionId?: string; reason: string }) =>
+      withToken((token) => internalFetch<any>('/internal/operations/approval', token, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })),
+    runBatchOperation: async (payload: { batchOperationId?: string; batchOperationType: string; batchOperationScope?: string; mode: 'preview' | 'dry_run' | 'execute'; confirmed?: boolean; requiresApproval?: boolean; reason: string }) =>
+      withToken((token) => internalFetch<any>('/internal/operations/batch', token, {
         method: 'POST',
         body: JSON.stringify(payload),
       })),

@@ -90,3 +90,5 @@
 
 - 仮定: 本番運用で使う GitHub Environments の reviewer / assignee ルールは組織設定で別途管理される。
 - 要確認: 本番運用の reviewer / assignee / milestone の固定ルールは、GitHub 組織設定側での最終確認が必要。
+
+- [Supabase Auth 前提 alert / incident / approval / batch safe ops / escalation runbook (2026-04-22)](./09_operations/supabase-alert-incident-approval-batch-ops-runbook-2026-04-22.md)

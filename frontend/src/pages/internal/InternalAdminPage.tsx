@@ -15,6 +15,8 @@ import {
   type InternalAutomationRunResponse,
   type InternalOperationsDashboardResponse,
   type InternalOperationsSafeActionResponse,
+  type InternalIncidentDashboardResponse,
+  type InternalScheduledChecksResponse,
 } from '@/modules/internal-admin/api'
 import { trackMizzzEvent } from '@/modules/analytics/tracking'
 
@@ -41,6 +43,11 @@ export default function InternalAdminPage() {
   const [operationsDashboard, setOperationsDashboard] = useState<InternalOperationsDashboardResponse | null>(null)
   const [safeActionReason, setSafeActionReason] = useState('queue 状態確認のため dry-run 実行')
   const [safeActionResult, setSafeActionResult] = useState<InternalOperationsSafeActionResponse | null>(null)
+  const [incidentDashboard, setIncidentDashboard] = useState<InternalIncidentDashboardResponse | null>(null)
+  const [scheduledChecksResult, setScheduledChecksResult] = useState<InternalScheduledChecksResponse | null>(null)
+  const [triageReason, setTriageReason] = useState('scheduled check で検知した異常を確認')
+  const [approvalReason, setApprovalReason] = useState('dry-run 結果確認後に承認')
+  const [batchReason, setBatchReason] = useState('preview / dry-run による影響確認')
   const selectedUserSummary = (selectedUser?.userSummary ?? {}) as Record<string, any>
 
   const internalRole = user?.internalRole ?? 'user'
@@ -153,6 +160,178 @@ export default function InternalAdminPage() {
           {safeActionResult && (
             <pre className="mt-2 overflow-auto rounded bg-gray-50 p-3 text-xs dark:bg-gray-900">{JSON.stringify(safeActionResult, null, 2)}</pre>
           )}
+        </div>
+      </div>
+
+      <div className="mt-6 rounded border border-gray-200 p-4 dark:border-gray-800">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-gray-500">incident dashboard / scheduled checks / approval workflow / batch safe ops</p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="rounded border border-gray-300 px-3 py-2 text-xs"
+              onClick={() => {
+                setMessage(null)
+                trackMizzzEvent('incident_dashboard_view', { actorRole: internalRole, sourceSection: 'incident_dashboard', sourceArea: 'cross' })
+                api.getIncidentDashboard().then(setIncidentDashboard).catch((e: Error) => setMessage(e.message))
+              }}
+            >incident summary 更新</button>
+            <button
+              type="button"
+              className="rounded bg-gray-900 px-3 py-2 text-xs text-white"
+              onClick={() => {
+                setMessage(null)
+                trackMizzzEvent('alert_list_view', { actorRole: internalRole, sourceSection: 'incident_dashboard', sourceArea: 'cross' })
+                api.runScheduledChecks({ triggerMode: 'manual', sourceSite: 'main' }).then((result) => {
+                  setScheduledChecksResult(result)
+                }).catch((e: Error) => setMessage(e.message))
+              }}
+            >scheduled checks 実行</button>
+          </div>
+        </div>
+
+        {incidentDashboard && (
+          <div className="mt-3 space-y-3 text-xs">
+            <p className="text-gray-500">
+              alerts: {incidentDashboard.alertSummary.detectedCount}/{incidentDashboard.alertSummary.totalCount} · incidents unresolved: {incidentDashboard.incidentSummary.unresolvedCount} · approvals pending: {incidentDashboard.approvalSummary.pendingCount}
+            </p>
+            <p className="text-gray-500">next: {incidentDashboard.incidentSummary.nextRecommendedAction}</p>
+            <div className="grid gap-2 md:grid-cols-2">
+              <div className="rounded border border-gray-200 p-3 dark:border-gray-700">
+                <p className="font-medium">alert / incident</p>
+                <p>critical alerts: {incidentDashboard.alertSummary.criticalCount}</p>
+                <p>blocked incidents: {incidentDashboard.incidentSummary.blockedCount}</p>
+                <p>stale incidents: {incidentDashboard.incidentSummary.staleCount}</p>
+                <p>escalated incidents: {incidentDashboard.incidentSummary.escalatedCount}</p>
+              </div>
+              <div className="rounded border border-gray-200 p-3 dark:border-gray-700">
+                <p className="font-medium">approval / batch / escalation</p>
+                <p>pending approvals: {incidentDashboard.approvalSummary.pendingCount}</p>
+                <p>batch pending approval: {incidentDashboard.batchOperationSummary.pendingApprovalCount}</p>
+                <p>batch failed: {incidentDashboard.batchOperationSummary.failedCount}</p>
+                <p>active escalations: {incidentDashboard.escalationSummary.activeCount}</p>
+              </div>
+            </div>
+            <pre className="overflow-auto rounded bg-gray-50 p-3 dark:bg-gray-900">{JSON.stringify({
+              alertItems: incidentDashboard.alertSummary.items.slice(0, 8),
+              incidentItems: incidentDashboard.incidentSummary.items.slice(0, 8),
+              approvalItems: incidentDashboard.approvalSummary.items.slice(0, 8),
+            }, null, 2)}</pre>
+          </div>
+        )}
+
+        {scheduledChecksResult && (
+          <pre className="mt-3 overflow-auto rounded bg-gray-50 p-3 text-xs dark:bg-gray-900">{JSON.stringify(scheduledChecksResult, null, 2)}</pre>
+        )}
+
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <div className="rounded border border-gray-200 p-3 dark:border-gray-700">
+            <p className="text-xs text-gray-500">triage / incident action</p>
+            <input value={triageReason} onChange={(e) => setTriageReason(e.target.value)} className="mt-2 w-full rounded border border-gray-300 px-2 py-2 text-xs" />
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="rounded border border-gray-300 px-2 py-1 text-xs"
+                onClick={() => {
+                  setMessage(null)
+                  trackMizzzEvent('alert_acknowledge', { actorRole: internalRole, sourceSection: 'incident_dashboard', actionType: 'acknowledge' })
+                  api.runIncidentTriage({ actionType: 'acknowledge', reason: triageReason, sourceArea: 'operations' }).then(() => api.getIncidentDashboard().then(setIncidentDashboard)).catch((e: Error) => setMessage(e.message))
+                }}
+              >ack</button>
+              <button
+                type="button"
+                className="rounded border border-gray-300 px-2 py-1 text-xs"
+                onClick={() => {
+                  setMessage(null)
+                  trackMizzzEvent('incident_open', { actorRole: internalRole, sourceSection: 'incident_dashboard', incidentType: 'operations_incident' })
+                  api.runIncidentTriage({ actionType: 'create_incident', reason: triageReason, incidentSeverity: 'medium', sourceArea: 'membership' }).then(() => api.getIncidentDashboard().then(setIncidentDashboard)).catch((e: Error) => setMessage(e.message))
+                }}
+              >incident化</button>
+              <button
+                type="button"
+                className="rounded border border-amber-300 px-2 py-1 text-xs text-amber-700"
+                onClick={() => {
+                  setMessage(null)
+                  trackMizzzEvent('escalation_start', { actorRole: internalRole, sourceSection: 'incident_dashboard', incidentType: 'operations_incident' })
+                  api.runIncidentTriage({ actionType: 'escalate', reason: triageReason, escalationTarget: 'ops_lead', sourceArea: 'security' }).then(() => api.getIncidentDashboard().then(setIncidentDashboard)).catch((e: Error) => setMessage(e.message))
+                }}
+              >escalate</button>
+            </div>
+          </div>
+
+          <div className="rounded border border-gray-200 p-3 dark:border-gray-700">
+            <p className="text-xs text-gray-500">approval action</p>
+            <input value={approvalReason} onChange={(e) => setApprovalReason(e.target.value)} className="mt-2 w-full rounded border border-gray-300 px-2 py-2 text-xs" />
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="rounded border border-gray-300 px-2 py-1 text-xs"
+                onClick={() => {
+                  setMessage(null)
+                  trackMizzzEvent('approval_request_create', { actorRole: internalRole, sourceSection: 'approval_workflow', actionType: 'pending' })
+                  api.runApprovalAction({ approvalState: 'pending', approvalType: 'batch_operation', reason: approvalReason }).then(() => api.getIncidentDashboard().then(setIncidentDashboard)).catch((e: Error) => setMessage(e.message))
+                }}
+              >request</button>
+              <button
+                type="button"
+                className="rounded border border-emerald-300 px-2 py-1 text-xs text-emerald-700"
+                onClick={() => {
+                  setMessage(null)
+                  trackMizzzEvent('approval_request_approve', { actorRole: internalRole, sourceSection: 'approval_workflow', actionType: 'approved' })
+                  api.runApprovalAction({ approvalState: 'approved', approvalType: 'batch_operation', reason: approvalReason }).then(() => api.getIncidentDashboard().then(setIncidentDashboard)).catch((e: Error) => setMessage(e.message))
+                }}
+              >approve</button>
+              <button
+                type="button"
+                className="rounded border border-red-300 px-2 py-1 text-xs text-red-700"
+                onClick={() => {
+                  setMessage(null)
+                  trackMizzzEvent('approval_request_reject', { actorRole: internalRole, sourceSection: 'approval_workflow', actionType: 'rejected' })
+                  api.runApprovalAction({ approvalState: 'rejected', approvalType: 'batch_operation', reason: approvalReason }).then(() => api.getIncidentDashboard().then(setIncidentDashboard)).catch((e: Error) => setMessage(e.message))
+                }}
+              >reject</button>
+            </div>
+          </div>
+
+          <div className="rounded border border-gray-200 p-3 dark:border-gray-700">
+            <p className="text-xs text-gray-500">batch safe ops (preview / dry-run / execute)</p>
+            <input value={batchReason} onChange={(e) => setBatchReason(e.target.value)} className="mt-2 w-full rounded border border-gray-300 px-2 py-2 text-xs" />
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="rounded border border-gray-300 px-2 py-1 text-xs"
+                onClick={() => {
+                  setMessage(null)
+                  trackMizzzEvent('batch_preview_view', { actorRole: internalRole, sourceSection: 'batch_safe_ops', actionType: 'preview' })
+                  api.runBatchOperation({ batchOperationType: 'safe_resync', batchOperationScope: 'membership', mode: 'preview', reason: batchReason }).then(() => api.getIncidentDashboard().then(setIncidentDashboard)).catch((e: Error) => setMessage(e.message))
+                }}
+              >preview</button>
+              <button
+                type="button"
+                className="rounded border border-gray-300 px-2 py-1 text-xs"
+                onClick={() => {
+                  setMessage(null)
+                  trackMizzzEvent('batch_dry_run_start', { actorRole: internalRole, sourceSection: 'batch_safe_ops', actionType: 'dry_run' })
+                  api.runBatchOperation({ batchOperationType: 'safe_retry', batchOperationScope: 'notification', mode: 'dry_run', reason: batchReason }).then(() => {
+                    trackMizzzEvent('batch_dry_run_complete', { actorRole: internalRole, sourceSection: 'batch_safe_ops', actionType: 'dry_run' })
+                    return api.getIncidentDashboard().then(setIncidentDashboard)
+                  }).catch((e: Error) => setMessage(e.message))
+                }}
+              >dry-run</button>
+              <button
+                type="button"
+                className="rounded border border-amber-300 px-2 py-1 text-xs text-amber-700"
+                onClick={() => {
+                  setMessage(null)
+                  trackMizzzEvent('batch_execute_start', { actorRole: internalRole, sourceSection: 'batch_safe_ops', actionType: 'execute' })
+                  api.runBatchOperation({ batchOperationType: 'safe_resend', batchOperationScope: 'support', mode: 'execute', confirmed: true, requiresApproval: true, reason: batchReason }).then(() => {
+                    trackMizzzEvent('batch_execute_complete', { actorRole: internalRole, sourceSection: 'batch_safe_ops', actionType: 'execute' })
+                    return api.getIncidentDashboard().then(setIncidentDashboard)
+                  }).catch((e: Error) => setMessage(e.message))
+                }}
+              >execute(confirm)</button>
+            </div>
+          </div>
         </div>
       </div>
 

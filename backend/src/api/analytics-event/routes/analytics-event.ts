@@ -60,6 +60,37 @@ export default {
       handler: 'analytics-event.internalOperationsSafeAction',
       config: { auth: false },
     },
+
+    {
+      method: 'POST',
+      path: '/internal/operations/scheduled-checks/run',
+      handler: 'analytics-event.internalScheduledChecksRun',
+      config: { auth: false },
+    },
+    {
+      method: 'GET',
+      path: '/internal/incidents/dashboard',
+      handler: 'analytics-event.internalIncidentDashboard',
+      config: { auth: false },
+    },
+    {
+      method: 'POST',
+      path: '/internal/incidents/triage',
+      handler: 'analytics-event.internalIncidentTriageAction',
+      config: { auth: false },
+    },
+    {
+      method: 'POST',
+      path: '/internal/operations/approval',
+      handler: 'analytics-event.internalApprovalAction',
+      config: { auth: false },
+    },
+    {
+      method: 'POST',
+      path: '/internal/operations/batch',
+      handler: 'analytics-event.internalBatchOperationAction',
+      config: { auth: false },
+    },
     {
       method: 'GET',
       path: '/internal/automation/runs',

@@ -51,6 +51,12 @@ const ALLOWED_EVENTS = new Set([
   'resync_start', 'resync_complete',
   'resend_start', 'resend_complete',
   'related_user360_open', 'related_case_open',
+  'incident_dashboard_view', 'alert_list_view', 'alert_acknowledge', 'alert_group_open',
+  'incident_open', 'incident_assign', 'incident_resolve',
+  'approval_request_create', 'approval_request_approve', 'approval_request_reject',
+  'batch_preview_view', 'batch_dry_run_start', 'batch_dry_run_complete',
+  'batch_execute_start', 'batch_execute_complete',
+  'escalation_start', 'escalation_complete',
 ])
 
 function sanitizeText(value: unknown, maxLength = 120): string | undefined {
@@ -188,6 +194,23 @@ function toPriority(severity: string, count: number): 'critical' | 'high' | 'med
   if (severity === 'high' || count >= 20) return 'high'
   if (severity === 'medium' || count >= 8) return 'medium'
   return 'low'
+}
+
+function parseJsonObject(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
+  return value as Record<string, unknown>
+}
+
+function toSummaryLogState(status: string): string {
+  if (status === 'failed' || status === 'denied') return 'failed'
+  if (status === 'pending') return 'pending'
+  return 'completed'
+}
+
+function getActionPrefix(action: unknown): string {
+  const text = String(action ?? '')
+  const index = text.indexOf(':')
+  return index >= 0 ? text.slice(0, index) : text
 }
 
 export default factories.createCoreController('api::analytics-event.analytics-event', ({ strapi }) => ({
@@ -1346,6 +1369,461 @@ export default factories.createCoreController('api::analytics-event.analytics-ev
       if (message.includes('Internal permission denied')) return ctx.forbidden('operations dashboard の権限がありません。')
       strapi.log.error(`[analytics-event] internalOperationsDashboard failed: ${message}`)
       return ctx.internalServerError('operations dashboard summary の取得に失敗しました。')
+    }
+  },
+
+  async internalScheduledChecksRun(ctx) {
+    try {
+      const access = await requireInternalPermission(ctx, 'internal.playbook.run')
+      const now = new Date()
+      const nowIso = now.toISOString()
+      const body = (ctx.request.body ?? {}) as Record<string, unknown>
+      const triggerMode = sanitizeText(body.triggerMode, 24) ?? 'manual'
+      const sourceSite = sanitizeSourceSite(body.sourceSite)
+      const checkCatalog = [
+        { scheduledCheckType: 'membership_entitlement_mismatch', sourceArea: 'membership', staleHours: 6 },
+        { scheduledCheckType: 'billing_subscription_mismatch', sourceArea: 'billing', staleHours: 6 },
+        { scheduledCheckType: 'notification_failure_spike', sourceArea: 'notification', staleHours: 2 },
+        { scheduledCheckType: 'privacy_request_stall', sourceArea: 'privacy', staleHours: 8 },
+        { scheduledCheckType: 'security_review_stall', sourceArea: 'security', staleHours: 4 },
+        { scheduledCheckType: 'support_backlog_spike', sourceArea: 'support', staleHours: 2 },
+        { scheduledCheckType: 'summary_sync_stale', sourceArea: 'operations', staleHours: 6 },
+      ] as const
+
+      const staleLimitMs = 6 * 60 * 60 * 1000
+      const [subscriptions, appUsers, notifications, inquiries, investigations] = await Promise.all([
+        strapi.documents('api::subscription-record.subscription-record').findMany({ fields: ['billingStatus', 'subscriptionStatus', 'membershipStatus', 'entitlementState', 'syncState', 'updatedAt'], limit: BI_MAX_FETCH_ROWS }),
+        strapi.documents('api::app-user.app-user').findMany({ fields: ['membershipStatus', 'subscriptionState', 'entitlementState', 'billingState', 'updatedAt', 'deletionRequestState', 'deletionState', 'privacyNoticeState'], limit: BI_MAX_FETCH_ROWS }),
+        strapi.documents('api::delivery-log.delivery-log').findMany({ fields: ['status', 'createdAt'], limit: BI_MAX_FETCH_ROWS }),
+        strapi.documents('api::inquiry-submission.inquiry-submission').findMany({ fields: ['status', 'submittedAt', 'updatedAt'], limit: BI_MAX_FETCH_ROWS }),
+        strapi.documents('api::security-investigation.security-investigation').findMany({ fields: ['investigationState', 'updatedAt'], limit: BI_MAX_FETCH_ROWS }),
+      ])
+
+      const subscriptionRows = subscriptions as Array<Record<string, unknown>>
+      const appUserRows = appUsers as Array<Record<string, unknown>>
+      const notificationRows = notifications as Array<Record<string, unknown>>
+      const inquiryRows = inquiries as Array<Record<string, unknown>>
+      const investigationRows = investigations as Array<Record<string, unknown>>
+
+      const mismatchMembership = subscriptionRows.filter((row) => {
+        const membership = String(row.membershipStatus ?? '')
+        const entitlement = String(row.entitlementState ?? '')
+        const billing = String(row.billingStatus ?? '')
+        return (membership === 'active' && entitlement === 'inactive') || (membership === 'grace' && billing === 'failed') || String(row.syncState ?? '') === 'mismatch_detected'
+      }).length
+      const mismatchBilling = appUserRows.filter((row) => {
+        const billing = String(row.billingState ?? '')
+        const subscriptionState = String(row.subscriptionState ?? '')
+        return (billing === 'failed' && ['active', 'trialing'].includes(subscriptionState)) || (billing === 'clear' && subscriptionState === 'past_due')
+      }).length
+      const notificationFailure = notificationRows.filter((row) => ['failed', 'bounced', 'retry_pending'].includes(String(row.status ?? ''))).length
+      const privacyStall = appUserRows.filter((row) => ['requested', 'pending_review', 'queued', 'in_progress'].includes(String(row.deletionRequestState ?? '')) || ['pending', 'queued', 'in_progress'].includes(String(row.deletionState ?? '')) || ['review_needed', 'pending'].includes(String(row.privacyNoticeState ?? ''))).length
+      const securityStall = investigationRows.filter((row) => ['open', 'pending', 'needs_review'].includes(String(row.investigationState ?? ''))).length
+      const supportBacklog = inquiryRows.filter((row) => ['new', 'in_review', 'waiting_reply', 'reopened'].includes(String(row.status ?? ''))).length
+      const staleSummary = appUserRows.filter((row) => {
+        const updatedAt = parseDateInput(row.updatedAt)
+        return updatedAt ? (now.getTime() - updatedAt.getTime() > staleLimitMs) : true
+      }).length
+
+      const resultMap: Record<string, { detectedCount: number; alertSeverity: 'low' | 'medium' | 'high' }> = {
+        membership_entitlement_mismatch: { detectedCount: mismatchMembership, alertSeverity: mismatchMembership >= 10 ? 'high' : mismatchMembership >= 3 ? 'medium' : 'low' },
+        billing_subscription_mismatch: { detectedCount: mismatchBilling, alertSeverity: mismatchBilling >= 8 ? 'high' : mismatchBilling >= 3 ? 'medium' : 'low' },
+        notification_failure_spike: { detectedCount: notificationFailure, alertSeverity: notificationFailure >= 20 ? 'high' : notificationFailure >= 8 ? 'medium' : 'low' },
+        privacy_request_stall: { detectedCount: privacyStall, alertSeverity: privacyStall >= 10 ? 'high' : privacyStall >= 3 ? 'medium' : 'low' },
+        security_review_stall: { detectedCount: securityStall, alertSeverity: securityStall >= 10 ? 'high' : securityStall >= 3 ? 'medium' : 'low' },
+        support_backlog_spike: { detectedCount: supportBacklog, alertSeverity: supportBacklog >= 20 ? 'high' : supportBacklog >= 8 ? 'medium' : 'low' },
+        summary_sync_stale: { detectedCount: staleSummary, alertSeverity: staleSummary >= 50 ? 'high' : staleSummary >= 10 ? 'medium' : 'low' },
+      }
+
+      const checks = checkCatalog.map((check) => {
+        const result = resultMap[check.scheduledCheckType]
+        const alertState = result.detectedCount > 0 ? 'detected' : 'clear'
+        const scheduledCheckState = 'completed'
+        return {
+          ...check,
+          scheduledCheckState,
+          detectedCount: result.detectedCount,
+          alertState,
+          alertSeverity: result.alertSeverity,
+          alertPriority: toPriority(result.alertSeverity, result.detectedCount),
+          lastCheckedAt: nowIso,
+          nextRecommendedAction: result.detectedCount > 0 ? `${check.sourceArea} の triage を開始` : '監視継続',
+        }
+      })
+
+      await strapi.documents('api::internal-audit-log.internal-audit-log').create({
+        data: {
+          actorLogtoUserId: access.authUser.userId,
+          actorInternalRoles: access.internalRoles,
+          targetType: 'scheduled-check-run',
+          targetId: `scheduled-checks:${now.getTime()}`,
+          action: 'ops-scheduled-check:run',
+          status: 'success',
+          reason: `triggerMode=${triggerMode}`,
+          sourceSite: sourceSite === 'unknown' ? 'cross' : sourceSite,
+          beforeState: { scheduledCheckState: 'queued' },
+          afterState: { scheduledCheckState: 'completed', detectedTotal: checks.reduce((acc, item) => acc + item.detectedCount, 0) },
+          metadata: { triggerMode, checks },
+          requestId: String(ctx.request.headers['x-request-id'] ?? ''),
+        },
+      })
+      ctx.body = {
+        triggerMode,
+        sourceSite,
+        checkCount: checks.length,
+        detectedAlerts: checks.filter((item) => item.detectedCount > 0).length,
+        checks,
+      }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Internal permission denied')) return ctx.forbidden('scheduled checks の実行権限がありません。')
+      strapi.log.error(`[analytics-event] internalScheduledChecksRun failed: ${message}`)
+      return ctx.internalServerError('scheduled checks の実行に失敗しました。')
+    }
+  },
+
+  async internalIncidentDashboard(ctx) {
+    try {
+      await requireInternalPermission(ctx, 'internal.user.read')
+      const logs = await strapi.documents('api::internal-audit-log.internal-audit-log').findMany({
+        filters: {
+          action: {
+            $containsi: 'ops-',
+          },
+        },
+        fields: ['action', 'status', 'reason', 'sourceSite', 'targetType', 'targetId', 'metadata', 'createdAt', 'actorLogtoUserId'],
+        sort: ['createdAt:desc'],
+        limit: BI_MAX_FETCH_ROWS,
+      })
+
+      const rows = logs as Array<Record<string, unknown>>
+      const checkLogs = rows.filter((row) => getActionPrefix(row.action) === 'ops-scheduled-check')
+      const triageLogs = rows.filter((row) => getActionPrefix(row.action) === 'ops-incident-triage')
+      const approvalLogs = rows.filter((row) => getActionPrefix(row.action) === 'ops-approval')
+      const batchLogs = rows.filter((row) => getActionPrefix(row.action) === 'ops-batch-operation')
+      const escalationLogs = rows.filter((row) => getActionPrefix(row.action) === 'ops-escalation')
+
+      const latestCheck = checkLogs[0]
+      const latestCheckMetadata = parseJsonObject(latestCheck?.metadata)
+      const latestChecks = Array.isArray(latestCheckMetadata.checks) ? latestCheckMetadata.checks as Array<Record<string, unknown>> : []
+      const alertItems = latestChecks.map((item, index) => ({
+        alertId: `${String(item.scheduledCheckType ?? 'check')}:${index}`,
+        alertType: String(item.scheduledCheckType ?? 'unknown'),
+        alertSeverity: String(item.alertSeverity ?? 'low'),
+        alertPriority: String(item.alertPriority ?? 'low'),
+        alertState: String(item.alertState ?? 'detected'),
+        alertReason: String(item.nextRecommendedAction ?? ''),
+        sourceArea: String(item.sourceArea ?? 'operations'),
+        detectedCount: Number(item.detectedCount ?? 0),
+        requiresReviewState: Number(item.detectedCount ?? 0) > 0 ? 'required' : 'none',
+      }))
+
+      const incidentItems = triageLogs.slice(0, 20).map((row) => {
+        const metadata = parseJsonObject(row.metadata)
+        return {
+          incidentId: String(row.targetId ?? ''),
+          incidentType: String(metadata.incidentType ?? 'operations_incident'),
+          incidentSeverity: String(metadata.incidentSeverity ?? 'medium'),
+          incidentPriority: String(metadata.incidentPriority ?? 'medium'),
+          incidentState: String(metadata.incidentState ?? 'open'),
+          incidentOwnerState: String(metadata.incidentOwnerState ?? 'unassigned'),
+          incidentResolutionState: String(metadata.incidentResolutionState ?? 'pending'),
+          escalationState: String(metadata.escalationState ?? 'none'),
+          blockedState: String(metadata.blockedState ?? 'none'),
+          nextRecommendedAction: String(metadata.nextRecommendedAction ?? 'runbook を確認'),
+          sourceArea: String(metadata.sourceArea ?? row.sourceSite ?? 'cross'),
+          createdAt: row.createdAt,
+        }
+      })
+
+      const approvalItems = approvalLogs.slice(0, 20).map((row) => {
+        const metadata = parseJsonObject(row.metadata)
+        return {
+          approvalId: String(row.targetId ?? ''),
+          approvalType: String(metadata.approvalType ?? 'batch_operation'),
+          approvalState: String(metadata.approvalState ?? 'pending'),
+          approvalReason: String(row.reason ?? ''),
+          approvalActor: String(row.actorLogtoUserId ?? ''),
+          requiresApprovalState: 'required',
+          createdAt: row.createdAt,
+        }
+      })
+
+      const batchItems = batchLogs.slice(0, 20).map((row) => {
+        const metadata = parseJsonObject(row.metadata)
+        return {
+          batchOperationId: String(row.targetId ?? ''),
+          batchOperationType: String(metadata.batchOperationType ?? 'unknown'),
+          batchOperationScope: String(metadata.batchOperationScope ?? 'cross'),
+          batchOperationState: String(metadata.batchOperationState ?? toSummaryLogState(String(row.status ?? 'pending'))),
+          batchOperationPreviewState: String(metadata.batchOperationPreviewState ?? 'preview_ready'),
+          batchOperationDryRunState: String(metadata.batchOperationDryRunState ?? 'not_started'),
+          batchOperationResultState: String(metadata.batchOperationResultState ?? 'not_started'),
+          requiresApprovalState: String(metadata.requiresApprovalState ?? 'required'),
+          lastExecutedAt: row.createdAt,
+        }
+      })
+
+      const escalationItems = escalationLogs.slice(0, 20).map((row) => {
+        const metadata = parseJsonObject(row.metadata)
+        return {
+          escalationId: String(row.targetId ?? ''),
+          escalationState: String(metadata.escalationState ?? toSummaryLogState(String(row.status ?? 'pending'))),
+          escalationReason: String(row.reason ?? ''),
+          escalationTarget: String(metadata.escalationTarget ?? 'ops_lead'),
+          incidentId: String(metadata.incidentId ?? ''),
+          createdAt: row.createdAt,
+        }
+      })
+
+      const unresolvedIncidentCount = incidentItems.filter((item) => !['resolved', 'closed'].includes(item.incidentState)).length
+      const blockedIncidentCount = incidentItems.filter((item) => ['blocked', 'waiting_approval', 'waiting_external'].includes(item.incidentState) || item.blockedState === 'blocked').length
+      const staleIncidentCount = incidentItems.filter((item) => item.incidentState === 'open' && parseDateInput(item.createdAt) ? (Date.now() - new Date(String(item.createdAt)).getTime()) > 24 * 60 * 60 * 1000 : false).length
+
+      ctx.body = {
+        sourceOfTruth: {
+          auth: 'supabase-auth(auth.users)',
+          businessState: 'app-user domain',
+          operationsControlPlane: 'internal_audit_log + scheduled check result',
+        },
+        scheduledCheckSummary: {
+          scheduledCheckState: latestCheck ? 'completed' : 'idle',
+          scheduledCheckTypeCount: latestChecks.length,
+          lastCheckedAt: latestCheck?.createdAt ?? null,
+          lastTriggeredAt: latestCheck?.createdAt ?? null,
+          staleCheckCount: alertItems.filter((item) => item.alertType.includes('stale')).length,
+        },
+        alertSummary: {
+          totalCount: alertItems.length,
+          detectedCount: alertItems.filter((item) => item.alertState === 'detected').length,
+          criticalCount: alertItems.filter((item) => item.alertPriority === 'critical').length,
+          nextRecommendedAction: alertItems.some((item) => item.alertPriority === 'critical') ? 'critical alert を incident 化して owner を割当' : 'detected alert を triage',
+          items: alertItems,
+        },
+        incidentSummary: {
+          totalCount: incidentItems.length,
+          unresolvedCount: unresolvedIncidentCount,
+          blockedCount: blockedIncidentCount,
+          staleCount: staleIncidentCount,
+          escalatedCount: incidentItems.filter((item) => item.escalationState === 'escalated').length,
+          nextRecommendedAction: unresolvedIncidentCount > 0 ? '未解決 incident の owner 割当と承認待ち整理' : 'scheduled checks を定期実行',
+          items: incidentItems,
+        },
+        approvalSummary: {
+          totalCount: approvalItems.length,
+          pendingCount: approvalItems.filter((item) => item.approvalState === 'pending').length,
+          rejectedCount: approvalItems.filter((item) => item.approvalState === 'rejected').length,
+          lastApprovedAt: approvalItems.find((item) => item.approvalState === 'approved')?.createdAt ?? null,
+          items: approvalItems,
+        },
+        batchOperationSummary: {
+          totalCount: batchItems.length,
+          pendingApprovalCount: batchItems.filter((item) => item.batchOperationState === 'pending_approval').length,
+          runningCount: batchItems.filter((item) => item.batchOperationState === 'running').length,
+          failedCount: batchItems.filter((item) => item.batchOperationResultState === 'failed' || item.batchOperationState === 'failed').length,
+          lastExecutedAt: batchItems[0]?.lastExecutedAt ?? null,
+          items: batchItems,
+        },
+        escalationSummary: {
+          totalCount: escalationItems.length,
+          activeCount: escalationItems.filter((item) => !['completed', 'resolved'].includes(item.escalationState)).length,
+          completedCount: escalationItems.filter((item) => ['completed', 'resolved'].includes(item.escalationState)).length,
+          items: escalationItems,
+        },
+      }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Internal permission denied')) return ctx.forbidden('incident dashboard の権限がありません。')
+      strapi.log.error(`[analytics-event] internalIncidentDashboard failed: ${message}`)
+      return ctx.internalServerError('incident dashboard summary の取得に失敗しました。')
+    }
+  },
+
+  async internalIncidentTriageAction(ctx) {
+    try {
+      const access = await requireInternalPermission(ctx, 'internal.playbook.run')
+      const body = (ctx.request.body ?? {}) as Record<string, unknown>
+      const actionType = sanitizeText(body.actionType, 40) ?? 'acknowledge'
+      const incidentType = sanitizeText(body.incidentType, 80) ?? 'operations_incident'
+      const incidentSeverity = sanitizeText(body.incidentSeverity, 20) ?? 'medium'
+      const incidentPriority = sanitizeText(body.incidentPriority, 20) ?? toPriority(incidentSeverity, 1)
+      const reason = sanitizeText(body.reason, 240)
+      const sourceArea = sanitizeText(body.sourceArea, 40) ?? 'operations'
+      const incidentId = sanitizeText(body.incidentId, 120) ?? `incident:${Date.now()}`
+      if (!reason || reason.length < 8) return ctx.badRequest('reason は8文字以上で入力してください。')
+
+      let incidentState = 'open'
+      let escalationState = 'none'
+      let incidentResolutionState = 'pending'
+      let nextRecommendedAction = 'owner を割り当てて詳細調査'
+      if (actionType === 'acknowledge') {
+        incidentState = 'in_review'
+        nextRecommendedAction = 'アラート根拠を確認して incident 化の要否を判断'
+      } else if (actionType === 'create_incident') {
+        incidentState = 'open'
+        nextRecommendedAction = 'incident owner を割当'
+      } else if (actionType === 'escalate') {
+        incidentState = 'escalated'
+        escalationState = 'escalated'
+        nextRecommendedAction = 'escalation target の承認/対応を待機'
+      } else if (actionType === 'resolve') {
+        incidentState = 'resolved'
+        incidentResolutionState = 'resolved'
+        nextRecommendedAction = '再発防止メモと runbook 更新'
+      }
+
+      await strapi.documents('api::internal-audit-log.internal-audit-log').create({
+        data: {
+          actorLogtoUserId: access.authUser.userId,
+          actorInternalRoles: access.internalRoles,
+          targetType: 'incident',
+          targetId: incidentId,
+          action: `ops-incident-triage:${actionType}`,
+          status: 'success',
+          reason,
+          sourceSite: 'cross',
+          beforeState: { incidentState: 'detected' },
+          afterState: { incidentState },
+          metadata: {
+            actionType,
+            incidentType,
+            incidentSeverity,
+            incidentPriority,
+            incidentState,
+            escalationState,
+            incidentOwnerState: actionType === 'create_incident' ? 'assigned' : 'unassigned',
+            incidentResolutionState,
+            sourceArea,
+            nextRecommendedAction,
+          },
+          requestId: String(ctx.request.headers['x-request-id'] ?? ''),
+        },
+      })
+
+      ctx.body = {
+        incidentId,
+        actionType,
+        incidentState,
+        escalationState,
+        incidentResolutionState,
+        nextRecommendedAction,
+      }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Internal permission denied')) return ctx.forbidden('incident triage の権限がありません。')
+      strapi.log.error(`[analytics-event] internalIncidentTriageAction failed: ${message}`)
+      return ctx.internalServerError('incident triage 実行に失敗しました。')
+    }
+  },
+
+  async internalApprovalAction(ctx) {
+    try {
+      const access = await requireInternalPermission(ctx, 'internal.playbook.approve')
+      const body = (ctx.request.body ?? {}) as Record<string, unknown>
+      const approvalType = sanitizeText(body.approvalType, 80) ?? 'batch_operation'
+      const approvalState = sanitizeText(body.approvalState, 24) ?? 'pending'
+      const approvalId = sanitizeText(body.approvalId, 120) ?? `approval:${Date.now()}`
+      const reason = sanitizeText(body.reason, 240)
+      const targetActionId = sanitizeText(body.targetActionId, 120) ?? 'unknown'
+      if (!reason || reason.length < 8) return ctx.badRequest('reason は8文字以上で入力してください。')
+
+      await strapi.documents('api::internal-audit-log.internal-audit-log').create({
+        data: {
+          actorLogtoUserId: access.authUser.userId,
+          actorInternalRoles: access.internalRoles,
+          targetType: 'approval',
+          targetId: approvalId,
+          action: `ops-approval:${approvalState}`,
+          status: approvalState === 'rejected' ? 'denied' : 'success',
+          reason,
+          sourceSite: 'cross',
+          beforeState: { approvalState: 'pending' },
+          afterState: { approvalState },
+          metadata: { approvalType, approvalState, targetActionId, approvalActor: access.authUser.userId },
+          requestId: String(ctx.request.headers['x-request-id'] ?? ''),
+        },
+      })
+
+      ctx.body = { approvalId, approvalType, approvalState, targetActionId }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Internal permission denied')) return ctx.forbidden('approval 操作権限がありません。')
+      strapi.log.error(`[analytics-event] internalApprovalAction failed: ${message}`)
+      return ctx.internalServerError('approval 操作に失敗しました。')
+    }
+  },
+
+  async internalBatchOperationAction(ctx) {
+    try {
+      const access = await requireInternalPermission(ctx, 'internal.playbook.run')
+      const body = (ctx.request.body ?? {}) as Record<string, unknown>
+      const batchOperationType = sanitizeText(body.batchOperationType, 80) ?? 'safe_resync'
+      const batchOperationScope = sanitizeText(body.batchOperationScope, 80) ?? 'cross_site'
+      const reason = sanitizeText(body.reason, 240)
+      const mode = sanitizeText(body.mode, 20) ?? 'preview'
+      const confirmed = Boolean(body.confirmed)
+      const requiresApproval = body.requiresApproval !== false
+      const batchOperationId = sanitizeText(body.batchOperationId, 120) ?? `batch:${batchOperationType}:${Date.now()}`
+      if (!reason || reason.length < 8) return ctx.badRequest('reason は8文字以上で入力してください。')
+
+      if (mode === 'execute' && !confirmed) return ctx.badRequest('execute には confirmed=true が必要です。')
+
+      const batchOperationState = mode === 'preview'
+        ? 'preview_ready'
+        : mode === 'dry_run'
+          ? 'dry_run_ready'
+          : requiresApproval
+            ? 'pending_approval'
+            : 'running'
+      const batchOperationResultState = mode === 'execute'
+        ? (requiresApproval ? 'pending_approval' : 'queued')
+        : mode === 'dry_run'
+          ? 'dry_run_completed'
+          : 'not_started'
+
+      await strapi.documents('api::internal-audit-log.internal-audit-log').create({
+        data: {
+          actorLogtoUserId: access.authUser.userId,
+          actorInternalRoles: access.internalRoles,
+          targetType: 'batch-operation',
+          targetId: batchOperationId,
+          action: `ops-batch-operation:${mode}`,
+          status: requiresApproval && mode === 'execute' ? 'pending' : 'success',
+          reason,
+          sourceSite: 'cross',
+          beforeState: { batchOperationState: 'draft' },
+          afterState: { batchOperationState },
+          metadata: {
+            batchOperationType,
+            batchOperationScope,
+            batchOperationState,
+            batchOperationPreviewState: mode === 'preview' ? 'preview_ready' : 'completed',
+            batchOperationDryRunState: mode === 'dry_run' ? 'dry_run_completed' : 'not_started',
+            batchOperationResultState,
+            requiresApprovalState: requiresApproval ? 'required' : 'not_required',
+            runbookState: 'linked',
+            confirmed,
+          },
+          requestId: String(ctx.request.headers['x-request-id'] ?? ''),
+        },
+      })
+
+      ctx.body = {
+        batchOperationId,
+        batchOperationType,
+        batchOperationScope,
+        mode,
+        confirmed,
+        requiresApprovalState: requiresApproval ? 'required' : 'not_required',
+        batchOperationState,
+        batchOperationResultState,
+        diffSummary: mode === 'preview' ? '対象件数と影響範囲を確認してください。' : mode === 'dry_run' ? 'write を行わない dry-run 結果です。' : '承認後に execute queue へ移送されます。',
+      }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Internal permission denied')) return ctx.forbidden('batch safe ops 実行権限がありません。')
+      strapi.log.error(`[analytics-event] internalBatchOperationAction failed: ${message}`)
+      return ctx.internalServerError('batch safe ops の実行に失敗しました。')
     }
   },
 
