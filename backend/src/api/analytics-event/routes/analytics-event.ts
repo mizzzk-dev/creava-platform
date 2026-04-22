@@ -55,6 +55,18 @@ export default {
       config: { auth: false },
     },
     {
+      method: 'GET',
+      path: '/internal/releases/dashboard',
+      handler: 'analytics-event.internalReleaseDashboard',
+      config: { auth: false },
+    },
+    {
+      method: 'POST',
+      path: '/internal/releases/action',
+      handler: 'analytics-event.internalReleaseAction',
+      config: { auth: false },
+    },
+    {
       method: 'POST',
       path: '/internal/operations/safe-action',
       handler: 'analytics-event.internalOperationsSafeAction',

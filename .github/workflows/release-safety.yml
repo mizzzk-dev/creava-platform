@@ -1,0 +1,97 @@
+name: Release Safety Gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: '対象環境（preview / staging / production）'
+        required: true
+        default: staging
+        type: choice
+        options:
+          - preview
+          - staging
+          - production
+      action_type:
+        description: 'release action'
+        required: true
+        default: parity_check
+        type: choice
+        options:
+          - preview
+          - parity_check
+          - approve
+          - execute
+          - rollback_execute
+      confirmed:
+        description: 'execute / rollback を実行する場合のみ true'
+        required: true
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+jobs:
+  safety-gate:
+    name: Release safety gate (${{ inputs.target_env }} / ${{ inputs.action_type }})
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target_env == 'production' && 'production' || 'staging' }}
+
+    steps:
+      - name: Validate action guard
+        run: |
+          set -euo pipefail
+          ACTION="${{ inputs.action_type }}"
+          CONFIRMED="${{ inputs.confirmed }}"
+          TARGET_ENV="${{ inputs.target_env }}"
+
+          if [[ "$ACTION" =~ ^(execute|rollback_execute)$ ]] && [ "$CONFIRMED" != "true" ]; then
+            echo "::error::execute / rollback_execute には confirmed=true が必要です。"
+            exit 1
+          fi
+
+          if [ "$TARGET_ENV" = "production" ] && [ "$ACTION" = "execute" ] && [ "$CONFIRMED" != "true" ]; then
+            echo "::error::production execute には明示確認が必要です。"
+            exit 1
+          fi
+
+      - name: Check required secrets presence
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          VITE_STRAPI_API_URL: ${{ secrets.VITE_STRAPI_API_URL }}
+          STRAPI_DEPLOY_TOKEN: ${{ secrets.STRAPI_DEPLOY_TOKEN }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for key in SUPABASE_URL SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY VITE_STRAPI_API_URL; do
+            value="${!key:-}"
+            if [ -z "$value" ]; then
+              echo "::error::${key} が未設定です。"
+              missing=1
+            fi
+          done
+
+          if [ "${{ inputs.action_type }}" = "execute" ] || [ "${{ inputs.action_type }}" = "rollback_execute" ]; then
+            if [ -z "${STRAPI_DEPLOY_TOKEN:-}" ]; then
+              echo "::error::execute/rollback_execute には STRAPI_DEPLOY_TOKEN が必要です。"
+              missing=1
+            fi
+          fi
+
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Write release safety summary
+        run: |
+          {
+            echo "## Release Safety Gate"
+            echo "- target_env: ${{ inputs.target_env }}"
+            echo "- action_type: ${{ inputs.action_type }}"
+            echo "- confirmed: ${{ inputs.confirmed }}"
+            echo "- result: safety checks passed"
+            echo "- note: この workflow は gate/check 用です。実 deploy/rollback 実行は別 workflow で行ってください。"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -64,6 +64,11 @@ const ALLOWED_EVENTS = new Set([
   'incident_notice_banner_view', 'incident_notice_banner_click',
   'maintenance_schedule_publish', 'incident_status_publish', 'recovery_status_publish',
   'postmortem_publish', 'knowledge_article_from_incident_open', 'related_support_article_open',
+  'release_dashboard_view', 'release_summary_view', 'parity_check_run', 'parity_check_result_view',
+  'migration_risk_view', 'rollout_start', 'rollout_pause', 'rollout_resume', 'rollout_complete',
+  'verification_start', 'verification_complete', 'rollback_preview_view', 'rollback_execute_start',
+  'rollback_execute_complete', 'hotfix_start', 'freeze_exception_request', 'release_note_publish',
+  'related_incident_open',
 ])
 
 function sanitizeText(value: unknown, maxLength = 120): string | undefined {
@@ -256,6 +261,67 @@ function mapStatusSeverity(statusState: string, incomingSeverity?: string): stri
   if (statusState === 'degraded_performance') return 'medium'
   if (statusState.startsWith('maintenance')) return 'low'
   return 'none'
+}
+
+type ReleaseAuditItem = {
+  releaseId: string
+  changeRequestId: string
+  sourceSite: string
+  releaseState: string
+  deploymentState: string
+  rolloutState: string
+  rollbackState: string
+  migrationState: string
+  migrationRiskState: string
+  environmentParityState: string
+  configDriftState: string
+  verificationState: string
+  smokeCheckState: string
+  healthCheckState: string
+  freezeState: string
+  hotfixState: string
+  releaseApprovalState: string
+  releaseOwnerState: string
+  releaseWindowState: string
+  releaseVisibilityState: string
+  releaseCommunicationState: string
+  nextRecommendedAction: string
+  lastVerifiedAt: string | null
+  lastRolledBackAt: string | null
+  lastParityCheckAt: string | null
+  createdAt: string | null
+}
+
+function toReleaseAuditItem(row: Record<string, unknown>): ReleaseAuditItem {
+  const metadata = parseJsonObject(row.metadata)
+  return {
+    releaseId: String(row.targetId ?? metadata.releaseId ?? `release:${Date.now()}`),
+    changeRequestId: String(metadata.changeRequestId ?? metadata.releaseRequestId ?? 'change-request:unknown'),
+    sourceSite: String(row.sourceSite ?? metadata.sourceSite ?? 'cross'),
+    releaseState: String(metadata.releaseState ?? 'planned'),
+    deploymentState: String(metadata.deploymentState ?? 'not_started'),
+    rolloutState: String(metadata.rolloutState ?? 'not_started'),
+    rollbackState: String(metadata.rollbackState ?? 'not_needed'),
+    migrationState: String(metadata.migrationState ?? 'not_started'),
+    migrationRiskState: String(metadata.migrationRiskState ?? 'low'),
+    environmentParityState: String(metadata.environmentParityState ?? 'review_needed'),
+    configDriftState: String(metadata.configDriftState ?? 'unknown'),
+    verificationState: String(metadata.verificationState ?? 'pending'),
+    smokeCheckState: String(metadata.smokeCheckState ?? 'pending'),
+    healthCheckState: String(metadata.healthCheckState ?? 'pending'),
+    freezeState: String(metadata.freezeState ?? 'none'),
+    hotfixState: String(metadata.hotfixState ?? 'normal'),
+    releaseApprovalState: String(metadata.releaseApprovalState ?? 'review_pending'),
+    releaseOwnerState: String(metadata.releaseOwnerState ?? 'unassigned'),
+    releaseWindowState: String(metadata.releaseWindowState ?? 'normal'),
+    releaseVisibilityState: String(metadata.releaseVisibilityState ?? 'internal_only'),
+    releaseCommunicationState: String(metadata.releaseCommunicationState ?? 'draft'),
+    nextRecommendedAction: String(metadata.nextRecommendedAction ?? 'change request を review してください。'),
+    lastVerifiedAt: metadata.lastVerifiedAt ? String(metadata.lastVerifiedAt) : null,
+    lastRolledBackAt: metadata.lastRolledBackAt ? String(metadata.lastRolledBackAt) : null,
+    lastParityCheckAt: metadata.lastParityCheckAt ? String(metadata.lastParityCheckAt) : null,
+    createdAt: row.createdAt ? String(row.createdAt) : null,
+  }
 }
 
 function toCommunicationItem(row: Record<string, unknown>): CommunicationItem {
@@ -1463,6 +1529,197 @@ export default factories.createCoreController('api::analytics-event.analytics-ev
       if (message.includes('Internal permission denied')) return ctx.forbidden('operations dashboard の権限がありません。')
       strapi.log.error(`[analytics-event] internalOperationsDashboard failed: ${message}`)
       return ctx.internalServerError('operations dashboard summary の取得に失敗しました。')
+    }
+  },
+
+  async internalReleaseDashboard(ctx) {
+    try {
+      await requireInternalPermission(ctx, 'internal.release.read')
+      const rows = await strapi.documents('api::internal-audit-log.internal-audit-log').findMany({
+        filters: { action: { $containsi: 'ops-release' } },
+        fields: ['id', 'status', 'sourceSite', 'targetId', 'metadata', 'createdAt'],
+        sort: ['createdAt:desc'],
+        limit: BI_MAX_FETCH_ROWS,
+      })
+      const releaseItems = (rows as Array<Record<string, unknown>>).map(toReleaseAuditItem).slice(0, 80)
+
+      const parityBlocked = releaseItems.filter((item) => ['blocked', 'drift_detected', 'review_needed'].includes(item.environmentParityState)).length
+      const migrationHighRisk = releaseItems.filter((item) => ['high', 'destructive_like', 'irreversible_like'].includes(item.migrationRiskState)).length
+      const blockedChanges = releaseItems.filter((item) => ['blocked', 'review_pending'].includes(item.releaseState) || ['pending', 'rejected'].includes(item.releaseApprovalState))
+      const rollbackReady = releaseItems.filter((item) => ['prepared', 'available'].includes(item.rollbackState))
+      const activeRollouts = releaseItems.filter((item) => ['staged', 'partial', 'paused'].includes(item.rolloutState))
+
+      ctx.body = {
+        sourceOfTruth: {
+          auth: 'supabase-auth(auth.users)',
+          businessState: 'app-user domain',
+          releaseControlPlane: 'internal_audit_log + release summary metadata',
+        },
+        releaseSummary: {
+          totalCount: releaseItems.length,
+          plannedCount: releaseItems.filter((item) => item.releaseState === 'planned').length,
+          releasingCount: releaseItems.filter((item) => ['releasing', 'partially_released'].includes(item.releaseState)).length,
+          verifiedCount: releaseItems.filter((item) => item.releaseState === 'verified').length,
+          rolledBackCount: releaseItems.filter((item) => item.releaseState === 'rolled_back').length,
+          blockedCount: blockedChanges.length,
+          nextRecommendedAction: parityBlocked > 0 ? 'environment parity / config drift を解消してから release approve を進める' : activeRollouts.length > 0 ? 'active rollout の verification checklist を完了する' : 'planned release の review を進める',
+        },
+        deploymentSummary: {
+          runningCount: releaseItems.filter((item) => item.deploymentState === 'running').length,
+          failedCount: releaseItems.filter((item) => item.deploymentState === 'failed').length,
+          readyCount: releaseItems.filter((item) => item.deploymentState === 'ready').length,
+          completedCount: releaseItems.filter((item) => item.deploymentState === 'completed').length,
+        },
+        rolloutSummary: {
+          activeCount: activeRollouts.length,
+          pausedCount: releaseItems.filter((item) => item.rolloutState === 'paused').length,
+          completedCount: releaseItems.filter((item) => item.rolloutState === 'completed').length,
+          revertedCount: releaseItems.filter((item) => item.rolloutState === 'reverted').length,
+        },
+        rollbackSummary: {
+          rollbackReadyCount: rollbackReady.length,
+          runningCount: releaseItems.filter((item) => item.rollbackState === 'running').length,
+          completedCount: releaseItems.filter((item) => item.rollbackState === 'completed').length,
+          failedCount: releaseItems.filter((item) => item.rollbackState === 'failed').length,
+        },
+        environmentParitySummary: {
+          alignedCount: releaseItems.filter((item) => item.environmentParityState === 'aligned').length,
+          driftDetectedCount: releaseItems.filter((item) => item.environmentParityState === 'drift_detected').length,
+          reviewNeededCount: releaseItems.filter((item) => item.environmentParityState === 'review_needed').length,
+          blockedCount: releaseItems.filter((item) => item.environmentParityState === 'blocked').length,
+          configDriftDetectedCount: releaseItems.filter((item) => ['missing_secret', 'runtime_mismatch', 'drift_detected'].includes(item.configDriftState)).length,
+          lastParityCheckAt: releaseItems.find((item) => item.lastParityCheckAt)?.lastParityCheckAt ?? null,
+        },
+        migrationSummary: {
+          notStartedCount: releaseItems.filter((item) => item.migrationState === 'not_started').length,
+          runningCount: releaseItems.filter((item) => item.migrationState === 'running').length,
+          completedCount: releaseItems.filter((item) => item.migrationState === 'completed').length,
+          failedCount: releaseItems.filter((item) => item.migrationState === 'failed').length,
+          highRiskCount: migrationHighRisk,
+          destructiveLikeCount: releaseItems.filter((item) => item.migrationRiskState === 'destructive_like').length,
+          irreversibleLikeCount: releaseItems.filter((item) => item.migrationRiskState === 'irreversible_like').length,
+        },
+        releaseNoteSummary: {
+          internalDraftCount: releaseItems.filter((item) => item.releaseCommunicationState === 'draft').length,
+          supportReadyCount: releaseItems.filter((item) => item.releaseCommunicationState === 'support_ready').length,
+          publicPublishedCount: releaseItems.filter((item) => item.releaseVisibilityState === 'public' && item.releaseCommunicationState === 'published').length,
+        },
+        freezeSummary: {
+          freezeActiveCount: releaseItems.filter((item) => item.freezeState === 'active').length,
+          freezeExceptionCount: releaseItems.filter((item) => item.releaseWindowState === 'freeze_exception').length,
+          hotfixCount: releaseItems.filter((item) => item.hotfixState === 'active').length,
+        },
+        blockedChanges: blockedChanges.slice(0, 20),
+        activeRollouts: activeRollouts.slice(0, 20),
+        rollbackReadyItems: rollbackReady.slice(0, 20),
+        releases: releaseItems,
+      }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Internal permission denied')) return ctx.forbidden('release dashboard の権限がありません。')
+      strapi.log.error(`[analytics-event] internalReleaseDashboard failed: ${message}`)
+      return ctx.internalServerError('release dashboard summary の取得に失敗しました。')
+    }
+  },
+
+  async internalReleaseAction(ctx) {
+    try {
+      const body = (ctx.request.body ?? {}) as Record<string, unknown>
+      const actionType = sanitizeText(body.actionType, 40) ?? 'preview'
+      const permission = actionType === 'approve'
+        ? 'internal.release.approve'
+        : actionType === 'execute'
+          ? 'internal.release.execute'
+          : actionType === 'rollback_execute'
+            ? 'internal.release.rollback'
+            : actionType === 'publish_note'
+              ? 'internal.release.note.publish'
+              : 'internal.release.read'
+      const access = await requireInternalPermission(ctx, permission)
+      const reason = sanitizeText(body.reason, 240)
+      if (!reason || reason.length < 8) return ctx.badRequest('reason は8文字以上で入力してください。')
+
+      const releaseId = sanitizeText(body.releaseId, 140) ?? `release:${Date.now()}`
+      const sourceSite = sanitizeSourceSite(body.sourceSite) === 'unknown' ? 'cross' : sanitizeSourceSite(body.sourceSite)
+      const dryRun = body.dryRun !== false
+      const confirmed = Boolean(body.confirmed)
+      if (['execute', 'rollback_execute'].includes(actionType) && !confirmed) return ctx.badRequest('execute / rollback_execute には confirmed=true が必要です。')
+
+      const nowIso = new Date().toISOString()
+      const migrationRiskState = sanitizeText(body.migrationRiskState, 32) ?? 'medium'
+      const environmentParityState = sanitizeText(body.environmentParityState, 32) ?? 'review_needed'
+      const releaseState = sanitizeText(body.releaseState, 32)
+        ?? (actionType === 'approve' ? 'ready' : actionType === 'execute' ? 'releasing' : actionType === 'rollback_execute' ? 'rolled_back' : 'planned')
+      const deploymentState = sanitizeText(body.deploymentState, 32)
+        ?? (actionType === 'execute' ? 'running' : actionType === 'rollback_execute' ? 'rolled_back' : 'ready')
+      const rolloutState = sanitizeText(body.rolloutState, 32)
+        ?? (actionType === 'execute' ? 'staged' : actionType === 'rollback_execute' ? 'reverted' : 'not_started')
+      const rollbackState = sanitizeText(body.rollbackState, 32)
+        ?? (actionType === 'rollback_execute' ? 'completed' : 'available')
+
+      await strapi.documents('api::internal-audit-log.internal-audit-log').create({
+        data: {
+          actorLogtoUserId: access.authUser.userId,
+          actorInternalRoles: access.internalRoles,
+          targetType: 'release-item',
+          targetId: releaseId,
+          action: `ops-release:${actionType}`,
+          status: actionType === 'execute' && dryRun ? 'pending' : 'success',
+          reason,
+          sourceSite,
+          beforeState: { releaseState: 'planned', rolloutState: 'not_started', rollbackState: 'prepared' },
+          afterState: { releaseState, rolloutState, rollbackState },
+          metadata: {
+            releaseId,
+            changeRequestId: sanitizeText(body.changeRequestId, 120) ?? `change:${releaseId}`,
+            actionType,
+            dryRun,
+            confirmed,
+            releaseState,
+            deploymentState,
+            rolloutState,
+            rollbackState,
+            migrationState: sanitizeText(body.migrationState, 32) ?? 'planned',
+            migrationRiskState,
+            environmentParityState,
+            configDriftState: sanitizeText(body.configDriftState, 32) ?? 'review_needed',
+            featureFlagState: sanitizeText(body.featureFlagState, 32) ?? 'ready',
+            verificationState: sanitizeText(body.verificationState, 32) ?? 'pending',
+            smokeCheckState: sanitizeText(body.smokeCheckState, 32) ?? 'pending',
+            healthCheckState: sanitizeText(body.healthCheckState, 32) ?? 'pending',
+            releaseCommunicationState: sanitizeText(body.releaseCommunicationState, 32) ?? 'draft',
+            releaseVisibilityState: sanitizeText(body.releaseVisibilityState, 32) ?? 'internal_only',
+            freezeState: sanitizeText(body.freezeState, 32) ?? 'none',
+            hotfixState: sanitizeText(body.hotfixState, 32) ?? 'normal',
+            releaseOwnerState: sanitizeText(body.releaseOwnerState, 32) ?? 'assigned',
+            releaseApprovalState: sanitizeText(body.releaseApprovalState, 32) ?? (actionType === 'approve' ? 'approved' : 'review_pending'),
+            releaseWindowState: sanitizeText(body.releaseWindowState, 32) ?? 'normal',
+            lastVerifiedAt: actionType === 'verify' ? nowIso : null,
+            lastRolledBackAt: actionType === 'rollback_execute' ? nowIso : null,
+            lastParityCheckAt: ['parity_check', 'preview'].includes(actionType) ? nowIso : null,
+            nextRecommendedAction: sanitizeText(body.nextRecommendedAction, 240) ?? (actionType === 'parity_check' ? 'drift があれば修正後に approval を再開' : actionType === 'execute' ? 'verification checklist を実行' : actionType === 'rollback_execute' ? 'incident dashboard / status page を更新' : 'reviewer の承認待ち'),
+          },
+          requestId: String(ctx.request.headers['x-request-id'] ?? ''),
+        },
+      })
+
+      ctx.body = {
+        releaseId,
+        actionType,
+        dryRun,
+        confirmed,
+        releaseState,
+        deploymentState,
+        rolloutState,
+        rollbackState,
+        migrationRiskState,
+        environmentParityState,
+      }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Internal permission denied')) return ctx.forbidden('release action の権限がありません。')
+      strapi.log.error(`[analytics-event] internalReleaseAction failed: ${message}`)
+      return ctx.internalServerError('release action 実行に失敗しました。')
     }
   },
 

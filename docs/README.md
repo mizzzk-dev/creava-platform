@@ -1,6 +1,6 @@
 # プロジェクトドキュメントハブ
 
-- 更新日: 2026-04-19
+- 更新日: 2026-04-22
 - 対象: `creava-platform` の frontend / backend / docs
 - 目的: 未経験者でも「構成・実装・運用・保守」の全体像を理解できるようにする
 - 前提: 本書は実装コード（`frontend/src`, `backend/src`, `backend/config`, `.github/workflows`）を基準に作成
@@ -56,6 +56,7 @@
 - [Supabase Auth 前提 privacy / consent / export / deletion / retention runbook (2026-04-22)](./09_operations/supabase-privacy-consent-export-deletion-runbook-2026-04-22.md)
 - [Supabase Auth 前提 internal admin / operations console / user 360 runbook (2026-04-22)](./09_operations/supabase-internal-admin-user360-operations-console-runbook-2026-04-22.md)
 - [Supabase Auth 前提 status page / maintenance / incident communications / postmortem / RCA runbook (2026-04-22)](./09_operations/supabase-status-maintenance-incident-postmortem-runbook-2026-04-22.md)
+- [Supabase Auth 前提 release management / deployment safety / rollback / parity / release notes runbook (2026-04-22)](./09_operations/supabase-release-management-deployment-safety-runbook-2026-04-22.md)
 - [統一認証基盤を前提にした user lifecycle / onboarding / 会員導線整備 (2026-04-19)](./user-lifecycle-membership-onboarding-foundation-2026-04-19.md)
 - [membershipStatus / entitlement / subscription / notification / CRM 同期基盤整備 (2026-04-19)](./membership-entitlement-subscription-sync-foundation-2026-04-19.md)
 - [renewal / lifecycle messaging / win-back 基盤整備 (2026-04-19)](./renewal-lifecycle-retention-foundation-2026-04-19.md)

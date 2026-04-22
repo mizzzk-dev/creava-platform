@@ -18,6 +18,7 @@ import {
   type InternalIncidentDashboardResponse,
   type InternalScheduledChecksResponse,
   type InternalIncidentCommunicationsDashboardResponse,
+  type InternalReleaseDashboardResponse,
 } from '@/modules/internal-admin/api'
 import { trackMizzzEvent } from '@/modules/analytics/tracking'
 
@@ -44,6 +45,9 @@ export default function InternalAdminPage() {
   const [operationsDashboard, setOperationsDashboard] = useState<InternalOperationsDashboardResponse | null>(null)
   const [safeActionReason, setSafeActionReason] = useState('queue 状態確認のため dry-run 実行')
   const [safeActionResult, setSafeActionResult] = useState<InternalOperationsSafeActionResponse | null>(null)
+  const [releaseDashboard, setReleaseDashboard] = useState<InternalReleaseDashboardResponse | null>(null)
+  const [releaseReason, setReleaseReason] = useState('preview / dry-run で release risk を確認')
+  const [releaseActionResult, setReleaseActionResult] = useState<Record<string, unknown> | null>(null)
   const [incidentDashboard, setIncidentDashboard] = useState<InternalIncidentDashboardResponse | null>(null)
   const [scheduledChecksResult, setScheduledChecksResult] = useState<InternalScheduledChecksResponse | null>(null)
   const [triageReason, setTriageReason] = useState('scheduled check で検知した異常を確認')
@@ -161,6 +165,128 @@ export default function InternalAdminPage() {
           </div>
           {safeActionResult && (
             <pre className="mt-2 overflow-auto rounded bg-gray-50 p-3 text-xs dark:bg-gray-900">{JSON.stringify(safeActionResult, null, 2)}</pre>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-6 rounded border border-gray-200 p-4 dark:border-gray-800">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-gray-500">release dashboard / change management / parity / rollback</p>
+          <button
+            type="button"
+            className="rounded bg-gray-900 px-3 py-2 text-xs text-white"
+            onClick={() => {
+              setMessage(null)
+              trackMizzzEvent('release_dashboard_view', { actorRole: internalRole, sourceSection: 'release_dashboard', sourceArea: 'cross' })
+              api.getReleaseDashboard().then(setReleaseDashboard).catch((e: Error) => setMessage(e.message))
+            }}
+          >release summary 更新</button>
+        </div>
+
+        {releaseDashboard && (
+          <div className="mt-3 space-y-3 text-xs">
+            <p className="text-gray-500">next: {releaseDashboard.releaseSummary.nextRecommendedAction}</p>
+            <div className="grid gap-2 md:grid-cols-2">
+              <div className="rounded border border-gray-200 p-3 dark:border-gray-700">
+                <p className="font-medium">release / rollout / rollback</p>
+                <p>planned: {releaseDashboard.releaseSummary.plannedCount}</p>
+                <p>releasing: {releaseDashboard.releaseSummary.releasingCount}</p>
+                <p>blocked: {releaseDashboard.releaseSummary.blockedCount}</p>
+                <p>active rollout: {releaseDashboard.rolloutSummary.activeCount}</p>
+                <p>rollback ready: {releaseDashboard.rollbackSummary.rollbackReadyCount}</p>
+                <p>rollback completed: {releaseDashboard.rollbackSummary.completedCount}</p>
+              </div>
+              <div className="rounded border border-gray-200 p-3 dark:border-gray-700">
+                <p className="font-medium">parity / migration / release notes</p>
+                <p>parity drift: {releaseDashboard.environmentParitySummary.driftDetectedCount}</p>
+                <p>config drift: {releaseDashboard.environmentParitySummary.configDriftDetectedCount}</p>
+                <p>migration high risk: {releaseDashboard.migrationSummary.highRiskCount}</p>
+                <p>destructive_like: {releaseDashboard.migrationSummary.destructiveLikeCount}</p>
+                <p>support ready note: {releaseDashboard.releaseNoteSummary.supportReadyCount}</p>
+                <p>public published note: {releaseDashboard.releaseNoteSummary.publicPublishedCount}</p>
+              </div>
+            </div>
+            <pre className="overflow-auto rounded bg-gray-50 p-3 dark:bg-gray-900">{JSON.stringify({
+              blockedChanges: releaseDashboard.blockedChanges.slice(0, 8),
+              activeRollouts: releaseDashboard.activeRollouts.slice(0, 8),
+              rollbackReadyItems: releaseDashboard.rollbackReadyItems.slice(0, 8),
+            }, null, 2)}</pre>
+          </div>
+        )}
+
+        <div className="mt-4 rounded border border-gray-200 p-3 dark:border-gray-700">
+          <p className="text-xs text-gray-500">release safe actions (preview / parity / approve / execute / rollback / publish note)</p>
+          <div className="mt-2 flex flex-col gap-2 md:flex-row">
+            <input value={releaseReason} onChange={(e) => setReleaseReason(e.target.value)} className="w-full rounded border border-gray-300 px-2 py-2 text-xs" placeholder="release action reason を入力" />
+            <button
+              type="button"
+              className="rounded border border-gray-300 px-3 py-2 text-xs"
+              onClick={() => {
+                setMessage(null)
+                trackMizzzEvent('parity_check_run', { actorRole: internalRole, sourceSection: 'release_dashboard', sourceArea: 'cross' })
+                api.runReleaseAction({
+                  actionType: 'parity_check',
+                  sourceSite: 'cross',
+                  reason: releaseReason,
+                  dryRun: true,
+                  environmentParityState: 'review_needed',
+                  configDriftState: 'runtime_mismatch',
+                  migrationRiskState: 'medium',
+                }).then((result) => {
+                  setReleaseActionResult(result)
+                  return api.getReleaseDashboard().then(setReleaseDashboard)
+                }).catch((e: Error) => setMessage(e.message))
+              }}
+            >parity check dry-run</button>
+            <button
+              type="button"
+              className="rounded border border-amber-300 px-3 py-2 text-xs text-amber-700"
+              onClick={() => {
+                setMessage(null)
+                trackMizzzEvent('rollout_start', { actorRole: internalRole, sourceSection: 'release_dashboard', sourceArea: 'cross' })
+                api.runReleaseAction({
+                  actionType: 'execute',
+                  sourceSite: 'cross',
+                  reason: releaseReason,
+                  dryRun: false,
+                  confirmed: true,
+                  releaseState: 'releasing',
+                  deploymentState: 'running',
+                  rolloutState: 'staged',
+                  verificationState: 'pending',
+                  rollbackState: 'available',
+                }).then((result) => {
+                  setReleaseActionResult(result)
+                  return api.getReleaseDashboard().then(setReleaseDashboard)
+                }).catch((e: Error) => setMessage(e.message))
+              }}
+            >staged rollout execute</button>
+            <button
+              type="button"
+              className="rounded border border-red-300 px-3 py-2 text-xs text-red-700"
+              onClick={() => {
+                setMessage(null)
+                trackMizzzEvent('rollback_execute_start', { actorRole: internalRole, sourceSection: 'release_dashboard', sourceArea: 'cross' })
+                api.runReleaseAction({
+                  actionType: 'rollback_execute',
+                  sourceSite: 'cross',
+                  reason: releaseReason,
+                  dryRun: false,
+                  confirmed: true,
+                  releaseState: 'rolled_back',
+                  deploymentState: 'rolled_back',
+                  rolloutState: 'reverted',
+                  rollbackState: 'completed',
+                  releaseCommunicationState: 'support_ready',
+                }).then((result) => {
+                  setReleaseActionResult(result)
+                  return api.getReleaseDashboard().then(setReleaseDashboard)
+                }).catch((e: Error) => setMessage(e.message))
+              }}
+            >rollback execute</button>
+          </div>
+          {releaseActionResult && (
+            <pre className="mt-2 overflow-auto rounded bg-gray-50 p-3 text-xs dark:bg-gray-900">{JSON.stringify(releaseActionResult, null, 2)}</pre>
           )}
         </div>
       </div>

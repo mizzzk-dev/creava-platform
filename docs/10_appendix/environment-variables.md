@@ -350,3 +350,27 @@
 
 ### 補足
 - 今回の playbook console 追加は既存ドメインと API で完結するため **DNS変更不要**。
+
+## 10. release management / rollback / parity 追加（2026-04-22）
+
+### backend runtime env
+- `RELEASE_FREEZE_ENABLED`: freeze を強制するか（既定 `false`）。
+- `RELEASE_FREEZE_CALENDAR`: freeze 期間を JSON で定義（例: `[{\"from\":\"2026-12-25T00:00:00Z\",\"to\":\"2026-12-26T12:00:00Z\",\"reason\":\"year-end freeze\"}]`）。
+- `RELEASE_PARITY_STRICT_MODE`: parity drift がある場合に execute を block するか（既定 `true`）。
+- `RELEASE_PARITY_REQUIRED_ENVIRONMENTS`: parity 対象環境（例: `preview,staging,production`）。
+- `RELEASE_MIGRATION_DESTRUCTIVE_REQUIRE_APPROVAL`: destructive_like migration の追加承認を必須化（既定 `true`）。
+- `RELEASE_ROLLBACK_REQUIRE_APPROVAL`: rollback execute に承認を要求するか（既定 `true`）。
+- `RELEASE_VERIFICATION_REQUIRED`: rollout complete 前に verification 完了を必須化するか（既定 `true`）。
+- `RELEASE_PUBLIC_NOTE_REQUIRE_APPROVAL`: public release note publish に承認を要求するか（既定 `true`）。
+- `RELEASE_DIGEST_ENABLED`: release digest の集約出力を有効化するか（既定 `false`）。
+
+### GitHub Secrets / Variables
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`（frontend に露出しない）
+- `RELEASE_REQUIRED_APPROVER_IDS`（例: `ops-lead,release-manager`）
+- `RELEASE_FREEZE_DEFAULT_WINDOW`（workflow 用 freeze 既定値）
+
+### 補足
+- runtime env と CI secrets の責務を分離し、同じキーの使い回しを避ける。
+- local / staging / production で parity check の期待値が異なるため、drift 許容条件は docs に明記する。

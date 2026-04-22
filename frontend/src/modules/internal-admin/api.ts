@@ -518,6 +518,72 @@ export type InternalIncidentCommunicationsDashboardResponse = {
   }>
 }
 
+export type InternalReleaseDashboardResponse = {
+  sourceOfTruth: Record<string, string>
+  releaseSummary: {
+    totalCount: number
+    plannedCount: number
+    releasingCount: number
+    verifiedCount: number
+    rolledBackCount: number
+    blockedCount: number
+    nextRecommendedAction: string
+  }
+  deploymentSummary: { runningCount: number; failedCount: number; readyCount: number; completedCount: number }
+  rolloutSummary: { activeCount: number; pausedCount: number; completedCount: number; revertedCount: number }
+  rollbackSummary: { rollbackReadyCount: number; runningCount: number; completedCount: number; failedCount: number }
+  environmentParitySummary: {
+    alignedCount: number
+    driftDetectedCount: number
+    reviewNeededCount: number
+    blockedCount: number
+    configDriftDetectedCount: number
+    lastParityCheckAt: string | null
+  }
+  migrationSummary: {
+    notStartedCount: number
+    runningCount: number
+    completedCount: number
+    failedCount: number
+    highRiskCount: number
+    destructiveLikeCount: number
+    irreversibleLikeCount: number
+  }
+  releaseNoteSummary: { internalDraftCount: number; supportReadyCount: number; publicPublishedCount: number }
+  freezeSummary: { freezeActiveCount: number; freezeExceptionCount: number; hotfixCount: number }
+  blockedChanges: Array<{ releaseId: string; releaseState: string; releaseApprovalState: string; nextRecommendedAction: string; sourceSite: string }>
+  activeRollouts: Array<{ releaseId: string; rolloutState: string; verificationState: string; nextRecommendedAction: string; sourceSite: string }>
+  rollbackReadyItems: Array<{ releaseId: string; rollbackState: string; migrationRiskState: string; nextRecommendedAction: string; sourceSite: string }>
+  releases: Array<{
+    releaseId: string
+    changeRequestId: string
+    sourceSite: string
+    releaseState: string
+    deploymentState: string
+    rolloutState: string
+    rollbackState: string
+    migrationState: string
+    migrationRiskState: string
+    environmentParityState: string
+    configDriftState: string
+    verificationState: string
+    smokeCheckState: string
+    healthCheckState: string
+    freezeState: string
+    hotfixState: string
+    releaseApprovalState: string
+    releaseOwnerState: string
+    releaseWindowState: string
+    releaseVisibilityState: string
+    releaseCommunicationState: string
+    nextRecommendedAction: string
+    lastVerifiedAt: string | null
+    lastRolledBackAt: string | null
+    lastParityCheckAt: string | null
+    createdAt: string | null
+  }>
+}
+
 function getApiBaseUrl(): string {
   const baseUrl = import.meta.env.VITE_STRAPI_API_URL
   if (!baseUrl) throw new Error('VITE_STRAPI_API_URL が未設定です。')
@@ -611,6 +677,30 @@ export function useInternalAdminApi() {
         method: 'POST',
         body: JSON.stringify(payload ?? {}),
       })),
+    getReleaseDashboard: async () => withToken((token) => internalFetch<InternalReleaseDashboardResponse>('/internal/releases/dashboard', token)),
+    runReleaseAction: async (payload: {
+      actionType: 'preview' | 'parity_check' | 'approve' | 'execute' | 'verify' | 'rollback_execute' | 'publish_note'
+      releaseId?: string
+      changeRequestId?: string
+      sourceSite?: 'main' | 'store' | 'fc' | 'cross'
+      reason: string
+      dryRun?: boolean
+      confirmed?: boolean
+      migrationRiskState?: string
+      environmentParityState?: string
+      configDriftState?: string
+      rolloutState?: string
+      releaseState?: string
+      deploymentState?: string
+      rollbackState?: string
+      verificationState?: string
+      releaseCommunicationState?: string
+      releaseVisibilityState?: string
+      nextRecommendedAction?: string
+    }) => withToken((token) => internalFetch<any>('/internal/releases/action', token, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })),
     getIncidentDashboard: async () => withToken((token) => internalFetch<InternalIncidentDashboardResponse>('/internal/incidents/dashboard', token)),
     runIncidentTriage: async (payload: { actionType: 'acknowledge' | 'create_incident' | 'escalate' | 'resolve'; incidentId?: string; incidentType?: string; incidentSeverity?: string; incidentPriority?: string; sourceArea?: string; reason: string; escalationTarget?: string }) =>
       withToken((token) => internalFetch<any>('/internal/incidents/triage', token, {
