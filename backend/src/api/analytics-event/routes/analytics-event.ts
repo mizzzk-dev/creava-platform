@@ -61,6 +61,24 @@ export default {
       config: { auth: false },
     },
     {
+      method: 'GET',
+      path: '/internal/flags/dashboard',
+      handler: 'analytics-event.internalFlagDashboard',
+      config: { auth: false },
+    },
+    {
+      method: 'GET',
+      path: '/internal/flags/evaluation',
+      handler: 'analytics-event.internalFlagEvaluation',
+      config: { auth: false },
+    },
+    {
+      method: 'POST',
+      path: '/internal/flags/action',
+      handler: 'analytics-event.internalFlagAction',
+      config: { auth: false },
+    },
+    {
       method: 'POST',
       path: '/internal/releases/action',
       handler: 'analytics-event.internalReleaseAction',

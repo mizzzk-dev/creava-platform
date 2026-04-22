@@ -19,6 +19,8 @@ import {
   type InternalScheduledChecksResponse,
   type InternalIncidentCommunicationsDashboardResponse,
   type InternalReleaseDashboardResponse,
+  type InternalFlagDashboardResponse,
+  type InternalFlagEvaluationResponse,
 } from '@/modules/internal-admin/api'
 import { trackMizzzEvent } from '@/modules/analytics/tracking'
 
@@ -48,6 +50,10 @@ export default function InternalAdminPage() {
   const [releaseDashboard, setReleaseDashboard] = useState<InternalReleaseDashboardResponse | null>(null)
   const [releaseReason, setReleaseReason] = useState('preview / dry-run で release risk を確認')
   const [releaseActionResult, setReleaseActionResult] = useState<Record<string, unknown> | null>(null)
+  const [flagDashboard, setFlagDashboard] = useState<InternalFlagDashboardResponse | null>(null)
+  const [flagEvaluation, setFlagEvaluation] = useState<InternalFlagEvaluationResponse | null>(null)
+  const [flagReason, setFlagReason] = useState('preview / simulation で exposure 影響を確認')
+  const [flagActionResult, setFlagActionResult] = useState<Record<string, unknown> | null>(null)
   const [incidentDashboard, setIncidentDashboard] = useState<InternalIncidentDashboardResponse | null>(null)
   const [scheduledChecksResult, setScheduledChecksResult] = useState<InternalScheduledChecksResponse | null>(null)
   const [triageReason, setTriageReason] = useState('scheduled check で検知した異常を確認')
@@ -165,6 +171,120 @@ export default function InternalAdminPage() {
           </div>
           {safeActionResult && (
             <pre className="mt-2 overflow-auto rounded bg-gray-50 p-3 text-xs dark:bg-gray-900">{JSON.stringify(safeActionResult, null, 2)}</pre>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-6 rounded border border-gray-200 p-4 dark:border-gray-800">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-gray-500">flag dashboard / experimentation / staged exposure / kill switch</p>
+          <button
+            type="button"
+            className="rounded bg-gray-900 px-3 py-2 text-xs text-white"
+            onClick={() => {
+              setMessage(null)
+              trackMizzzEvent('flag_dashboard_view', { actorRole: internalRole, sourceSection: 'flag_dashboard', sourceArea: 'cross' })
+              api.getFlagDashboard().then(setFlagDashboard).catch((e: Error) => setMessage(e.message))
+            }}
+          >flag summary 更新</button>
+        </div>
+        {flagDashboard && (
+          <div className="mt-3 space-y-3 text-xs">
+            <p className="text-gray-500">next: {flagDashboard.flagSummary.nextRecommendedAction}</p>
+            <div className="grid gap-2 md:grid-cols-2">
+              <div className="rounded border border-gray-200 p-3 dark:border-gray-700">
+                <p className="font-medium">flags / rollout</p>
+                <p>total: {flagDashboard.flagSummary.totalCount}</p>
+                <p>active partial: {flagDashboard.flagSummary.activePartialCount}</p>
+                <p>active full: {flagDashboard.flagSummary.activeFullCount}</p>
+                <p>paused: {flagDashboard.flagSummary.pausedCount}</p>
+                <p>disabled: {flagDashboard.flagSummary.disabledCount}</p>
+                <p>risky: {flagDashboard.flagSummary.riskyCount}</p>
+              </div>
+              <div className="rounded border border-gray-200 p-3 dark:border-gray-700">
+                <p className="font-medium">experiment / exposure / kill switch</p>
+                <p>running experiments: {flagDashboard.experimentSummary.runningCount}</p>
+                <p>exposed: {flagDashboard.exposureSummary.exposedCount}</p>
+                <p>blocked: {flagDashboard.exposureSummary.blockedCount}</p>
+                <p>kill switch triggered: {flagDashboard.killSwitchSummary.triggeredCount}</p>
+                <p>kill switch ready: {flagDashboard.killSwitchSummary.availableCount}</p>
+              </div>
+            </div>
+            <pre className="overflow-auto rounded bg-gray-50 p-3 dark:bg-gray-900">{JSON.stringify({
+              blockedOrRiskyFlags: flagDashboard.blockedOrRiskyFlags.slice(0, 8),
+              runningExperiments: flagDashboard.runningExperiments.slice(0, 8),
+              killSwitchReadyItems: flagDashboard.killSwitchReadyItems.slice(0, 8),
+            }, null, 2)}</pre>
+          </div>
+        )}
+        <div className="mt-4 rounded border border-gray-200 p-3 dark:border-gray-700">
+          <p className="text-xs text-gray-500">flag evaluation / safe action</p>
+          <div className="mt-2 flex flex-col gap-2 md:flex-row">
+            <input value={flagReason} onChange={(e) => setFlagReason(e.target.value)} className="w-full rounded border border-gray-300 px-2 py-2 text-xs" placeholder="flag action reason を入力" />
+            <button
+              type="button"
+              className="rounded border border-gray-300 px-3 py-2 text-xs"
+              onClick={() => {
+                setMessage(null)
+                trackMizzzEvent('flag_evaluation_view', { actorRole: internalRole, sourceSection: 'flag_dashboard', sourceArea: 'cross' })
+                api.getFlagEvaluation({
+                  flagKey: 'member-beta-banner',
+                  sourceSite: 'main',
+                  membershipStatus: 'active',
+                  entitlementState: 'granted',
+                  lifecycleStage: 'engaged',
+                  locale: 'ja',
+                  rolloutPercentage: 25,
+                }).then(setFlagEvaluation).catch((e: Error) => setMessage(e.message))
+              }}
+            >evaluation preview</button>
+            <button
+              type="button"
+              className="rounded border border-gray-300 px-3 py-2 text-xs"
+              onClick={() => {
+                setMessage(null)
+                trackMizzzEvent('staged_rollout_start', { actorRole: internalRole, sourceSection: 'flag_dashboard', sourceArea: 'cross' })
+                api.runFlagAction({
+                  actionType: 'execute',
+                  flagKey: 'member-beta-banner',
+                  sourceSite: 'main',
+                  reason: flagReason,
+                  dryRun: true,
+                  confirmed: true,
+                  featureFlagState: 'active_partial',
+                  experimentState: 'running',
+                  rolloutPercentageState: '25',
+                }).then((result) => {
+                  setFlagActionResult(result)
+                  trackMizzzEvent('rollout_percentage_change', { actorRole: internalRole, sourceSection: 'flag_dashboard', sourceArea: 'cross' })
+                }).catch((e: Error) => setMessage(e.message))
+              }}
+            >staged rollout dry-run</button>
+            <button
+              type="button"
+              className="rounded border border-red-400 px-3 py-2 text-xs text-red-700"
+              onClick={() => {
+                setMessage(null)
+                trackMizzzEvent('kill_switch_trigger_start', { actorRole: internalRole, sourceSection: 'flag_dashboard', sourceArea: 'cross' })
+                api.runFlagAction({
+                  actionType: 'kill_switch_trigger',
+                  flagKey: 'member-beta-banner',
+                  sourceSite: 'main',
+                  reason: flagReason,
+                  dryRun: false,
+                  confirmed: true,
+                }).then((result) => {
+                  setFlagActionResult(result)
+                  trackMizzzEvent('kill_switch_trigger_complete', { actorRole: internalRole, sourceSection: 'flag_dashboard', sourceArea: 'cross' })
+                }).catch((e: Error) => setMessage(e.message))
+              }}
+            >kill switch trigger</button>
+          </div>
+          {flagEvaluation && (
+            <pre className="mt-2 overflow-auto rounded bg-gray-50 p-3 text-xs dark:bg-gray-900">{JSON.stringify(flagEvaluation, null, 2)}</pre>
+          )}
+          {flagActionResult && (
+            <pre className="mt-2 overflow-auto rounded bg-gray-50 p-3 text-xs dark:bg-gray-900">{JSON.stringify(flagActionResult, null, 2)}</pre>
           )}
         </div>
       </div>

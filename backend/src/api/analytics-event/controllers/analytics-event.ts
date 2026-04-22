@@ -69,6 +69,11 @@ const ALLOWED_EVENTS = new Set([
   'verification_start', 'verification_complete', 'rollback_preview_view', 'rollback_execute_start',
   'rollback_execute_complete', 'hotfix_start', 'freeze_exception_request', 'release_note_publish',
   'related_incident_open',
+  'flag_dashboard_view', 'flag_summary_view', 'flag_evaluation_view',
+  'rollout_percentage_change', 'staged_rollout_start', 'staged_rollout_pause', 'staged_rollout_resume',
+  'experiment_start', 'experiment_pause', 'experiment_complete', 'experiment_stop',
+  'kill_switch_preview_view', 'kill_switch_trigger_start', 'kill_switch_trigger_complete',
+  'exposure_reason_view',
 ])
 
 function sanitizeText(value: unknown, maxLength = 120): string | undefined {
@@ -292,6 +297,38 @@ type ReleaseAuditItem = {
   createdAt: string | null
 }
 
+type FlagAuditItem = {
+  flagKey: string
+  sourceSite: string
+  sourceArea: string
+  featureFlagType: string
+  featureFlagState: string
+  flagVisibilityState: string
+  flagEvaluationState: string
+  experimentState: string
+  experimentType: string
+  variantState: string
+  assignmentState: string
+  exposureState: string
+  audienceRuleState: string
+  audienceEligibilityState: string
+  rolloutPercentageState: string
+  rolloutWindowState: string
+  killSwitchState: string
+  emergencyDisableState: string
+  evaluationReason: string
+  lifecycleStage: string
+  membershipStatus: string
+  entitlementState: string
+  subscriptionState: string
+  billingState: string
+  locale: string
+  lastEvaluatedAt: string | null
+  lastChangedAt: string | null
+  lastDisabledAt: string | null
+  nextRecommendedAction: string
+}
+
 function toReleaseAuditItem(row: Record<string, unknown>): ReleaseAuditItem {
   const metadata = parseJsonObject(row.metadata)
   return {
@@ -321,6 +358,41 @@ function toReleaseAuditItem(row: Record<string, unknown>): ReleaseAuditItem {
     lastRolledBackAt: metadata.lastRolledBackAt ? String(metadata.lastRolledBackAt) : null,
     lastParityCheckAt: metadata.lastParityCheckAt ? String(metadata.lastParityCheckAt) : null,
     createdAt: row.createdAt ? String(row.createdAt) : null,
+  }
+}
+
+function toFlagAuditItem(row: Record<string, unknown>): FlagAuditItem {
+  const metadata = parseJsonObject(row.metadata)
+  return {
+    flagKey: String(row.targetId ?? metadata.flagKey ?? `flag:${Date.now()}`),
+    sourceSite: String(row.sourceSite ?? metadata.sourceSite ?? 'cross'),
+    sourceArea: String(metadata.sourceArea ?? 'runtime-exposure-control'),
+    featureFlagType: String(metadata.featureFlagType ?? 'ui_flag'),
+    featureFlagState: String(metadata.featureFlagState ?? 'draft'),
+    flagVisibilityState: String(metadata.flagVisibilityState ?? 'internal_only'),
+    flagEvaluationState: String(metadata.flagEvaluationState ?? 'not_evaluated'),
+    experimentState: String(metadata.experimentState ?? 'draft'),
+    experimentType: String(metadata.experimentType ?? 'none'),
+    variantState: String(metadata.variantState ?? 'control'),
+    assignmentState: String(metadata.assignmentState ?? 'not_assigned'),
+    exposureState: String(metadata.exposureState ?? 'not_exposed'),
+    audienceRuleState: String(metadata.audienceRuleState ?? 'none'),
+    audienceEligibilityState: String(metadata.audienceEligibilityState ?? 'unknown'),
+    rolloutPercentageState: String(metadata.rolloutPercentageState ?? '0'),
+    rolloutWindowState: String(metadata.rolloutWindowState ?? 'always'),
+    killSwitchState: String(metadata.killSwitchState ?? 'available'),
+    emergencyDisableState: String(metadata.emergencyDisableState ?? 'idle'),
+    evaluationReason: String(metadata.evaluationReason ?? 'rule not evaluated yet'),
+    lifecycleStage: String(metadata.lifecycleStage ?? 'unknown'),
+    membershipStatus: String(metadata.membershipStatus ?? 'unknown'),
+    entitlementState: String(metadata.entitlementState ?? 'unknown'),
+    subscriptionState: String(metadata.subscriptionState ?? 'unknown'),
+    billingState: String(metadata.billingState ?? 'unknown'),
+    locale: String(metadata.locale ?? 'all'),
+    lastEvaluatedAt: metadata.lastEvaluatedAt ? String(metadata.lastEvaluatedAt) : null,
+    lastChangedAt: metadata.lastChangedAt ? String(metadata.lastChangedAt) : null,
+    lastDisabledAt: metadata.lastDisabledAt ? String(metadata.lastDisabledAt) : null,
+    nextRecommendedAction: String(metadata.nextRecommendedAction ?? 'preview / simulation で評価結果を確認'),
   }
 }
 
@@ -1622,6 +1694,134 @@ export default factories.createCoreController('api::analytics-event.analytics-ev
     }
   },
 
+  async internalFlagDashboard(ctx) {
+    try {
+      await requireInternalPermission(ctx, 'internal.flag.read')
+      const rows = await strapi.documents('api::internal-audit-log.internal-audit-log').findMany({
+        filters: { action: { $containsi: 'ops-flag' } },
+        fields: ['id', 'status', 'sourceSite', 'targetId', 'metadata', 'createdAt'],
+        sort: ['createdAt:desc'],
+        limit: BI_MAX_FETCH_ROWS,
+      })
+      const flagItems = (rows as Array<Record<string, unknown>>).map(toFlagAuditItem).slice(0, 120)
+      const activeItems = flagItems.filter((item) => ['active_limited', 'active_partial', 'active_full'].includes(item.featureFlagState))
+      const riskyItems = flagItems.filter((item) => item.killSwitchState === 'unavailable' || item.featureFlagState === 'active_full')
+      const runningExperiments = flagItems.filter((item) => item.experimentState === 'running')
+      const killSwitchReady = flagItems.filter((item) => ['available', 'armed'].includes(item.killSwitchState))
+
+      ctx.body = {
+        sourceOfTruth: {
+          auth: 'supabase-auth(auth.users)',
+          businessState: 'app-user domain',
+          runtimeExposureControlPlane: 'internal_audit_log + backend evaluation summary',
+        },
+        flagSummary: {
+          totalCount: flagItems.length,
+          draftCount: flagItems.filter((item) => item.featureFlagState === 'draft').length,
+          activeLimitedCount: flagItems.filter((item) => item.featureFlagState === 'active_limited').length,
+          activePartialCount: flagItems.filter((item) => item.featureFlagState === 'active_partial').length,
+          activeFullCount: flagItems.filter((item) => item.featureFlagState === 'active_full').length,
+          pausedCount: flagItems.filter((item) => item.featureFlagState === 'paused').length,
+          disabledCount: flagItems.filter((item) => item.featureFlagState === 'disabled').length,
+          riskyCount: riskyItems.length,
+          nextRecommendedAction: riskyItems.length > 0 ? 'kill switch 非対応または active_full を優先見直し' : 'staged exposure の preview / simulation を継続',
+        },
+        experimentSummary: {
+          runningCount: runningExperiments.length,
+          pausedCount: flagItems.filter((item) => item.experimentState === 'paused').length,
+          completedCount: flagItems.filter((item) => item.experimentState === 'completed').length,
+          invalidatedCount: flagItems.filter((item) => item.experimentState === 'invalidated').length,
+        },
+        exposureSummary: {
+          exposedCount: flagItems.filter((item) => item.exposureState === 'exposed').length,
+          blockedCount: flagItems.filter((item) => item.exposureState === 'blocked').length,
+          suppressedCount: flagItems.filter((item) => item.exposureState === 'suppressed').length,
+          eligibleCount: flagItems.filter((item) => item.exposureState === 'eligible').length,
+        },
+        audienceSummary: {
+          targetedCount: flagItems.filter((item) => item.audienceRuleState !== 'none').length,
+          excludedCount: flagItems.filter((item) => item.audienceEligibilityState === 'excluded').length,
+          memberTargetedCount: flagItems.filter((item) => ['active', 'grace'].includes(item.membershipStatus)).length,
+          localeScopedCount: flagItems.filter((item) => item.locale !== 'all').length,
+        },
+        killSwitchSummary: {
+          availableCount: killSwitchReady.length,
+          armedCount: flagItems.filter((item) => item.killSwitchState === 'armed').length,
+          triggeredCount: flagItems.filter((item) => item.killSwitchState === 'triggered').length,
+          resetPendingCount: flagItems.filter((item) => item.killSwitchState === 'reset_pending').length,
+        },
+        evaluationSummary: {
+          explainableCount: flagItems.filter((item) => item.evaluationReason.length >= 4).length,
+          staleCount: flagItems.filter((item) => {
+            const at = parseDateInput(item.lastEvaluatedAt)
+            return at ? (Date.now() - at.getTime()) > (6 * 60 * 60 * 1000) : true
+          }).length,
+          activeCount: activeItems.length,
+        },
+        blockedOrRiskyFlags: riskyItems.slice(0, 20),
+        runningExperiments: runningExperiments.slice(0, 20),
+        killSwitchReadyItems: killSwitchReady.slice(0, 20),
+        flags: flagItems,
+      }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Internal permission denied')) return ctx.forbidden('flag dashboard の権限がありません。')
+      strapi.log.error(`[analytics-event] internalFlagDashboard failed: ${message}`)
+      return ctx.internalServerError('flag dashboard summary の取得に失敗しました。')
+    }
+  },
+
+  async internalFlagEvaluation(ctx) {
+    try {
+      await requireInternalPermission(ctx, 'internal.flag.read')
+      const flagKey = sanitizeText(ctx.query.flagKey, 140)
+      const sourceSite = sanitizeSourceSite(ctx.query.sourceSite)
+      const membershipStatus = sanitizeText(ctx.query.membershipStatus, 32) ?? 'guest'
+      const entitlementState = sanitizeText(ctx.query.entitlementState, 32) ?? 'none'
+      const lifecycleStage = sanitizeText(ctx.query.lifecycleStage, 32) ?? 'unknown'
+      const locale = sanitizeText(ctx.query.locale, 12) ?? 'ja'
+      const rolloutPercentage = Number(ctx.query.rolloutPercentage ?? 0)
+      const hashSeed = `${flagKey ?? 'default'}:${membershipStatus}:${entitlementState}:${lifecycleStage}:${locale}:${sourceSite}`
+      const hash = createHash('sha256').update(hashSeed).digest('hex')
+      const bucket = parseInt(hash.slice(0, 8), 16) % 100
+      const isEligibleMembership = ['active', 'grace', 'trialing'].includes(membershipStatus)
+      const isEligibleEntitlement = ['granted', 'limited'].includes(entitlementState)
+      const eligible = isEligibleMembership && isEligibleEntitlement
+      const exposureState = eligible && bucket < rolloutPercentage ? 'exposed' : eligible ? 'eligible' : 'blocked'
+      const assignmentState = eligible ? 'sticky_assigned' : 'excluded'
+      const variantState = eligible && bucket % 2 === 0 ? 'control' : eligible ? 'variant_a' : 'not_assigned'
+
+      ctx.body = {
+        flagKey: flagKey ?? 'unknown',
+        sourceSite: sourceSite === 'unknown' ? 'cross' : sourceSite,
+        sourceArea: 'runtime-exposure-control',
+        flagEvaluationState: 'evaluated',
+        audienceEligibilityState: eligible ? 'eligible' : 'excluded',
+        assignmentState,
+        exposureState,
+        variantState,
+        evaluationReason: eligible
+          ? `membershipStatus=${membershipStatus}, entitlementState=${entitlementState}, bucket=${bucket}, rolloutPercentage=${rolloutPercentage}`
+          : `membershipStatus=${membershipStatus} または entitlementState=${entitlementState} が targeting 条件を満たしていません`,
+        evaluationSummary: {
+          membershipStatus,
+          entitlementState,
+          lifecycleStage,
+          locale,
+          rolloutPercentageState: String(Math.max(0, Math.min(100, rolloutPercentage))),
+          evaluatedBucket: bucket,
+        },
+        lastEvaluatedAt: new Date().toISOString(),
+        nextRecommendedAction: exposureState === 'blocked' ? 'audience ルールまたは rollout percentage を preview で見直す' : 'support / internal admin で exposure reason を共有',
+      }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Internal permission denied')) return ctx.forbidden('flag evaluation の権限がありません。')
+      strapi.log.error(`[analytics-event] internalFlagEvaluation failed: ${message}`)
+      return ctx.internalServerError('flag evaluation に失敗しました。')
+    }
+  },
+
   async internalReleaseAction(ctx) {
     try {
       const body = (ctx.request.body ?? {}) as Record<string, unknown>
@@ -1720,6 +1920,103 @@ export default factories.createCoreController('api::analytics-event.analytics-ev
       if (message.includes('Internal permission denied')) return ctx.forbidden('release action の権限がありません。')
       strapi.log.error(`[analytics-event] internalReleaseAction failed: ${message}`)
       return ctx.internalServerError('release action 実行に失敗しました。')
+    }
+  },
+
+  async internalFlagAction(ctx) {
+    try {
+      const body = (ctx.request.body ?? {}) as Record<string, unknown>
+      const actionType = sanitizeText(body.actionType, 40) ?? 'preview'
+      const permission = actionType === 'approve'
+        ? 'internal.flag.approve'
+        : actionType === 'execute'
+          ? 'internal.flag.execute'
+          : actionType === 'kill_switch_trigger'
+            ? 'internal.flag.emergency'
+            : 'internal.flag.read'
+      const access = await requireInternalPermission(ctx, permission)
+      const reason = sanitizeText(body.reason, 240)
+      if (!reason || reason.length < 8) return ctx.badRequest('reason は8文字以上で入力してください。')
+
+      const flagKey = sanitizeText(body.flagKey, 140) ?? `flag:${Date.now()}`
+      const sourceSite = sanitizeSourceSite(body.sourceSite) === 'unknown' ? 'cross' : sanitizeSourceSite(body.sourceSite)
+      const confirmed = Boolean(body.confirmed)
+      const dryRun = body.dryRun !== false
+      if (['execute', 'kill_switch_trigger', 'reset'].includes(actionType) && !confirmed) return ctx.badRequest('execute / kill switch / reset は confirmed=true が必要です。')
+
+      const nowIso = new Date().toISOString()
+      const featureFlagState = sanitizeText(body.featureFlagState, 32)
+        ?? (actionType === 'execute' ? 'active_partial' : actionType === 'kill_switch_trigger' ? 'disabled' : 'draft')
+      const experimentState = sanitizeText(body.experimentState, 32) ?? (actionType === 'execute' ? 'running' : 'draft')
+      const killSwitchState = sanitizeText(body.killSwitchState, 32)
+        ?? (actionType === 'kill_switch_trigger' ? 'triggered' : actionType === 'reset' ? 'reset_pending' : 'available')
+      const emergencyDisableState = sanitizeText(body.emergencyDisableState, 32)
+        ?? (actionType === 'kill_switch_trigger' ? 'disabled' : 'idle')
+
+      await strapi.documents('api::internal-audit-log.internal-audit-log').create({
+        data: {
+          actorLogtoUserId: access.authUser.userId,
+          actorInternalRoles: access.internalRoles,
+          targetType: 'feature-flag-item',
+          targetId: flagKey,
+          action: `ops-flag:${actionType}`,
+          status: ['execute', 'kill_switch_trigger'].includes(actionType) && dryRun ? 'pending' : 'success',
+          reason,
+          sourceSite,
+          beforeState: { featureFlagState: 'draft', killSwitchState: 'available' },
+          afterState: { featureFlagState, killSwitchState },
+          metadata: {
+            flagKey,
+            actionType,
+            dryRun,
+            confirmed,
+            sourceArea: sanitizeText(body.sourceArea, 64) ?? 'runtime-exposure-control',
+            featureFlagType: sanitizeText(body.featureFlagType, 32) ?? 'ui_flag',
+            featureFlagState,
+            flagVisibilityState: sanitizeText(body.flagVisibilityState, 32) ?? 'internal_only',
+            flagEvaluationState: sanitizeText(body.flagEvaluationState, 32) ?? 'evaluated',
+            experimentState,
+            experimentType: sanitizeText(body.experimentType, 32) ?? 'ab_test',
+            variantState: sanitizeText(body.variantState, 32) ?? 'control',
+            assignmentState: sanitizeText(body.assignmentState, 32) ?? 'sticky_assigned',
+            exposureState: sanitizeText(body.exposureState, 32) ?? (featureFlagState.startsWith('active') ? 'exposed' : 'blocked'),
+            audienceRuleState: sanitizeText(body.audienceRuleState, 32) ?? 'inclusion_and_exclusion',
+            audienceEligibilityState: sanitizeText(body.audienceEligibilityState, 32) ?? 'eligible',
+            rolloutPercentageState: sanitizeText(body.rolloutPercentageState, 32) ?? '25',
+            rolloutWindowState: sanitizeText(body.rolloutWindowState, 32) ?? 'always',
+            killSwitchState,
+            emergencyDisableState,
+            evaluationReason: sanitizeText(body.evaluationReason, 240) ?? 'membershipStatus / entitlementState / lifecycleStage rule で評価',
+            membershipStatus: sanitizeText(body.membershipStatus, 32) ?? 'active',
+            entitlementState: sanitizeText(body.entitlementState, 32) ?? 'granted',
+            subscriptionState: sanitizeText(body.subscriptionState, 32) ?? 'active',
+            billingState: sanitizeText(body.billingState, 32) ?? 'clear',
+            lifecycleStage: sanitizeText(body.lifecycleStage, 32) ?? 'engaged',
+            locale: sanitizeText(body.locale, 12) ?? 'all',
+            lastEvaluatedAt: nowIso,
+            lastChangedAt: nowIso,
+            lastDisabledAt: actionType === 'kill_switch_trigger' ? nowIso : null,
+            nextRecommendedAction: sanitizeText(body.nextRecommendedAction, 240) ?? (actionType === 'kill_switch_trigger' ? 'incident dashboard / status page / support center の通知を更新' : actionType === 'execute' ? 'staged rollout の監視を継続' : 'preview / simulation で評価結果を確認'),
+          },
+          requestId: String(ctx.request.headers['x-request-id'] ?? ''),
+        },
+      })
+
+      ctx.body = {
+        flagKey,
+        actionType,
+        dryRun,
+        confirmed,
+        featureFlagState,
+        experimentState,
+        killSwitchState,
+        emergencyDisableState,
+      }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Internal permission denied')) return ctx.forbidden('flag action の権限がありません。')
+      strapi.log.error(`[analytics-event] internalFlagAction failed: ${message}`)
+      return ctx.internalServerError('flag action 実行に失敗しました。')
     }
   },
 
