@@ -374,3 +374,24 @@
 ### 補足
 - runtime env と CI secrets の責務を分離し、同じキーの使い回しを避ける。
 - local / staging / production で parity check の期待値が異なるため、drift 許容条件は docs に明記する。
+
+## 6. runtime exposure control / feature flag 拡張（2026-04-22）
+
+### frontend
+- `VITE_RUNTIME_EXPOSURE_CONTROL_ENABLED`: runtime exposure control UI を有効化。
+- `VITE_FLAG_DASHBOARD_ENABLED`: internal admin 上の flag dashboard 表示フラグ。
+- `VITE_FLAG_EVALUATION_CACHE_TTL_SEC`: evaluation summary の client cache TTL。
+- `VITE_FLAG_KILL_SWITCH_CONFIRM_REQUIRED`: kill switch 実行時の confirm 強制。
+
+### backend
+- `FEATURE_FLAG_CONTROL_PLANE_ENABLED`: backend 側 flag control API の有効化。
+- `FLAG_EVALUATION_CACHE_TTL_SEC`: evaluation result cache TTL。
+- `FLAG_DEFAULT_ROLLOUT_PERCENTAGE`: staged exposure の初期値。
+- `FLAG_KILL_SWITCH_REQUIRE_APPROVAL`: kill switch 実行前に approval を要求するか。
+- `FLAG_KILL_SWITCH_MAX_LATENCY_MS`: kill switch 反映遅延の許容値。
+- `FLAG_AUDIENCE_RULESET_VERSION`: audience 評価ルールセットのバージョン。
+- `EXPERIMENT_ASSIGNMENT_STICKY_DAYS`: assignment を sticky とみなす日数。
+
+### 運用注意
+- `SUPABASE_SERVICE_ROLE_KEY` は backend/trusted server 以外に設定しない。
+- release dashboard 用変数と flag dashboard 用変数は分離し、責務を混在させない。

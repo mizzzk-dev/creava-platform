@@ -584,6 +584,52 @@ export type InternalReleaseDashboardResponse = {
   }>
 }
 
+export type InternalFlagDashboardResponse = {
+  sourceOfTruth: Record<string, string>
+  flagSummary: {
+    totalCount: number
+    draftCount: number
+    activeLimitedCount: number
+    activePartialCount: number
+    activeFullCount: number
+    pausedCount: number
+    disabledCount: number
+    riskyCount: number
+    nextRecommendedAction: string
+  }
+  experimentSummary: { runningCount: number; pausedCount: number; completedCount: number; invalidatedCount: number }
+  exposureSummary: { exposedCount: number; blockedCount: number; suppressedCount: number; eligibleCount: number }
+  audienceSummary: { targetedCount: number; excludedCount: number; memberTargetedCount: number; localeScopedCount: number }
+  killSwitchSummary: { availableCount: number; armedCount: number; triggeredCount: number; resetPendingCount: number }
+  evaluationSummary: { explainableCount: number; staleCount: number; activeCount: number }
+  blockedOrRiskyFlags: Array<Record<string, unknown>>
+  runningExperiments: Array<Record<string, unknown>>
+  killSwitchReadyItems: Array<Record<string, unknown>>
+  flags: Array<Record<string, unknown>>
+}
+
+export type InternalFlagEvaluationResponse = {
+  flagKey: string
+  sourceSite: string
+  sourceArea: string
+  flagEvaluationState: string
+  audienceEligibilityState: string
+  assignmentState: string
+  exposureState: string
+  variantState: string
+  evaluationReason: string
+  evaluationSummary: {
+    membershipStatus: string
+    entitlementState: string
+    lifecycleStage: string
+    locale: string
+    rolloutPercentageState: string
+    evaluatedBucket: number
+  }
+  lastEvaluatedAt: string
+  nextRecommendedAction: string
+}
+
 function getApiBaseUrl(): string {
   const baseUrl = import.meta.env.VITE_STRAPI_API_URL
   if (!baseUrl) throw new Error('VITE_STRAPI_API_URL が未設定です。')
@@ -678,6 +724,42 @@ export function useInternalAdminApi() {
         body: JSON.stringify(payload ?? {}),
       })),
     getReleaseDashboard: async () => withToken((token) => internalFetch<InternalReleaseDashboardResponse>('/internal/releases/dashboard', token)),
+    getFlagDashboard: async () => withToken((token) => internalFetch<InternalFlagDashboardResponse>('/internal/flags/dashboard', token)),
+    getFlagEvaluation: async (query: {
+      flagKey?: string
+      sourceSite?: 'main' | 'store' | 'fc' | 'cross'
+      membershipStatus?: string
+      entitlementState?: string
+      lifecycleStage?: string
+      locale?: string
+      rolloutPercentage?: number
+    }) => withToken((token) => {
+      const search = new URLSearchParams()
+      Object.entries(query).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === '') return
+        search.set(key, String(value))
+      })
+      return internalFetch<InternalFlagEvaluationResponse>(`/internal/flags/evaluation?${search.toString()}`, token)
+    }),
+    runFlagAction: async (payload: {
+      actionType: 'preview' | 'simulate' | 'approve' | 'execute' | 'pause' | 'kill_switch_trigger' | 'reset'
+      flagKey?: string
+      sourceSite?: 'main' | 'store' | 'fc' | 'cross'
+      reason: string
+      dryRun?: boolean
+      confirmed?: boolean
+      featureFlagType?: string
+      featureFlagState?: string
+      experimentState?: string
+      killSwitchState?: string
+      emergencyDisableState?: string
+      rolloutPercentageState?: string
+      evaluationReason?: string
+      nextRecommendedAction?: string
+    }) => withToken((token) => internalFetch<any>('/internal/flags/action', token, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })),
     runReleaseAction: async (payload: {
       actionType: 'preview' | 'parity_check' | 'approve' | 'execute' | 'verify' | 'rollback_execute' | 'publish_note'
       releaseId?: string
