@@ -5,7 +5,23 @@ import PageHead from '@/components/seo/PageHead'
 import SocialAuthProviderStatus from '@/components/auth/SocialAuthProviderStatus'
 import { useCurrentUser, useUserLifecycleApi } from '@/hooks'
 import { ROUTES } from '@/lib/routeConstants'
-import { appendSecurityEvent, clearWithdrawRequest, getMemberAccountSettings, getMemberBillingSummary, getMemberDashboard, requestWithdraw, updateMemberAccountSettings, verifySensitiveAction, type MemberBillingSummary } from '@/modules/member/api'
+import {
+  appendSecurityEvent,
+  clearWithdrawRequest,
+  getMemberAccountSettings,
+  getMemberBillingSummary,
+  getMemberDashboard,
+  getPrivacySummary,
+  requestMembershipCancellationFlow,
+  requestPrivacyDataExport,
+  requestPrivacyDeletion,
+  requestWithdraw,
+  updateMemberAccountSettings,
+  updatePrivacyPreferences,
+  verifySensitiveAction,
+  type MemberBillingSummary,
+  type PrivacySummary,
+} from '@/modules/member/api'
 import type { MemberAccountSettings, MemberDashboardData, MemberOrderStatus, MemberPaymentSettings, MemberShippingSettings, ShipmentStatus } from '@/modules/member/types'
 import { buildCrmSegments, buildLtvDashboard, buildSupportTemplates } from '@/modules/store/lib/commerceOptimization'
 import MyPagePersonalizationPanel from '@/modules/personalization/components/MyPagePersonalizationPanel'
@@ -22,6 +38,7 @@ import UserLifecycleBanner from '@/components/common/UserLifecycleBanner'
 import MemberValueExperiencePanel from '@/components/common/MemberValueExperiencePanel'
 import MemberProgressHub from '@/components/common/MemberProgressHub'
 import { requestSupabaseEmailChange, revokeSupabaseSessions, sendSupabasePasswordReset } from '@/lib/auth/supabaseAccount'
+import PrivacyCenterPanel from '@/modules/member/components/PrivacyCenterPanel'
 
 const MEMBER_BENEFITS = [
   'member.benefitEarly',
@@ -177,6 +194,7 @@ export default function MemberPage() {
   const [cardValidationErrors, setCardValidationErrors] = useState<Record<string, string>>({})
   const [campaigns, setCampaigns] = useState<CampaignSummary[]>([])
   const [billingSummary, setBillingSummary] = useState<MemberBillingSummary | null>(null)
+  const [privacySummary, setPrivacySummary] = useState<PrivacySummary | null>(null)
   const [securityEmail, setSecurityEmail] = useState('')
   const [securityMessage, setSecurityMessage] = useState<string | null>(null)
   const [securityError, setSecurityError] = useState<string | null>(null)
@@ -270,19 +288,26 @@ export default function MemberPage() {
   useEffect(() => {
     if (!isLoaded || !isSignedIn) {
       setBillingSummary(null)
+      setPrivacySummary(null)
       return
     }
     let cancelled = false
     authClient.getAccessToken()
       .then((token) => {
         if (!token) return null
-        return getMemberBillingSummary(token)
+        return Promise.all([getMemberBillingSummary(token), getPrivacySummary(token)])
       })
       .then((res) => {
-        if (!cancelled && res) setBillingSummary(res)
+        if (!cancelled && res) {
+          setBillingSummary(res[0])
+          setPrivacySummary(res[1])
+        }
       })
       .catch(() => {
-        if (!cancelled) setBillingSummary(null)
+        if (!cancelled) {
+          setBillingSummary(null)
+          setPrivacySummary(null)
+        }
       })
     return () => {
       cancelled = true
@@ -326,6 +351,37 @@ export default function MemberPage() {
     if (!dashboardData || !dashboardData.withdrawRequested) return
     const requested = await clearWithdrawRequest()
     setDashboardData({ ...dashboardData, withdrawRequested: requested })
+  }
+
+  const handlePrivacyConsentSave = async (next: Pick<PrivacySummary, 'notificationConsentState' | 'crmConsentState' | 'analyticsConsentState'>) => {
+    const token = await authClient.getAccessToken()
+    if (!token) return
+    const updated = await updatePrivacyPreferences(token, next)
+    setPrivacySummary(updated)
+  }
+
+  const handlePrivacyExportRequest = async () => {
+    const token = await authClient.getAccessToken()
+    if (!token) return
+    const updated = await requestPrivacyDataExport(token)
+    setPrivacySummary(updated)
+    trackMizzzEvent('data_export_request_complete', { sourceSite: SITE_TYPE })
+  }
+
+  const handlePrivacyDeletionRequest = async () => {
+    const token = await authClient.getAccessToken()
+    if (!token) return
+    const updated = await requestPrivacyDeletion(token, 'DELETE_MY_ACCOUNT')
+    setPrivacySummary(updated)
+    trackMizzzEvent('deletion_request_confirm', { sourceSite: SITE_TYPE })
+  }
+
+  const handleMembershipCancellationRequest = async () => {
+    const token = await authClient.getAccessToken()
+    if (!token) return
+    const updated = await requestMembershipCancellationFlow(token)
+    setPrivacySummary(updated)
+    trackMizzzEvent('membership_cancellation_complete', { sourceSite: SITE_TYPE })
   }
 
   const handleAccountProfileChange = (key: 'userId' | 'displayName' | 'email', value: string) => {
@@ -1068,6 +1124,15 @@ export default function MemberPage() {
                 <section className="rounded border border-gray-200 p-4 dark:border-gray-700 lg:col-span-2">
                   <NotificationPreferenceCenter location="member_page" />
                 </section>
+                {privacySummary && (
+                  <PrivacyCenterPanel
+                    summary={privacySummary}
+                    onSaveConsent={handlePrivacyConsentSave}
+                    onRequestExport={handlePrivacyExportRequest}
+                    onRequestCancellation={handleMembershipCancellationRequest}
+                    onRequestDeletion={handlePrivacyDeletionRequest}
+                  />
+                )}
 
                 <section className="rounded border border-gray-200 p-4 dark:border-gray-700 lg:col-span-2">
                   <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Billing / Entitlement</h2>

@@ -320,3 +320,86 @@ export async function updateMemberAccountSettings(settings: MemberAccountSetting
   saveMemberAccountSettings(settings)
   return settings
 }
+
+export type PrivacySummary = {
+  consentState: string
+  notificationConsentState: 'enabled' | 'disabled' | 'partial'
+  crmConsentState: 'opted_in' | 'opted_out' | 'restricted'
+  analyticsConsentState: 'unknown' | 'accepted' | 'declined' | 'limited'
+  dataExportState: string
+  dataExportRequestState: string
+  dataExportRequestedAt: string | null
+  dataExportReadyAt: string | null
+  deletionState: string
+  deletionRequestState: string
+  deletionRequestedAt: string | null
+  deletionConfirmedAt: string | null
+  retentionState: string
+  retentionReason: string | null
+  membershipCancellationState: string
+  legalHoldState: string
+  privacyUpdatedAt: string | null
+  userFacingNotes?: {
+    deletion?: string
+    retention?: string
+    export?: string
+  }
+}
+
+async function fetchPrivacyWithAuth<T>(path: string, authToken: string, init?: RequestInit): Promise<T> {
+  const baseUrl = import.meta.env.VITE_STRAPI_API_URL
+  if (!baseUrl) throw new Error('VITE_STRAPI_API_URL が未設定です。')
+  const response = await fetch(`${baseUrl.replace(/\/$/, '')}${path}`, {
+    ...init,
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${authToken}`,
+      ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(init?.headers ?? {}),
+    },
+  })
+  if (!response.ok) {
+    throw new Error(`privacy API error: ${response.status}`)
+  }
+  return response.json() as Promise<T>
+}
+
+export async function getPrivacySummary(authToken: string): Promise<PrivacySummary> {
+  const json = await fetchPrivacyWithAuth<{ privacySummary: PrivacySummary }>('/api/user-sync/privacy/summary', authToken)
+  return json.privacySummary
+}
+
+export async function updatePrivacyPreferences(
+  authToken: string,
+  payload: Pick<PrivacySummary, 'notificationConsentState' | 'crmConsentState' | 'analyticsConsentState'>,
+): Promise<PrivacySummary> {
+  const json = await fetchPrivacyWithAuth<{ privacySummary: PrivacySummary }>('/api/user-sync/privacy/preferences', authToken, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+  return json.privacySummary
+}
+
+export async function requestPrivacyDataExport(authToken: string): Promise<PrivacySummary> {
+  const json = await fetchPrivacyWithAuth<{ privacySummary: PrivacySummary }>('/api/user-sync/privacy/export-request', authToken, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  })
+  return json.privacySummary
+}
+
+export async function requestPrivacyDeletion(authToken: string, confirmPhrase: string): Promise<PrivacySummary> {
+  const json = await fetchPrivacyWithAuth<{ privacySummary: PrivacySummary }>('/api/user-sync/privacy/deletion-request', authToken, {
+    method: 'POST',
+    body: JSON.stringify({ confirmPhrase }),
+  })
+  return json.privacySummary
+}
+
+export async function requestMembershipCancellationFlow(authToken: string): Promise<PrivacySummary> {
+  const json = await fetchPrivacyWithAuth<{ privacySummary: PrivacySummary }>('/api/user-sync/privacy/membership-cancellation', authToken, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  })
+  return json.privacySummary
+}

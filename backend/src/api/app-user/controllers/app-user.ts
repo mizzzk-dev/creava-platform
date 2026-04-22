@@ -295,6 +295,43 @@ function buildSeedData(authUserId: string, claims: NormalizedClaims, sourceSite:
       lineOptIn: false,
       updatedBy: 'provisioning',
     },
+    consentState: 'granted',
+    notificationConsentState: 'enabled',
+    crmConsentState: 'opted_in',
+    analyticsConsentState: 'unknown',
+    privacySummary: {
+      privacyNoticeState: 'informational',
+      consentSummary: {
+        notificationConsentState: 'enabled',
+        crmConsentState: 'opted_in',
+        analyticsConsentState: 'unknown',
+      },
+      dataLifecycleSummary: {
+        dataExportState: 'not_requested',
+        deletionState: 'none',
+        retentionState: 'active',
+        membershipCancellationState: 'none',
+        legalHoldState: 'none',
+      },
+      nextActions: ['update_consent', 'request_export'],
+      supportEscalationRequired: false,
+    },
+    privacyNoticeState: 'informational',
+    dataExportState: 'not_requested',
+    dataExportRequestState: 'none',
+    dataExportRequestedAt: null,
+    dataExportReadyAt: null,
+    deletionState: 'none',
+    deletionRequestState: 'none',
+    deletionRequestedAt: null,
+    deletionConfirmedAt: null,
+    anonymizationState: 'none',
+    retentionState: 'active',
+    retentionReason: null,
+    cancellationState: 'none',
+    membershipCancellationState: 'none',
+    legalHoldState: 'none',
+    privacyUpdatedAt: nowIso,
     profileCompletionState: completedFields >= 3 ? 'complete' : completedFields > 0 ? 'partial' : 'empty',
     onboardingState: 'not_started',
     lifecycleStage: membership.membershipStatus === 'member' ? 'active_member' : membership.membershipStatus === 'grace' ? 'grace_member' : 'authenticated_non_member',
@@ -346,6 +383,49 @@ function buildSeedData(authUserId: string, claims: NormalizedClaims, sourceSite:
     lastProgressUpdateAt: nowIso,
     syncVersion: 1,
   }
+}
+
+function buildPrivacySummary(appUser: any) {
+  const notificationConsentState = appUser?.notificationConsentState ?? 'enabled'
+  const crmConsentState = appUser?.crmConsentState ?? 'opted_in'
+  const analyticsConsentState = appUser?.analyticsConsentState ?? 'unknown'
+  const consentState = appUser?.consentState ?? (notificationConsentState === 'enabled' && crmConsentState === 'opted_in' ? 'granted' : 'partial')
+
+  const summary = {
+    consentState,
+    notificationConsentState,
+    crmConsentState,
+    analyticsConsentState,
+    privacyNoticeState: appUser?.privacyNoticeState ?? 'informational',
+    dataExportState: appUser?.dataExportState ?? 'not_requested',
+    dataExportRequestState: appUser?.dataExportRequestState ?? 'none',
+    dataExportRequestedAt: appUser?.dataExportRequestedAt ?? null,
+    dataExportReadyAt: appUser?.dataExportReadyAt ?? null,
+    deletionState: appUser?.deletionState ?? 'none',
+    deletionRequestState: appUser?.deletionRequestState ?? 'none',
+    deletionRequestedAt: appUser?.deletionRequestedAt ?? null,
+    deletionConfirmedAt: appUser?.deletionConfirmedAt ?? null,
+    anonymizationState: appUser?.anonymizationState ?? 'none',
+    retentionState: appUser?.retentionState ?? 'active',
+    retentionReason: appUser?.retentionReason ?? null,
+    cancellationState: appUser?.cancellationState ?? 'none',
+    membershipCancellationState: appUser?.membershipCancellationState ?? 'none',
+    legalHoldState: appUser?.legalHoldState ?? 'none',
+    privacyUpdatedAt: appUser?.privacyUpdatedAt ?? appUser?.updatedAt ?? null,
+    userFacingNotes: {
+      deletion: '退会・解約・アカウント削除は別操作です。削除前に保持対象データを確認してください。',
+      retention: '注文/請求/監査に関わる最小データは法令・規約に基づき保持される場合があります。',
+      export: 'データエクスポートは即時ではなく、準備完了後に受け取り期限内で取得できます。',
+    },
+    nextActions: [
+      'notification_preferences',
+      'crm_preferences',
+      'analytics_consent',
+      'data_export_request',
+      'membership_cancellation_or_account_deletion',
+    ],
+  }
+  return summary
 }
 
 function resolveMfaState(claims: Record<string, unknown>, appUser: any): 'disabled' | 'available' | 'enabled' | 'required' {
@@ -656,6 +736,7 @@ async function buildUserSummary(strapi: any, logtoUserId: string) {
         inquiryCount: inquirySubmissions.length,
         latestInquiryStatus: inquirySubmissions[0]?.status ?? null,
       },
+      privacySummary: buildPrivacySummary(appUser),
       moderationState: {
         moderationActionCount: moderationLogs.length,
         reportCount: reports.length,
@@ -852,6 +933,7 @@ export default ({ strapi }) => ({
         lifecycleSummary,
         nowIso: new Date().toISOString(),
       })
+      const privacySummary = buildPrivacySummary(appUser)
 
       ctx.body = {
         appUser,
@@ -888,6 +970,7 @@ export default ({ strapi }) => ({
           }
           : null,
         notificationPreference,
+        privacySummary,
         lifecycleSummary,
         securityHub: securitySummary.securityHub,
         securitySummary,
@@ -915,6 +998,170 @@ export default ({ strapi }) => ({
         return ctx.unauthorized('ログイン状態を確認して再試行してください。')
       }
       ctx.internalServerError('user summary の取得に失敗しました。')
+    }
+  },
+
+  async privacySummary(ctx) {
+    try {
+      const authUser = await requireAuthUser(ctx)
+      const appUser = await strapi.documents('api::app-user.app-user').findFirst({
+        filters: {
+          $or: [
+            { authUserId: { $eq: authUser.userId } },
+            { supabaseUserId: { $eq: authUser.userId } },
+            { logtoUserId: { $eq: authUser.userId } },
+          ],
+        },
+      })
+      if (!appUser) return ctx.notFound('app user が未プロビジョニングです。')
+      ctx.body = { privacySummary: buildPrivacySummary(appUser) }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Authorization') || message.includes('JWT')) return ctx.unauthorized('ログイン状態を確認して再試行してください。')
+      return ctx.internalServerError('privacy summary の取得に失敗しました。')
+    }
+  },
+
+  async updatePrivacyPreferences(ctx) {
+    try {
+      const authUser = await requireAuthUser(ctx)
+      const appUser = await strapi.documents('api::app-user.app-user').findFirst({
+        filters: {
+          $or: [
+            { authUserId: { $eq: authUser.userId } },
+            { supabaseUserId: { $eq: authUser.userId } },
+            { logtoUserId: { $eq: authUser.userId } },
+          ],
+        },
+      })
+      if (!appUser) return ctx.notFound('app user が未プロビジョニングです。')
+      const nowIso = new Date().toISOString()
+      const updates = {
+        notificationConsentState: String(ctx.request.body?.notificationConsentState ?? appUser.notificationConsentState ?? 'enabled'),
+        crmConsentState: String(ctx.request.body?.crmConsentState ?? appUser.crmConsentState ?? 'opted_in'),
+        analyticsConsentState: String(ctx.request.body?.analyticsConsentState ?? appUser.analyticsConsentState ?? 'unknown'),
+      }
+      const consentState = updates.notificationConsentState === 'disabled' && updates.crmConsentState === 'opted_out'
+        ? 'revoked'
+        : updates.notificationConsentState === 'enabled' && updates.crmConsentState === 'opted_in'
+          ? 'granted'
+          : 'partial'
+
+      const updated = await strapi.documents('api::app-user.app-user').update({
+        documentId: appUser.documentId,
+        data: {
+          ...updates,
+          consentState,
+          privacyUpdatedAt: nowIso,
+          privacySummary: {
+            ...(appUser.privacySummary ?? {}),
+            updatedBy: 'self_service',
+            lastConsentUpdatedAt: nowIso,
+          },
+        },
+      })
+      ctx.body = { ok: true, privacySummary: buildPrivacySummary(updated) }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Authorization') || message.includes('JWT')) return ctx.unauthorized('ログイン状態を確認して再試行してください。')
+      return ctx.internalServerError('privacy preference の更新に失敗しました。')
+    }
+  },
+
+  async requestDataExport(ctx) {
+    try {
+      const authUser = await requireAuthUser(ctx)
+      const appUser = await strapi.documents('api::app-user.app-user').findFirst({
+        filters: {
+          $or: [
+            { authUserId: { $eq: authUser.userId } },
+            { supabaseUserId: { $eq: authUser.userId } },
+            { logtoUserId: { $eq: authUser.userId } },
+          ],
+        },
+      })
+      if (!appUser) return ctx.notFound('app user が未プロビジョニングです。')
+      const nowIso = new Date().toISOString()
+      const updated = await strapi.documents('api::app-user.app-user').update({
+        documentId: appUser.documentId,
+        data: {
+          dataExportState: 'requested',
+          dataExportRequestState: 'requested',
+          dataExportRequestedAt: nowIso,
+          privacyUpdatedAt: nowIso,
+        },
+      })
+      ctx.body = { ok: true, dataExportState: updated.dataExportState, dataExportRequestedAt: updated.dataExportRequestedAt, privacySummary: buildPrivacySummary(updated) }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Authorization') || message.includes('JWT')) return ctx.unauthorized('ログイン状態を確認して再試行してください。')
+      return ctx.internalServerError('data export request の登録に失敗しました。')
+    }
+  },
+
+  async requestDeletion(ctx) {
+    try {
+      const authUser = await requireAuthUser(ctx)
+      const appUser = await strapi.documents('api::app-user.app-user').findFirst({
+        filters: {
+          $or: [
+            { authUserId: { $eq: authUser.userId } },
+            { supabaseUserId: { $eq: authUser.userId } },
+            { logtoUserId: { $eq: authUser.userId } },
+          ],
+        },
+      })
+      if (!appUser) return ctx.notFound('app user が未プロビジョニングです。')
+      const nowIso = new Date().toISOString()
+      const confirmPhrase = String(ctx.request.body?.confirmPhrase ?? '').trim()
+      if (confirmPhrase !== 'DELETE_MY_ACCOUNT') return ctx.badRequest('確認フレーズが一致しません。')
+      const updated = await strapi.documents('api::app-user.app-user').update({
+        documentId: appUser.documentId,
+        data: {
+          deletionState: 'cooling_off',
+          deletionRequestState: 'confirmed',
+          deletionRequestedAt: appUser.deletionRequestedAt ?? nowIso,
+          deletionConfirmedAt: nowIso,
+          retentionState: appUser.legalHoldState === 'active' ? 'retained_minimum' : 'deletion_pending',
+          cancellationState: appUser.cancellationState === 'completed' ? 'completed' : 'requested',
+          privacyUpdatedAt: nowIso,
+        },
+      })
+      ctx.body = { ok: true, deletionState: updated.deletionState, deletionConfirmedAt: updated.deletionConfirmedAt, privacySummary: buildPrivacySummary(updated) }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Authorization') || message.includes('JWT')) return ctx.unauthorized('ログイン状態を確認して再試行してください。')
+      return ctx.internalServerError('deletion request の登録に失敗しました。')
+    }
+  },
+
+  async requestMembershipCancellation(ctx) {
+    try {
+      const authUser = await requireAuthUser(ctx)
+      const appUser = await strapi.documents('api::app-user.app-user').findFirst({
+        filters: {
+          $or: [
+            { authUserId: { $eq: authUser.userId } },
+            { supabaseUserId: { $eq: authUser.userId } },
+            { logtoUserId: { $eq: authUser.userId } },
+          ],
+        },
+      })
+      if (!appUser) return ctx.notFound('app user が未プロビジョニングです。')
+      const nowIso = new Date().toISOString()
+      const updated = await strapi.documents('api::app-user.app-user').update({
+        documentId: appUser.documentId,
+        data: {
+          membershipCancellationState: 'requested',
+          cancellationState: 'requested',
+          privacyUpdatedAt: nowIso,
+        },
+      })
+      ctx.body = { ok: true, membershipCancellationState: updated.membershipCancellationState, privacySummary: buildPrivacySummary(updated) }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Authorization') || message.includes('JWT')) return ctx.unauthorized('ログイン状態を確認して再試行してください。')
+      return ctx.internalServerError('membership cancellation request の登録に失敗しました。')
     }
   },
 
