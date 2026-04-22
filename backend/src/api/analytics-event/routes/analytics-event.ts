@@ -50,6 +50,18 @@ export default {
     },
     {
       method: 'GET',
+      path: '/internal/operations/dashboard',
+      handler: 'analytics-event.internalOperationsDashboard',
+      config: { auth: false },
+    },
+    {
+      method: 'POST',
+      path: '/internal/operations/safe-action',
+      handler: 'analytics-event.internalOperationsSafeAction',
+      config: { auth: false },
+    },
+    {
+      method: 'GET',
       path: '/internal/automation/runs',
       handler: 'analytics-event.internalAutomationRuns',
       config: { auth: false },

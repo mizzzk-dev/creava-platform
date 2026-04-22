@@ -299,6 +299,74 @@ export type InternalAutomationRunResponse = {
   retryPolicy: { maxAttempts: number; attempts: number }
 }
 
+export type InternalOperationsDashboardResponse = {
+  range: { from: string; to: string }
+  sourceOfTruth: Record<string, string>
+  operationsSummary: {
+    unresolvedState: string
+    backlogState: string
+    attentionState: string
+    opsPriorityState: string
+    lastCheckedAt: string
+    lastProcessedAt: string | null
+    nextRecommendedAction: string
+  }
+  kpiSummary: {
+    openSupportCases: number
+    waitingUserCount: number
+    unresolvedCriticalIssues: number
+    notificationFailures: number
+    pendingPrivacyActions: number
+    securityReviews: number
+    reconciliationNeededCount: number
+  }
+  queueSummary: Array<{
+    queueType: string
+    queueState: string
+    queueItemCount: number
+    queueItemSeverity: string
+    sourceArea: string
+    nextRecommendedAction: string
+    relatedEntityType: string
+  }>
+  anomalySummary: Array<{
+    anomalyType: string
+    anomalySeverity: string
+    anomalyState: string
+    anomalyReason: string
+    sourceArea: string
+    relatedEntityType: string
+    requiresReviewState: string
+  }>
+  reconciliationSummary: Array<{
+    reconciliationType: string
+    reconciliationState: string
+    reconciliationReason: string
+    queueItemCount: number
+    sourceArea: string
+    nextRecommendedAction: string
+  }>
+  playbookSummary: Array<{
+    playbookType: string
+    playbookState: string
+    playbookTriggerState: string
+    playbookResultState: string
+    requiresConfirmation: boolean
+    sourceArea: string
+  }>
+}
+
+export type InternalOperationsSafeActionResponse = {
+  actionId: string
+  actionType: string
+  sourceArea: string
+  dryRun: boolean
+  dangerousAction: boolean
+  confirmed: boolean
+  resultState: string
+  explanation: string
+}
+
 function getApiBaseUrl(): string {
   const baseUrl = import.meta.env.VITE_STRAPI_API_URL
   if (!baseUrl) throw new Error('VITE_STRAPI_API_URL が未設定です。')
@@ -376,6 +444,17 @@ export function useInternalAdminApi() {
       return internalFetch<InternalBiReport>(`/internal/bi/report?${query.toString()}`, token)
     }),
     getAutomationPlaybooks: async () => withToken((token) => internalFetch<InternalAutomationPlaybooksResponse>('/internal/automation/playbooks', token)),
+    getOperationsDashboard: async (from?: string, to?: string) => withToken((token) => {
+      const query = new URLSearchParams()
+      if (from) query.set('from', from)
+      if (to) query.set('to', to)
+      return internalFetch<InternalOperationsDashboardResponse>(`/internal/operations/dashboard${query.toString() ? `?${query.toString()}` : ''}`, token)
+    }),
+    runSafeOperation: async (payload: { actionType: string; sourceArea: string; reason: string; dryRun?: boolean; confirmed?: boolean; targetEntityType?: string; targetEntityId?: string }) =>
+      withToken((token) => internalFetch<InternalOperationsSafeActionResponse>('/internal/operations/safe-action', token, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })),
     getAutomationRuns: async () => withToken((token) => internalFetch<InternalAutomationRunsResponse>('/internal/automation/runs', token)),
     runAutomationPlaybook: async (payload: { playbookKey: string; runMode?: string; dryRun?: boolean; sourceSite?: string; reason?: string; approvalRequired?: boolean }) =>
       withToken((token) => internalFetch<InternalAutomationRunResponse>('/internal/automation/run', token, { method: 'POST', body: JSON.stringify(payload) })),

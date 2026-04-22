@@ -13,6 +13,8 @@ import {
   type InternalAutomationPlaybooksResponse,
   type InternalAutomationRunsResponse,
   type InternalAutomationRunResponse,
+  type InternalOperationsDashboardResponse,
+  type InternalOperationsSafeActionResponse,
 } from '@/modules/internal-admin/api'
 import { trackMizzzEvent } from '@/modules/analytics/tracking'
 
@@ -36,6 +38,9 @@ export default function InternalAdminPage() {
   const [automationPlaybooks, setAutomationPlaybooks] = useState<InternalAutomationPlaybooksResponse | null>(null)
   const [automationRuns, setAutomationRuns] = useState<InternalAutomationRunsResponse | null>(null)
   const [automationRunResult, setAutomationRunResult] = useState<InternalAutomationRunResponse | null>(null)
+  const [operationsDashboard, setOperationsDashboard] = useState<InternalOperationsDashboardResponse | null>(null)
+  const [safeActionReason, setSafeActionReason] = useState('queue 状態確認のため dry-run 実行')
+  const [safeActionResult, setSafeActionResult] = useState<InternalOperationsSafeActionResponse | null>(null)
   const selectedUserSummary = (selectedUser?.userSummary ?? {}) as Record<string, any>
 
   const internalRole = user?.internalRole ?? 'user'
@@ -49,6 +54,107 @@ export default function InternalAdminPage() {
       <h1 className="text-2xl font-semibold">Internal Admin Console (Beta)</h1>
       <p className="mt-2 text-sm text-gray-500">user lookup / summary / danger operations を最小機能で提供します。</p>
       <p className="mt-1 text-xs text-gray-500">閲覧優先（read-heavy）で、safe operation と privileged action を分離しています。現在ロール: {internalRole}</p>
+
+      <div className="mt-6 rounded border border-gray-200 p-4 dark:border-gray-800">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-gray-500">operations dashboard (main / store / fc)</p>
+          <button
+            type="button"
+            onClick={() => {
+              setMessage(null)
+              trackMizzzEvent('operations_dashboard_view', { actorRole: internalRole, sourceSection: 'operations_dashboard', sourceArea: 'cross' })
+              api.getOperationsDashboard().then(setOperationsDashboard).catch((e: Error) => setMessage(e.message))
+            }}
+            className="rounded bg-gray-900 px-3 py-2 text-xs text-white"
+          >summary 更新</button>
+        </div>
+
+        {operationsDashboard && (
+          <div className="mt-3 space-y-3 text-xs">
+            <p className="text-gray-500">
+              range: {operationsDashboard.range.from} ~ {operationsDashboard.range.to}
+            </p>
+            <p className="font-medium">
+              priority: {operationsDashboard.operationsSummary.opsPriorityState} / attention: {operationsDashboard.operationsSummary.attentionState}
+            </p>
+            <p className="text-gray-500">
+              next: {operationsDashboard.operationsSummary.nextRecommendedAction}
+            </p>
+            <div className="grid gap-2 md:grid-cols-2">
+              <div className="rounded border border-gray-200 p-3 dark:border-gray-700">
+                <p className="font-medium">KPI</p>
+                <p>open support: {operationsDashboard.kpiSummary.openSupportCases}</p>
+                <p>waiting user: {operationsDashboard.kpiSummary.waitingUserCount}</p>
+                <p>critical unresolved: {operationsDashboard.kpiSummary.unresolvedCriticalIssues}</p>
+                <p>notification failures: {operationsDashboard.kpiSummary.notificationFailures}</p>
+                <p>pending privacy: {operationsDashboard.kpiSummary.pendingPrivacyActions}</p>
+                <p>security reviews: {operationsDashboard.kpiSummary.securityReviews}</p>
+                <p>reconciliation needed: {operationsDashboard.kpiSummary.reconciliationNeededCount}</p>
+              </div>
+              <div className="rounded border border-gray-200 p-3 dark:border-gray-700">
+                <p className="font-medium">queue / anomaly / reconciliation / playbook</p>
+                <p>queue: {operationsDashboard.queueSummary.length} types</p>
+                <p>anomaly: {operationsDashboard.anomalySummary.filter((item) => item.anomalyState === 'detected').length} detected</p>
+                <p>reconciliation: {operationsDashboard.reconciliationSummary.filter((item) => item.reconciliationState !== 'not_needed').length} needed</p>
+                <p>playbook ready: {operationsDashboard.playbookSummary.filter((item) => item.playbookTriggerState === 'triggered').length}</p>
+              </div>
+            </div>
+            <pre className="overflow-auto rounded bg-gray-50 p-3 dark:bg-gray-900">{JSON.stringify({
+              queueSummary: operationsDashboard.queueSummary,
+              anomalySummary: operationsDashboard.anomalySummary,
+              reconciliationSummary: operationsDashboard.reconciliationSummary,
+              playbookSummary: operationsDashboard.playbookSummary,
+            }, null, 2)}</pre>
+          </div>
+        )}
+
+        <div className="mt-4 rounded border border-gray-200 p-3 dark:border-gray-700">
+          <p className="text-xs text-gray-500">safe operations (dry-run / confirm / audit)</p>
+          <div className="mt-2 flex flex-col gap-2 md:flex-row">
+            <input value={safeActionReason} onChange={(e) => setSafeActionReason(e.target.value)} className="w-full rounded border border-gray-300 px-2 py-2 text-xs" placeholder="reason を入力" />
+            <button
+              type="button"
+              className="rounded border border-gray-300 px-3 py-2 text-xs"
+              onClick={() => {
+                setMessage(null)
+                trackMizzzEvent('safe_retry_start', { actorRole: internalRole, sourceSection: 'operations_dashboard', sourceArea: 'notification' })
+                api.runSafeOperation({
+                  actionType: 'notification_retry',
+                  sourceArea: 'notification',
+                  reason: safeActionReason,
+                  dryRun: true,
+                  targetEntityType: 'delivery-log',
+                }).then((result) => {
+                  setSafeActionResult(result)
+                  trackMizzzEvent('safe_retry_complete', { actorRole: internalRole, sourceSection: 'operations_dashboard', sourceArea: 'notification' })
+                }).catch((e: Error) => setMessage(e.message))
+              }}
+            >notification retry dry-run</button>
+            <button
+              type="button"
+              className="rounded border border-amber-400 px-3 py-2 text-xs text-amber-700"
+              onClick={() => {
+                setMessage(null)
+                trackMizzzEvent('resync_start', { actorRole: internalRole, sourceSection: 'operations_dashboard', sourceArea: 'membership' })
+                api.runSafeOperation({
+                  actionType: 'membership_resync',
+                  sourceArea: 'membership',
+                  reason: safeActionReason,
+                  dryRun: false,
+                  confirmed: true,
+                  targetEntityType: 'subscription-record',
+                }).then((result) => {
+                  setSafeActionResult(result)
+                  trackMizzzEvent('resync_complete', { actorRole: internalRole, sourceSection: 'operations_dashboard', sourceArea: 'membership' })
+                }).catch((e: Error) => setMessage(e.message))
+              }}
+            >membership resync (confirm)</button>
+          </div>
+          {safeActionResult && (
+            <pre className="mt-2 overflow-auto rounded bg-gray-50 p-3 text-xs dark:bg-gray-900">{JSON.stringify(safeActionResult, null, 2)}</pre>
+          )}
+        </div>
+      </div>
 
       <div className="mt-6 rounded border border-gray-200 p-4 dark:border-gray-800">
         <p className="text-xs text-gray-500">user lookup</p>

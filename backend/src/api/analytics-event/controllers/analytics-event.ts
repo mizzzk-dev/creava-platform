@@ -44,6 +44,13 @@ const ALLOWED_EVENTS = new Set([
   'notification_center_view', 'inbox_summary_view', 'message_detail_view', 'message_mark_read', 'message_archive', 'message_dismiss',
   'unread_badge_click', 'important_notice_view', 'important_notice_cta_click', 'lifecycle_message_view', 'lifecycle_message_cta_click',
   'campaign_message_view', 'campaign_message_cta_click', 'notification_settings_view', 'notification_settings_save', 'support_from_notification_center',
+  'operations_dashboard_view', 'queue_summary_view', 'anomaly_summary_view', 'reconciliation_summary_view', 'playbook_summary_view',
+  'queue_drilldown_open', 'anomaly_drilldown_open', 'reconciliation_drilldown_open',
+  'playbook_start', 'playbook_complete',
+  'safe_retry_start', 'safe_retry_complete',
+  'resync_start', 'resync_complete',
+  'resend_start', 'resend_complete',
+  'related_user360_open', 'related_case_open',
 ])
 
 function sanitizeText(value: unknown, maxLength = 120): string | undefined {
@@ -174,6 +181,13 @@ function daysAgo(days: number): Date {
 
 function sumBy<T>(rows: T[], getter: (row: T) => number): number {
   return rows.reduce((acc, row) => acc + getter(row), 0)
+}
+
+function toPriority(severity: string, count: number): 'critical' | 'high' | 'medium' | 'low' {
+  if (severity === 'critical' || count >= 40) return 'critical'
+  if (severity === 'high' || count >= 20) return 'high'
+  if (severity === 'medium' || count >= 8) return 'medium'
+  return 'low'
 }
 
 export default factories.createCoreController('api::analytics-event.analytics-event', ({ strapi }) => ({
@@ -1187,6 +1201,209 @@ export default factories.createCoreController('api::analytics-event.analytics-ev
       if (message.includes('Internal permission denied')) return ctx.forbidden('internal automation playbook の権限がありません。')
       strapi.log.error(`[analytics-event] internalAutomationPlaybooks failed: ${message}`)
       return ctx.internalServerError('playbook 一覧の取得に失敗しました。')
+    }
+  },
+
+  async internalOperationsDashboard(ctx) {
+    try {
+      await requireInternalPermission(ctx, 'internal.user.read')
+      const to = parseDateInput(ctx.query.to) ?? new Date()
+      const from = parseDateInput(ctx.query.from) ?? new Date(to.getTime() - 7 * 24 * 60 * 60 * 1000)
+      const staleThresholdHours = Number(process.env.OPS_STALE_THRESHOLD_HOURS ?? 6)
+      const staleThresholdMs = staleThresholdHours * 60 * 60 * 1000
+
+      const [inquiries, notifications, subscriptions, securityInvestigations, securityNotices, playbookRuns, appUsers] = await Promise.all([
+        strapi.documents('api::inquiry-submission.inquiry-submission').findMany({
+          fields: ['id', 'status', 'submittedAt', 'updatedAt', 'sourceSite'],
+          limit: BI_MAX_FETCH_ROWS,
+          sort: ['submittedAt:desc'],
+        }),
+        strapi.documents('api::delivery-log.delivery-log').findMany({
+          fields: ['id', 'status', 'sentAt', 'createdAt', 'sourceSite'],
+          limit: BI_MAX_FETCH_ROWS,
+          sort: ['sentAt:desc'],
+        }),
+        strapi.documents('api::subscription-record.subscription-record').findMany({
+          fields: ['id', 'billingStatus', 'subscriptionStatus', 'membershipStatus', 'entitlementState', 'syncState', 'updatedAt', 'sourceSite'],
+          limit: BI_MAX_FETCH_ROWS,
+          sort: ['updatedAt:desc'],
+        }),
+        strapi.documents('api::security-investigation.security-investigation').findMany({
+          fields: ['id', 'status', 'investigationState', 'updatedAt', 'sourceSite'],
+          limit: BI_MAX_FETCH_ROWS,
+          sort: ['updatedAt:desc'],
+        }),
+        strapi.documents('api::security-notice.security-notice').findMany({
+          fields: ['id', 'status', 'noticeType', 'acknowledgedAt', 'publishedAt', 'sourceSite'],
+          limit: BI_MAX_FETCH_ROWS,
+          sort: ['publishedAt:desc'],
+        }),
+        strapi.documents('api::internal-audit-log.internal-audit-log').findMany({
+          filters: { targetType: { $eq: 'playbook-execution' } },
+          fields: ['id', 'status', 'createdAt', 'sourceSite'],
+          limit: BI_MAX_FETCH_ROWS,
+          sort: ['createdAt:desc'],
+        }),
+        strapi.documents('api::app-user.app-user').findMany({
+          fields: ['id', 'membershipStatus', 'billingState', 'entitlementState', 'subscriptionState', 'lifecycleStage', 'updatedAt', 'sourceSite', 'deletionState', 'deletionRequestState', 'privacyNoticeState', 'privacyUpdatedAt'],
+          limit: BI_MAX_FETCH_ROWS,
+          sort: ['updatedAt:desc'],
+        }),
+      ])
+
+      const inquiryRows = inquiries as Array<Record<string, unknown>>
+      const notificationRows = notifications as Array<Record<string, unknown>>
+      const subscriptionRows = subscriptions as Array<Record<string, unknown>>
+      const securityInvestigationRows = securityInvestigations as Array<Record<string, unknown>>
+      const securityNoticeRows = securityNotices as Array<Record<string, unknown>>
+      const playbookRunRows = playbookRuns as Array<Record<string, unknown>>
+      const appUserRows = appUsers as Array<Record<string, unknown>>
+
+      const unresolvedSupport = inquiryRows.filter((row) => ['new', 'in_review', 'waiting_reply', 'reopened'].includes(String(row.status ?? ''))).length
+      const waitingUser = inquiryRows.filter((row) => String(row.status ?? '') === 'waiting_reply').length
+      const notificationFailures = notificationRows.filter((row) => ['failed', 'bounced', 'retry_pending'].includes(String(row.status ?? ''))).length
+      const pendingPrivacyActions = appUserRows.filter((row) => {
+        const deletionState = String(row.deletionState ?? '')
+        const deletionRequestState = String(row.deletionRequestState ?? '')
+        const privacyNoticeState = String(row.privacyNoticeState ?? '')
+        return ['pending', 'queued', 'in_progress', 'scheduled', 'deletion_pending'].includes(deletionState)
+          || ['requested', 'pending_review', 'queued', 'in_progress'].includes(deletionRequestState)
+          || ['review_needed', 'pending'].includes(privacyNoticeState)
+      }).length
+      const securityReviewPending = securityInvestigationRows.filter((row) => ['open', 'pending', 'needs_review'].includes(String(row.investigationState ?? row.status ?? ''))).length
+      const mismatchCount = subscriptionRows.filter((row) => {
+        const billing = String(row.billingStatus ?? '')
+        const membership = String(row.membershipStatus ?? '')
+        const entitlement = String(row.entitlementState ?? '')
+        const subscriptionStatus = String(row.subscriptionStatus ?? '')
+        return (billing === 'failed' && membership === 'active')
+          || (subscriptionStatus === 'active' && entitlement === 'revoked')
+          || String(row.syncState ?? '') === 'mismatch_detected'
+      }).length
+      const staleSummaryCount = appUserRows.filter((row) => {
+        const updated = parseDateInput(row.updatedAt)
+        return updated ? (to.getTime() - updated.getTime()) > staleThresholdMs : true
+      }).length
+
+      const queueSummary = [
+        { queueType: 'support_backlog', queueState: unresolvedSupport > 0 ? 'pending' : 'healthy', queueItemCount: unresolvedSupport, queueItemSeverity: toPriority('high', unresolvedSupport), sourceArea: 'support', nextRecommendedAction: 'support center で担当割当と期限を更新', relatedEntityType: 'support-case' },
+        { queueType: 'notification_retry', queueState: notificationFailures > 0 ? 'retry_pending' : 'healthy', queueItemCount: notificationFailures, queueItemSeverity: toPriority('medium', notificationFailures), sourceArea: 'notification', nextRecommendedAction: 'failure reason を確認し safe retry を実行', relatedEntityType: 'notification-delivery' },
+        { queueType: 'privacy_export_pending', queueState: pendingPrivacyActions > 0 ? 'pending' : 'healthy', queueItemCount: pendingPrivacyActions, queueItemSeverity: toPriority('high', pendingPrivacyActions), sourceArea: 'privacy', nextRecommendedAction: 'privacy center で優先度順に再処理', relatedEntityType: 'privacy-request' },
+        { queueType: 'security_review_pending', queueState: securityReviewPending > 0 ? 'needs_review' : 'healthy', queueItemCount: securityReviewPending, queueItemSeverity: toPriority('high', securityReviewPending), sourceArea: 'security', nextRecommendedAction: 'security hub で open case を triage', relatedEntityType: 'security-investigation' },
+      ]
+
+      const anomalySummary = [
+        { anomalyType: 'membership_entitlement_mismatch', anomalySeverity: toPriority('high', mismatchCount), anomalyState: mismatchCount > 0 ? 'detected' : 'clear', anomalyReason: 'membershipStatus / entitlementState / billingState の整合崩れ', sourceArea: 'membership', relatedEntityType: 'subscription-record', relatedEntityId: null, requiresReviewState: mismatchCount > 0 ? 'required' : 'none' },
+        { anomalyType: 'support_backlog_spike', anomalySeverity: toPriority('high', unresolvedSupport), anomalyState: unresolvedSupport >= 20 ? 'detected' : 'normal', anomalyReason: '未解決 support case が閾値超過', sourceArea: 'support', relatedEntityType: 'support-case', relatedEntityId: null, requiresReviewState: unresolvedSupport >= 20 ? 'required' : 'none' },
+        { anomalyType: 'notification_delivery_spike', anomalySeverity: toPriority('medium', notificationFailures), anomalyState: notificationFailures >= 10 ? 'detected' : 'normal', anomalyReason: '通知配信失敗が増加', sourceArea: 'notification', relatedEntityType: 'delivery-log', relatedEntityId: null, requiresReviewState: notificationFailures >= 10 ? 'required' : 'none' },
+        { anomalyType: 'stale_summary_detected', anomalySeverity: toPriority('medium', staleSummaryCount), anomalyState: staleSummaryCount > 0 ? 'detected' : 'clear', anomalyReason: `app 側 summary の最終更新が ${staleThresholdHours}h を超過`, sourceArea: 'operations', relatedEntityType: 'app-user', relatedEntityId: null, requiresReviewState: staleSummaryCount > 0 ? 'required' : 'none' },
+      ]
+
+      const reconciliationSummary = [
+        { reconciliationType: 'membership_sync', reconciliationState: mismatchCount > 0 ? 'detected' : 'not_needed', reconciliationReason: mismatchCount > 0 ? 'subscription と user domain の差分あり' : '差分なし', queueItemCount: mismatchCount, sourceArea: 'membership', nextRecommendedAction: mismatchCount > 0 ? 'dry-run で差分確認後に safe re-sync を実行' : '監視継続' },
+        { reconciliationType: 'privacy_processing', reconciliationState: pendingPrivacyActions > 0 ? 'queued' : 'not_needed', reconciliationReason: pendingPrivacyActions > 0 ? 'privacy request が滞留' : '滞留なし', queueItemCount: pendingPrivacyActions, sourceArea: 'privacy', nextRecommendedAction: pendingPrivacyActions > 0 ? 'requestType ごとにキューを再評価' : '監視継続' },
+        { reconciliationType: 'notification_delivery', reconciliationState: notificationFailures > 0 ? 'queued' : 'not_needed', reconciliationReason: notificationFailures > 0 ? 'delivery failure/retry pending あり' : '失敗なし', queueItemCount: notificationFailures, sourceArea: 'notification', nextRecommendedAction: notificationFailures > 0 ? '再送対象を抽出して safe retry' : '監視継続' },
+      ]
+
+      const playbookSummary = [
+        { playbookType: 'support_backlog_triage', playbookState: unresolvedSupport > 0 ? 'ready' : 'suggested', playbookTriggerState: unresolvedSupport >= 10 ? 'triggered' : 'normal', playbookResultState: 'not_started', requiresConfirmation: false, sourceArea: 'support' },
+        { playbookType: 'membership_mismatch_review', playbookState: mismatchCount > 0 ? 'requires_confirmation' : 'suggested', playbookTriggerState: mismatchCount > 0 ? 'triggered' : 'normal', playbookResultState: 'not_started', requiresConfirmation: true, sourceArea: 'membership' },
+        { playbookType: 'notification_retry_review', playbookState: notificationFailures > 0 ? 'ready' : 'suggested', playbookTriggerState: notificationFailures > 0 ? 'triggered' : 'normal', playbookResultState: 'not_started', requiresConfirmation: false, sourceArea: 'notification' },
+      ]
+
+      ctx.body = {
+        range: { from: from.toISOString(), to: to.toISOString() },
+        sourceOfTruth: {
+          auth: 'supabase-auth(auth.users)',
+          businessState: 'app-user domain',
+          operations: 'ops summary derived in backend',
+        },
+        operationsSummary: {
+          unresolvedState: unresolvedSupport > 0 ? 'has_unresolved' : 'healthy',
+          backlogState: unresolvedSupport > 15 ? 'high_backlog' : unresolvedSupport > 0 ? 'backlog' : 'healthy',
+          attentionState: [mismatchCount, unresolvedSupport, pendingPrivacyActions, securityReviewPending].some((count) => count > 0) ? 'required' : 'normal',
+          opsPriorityState: toPriority('high', mismatchCount + unresolvedSupport + pendingPrivacyActions),
+          lastCheckedAt: new Date().toISOString(),
+          lastProcessedAt: playbookRunRows[0]?.createdAt ?? null,
+          nextRecommendedAction: mismatchCount > 0 ? 'reconciliation タブで membership mismatch の dry-run を優先' : unresolvedSupport > 0 ? 'support backlog triage を実行' : 'queue summary を定時監視',
+        },
+        kpiSummary: {
+          openSupportCases: unresolvedSupport,
+          waitingUserCount: waitingUser,
+          unresolvedCriticalIssues: queueSummary.filter((item) => item.queueItemSeverity === 'critical').reduce((acc, item) => acc + item.queueItemCount, 0),
+          notificationFailures,
+          pendingPrivacyActions,
+          securityReviews: securityReviewPending,
+          reconciliationNeededCount: reconciliationSummary.filter((item) => item.reconciliationState !== 'not_needed').reduce((acc, item) => acc + item.queueItemCount, 0),
+        },
+        queueSummary,
+        anomalySummary,
+        reconciliationSummary,
+        playbookSummary,
+      }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Internal permission denied')) return ctx.forbidden('operations dashboard の権限がありません。')
+      strapi.log.error(`[analytics-event] internalOperationsDashboard failed: ${message}`)
+      return ctx.internalServerError('operations dashboard summary の取得に失敗しました。')
+    }
+  },
+
+  async internalOperationsSafeAction(ctx) {
+    try {
+      const access = await requireInternalPermission(ctx, 'internal.playbook.run')
+      const body = (ctx.request.body ?? {}) as Record<string, unknown>
+      const actionType = sanitizeText(body.actionType, 80)
+      const sourceArea = sanitizeText(body.sourceArea, 40) ?? 'operations'
+      const reason = sanitizeText(body.reason, 240)
+      const dryRun = body.dryRun !== false
+      const confirmed = Boolean(body.confirmed)
+      const actionTargetType = sanitizeText(body.targetEntityType, 60) ?? 'ops-summary'
+      const actionTargetId = sanitizeText(body.targetEntityId, 120) ?? `summary:${sourceArea}`
+
+      if (!actionType) return ctx.badRequest('actionType は必須です。')
+      if (!reason || reason.length < 8) return ctx.badRequest('reason は8文字以上で入力してください。')
+
+      const dangerousAction = ['membership_resync', 'billing_resync', 'privacy_deletion_execute'].includes(actionType)
+      if (dangerousAction && !dryRun && !confirmed) {
+        return ctx.badRequest('dangerous action は confirmed=true が必要です。')
+      }
+
+      const actionId = `${actionType}:${Date.now()}`
+      await strapi.documents('api::internal-audit-log.internal-audit-log').create({
+        data: {
+          actorLogtoUserId: access.authUser.userId,
+          actorInternalRoles: access.internalRoles,
+          targetType: actionTargetType,
+          targetId: actionTargetId,
+          action: `ops-safe-action:${actionType}`,
+          status: dangerousAction && !dryRun ? 'pending' : 'success',
+          reason,
+          sourceSite: 'cross',
+          beforeState: { queueState: 'pending_review' },
+          afterState: { queueState: dryRun ? 'dry_run_completed' : dangerousAction ? 'pending_confirmation' : 'processed' },
+          metadata: { actionId, sourceArea, dryRun, dangerousAction, confirmed },
+          requestId: String(ctx.request.headers['x-request-id'] ?? ''),
+        },
+      })
+
+      ctx.body = {
+        actionId,
+        actionType,
+        sourceArea,
+        dryRun,
+        dangerousAction,
+        confirmed,
+        resultState: dryRun ? 'dry_run_completed' : dangerousAction ? 'pending_confirmation' : 'queued',
+        explanation: dangerousAction
+          ? '危険操作は dry-run と確認ログを残し、承認後に実処理へ進めてください。'
+          : 'safe action をキュー投入しました。実処理は runbook に従って実施してください。',
+      }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Internal permission denied')) return ctx.forbidden('safe operation 実行権限がありません。')
+      strapi.log.error(`[analytics-event] internalOperationsSafeAction failed: ${message}`)
+      return ctx.internalServerError('safe operation の実行に失敗しました。')
     }
   },
 
