@@ -5,7 +5,7 @@ import PageHead from '@/components/seo/PageHead'
 import SocialAuthProviderStatus from '@/components/auth/SocialAuthProviderStatus'
 import { useCurrentUser, useUserLifecycleApi } from '@/hooks'
 import { ROUTES } from '@/lib/routeConstants'
-import { clearWithdrawRequest, getMemberAccountSettings, getMemberBillingSummary, getMemberDashboard, requestWithdraw, updateMemberAccountSettings, verifySensitiveAction, type MemberBillingSummary } from '@/modules/member/api'
+import { appendSecurityEvent, clearWithdrawRequest, getMemberAccountSettings, getMemberBillingSummary, getMemberDashboard, requestWithdraw, updateMemberAccountSettings, verifySensitiveAction, type MemberBillingSummary } from '@/modules/member/api'
 import type { MemberAccountSettings, MemberDashboardData, MemberOrderStatus, MemberPaymentSettings, MemberShippingSettings, ShipmentStatus } from '@/modules/member/types'
 import { buildCrmSegments, buildLtvDashboard, buildSupportTemplates } from '@/modules/store/lib/commerceOptimization'
 import MyPagePersonalizationPanel from '@/modules/personalization/components/MyPagePersonalizationPanel'
@@ -224,6 +224,17 @@ export default function MemberPage() {
       cancelled = true
     }
   }, [authClient, canViewMemberNotices, isLoaded, isSignedIn, t])
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return
+    trackMizzzEvent('security_hub_view', {
+      sourceSite: SITE_TYPE,
+      locale: 'ja',
+      theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
+      membershipStatus: user?.membershipStatus ?? 'non_member',
+      lifecycleStage: lifecycleSummary?.lifecycleStage ?? 'unknown',
+    })
+  }, [isLoaded, isSignedIn, lifecycleSummary?.lifecycleStage, user?.membershipStatus])
 
   useEffect(() => {
     let cancelled = false
@@ -452,6 +463,8 @@ export default function MemberPage() {
     try {
       const redirectTo = SUPABASE_PASSWORD_RESET_REDIRECT_URL || `${window.location.origin}/callback?redirect=${encodeURIComponent(ROUTES.MEMBER)}`
       await sendSupabasePasswordReset(user.email, redirectTo)
+      const token = await authClient.getAccessToken()
+      if (token) await appendSecurityEvent(token, 'password_reset_requested', { sourceSite: SITE_TYPE })
       setSecurityMessage(t('member.securityPasswordResetSent', { defaultValue: 'パスワード再設定メールを送信しました。メール内リンクから変更を完了してください。' }))
       trackMizzzEvent('password_reset_start', { sourceSite: SITE_TYPE, membershipStatus: user.membershipStatus })
     } catch {
@@ -480,6 +493,7 @@ export default function MemberPage() {
     try {
       const token = await ensureSensitiveActionVerified('email_change')
       await requestSupabaseEmailChange(token, securityEmail.trim())
+      await appendSecurityEvent(token, 'email_change_requested', { sourceSite: SITE_TYPE })
       const baseMessage = t('member.securityEmailChangeSent', { defaultValue: 'メールアドレス変更確認メールを送信しました。新旧メールで承認を完了してください。' })
       setSecurityMessage(SUPABASE_EMAIL_CHANGE_REDIRECT_URL ? `${baseMessage} (${SUPABASE_EMAIL_CHANGE_REDIRECT_URL})` : baseMessage)
       trackMizzzEvent('email_change_start', { sourceSite: SITE_TYPE, membershipStatus: user?.membershipStatus ?? 'non_member' })
@@ -501,6 +515,10 @@ export default function MemberPage() {
     try {
       const token = await ensureSensitiveActionVerified('session_revoke')
       await revokeSupabaseSessions(token, sessionRevokeScope)
+      await appendSecurityEvent(token, sessionRevokeScope === 'global' ? 'all_sessions_revoked' : 'session_revoked', {
+        sourceSite: SITE_TYPE,
+        scope: sessionRevokeScope,
+      })
       setSecurityMessage(
         sessionRevokeScope === 'global'
           ? t('member.securitySessionRevokeGlobalDone', { defaultValue: '全セッションを破棄しました。必要に応じて再ログインしてください。' })

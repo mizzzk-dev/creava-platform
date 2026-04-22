@@ -1,0 +1,34 @@
+{
+  "kind": "collectionType",
+  "collectionName": "security_events",
+  "info": {
+    "singularName": "security-event",
+    "pluralName": "security-events",
+    "displayName": "Security Event",
+    "description": "Supabase Auth 前提の認証/セキュリティイベント監査ログ"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "eventId": { "type": "uid" },
+    "dedupeKey": { "type": "string" },
+    "securityEventType": {
+      "type": "enumeration",
+      "enum": ["login_success","login_failed","logout","password_reset_requested","password_reset_completed","email_change_requested","email_change_completed","mfa_enabled","mfa_disabled","linked_provider_added","linked_provider_removed","session_revoked","all_sessions_revoked","reauth_performed","suspicious_review_flagged"],
+      "required": true
+    },
+    "securityEventSeverity": {
+      "type": "enumeration",
+      "enum": ["low","medium","high","critical"],
+      "default": "low",
+      "required": true
+    },
+    "securityEventSource": { "type": "enumeration", "enum": ["main","store","fc","cross","support","internal_admin","system"], "default": "cross", "required": true },
+    "securityActorType": { "type": "enumeration", "enum": ["user","support","internal_admin","system"], "default": "user", "required": true },
+    "securityActorId": { "type": "string", "required": true },
+    "securityTargetUserId": { "type": "string", "required": true },
+    "result": { "type": "enumeration", "enum": ["success","failed","denied","review_recommended"], "default": "success", "required": true },
+    "eventOccurredAt": { "type": "datetime", "required": true },
+    "eventRecordedAt": { "type": "datetime", "required": true },
+    "securityEventMetadata": { "type": "json" }
+  }
+}

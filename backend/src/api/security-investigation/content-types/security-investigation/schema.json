@@ -1,0 +1,25 @@
+{
+  "kind": "collectionType",
+  "collectionName": "security_investigations",
+  "info": {
+    "singularName": "security-investigation",
+    "pluralName": "security-investigations",
+    "displayName": "Security Investigation",
+    "description": "support/internal admin 向けの調査状態"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "securityTargetUserId": { "type": "string", "required": true },
+    "investigationState": { "type": "enumeration", "enum": ["not_needed","open","reviewing","resolved","escalated"], "default": "not_needed", "required": true },
+    "investigationReason": { "type": "enumeration", "enum": ["suspicious_login_pattern","mfa_disabled","email_change_after_risk","session_revoke_after_alert","support_recovery_requested","manual_review"], "default": "manual_review", "required": true },
+    "suspiciousReviewState": { "type": "enumeration", "enum": ["none","flagged","under_review","user_confirmed","support_reviewed","resolved"], "default": "none", "required": true },
+    "recoveryState": { "type": "enumeration", "enum": ["none","self_service","support_required","support_in_progress","completed"], "default": "none", "required": true },
+    "sessionReviewState": { "type": "enumeration", "enum": ["none","recommended","required","completed"], "default": "none", "required": true },
+    "linkedIdentityChangeState": { "type": "enumeration", "enum": ["none","changed","review_recommended","resolved"], "default": "none", "required": true },
+    "securityExplanationState": { "type": "text" },
+    "openedBy": { "type": "string" },
+    "assignedTo": { "type": "string" },
+    "resolvedAt": { "type": "datetime" },
+    "investigationMetadata": { "type": "json" }
+  }
+}

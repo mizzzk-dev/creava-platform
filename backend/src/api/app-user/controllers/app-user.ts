@@ -23,6 +23,22 @@ const OPS_TOKEN = process.env.LOGTO_USER_SYNC_OPS_TOKEN
 const SENSITIVE_REAUTH_MAX_AGE_SEC = Number(process.env.SENSITIVE_REAUTH_MAX_AGE_SEC ?? '900')
 const SUPPORTED_SENSITIVE_ACTIONS = ['email_change', 'password_change', 'provider_link_change', 'session_revoke', 'account_recovery'] as const
 type SensitiveActionType = (typeof SUPPORTED_SENSITIVE_ACTIONS)[number]
+type SecurityEventType =
+  | 'login_success'
+  | 'login_failed'
+  | 'logout'
+  | 'password_reset_requested'
+  | 'password_reset_completed'
+  | 'email_change_requested'
+  | 'email_change_completed'
+  | 'mfa_enabled'
+  | 'mfa_disabled'
+  | 'linked_provider_added'
+  | 'linked_provider_removed'
+  | 'session_revoked'
+  | 'all_sessions_revoked'
+  | 'reauth_performed'
+  | 'suspicious_review_flagged'
 
 function normalizeLocale(raw: unknown, fallback: string = 'ja'): string {
   if (raw === 'ja' || raw === 'en' || raw === 'ko') return raw
@@ -402,6 +418,91 @@ function buildSecuritySummary(params: { authUser: AuthenticatedUser; appUser: an
   }
 }
 
+function resolveSecuritySeverity(eventType: SecurityEventType): 'low' | 'medium' | 'high' | 'critical' {
+  if (eventType === 'suspicious_review_flagged') return 'high'
+  if (eventType === 'all_sessions_revoked' || eventType === 'email_change_completed' || eventType === 'mfa_disabled') return 'medium'
+  return 'low'
+}
+
+async function createSecurityEvent(strapi: any, payload: {
+  eventType: SecurityEventType
+  targetUserId: string
+  actorId?: string
+  actorType?: 'user' | 'support' | 'internal_admin' | 'system'
+  sourceSite?: SiteType
+  result?: 'success' | 'failed' | 'denied' | 'review_recommended'
+  metadata?: Record<string, unknown>
+  dedupeKey?: string
+}) {
+  const nowIso = new Date().toISOString()
+  if (payload.dedupeKey) {
+    const existing = await strapi.documents('api::security-event.security-event').findFirst({
+      filters: { dedupeKey: { $eq: payload.dedupeKey } },
+    })
+    if (existing) return existing
+  }
+
+  return strapi.documents('api::security-event.security-event').create({
+    data: {
+      dedupeKey: payload.dedupeKey ?? null,
+      securityEventType: payload.eventType,
+      securityEventSeverity: resolveSecuritySeverity(payload.eventType),
+      securityEventSource: payload.sourceSite ?? 'cross',
+      securityActorType: payload.actorType ?? 'user',
+      securityActorId: payload.actorId ?? payload.targetUserId,
+      securityTargetUserId: payload.targetUserId,
+      result: payload.result ?? 'success',
+      eventOccurredAt: nowIso,
+      eventRecordedAt: nowIso,
+      securityEventMetadata: payload.metadata ?? {},
+    },
+  })
+}
+
+async function createSecurityNoticeFromEvent(strapi: any, payload: {
+  targetUserId: string
+  sourceSite?: SiteType
+  eventType: SecurityEventType
+  eventId?: string
+}) {
+  const nowIso = new Date().toISOString()
+  const config: Record<SecurityEventType, { type: string; state: string; title: string; message: string; suspiciousReviewState?: string; recoveryRecommendationState?: string }> = {
+    login_success: { type: 'security_info', state: 'info', title: 'ログインを確認しました', message: 'アカウントへのログインがありました。覚えがない場合はセッションを確認してください。' },
+    login_failed: { type: 'suspicious_review', state: 'review_recommended', title: 'ログイン失敗が続いています', message: '第三者アクセスの可能性があります。パスワード変更またはセッション確認を推奨します。', suspiciousReviewState: 'flagged' },
+    logout: { type: 'security_info', state: 'none', title: 'ログアウトしました', message: 'ログアウトを実行しました。' },
+    password_reset_requested: { type: 'important_change', state: 'info', title: 'パスワード再設定が要求されました', message: 'パスワード再設定メールを送信しました。' },
+    password_reset_completed: { type: 'important_change', state: 'review_recommended', title: 'パスワードを変更しました', message: '心当たりがない場合はサポートに連絡してください。' },
+    email_change_requested: { type: 'important_change', state: 'info', title: 'メールアドレス変更を受け付けました', message: '変更確認メールを送信しました。' },
+    email_change_completed: { type: 'important_change', state: 'action_required', title: 'メールアドレスが変更されました', message: '心当たりがない場合は直ちに復旧フローを開始してください。', recoveryRecommendationState: 'recommended' },
+    mfa_enabled: { type: 'security_info', state: 'resolved', title: '2段階認証を有効化しました', message: 'セキュリティ強度が向上しました。' },
+    mfa_disabled: { type: 'suspicious_review', state: 'review_recommended', title: '2段階認証が無効化されました', message: '心当たりがない場合は再有効化とパスワード変更を推奨します。', suspiciousReviewState: 'flagged' },
+    linked_provider_added: { type: 'important_change', state: 'info', title: '連携ログインを追加しました', message: '新しいログインプロバイダーが連携されました。' },
+    linked_provider_removed: { type: 'important_change', state: 'review_recommended', title: '連携ログインを解除しました', message: '心当たりがない場合はアカウント復旧を推奨します。', recoveryRecommendationState: 'recommended' },
+    session_revoked: { type: 'session_review', state: 'resolved', title: '他セッションをログアウトしました', message: '別端末のセッションを無効化しました。' },
+    all_sessions_revoked: { type: 'session_review', state: 'resolved', title: 'すべてのセッションを無効化しました', message: '全端末の再ログインが必要です。' },
+    reauth_performed: { type: 'security_info', state: 'none', title: '再認証を確認しました', message: '機密操作に必要な再認証が完了しました。' },
+    suspicious_review_flagged: { type: 'suspicious_review', state: 'action_required', title: '不審アクセスのレビューを推奨します', message: '安全確認のためセキュリティ確認を行ってください。', suspiciousReviewState: 'flagged', recoveryRecommendationState: 'recommended' },
+  }
+
+  const selected = config[payload.eventType]
+  if (selected.state === 'none') return null
+  return strapi.documents('api::security-notice.security-notice').create({
+    data: {
+      securityTargetUserId: payload.targetUserId,
+      securityNoticeType: selected.type,
+      securityNoticeState: selected.state,
+      title: selected.title,
+      message: selected.message,
+      eventRef: payload.eventId ?? null,
+      suspiciousReviewState: selected.suspiciousReviewState ?? 'none',
+      recoveryRecommendationState: selected.recoveryRecommendationState ?? 'none',
+      sourceSite: payload.sourceSite ?? 'cross',
+      publishedAtISO: nowIso,
+      noticeMetadata: {},
+    },
+  })
+}
+
 function assertOpsToken(ctx: any): boolean {
   if (!OPS_TOKEN) return false
   return String(ctx.request.headers['x-ops-token'] ?? '') === OPS_TOKEN
@@ -623,6 +724,20 @@ export default ({ strapi }) => ({
         const created = await strapi.documents('api::app-user.app-user').create({
           data: buildSeedData(authUser.userId, claims, sourceSite, membership, nowIso),
         })
+        const event = await createSecurityEvent(strapi, {
+          eventType: 'login_success',
+          targetUserId: authUser.userId,
+          actorId: authUser.userId,
+          sourceSite,
+          dedupeKey: `login_success:${authUser.userId}:${nowIso.slice(0, 16)}`,
+          metadata: { reason: 'first_login_provision' },
+        })
+        await createSecurityNoticeFromEvent(strapi, {
+          targetUserId: authUser.userId,
+          sourceSite,
+          eventType: 'login_success',
+          eventId: event?.eventId,
+        })
 
         await ensureNotificationPreference(strapi, authUser.userId, sourceSite, claims.locale, nowIso)
 
@@ -676,6 +791,14 @@ export default ({ strapi }) => ({
       })
 
       await ensureNotificationPreference(strapi, authUser.userId, sourceSite, claims.locale, nowIso)
+      await createSecurityEvent(strapi, {
+        eventType: 'login_success',
+        targetUserId: authUser.userId,
+        actorId: authUser.userId,
+        sourceSite,
+        dedupeKey: `login_success:${authUser.userId}:${nowIso.slice(0, 16)}`,
+        metadata: { reason: 're_login_sync' },
+      })
 
       ctx.body = {
         provisioned: false,
@@ -795,6 +918,43 @@ export default ({ strapi }) => ({
     }
   },
 
+  async securityOverview(ctx) {
+    try {
+      const authUser = await requireAuthUser(ctx)
+      const [events, notices] = await Promise.all([
+        strapi.documents('api::security-event.security-event').findMany({
+          filters: { securityTargetUserId: { $eq: authUser.userId } },
+          sort: ['eventOccurredAt:desc'],
+          limit: 20,
+        }),
+        strapi.documents('api::security-notice.security-notice').findMany({
+          filters: { securityTargetUserId: { $eq: authUser.userId } },
+          sort: ['publishedAtISO:desc'],
+          limit: 20,
+        }),
+      ])
+      const openReview = notices.filter((notice: any) => notice.securityNoticeState === 'review_recommended' || notice.securityNoticeState === 'action_required').length
+      const suspiciousCount = notices.filter((notice: any) => notice.suspiciousReviewState === 'flagged' || notice.suspiciousReviewState === 'under_review').length
+      ctx.body = {
+        securitySummary: {
+          securityTimelineState: events.length > 0 ? 'available' : 'empty',
+          securityNoticeState: openReview > 0 ? 'review_recommended' : 'none',
+          suspiciousReviewState: suspiciousCount > 0 ? 'flagged' : 'none',
+          recentAccessState: events.some((event: any) => event.securityEventType === 'login_success') ? 'available' : 'limited',
+          recoveryState: notices.some((notice: any) => notice.recoveryRecommendationState === 'recommended') ? 'support_recommended' : 'none',
+        },
+        recentEvents: events,
+        notices,
+      }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Authorization') || message.includes('JWT')) {
+        return ctx.unauthorized('ログイン状態を確認して再試行してください。')
+      }
+      return ctx.internalServerError('security overview の取得に失敗しました。')
+    }
+  },
+
   async verifySensitiveAction(ctx) {
     try {
       const authUser = await requireAuthUser(ctx)
@@ -838,6 +998,19 @@ export default ({ strapi }) => ({
           },
         },
       })
+      const event = await createSecurityEvent(strapi, {
+        eventType: 'reauth_performed',
+        targetUserId: authUser.userId,
+        actorId: authUser.userId,
+        sourceSite: normalizeSite(ctx.request.body?.sourceSite),
+        metadata: { actionType, tokenAgeSec },
+      })
+      await createSecurityNoticeFromEvent(strapi, {
+        targetUserId: authUser.userId,
+        sourceSite: normalizeSite(ctx.request.body?.sourceSite),
+        eventType: 'reauth_performed',
+        eventId: event?.eventId,
+      })
 
       ctx.body = {
         ok: true,
@@ -852,6 +1025,51 @@ export default ({ strapi }) => ({
         return ctx.unauthorized('ログイン状態を確認して再試行してください。')
       }
       return ctx.internalServerError('sensitive action の検証に失敗しました。')
+    }
+  },
+
+  async appendSecurityEvent(ctx) {
+    try {
+      const authUser = await requireAuthUser(ctx)
+      const sourceSite = normalizeSite(ctx.request.body?.sourceSite)
+      const eventType = String(ctx.request.body?.eventType ?? '').trim() as SecurityEventType
+      const allowedEventTypes: SecurityEventType[] = [
+        'logout',
+        'password_reset_requested',
+        'password_reset_completed',
+        'email_change_requested',
+        'email_change_completed',
+        'mfa_enabled',
+        'mfa_disabled',
+        'linked_provider_added',
+        'linked_provider_removed',
+        'session_revoked',
+        'all_sessions_revoked',
+        'suspicious_review_flagged',
+      ]
+      if (!allowedEventTypes.includes(eventType)) return ctx.badRequest('eventType が不正です。')
+      const dedupeKey = String(ctx.request.body?.dedupeKey ?? '').trim() || undefined
+      const event = await createSecurityEvent(strapi, {
+        eventType,
+        targetUserId: authUser.userId,
+        actorId: authUser.userId,
+        sourceSite,
+        dedupeKey,
+        metadata: typeof ctx.request.body?.metadata === 'object' ? ctx.request.body.metadata : {},
+      })
+      const notice = await createSecurityNoticeFromEvent(strapi, {
+        targetUserId: authUser.userId,
+        sourceSite,
+        eventType,
+        eventId: event?.eventId,
+      })
+      ctx.body = { ok: true, event, notice }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Authorization') || message.includes('JWT')) {
+        return ctx.unauthorized('ログイン状態を確認して再試行してください。')
+      }
+      return ctx.internalServerError('security event の記録に失敗しました。')
     }
   },
 
@@ -949,6 +1167,37 @@ export default ({ strapi }) => ({
       if (!summary) return ctx.notFound('対象ユーザーが見つかりません。')
 
       ctx.body = summary
+    } catch (error) {
+      if ((error as Error).message.includes('Internal permission denied')) {
+        return ctx.forbidden('internal 権限が不足しています。')
+      }
+      return ctx.unauthorized('認証に失敗しました。')
+    }
+  },
+
+  async internalSecurityOps(ctx) {
+    try {
+      const access = await requireInternalPermission(ctx, 'internal.user.read')
+      const authUserId = String(ctx.params.authUserId ?? '').trim()
+      if (!authUserId) return ctx.badRequest('authUserId が必要です。')
+      const [events, notices, investigations] = await Promise.all([
+        strapi.documents('api::security-event.security-event').findMany({
+          filters: { securityTargetUserId: { $eq: authUserId } },
+          sort: ['eventOccurredAt:desc'],
+          limit: 100,
+        }),
+        strapi.documents('api::security-notice.security-notice').findMany({
+          filters: { securityTargetUserId: { $eq: authUserId } },
+          sort: ['publishedAtISO:desc'],
+          limit: 100,
+        }),
+        strapi.documents('api::security-investigation.security-investigation').findMany({
+          filters: { securityTargetUserId: { $eq: authUserId } },
+          sort: ['updatedAt:desc'],
+          limit: 100,
+        }),
+      ])
+      ctx.body = { internalRoles: access.internalRoles, events, notices, investigations }
     } catch (error) {
       if ((error as Error).message.includes('Internal permission denied')) {
         return ctx.forbidden('internal 権限が不足しています。')

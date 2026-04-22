@@ -1,0 +1,26 @@
+{
+  "kind": "collectionType",
+  "collectionName": "security_notices",
+  "info": {
+    "singularName": "security-notice",
+    "pluralName": "security-notices",
+    "displayName": "Security Notice",
+    "description": "ユーザー向け security notice 状態"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "securityTargetUserId": { "type": "string", "required": true },
+    "securityNoticeType": { "type": "enumeration", "enum": ["important_change","session_review","suspicious_review","recovery_recommendation","security_info"], "required": true },
+    "securityNoticeState": { "type": "enumeration", "enum": ["none","info","review_recommended","action_required","resolved"], "default": "info", "required": true },
+    "title": { "type": "string", "required": true },
+    "message": { "type": "text", "required": true },
+    "eventRef": { "type": "string" },
+    "suspiciousReviewState": { "type": "enumeration", "enum": ["none","flagged","under_review","user_confirmed","support_reviewed","resolved"], "default": "none" },
+    "recoveryRecommendationState": { "type": "enumeration", "enum": ["none","recommended","required","completed"], "default": "none" },
+    "acknowledgedAt": { "type": "datetime" },
+    "resolvedAt": { "type": "datetime" },
+    "sourceSite": { "type": "enumeration", "enum": ["main","store","fc","cross"], "default": "cross", "required": true },
+    "publishedAtISO": { "type": "datetime", "required": true },
+    "noticeMetadata": { "type": "json" }
+  }
+}

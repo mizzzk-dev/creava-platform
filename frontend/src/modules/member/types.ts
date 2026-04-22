@@ -80,6 +80,9 @@ export interface AuditLog {
   id: number
   eventType: string
   createdAt: string
+  severity?: string
+  sourceSite?: string
+  result?: string
 }
 
 export interface MemberDashboardData {

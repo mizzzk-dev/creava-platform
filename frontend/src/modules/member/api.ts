@@ -9,6 +9,31 @@ import { StrapiApiError } from '@/lib/api/client'
 const USE_MOCK = !import.meta.env.VITE_STRAPI_API_URL
 const MEMBER_PAGE_SIZE = 10
 
+type SecurityOverviewResponse = {
+  securitySummary: {
+    securityTimelineState: string
+    securityNoticeState: string
+    suspiciousReviewState: string
+    recentAccessState: string
+    recoveryState: string
+  }
+  recentEvents: Array<{
+    id: number
+    securityEventType: string
+    eventOccurredAt: string
+    securityEventSeverity?: string
+    securityEventSource?: string
+    result?: string
+  }>
+  notices: Array<{
+    id: number
+    title: string
+    message: string
+    securityNoticeState: 'none' | 'info' | 'review_recommended' | 'action_required' | 'resolved'
+    publishedAtISO: string
+  }>
+}
+
 export type MemberBillingSummary = {
   membership: {
     membershipPlan: 'free' | 'standard' | 'premium'
@@ -123,6 +148,38 @@ export async function verifySensitiveAction(authToken: string, actionType: 'emai
   return json
 }
 
+export async function appendSecurityEvent(authToken: string, eventType: string, metadata: Record<string, unknown> = {}): Promise<void> {
+  const baseUrl = import.meta.env.VITE_STRAPI_API_URL
+  if (!baseUrl) return
+  await fetch(`${baseUrl.replace(/\/$/, '')}/api/user-sync/security/events`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${authToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      eventType,
+      sourceSite: import.meta.env.VITE_SITE_TYPE ?? 'main',
+      dedupeKey: `${eventType}:${new Date().toISOString().slice(0, 16)}`,
+      metadata,
+    }),
+  })
+}
+
+async function getSecurityOverview(authToken: string): Promise<SecurityOverviewResponse | null> {
+  const baseUrl = import.meta.env.VITE_STRAPI_API_URL
+  if (!baseUrl) return null
+  const response = await fetch(`${baseUrl.replace(/\/$/, '')}/api/user-sync/security/overview`, {
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${authToken}`,
+    },
+  })
+  if (!response.ok) return null
+  return response.json() as Promise<SecurityOverviewResponse>
+}
+
 
 async function getMemberOrdersAndShipments(authToken: string): Promise<Pick<MemberDashboardData, 'orders' | 'shipments'>> {
   const baseUrl = import.meta.env.VITE_STRAPI_API_URL
@@ -157,7 +214,7 @@ export async function getMemberDashboard(isMember: boolean, authToken?: string |
   }
 
   try {
-    const [orderData, notices, auditLogs] = await Promise.all([
+    const [orderData, notices, auditLogs, securityOverview] = await Promise.all([
       authToken
         ? getMemberOrdersAndShipments(authToken)
         : Promise.all([
@@ -178,15 +235,34 @@ export async function getMemberDashboard(isMember: boolean, authToken?: string |
         sort: ['createdAt:desc'],
         pagination: { pageSize: MEMBER_PAGE_SIZE },
       }),
+      authToken ? getSecurityOverview(authToken) : Promise.resolve(null),
     ])
 
     const saved = loadMemberPreferences()
     return {
       orders: orderData.orders,
       shipments: orderData.shipments,
-      notices: notices.data,
+      notices: securityOverview
+        ? securityOverview.notices.map((notice) => ({
+          id: notice.id,
+          title: notice.title,
+          body: notice.message,
+          audience: 'all' as const,
+          priority: notice.securityNoticeState === 'action_required' ? 'high' as const : 'normal' as const,
+          publishedAt: notice.publishedAtISO,
+        }))
+        : notices.data,
       preferences: saved ?? { newsletterOptIn: true, loginAlertOptIn: true },
-      auditLogs: auditLogs.data,
+      auditLogs: securityOverview
+        ? securityOverview.recentEvents.map((event) => ({
+          id: event.id,
+          eventType: event.securityEventType,
+          createdAt: event.eventOccurredAt,
+          severity: event.securityEventSeverity,
+          sourceSite: event.securityEventSource,
+          result: event.result,
+        }))
+        : auditLogs.data,
       withdrawRequested: loadWithdrawRequested(),
       loyaltyProfile: createMockMemberDashboardData(isMember).loyaltyProfile,
     }

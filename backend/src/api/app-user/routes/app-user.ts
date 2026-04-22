@@ -20,6 +20,18 @@ export default {
     },
     {
       method: 'GET',
+      path: '/user-sync/security/overview',
+      handler: 'app-user.securityOverview',
+      config: { auth: false },
+    },
+    {
+      method: 'POST',
+      path: '/user-sync/security/events',
+      handler: 'app-user.appendSecurityEvent',
+      config: { auth: false },
+    },
+    {
+      method: 'GET',
       path: '/user-sync/support/lookup',
       handler: 'app-user.supportLookup',
       config: { auth: false },
@@ -40,6 +52,12 @@ export default {
       method: 'GET',
       path: '/internal/users/:logtoUserId/summary',
       handler: 'app-user.internalSummary',
+      config: { auth: false },
+    },
+    {
+      method: 'GET',
+      path: '/internal/users/:authUserId/security-ops',
+      handler: 'app-user.internalSecurityOps',
       config: { auth: false },
     },
     {
