@@ -13,6 +13,7 @@ const BI_FORECAST_HORIZON_DAYS = Number(process.env.BI_FORECAST_HORIZON_DAYS ?? 
 const PLAYBOOK_APPROVAL_AUDIENCE_THRESHOLD = Number(process.env.PLAYBOOK_APPROVAL_AUDIENCE_THRESHOLD ?? 200)
 const PLAYBOOK_SAFE_MODE_DEFAULT = String(process.env.PLAYBOOK_SAFE_MODE_DEFAULT ?? 'true').toLowerCase() !== 'false'
 const PLAYBOOK_RETRY_LIMIT = Number(process.env.PLAYBOOK_RETRY_LIMIT ?? 3)
+const STATUS_PUBLIC_HISTORY_LIMIT = Number(process.env.STATUS_PUBLIC_HISTORY_LIMIT ?? 10)
 
 const ALLOWED_EVENTS = new Set([
   'page_view', 'cta_click', 'nav_click', 'hero_click', 'card_click',
@@ -57,6 +58,12 @@ const ALLOWED_EVENTS = new Set([
   'batch_preview_view', 'batch_dry_run_start', 'batch_dry_run_complete',
   'batch_execute_start', 'batch_execute_complete',
   'escalation_start', 'escalation_complete',
+  'status_page_view', 'maintenance_notice_view', 'active_incident_view',
+  'recovery_notice_view', 'resolved_notice_view', 'postmortem_view',
+  'status_cta_support_click', 'status_cta_notification_click',
+  'incident_notice_banner_view', 'incident_notice_banner_click',
+  'maintenance_schedule_publish', 'incident_status_publish', 'recovery_status_publish',
+  'postmortem_publish', 'knowledge_article_from_incident_open', 'related_support_article_open',
 ])
 
 function sanitizeText(value: unknown, maxLength = 120): string | undefined {
@@ -211,6 +218,93 @@ function getActionPrefix(action: unknown): string {
   const text = String(action ?? '')
   const index = text.indexOf(':')
   return index >= 0 ? text.slice(0, index) : text
+}
+
+
+type CommunicationItem = {
+  incidentId: string
+  communicationType: string
+  statusState: string
+  statusSeverity: string
+  publishingState: string
+  incidentCommunicationPhase: string
+  impactSummaryState: string
+  affectedAreaState: string[]
+  userActionRecommendationState: string
+  sourceArea: string
+  sourceSite: string
+  publicTitle: string
+  publicSummary: string
+  publishedAt: string | null
+  recoveryAnnouncedAt: string | null
+  postmortemPublishedAt: string | null
+  lastUpdatedAt: string | null
+  nextUpdateAt: string | null
+  postmortemState: string
+  rcaState: string
+  rootCauseCategory: string
+  correctiveActionState: string
+  preventionActionState: string
+  knowledgeArticleState: string
+  knowledgeSummary: string
+}
+
+function mapStatusSeverity(statusState: string, incomingSeverity?: string): string {
+  if (incomingSeverity) return incomingSeverity
+  if (statusState === 'major_outage') return 'critical'
+  if (statusState === 'partial_outage') return 'high'
+  if (statusState === 'degraded_performance') return 'medium'
+  if (statusState.startsWith('maintenance')) return 'low'
+  return 'none'
+}
+
+function toCommunicationItem(row: Record<string, unknown>): CommunicationItem {
+  const metadata = parseJsonObject(row.metadata)
+  const affectedAreas = Array.isArray(metadata.affectedAreaState)
+    ? metadata.affectedAreaState.map((item) => String(item)).filter(Boolean)
+    : []
+  const statusState = String(metadata.statusState ?? (metadata.maintenanceState === 'in_progress' ? 'maintenance_in_progress' : 'operational'))
+  return {
+    incidentId: String(metadata.sourceIncidentId ?? row.targetId ?? ''),
+    communicationType: String(metadata.communicationType ?? 'incident_notice'),
+    statusState,
+    statusSeverity: mapStatusSeverity(statusState, sanitizeText(metadata.statusSeverity, 20)),
+    publishingState: String(metadata.publishingState ?? 'draft'),
+    incidentCommunicationPhase: String(metadata.incidentCommunicationPhase ?? 'draft'),
+    impactSummaryState: String(metadata.impactSummaryState ?? 'limited'),
+    affectedAreaState: affectedAreas,
+    userActionRecommendationState: String(metadata.userActionRecommendationState ?? '最新情報を確認し、必要に応じてサポートへお問い合わせください。'),
+    sourceArea: String(metadata.sourceArea ?? 'operations'),
+    sourceSite: String(metadata.sourceSite ?? row.sourceSite ?? 'cross'),
+    publicTitle: String(metadata.publicTitle ?? '運用ステータスのお知らせ'),
+    publicSummary: String(metadata.publicSummary ?? ''),
+    publishedAt: String(metadata.publishedAt ?? row.createdAt ?? ''),
+    recoveryAnnouncedAt: String(metadata.recoveryAnnouncedAt ?? ''),
+    postmortemPublishedAt: String(metadata.postmortemPublishedAt ?? ''),
+    lastUpdatedAt: String(metadata.lastUpdatedAt ?? row.createdAt ?? ''),
+    nextUpdateAt: String(metadata.nextUpdateAt ?? ''),
+    postmortemState: String(metadata.postmortemState ?? 'not_started'),
+    rcaState: String(metadata.rcaState ?? 'not_started'),
+    rootCauseCategory: String(metadata.rootCauseCategory ?? 'unknown'),
+    correctiveActionState: String(metadata.correctiveActionState ?? 'pending'),
+    preventionActionState: String(metadata.preventionActionState ?? 'pending'),
+    knowledgeArticleState: String(metadata.knowledgeArticleState ?? 'not_started'),
+    knowledgeSummary: String(metadata.knowledgeSummary ?? ''),
+  }
+}
+
+function pickCurrentStatus(items: CommunicationItem[]): CommunicationItem {
+  const ordered = items
+    .filter((item) => item.publishingState === 'published')
+    .sort((a, b) => (parseDateInput(b.lastUpdatedAt)?.getTime() ?? 0) - (parseDateInput(a.lastUpdatedAt)?.getTime() ?? 0))
+  return ordered[0] ?? {
+    incidentId: '', communicationType: 'none', statusState: 'operational', statusSeverity: 'none', publishingState: 'published',
+    incidentCommunicationPhase: 'closed', impactSummaryState: 'none', affectedAreaState: [],
+    userActionRecommendationState: '現在、main / store / fc への大きな影響は確認されていません。',
+    sourceArea: 'cross', sourceSite: 'cross', publicTitle: 'All Systems Operational', publicSummary: '',
+    publishedAt: null, recoveryAnnouncedAt: null, postmortemPublishedAt: null, lastUpdatedAt: null, nextUpdateAt: null,
+    postmortemState: 'not_started', rcaState: 'not_started', rootCauseCategory: 'unknown', correctiveActionState: 'pending', preventionActionState: 'pending', knowledgeArticleState: 'not_started', knowledgeSummary: '',
+  }
 }
 
 export default factories.createCoreController('api::analytics-event.analytics-event', ({ strapi }) => ({
@@ -1482,6 +1576,62 @@ export default factories.createCoreController('api::analytics-event.analytics-ev
     }
   },
 
+
+  async publicStatusSummary(ctx) {
+    try {
+      const sourceSite = sanitizeText(ctx.query?.sourceSite, 20) ?? 'main'
+      const logs = await strapi.documents('api::internal-audit-log.internal-audit-log').findMany({
+        filters: {
+          action: {
+            $containsi: 'ops-incident-communication',
+          },
+          status: { $ne: 'denied' },
+        },
+        fields: ['action', 'status', 'sourceSite', 'targetId', 'metadata', 'createdAt'],
+        sort: ['createdAt:desc'],
+        limit: BI_MAX_FETCH_ROWS,
+      })
+
+      const items = (logs as Array<Record<string, unknown>>)
+        .map(toCommunicationItem)
+        .filter((item) => item.publishingState === 'published' && (item.sourceSite === 'cross' || item.sourceSite === sourceSite))
+
+      const current = pickCurrentStatus(items)
+      const active = items.filter((item) => ['published', 'update_posted'].includes(item.incidentCommunicationPhase) && !['resolved', 'closed'].includes(item.incidentCommunicationPhase)).slice(0, STATUS_PUBLIC_HISTORY_LIMIT)
+      const maintenance = items.filter((item) => item.statusState.includes('maintenance')).slice(0, STATUS_PUBLIC_HISTORY_LIMIT)
+      const resolved = items.filter((item) => ['resolved_notice_posted', 'closed'].includes(item.incidentCommunicationPhase)).slice(0, STATUS_PUBLIC_HISTORY_LIMIT)
+      const postmortems = items.filter((item) => item.postmortemState === 'published').slice(0, STATUS_PUBLIC_HISTORY_LIMIT)
+      const knowledge = items.filter((item) => item.knowledgeArticleState === 'published').slice(0, STATUS_PUBLIC_HISTORY_LIMIT)
+
+      ctx.body = {
+        sourceOfTruth: {
+          auth: 'supabase-auth(auth.users)',
+          businessState: 'app-user domain',
+          statusSummary: 'internal_audit_log communication summaries',
+        },
+        publicStatusSummary: {
+          statusState: current.statusState,
+          statusSeverity: current.statusSeverity,
+          statusVisibilityState: 'public',
+          publishingState: current.publishingState,
+          affectedAreaState: current.affectedAreaState,
+          userActionRecommendationState: current.userActionRecommendationState,
+          nextUpdateAt: current.nextUpdateAt,
+          lastUpdatedAt: current.lastUpdatedAt,
+        },
+        maintenanceSummary: maintenance,
+        incidentCommunicationSummary: active,
+        activeIncidentCommunications: active,
+        resolvedIncidentCommunications: resolved,
+        postmortemSummary: postmortems,
+        knowledgeSummary: knowledge,
+      }
+    } catch (error) {
+      strapi.log.error(`[analytics-event] publicStatusSummary failed: ${(error as Error).message}`)
+      return ctx.internalServerError('public status summary の取得に失敗しました。')
+    }
+  },
+
   async internalIncidentDashboard(ctx) {
     try {
       await requireInternalPermission(ctx, 'internal.user.read')
@@ -1636,6 +1786,136 @@ export default factories.createCoreController('api::analytics-event.analytics-ev
       if (message.includes('Internal permission denied')) return ctx.forbidden('incident dashboard の権限がありません。')
       strapi.log.error(`[analytics-event] internalIncidentDashboard failed: ${message}`)
       return ctx.internalServerError('incident dashboard summary の取得に失敗しました。')
+    }
+  },
+
+
+  async internalIncidentCommunicationsDashboard(ctx) {
+    try {
+      await requireInternalPermission(ctx, 'internal.status.read')
+      const rows = await strapi.documents('api::internal-audit-log.internal-audit-log').findMany({
+        filters: { action: { $containsi: 'ops-incident-communication' } },
+        fields: ['status', 'sourceSite', 'targetId', 'metadata', 'createdAt', 'actorLogtoUserId'],
+        sort: ['createdAt:desc'],
+        limit: BI_MAX_FETCH_ROWS,
+      })
+      const items = (rows as Array<Record<string, unknown>>).map(toCommunicationItem)
+      ctx.body = {
+        summary: {
+          totalCount: items.length,
+          draftCount: items.filter((item) => item.publishingState === 'draft').length,
+          reviewCount: items.filter((item) => item.publishingState === 'review').length,
+          publishedCount: items.filter((item) => item.publishingState === 'published').length,
+          postmortemPendingCount: items.filter((item) => item.incidentCommunicationPhase === 'postmortem_pending').length,
+          staleCount: items.filter((item) => item.lastUpdatedAt && (Date.now() - (parseDateInput(item.lastUpdatedAt)?.getTime() ?? 0)) > 6 * 60 * 60 * 1000).length,
+        },
+        items: items.slice(0, 60),
+      }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Internal permission denied')) return ctx.forbidden('incident communications dashboard の権限がありません。')
+      strapi.log.error(`[analytics-event] internalIncidentCommunicationsDashboard failed: ${message}`)
+      return ctx.internalServerError('incident communications dashboard の取得に失敗しました。')
+    }
+  },
+
+  async internalIncidentCommunicationPublish(ctx) {
+    try {
+      const access = await requireInternalPermission(ctx, 'internal.status.publish')
+      const body = (ctx.request.body ?? {}) as Record<string, unknown>
+      const sourceIncidentId = sanitizeText(body.sourceIncidentId, 120) ?? `incident:${Date.now()}`
+      const sourceSite = sanitizeText(body.sourceSite, 20) ?? 'cross'
+      const sourceArea = sanitizeText(body.sourceArea, 40) ?? 'operations'
+      const statusState = sanitizeText(body.statusState, 40) ?? 'degraded_performance'
+      const maintenanceState = sanitizeText(body.maintenanceState, 40) ?? 'none'
+      const maintenanceType = sanitizeText(body.maintenanceType, 20) ?? 'planned'
+      const incidentCommunicationPhase = sanitizeText(body.incidentCommunicationPhase, 40) ?? 'draft'
+      const publishingState = sanitizeText(body.publishingState, 20) ?? 'draft'
+      const publicTitle = sanitizeText(body.publicTitle, 140) ?? '運用状況のお知らせ'
+      const publicSummary = sanitizeText(body.publicSummary, 500) ?? ''
+      const userActionRecommendationState = sanitizeText(body.userActionRecommendationState, 240) ?? 'しばらくしてから再試行し、解消しない場合はサポートへお問い合わせください。'
+      const reason = sanitizeText(body.reason, 240)
+      if (!reason || reason.length < 8) return ctx.badRequest('reason は8文字以上で入力してください。')
+
+      const affectedAreaState = Array.isArray(body.affectedAreaState)
+        ? body.affectedAreaState.map((item) => sanitizeText(item, 40)).filter(Boolean)
+        : []
+
+      const communicationId = sanitizeText(body.communicationId, 120) ?? `status:${Date.now()}`
+      const nowIso = new Date().toISOString()
+      const publishedAt = publishingState === 'published' ? nowIso : null
+      const postmortemState = sanitizeText(body.postmortemState, 40) ?? 'not_started'
+      const rcaState = sanitizeText(body.rcaState, 40) ?? 'not_started'
+      const rootCauseCategory = sanitizeText(body.rootCauseCategory, 40) ?? 'unknown'
+      const correctiveActionState = sanitizeText(body.correctiveActionState, 40) ?? 'pending'
+      const preventionActionState = sanitizeText(body.preventionActionState, 40) ?? 'pending'
+      const knowledgeArticleState = sanitizeText(body.knowledgeArticleState, 40) ?? 'not_started'
+      const knowledgeSummary = sanitizeText(body.knowledgeSummary, 240) ?? ''
+
+      await strapi.documents('api::internal-audit-log.internal-audit-log').create({
+        data: {
+          actorLogtoUserId: access.authUser.userId,
+          actorInternalRoles: access.internalRoles,
+          targetType: 'incident-communication',
+          targetId: communicationId,
+          action: `ops-incident-communication:${incidentCommunicationPhase}`,
+          status: publishingState === 'published' ? 'success' : 'pending',
+          reason,
+          sourceSite,
+          beforeState: { publishingState: 'draft' },
+          afterState: { publishingState },
+          metadata: {
+            sourceIncidentId,
+            sourceArea,
+            sourceSite,
+            communicationType: maintenanceState !== 'none' ? 'maintenance_notice' : 'incident_notice',
+            statusState,
+            statusSeverity: mapStatusSeverity(statusState),
+            statusVisibilityState: 'public',
+            maintenanceState,
+            maintenanceType,
+            maintenanceWindowState: sanitizeText(body.maintenanceWindowState, 40) ?? 'none',
+            incidentCommunicationState: sanitizeText(body.incidentCommunicationState, 40) ?? 'active',
+            incidentCommunicationPhase,
+            impactSummaryState: sanitizeText(body.impactSummaryState, 40) ?? 'limited',
+            affectedAreaState,
+            userActionRecommendationState,
+            postmortemState,
+            postmortemVisibilityState: sanitizeText(body.postmortemVisibilityState, 40) ?? 'internal_only',
+            rcaState,
+            rootCauseCategory,
+            correctiveActionState,
+            preventionActionState,
+            learningState: sanitizeText(body.learningState, 40) ?? 'capturing',
+            knowledgeArticleState,
+            publishingState,
+            publicTitle,
+            publicSummary,
+            knowledgeSummary,
+            publishedAt,
+            lastUpdatedAt: nowIso,
+            recoveryAnnouncedAt: incidentCommunicationPhase === 'resolved_notice_posted' ? nowIso : null,
+            postmortemPublishedAt: postmortemState === 'published' ? nowIso : null,
+            nextUpdateAt: sanitizeText(body.nextUpdateAt, 40) ?? null,
+          },
+          requestId: String(ctx.request.headers['x-request-id'] ?? ''),
+        },
+      })
+
+      ctx.body = {
+        communicationId,
+        sourceIncidentId,
+        publishingState,
+        incidentCommunicationPhase,
+        statusState,
+        postmortemState,
+        rcaState,
+      }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Internal permission denied')) return ctx.forbidden('incident communication publish の権限がありません。')
+      strapi.log.error(`[analytics-event] internalIncidentCommunicationPublish failed: ${message}`)
+      return ctx.internalServerError('incident communication publish に失敗しました。')
     }
   },
 

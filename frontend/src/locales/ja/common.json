@@ -16,7 +16,8 @@
     "member": "マイページ",
     "skipToContent": "コンテンツへスキップ",
     "request": "仕事依頼",
-    "discovery": "検索"
+    "discovery": "検索",
+    "status": "ステータス"
   },
   "footer": {
     "copyright": "© 2026 mizzz. All rights reserved.",
@@ -1131,5 +1132,33 @@
     "paymentFixCta": "支払い情報を更新する",
     "reactivatedTitle": "おかえりなさい。会員ステータスを再開しました。",
     "reactivatedDescription": "最近の更新・限定公開・特典を確認して、再開後の体験を活用してください。"
+  },
+  "status": {
+    "title": "サービスステータス",
+    "desc": "ユーザー影響と現在の状態を優先して表示します。技術詳細より先に、推奨アクションをご確認ください。",
+    "loading": "status summary を読み込み中です…",
+    "current": "current status",
+    "updated": "更新",
+    "visibility": "公開状態",
+    "areas": "影響範囲",
+    "none": "なし",
+    "active": "進行中の案内",
+    "noActive": "現在公開中の incident communication はありません。",
+    "maintenance": "予定メンテナンス",
+    "noMaintenance": "予定されたメンテナンスはありません。",
+    "postmortem": "復旧後の振り返り",
+    "noPostmortem": "公開済み postmortem はまだありません。",
+    "toSupport": "サポートセンターへ",
+    "toNotification": "通知センターへ",
+    "notice": "status notice",
+    "toStatus": "status 詳細を見る",
+    "operational": "正常稼働",
+    "maintenanceScheduled": "メンテナンス予定",
+    "maintenanceProgress": "メンテナンス中",
+    "degraded": "パフォーマンス低下",
+    "partial": "一部障害",
+    "major": "重大障害",
+    "recovering": "復旧中",
+    "resolved": "復旧済み"
   }
 }

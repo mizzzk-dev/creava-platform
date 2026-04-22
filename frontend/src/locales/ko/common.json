@@ -16,7 +16,8 @@
     "member": "Member",
     "skipToContent": "본문으로 건너뛰기",
     "request": "작업 의뢰",
-    "discovery": "탐색"
+    "discovery": "탐색",
+    "status": "상태"
   },
   "footer": {
     "copyright": "© 2026 mizzz. All rights reserved.",
@@ -1131,5 +1132,33 @@
     "paymentFixCta": "결제 정보 수정",
     "reactivatedTitle": "다시 오신 것을 환영합니다. 멤버십이 재개되었습니다.",
     "reactivatedDescription": "최근 업데이트, 한정 콘텐츠, 혜택을 확인하고 재개 후 경험을 이어가세요."
+  },
+  "status": {
+    "title": "서비스 상태",
+    "desc": "기술 상세보다 사용자 영향과 현재 상태를 우선 안내합니다. 먼저 권장 조치를 확인하세요.",
+    "loading": "상태 요약을 불러오는 중…",
+    "current": "현재 상태",
+    "updated": "업데이트",
+    "visibility": "공개 상태",
+    "areas": "영향 범위",
+    "none": "없음",
+    "active": "진행 중 안내",
+    "noActive": "현재 공개 중인 incident communication 이 없습니다.",
+    "maintenance": "예정된 점검",
+    "noMaintenance": "예정된 점검이 없습니다.",
+    "postmortem": "복구 후 회고",
+    "noPostmortem": "공개된 postmortem 이 아직 없습니다.",
+    "toSupport": "지원 센터로",
+    "toNotification": "알림 센터로",
+    "notice": "status notice",
+    "toStatus": "상태 상세 보기",
+    "operational": "정상 운영",
+    "maintenanceScheduled": "점검 예정",
+    "maintenanceProgress": "점검 진행 중",
+    "degraded": "성능 저하",
+    "partial": "부분 장애",
+    "major": "중대 장애",
+    "recovering": "복구 중",
+    "resolved": "해결됨"
   }
 }

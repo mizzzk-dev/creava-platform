@@ -55,6 +55,7 @@
 - [Supabase Auth 前提 統一アカウントセンター / 設定ハブ runbook (2026-04-21)](./09_operations/supabase-account-center-settings-hub-runbook-2026-04-21.md)
 - [Supabase Auth 前提 privacy / consent / export / deletion / retention runbook (2026-04-22)](./09_operations/supabase-privacy-consent-export-deletion-runbook-2026-04-22.md)
 - [Supabase Auth 前提 internal admin / operations console / user 360 runbook (2026-04-22)](./09_operations/supabase-internal-admin-user360-operations-console-runbook-2026-04-22.md)
+- [Supabase Auth 前提 status page / maintenance / incident communications / postmortem / RCA runbook (2026-04-22)](./09_operations/supabase-status-maintenance-incident-postmortem-runbook-2026-04-22.md)
 - [統一認証基盤を前提にした user lifecycle / onboarding / 会員導線整備 (2026-04-19)](./user-lifecycle-membership-onboarding-foundation-2026-04-19.md)
 - [membershipStatus / entitlement / subscription / notification / CRM 同期基盤整備 (2026-04-19)](./membership-entitlement-subscription-sync-foundation-2026-04-19.md)
 - [renewal / lifecycle messaging / win-back 基盤整備 (2026-04-19)](./renewal-lifecycle-retention-foundation-2026-04-19.md)

@@ -481,6 +481,43 @@ export type InternalIncidentDashboardResponse = {
   }
 }
 
+
+export type InternalIncidentCommunicationsDashboardResponse = {
+  summary: {
+    totalCount: number
+    draftCount: number
+    reviewCount: number
+    publishedCount: number
+    postmortemPendingCount: number
+    staleCount: number
+  }
+  items: Array<{
+    incidentId: string
+    communicationType: string
+    statusState: string
+    statusSeverity: string
+    publishingState: string
+    incidentCommunicationPhase: string
+    impactSummaryState: string
+    affectedAreaState: string[]
+    userActionRecommendationState: string
+    sourceArea: string
+    sourceSite: string
+    publicTitle: string
+    publicSummary: string
+    publishedAt: string | null
+    recoveryAnnouncedAt: string | null
+    postmortemPublishedAt: string | null
+    lastUpdatedAt: string | null
+    postmortemState: string
+    rcaState: string
+    rootCauseCategory: string
+    correctiveActionState: string
+    preventionActionState: string
+    knowledgeArticleState: string
+  }>
+}
+
 function getApiBaseUrl(): string {
   const baseUrl = import.meta.env.VITE_STRAPI_API_URL
   if (!baseUrl) throw new Error('VITE_STRAPI_API_URL が未設定です。')
@@ -580,6 +617,32 @@ export function useInternalAdminApi() {
         method: 'POST',
         body: JSON.stringify(payload),
       })),
+    getIncidentCommunicationsDashboard: async () => withToken((token) => internalFetch<InternalIncidentCommunicationsDashboardResponse>('/internal/incidents/communications/dashboard', token)),
+    publishIncidentCommunication: async (payload: {
+      sourceIncidentId?: string
+      sourceSite?: string
+      sourceArea?: string
+      statusState?: string
+      maintenanceState?: string
+      maintenanceType?: string
+      incidentCommunicationPhase?: string
+      publishingState?: string
+      publicTitle?: string
+      publicSummary?: string
+      affectedAreaState?: string[]
+      userActionRecommendationState?: string
+      postmortemState?: string
+      rcaState?: string
+      rootCauseCategory?: string
+      correctiveActionState?: string
+      preventionActionState?: string
+      knowledgeArticleState?: string
+      knowledgeSummary?: string
+      reason: string
+    }) => withToken((token) => internalFetch<any>('/internal/incidents/communications/publish', token, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })),
     runApprovalAction: async (payload: { approvalId?: string; approvalType?: string; approvalState: 'pending' | 'approved' | 'rejected' | 'expired'; targetActionId?: string; reason: string }) =>
       withToken((token) => internalFetch<any>('/internal/operations/approval', token, {
         method: 'POST',

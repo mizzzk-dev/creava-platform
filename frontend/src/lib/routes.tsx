@@ -72,6 +72,7 @@ const DiscoveryPage = lazy(() => import('@/pages/DiscoveryPage'))
 const LegacySubdomainRedirectPage = lazy(() => import('@/pages/LegacySubdomainRedirectPage'))
 const InternalAdminPage = lazy(() => import('@/pages/internal/InternalAdminPage'))
 const NotificationCenterPage = lazy(() => import('@/pages/NotificationCenterPage'))
+const StatusPage = lazy(() => import('@/pages/StatusPage'))
 
 // 定数は循環参照を避けるため routeConstants から取得し re-export する
 export { ROUTES, detailPath } from './routeConstants'
@@ -104,6 +105,7 @@ export function AppRoutes() {
             <Route path={ROUTES.FAQ} element={<FAQPage />} />
             <Route path={ROUTES.SUPPORT_CENTER} element={<SupportCenterPage />} />
             <Route path={ROUTES.SUPPORT_GUIDE_DETAIL} element={<SupportGuideDetailPage />} />
+            <Route path={ROUTES.STATUS} element={<StatusPage />} />
             <Route path={ROUTES.DISCOVERY} element={<DiscoveryPage />} />
             <Route path={ROUTES.STORE_GUIDE} element={<StorefrontGuidePage />} />
             <Route path={ROUTES.STORE_SHIPPING_POLICY} element={<StorefrontShippingPolicyPage />} />
@@ -157,6 +159,7 @@ export function AppRoutes() {
             <Route path={ROUTES.FAQ} element={<FAQPage />} />
             <Route path={ROUTES.SUPPORT_CENTER} element={<SupportCenterPage />} />
             <Route path={ROUTES.SUPPORT_GUIDE_DETAIL} element={<SupportGuideDetailPage />} />
+            <Route path={ROUTES.STATUS} element={<StatusPage />} />
             <Route path={ROUTES.DISCOVERY} element={<DiscoveryPage />} />
             <Route path={ROUTES.FC_GUIDE} element={<FanclubGuidePage />} />
             <Route path={ROUTES.CONTACT} element={<StorefrontContactRedirectPage />} />
@@ -204,6 +207,7 @@ export function AppRoutes() {
           <Route path={ROUTES.FAQ} element={<FAQPage />} />
           <Route path={ROUTES.SUPPORT_CENTER} element={<SupportCenterPage />} />
           <Route path={ROUTES.SUPPORT_GUIDE_DETAIL} element={<SupportGuideDetailPage />} />
+          <Route path={ROUTES.STATUS} element={<StatusPage />} />
             <Route path={ROUTES.DISCOVERY} element={<DiscoveryPage />} />
           <Route path={ROUTES.LEGAL_PRIVACY} element={<PrivacyPolicyPage />} />
           <Route path={ROUTES.LEGAL_TERMS} element={<TermsPage />} />

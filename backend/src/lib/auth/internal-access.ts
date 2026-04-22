@@ -20,6 +20,8 @@ export type InternalPermission =
   | 'internal.playbook.run'
   | 'internal.playbook.approve'
   | 'internal.audit.read'
+  | 'internal.status.read'
+  | 'internal.status.publish'
 
 const ROLE_PERMISSIONS: Record<InternalRole, InternalPermission[]> = {
   super_admin: [
@@ -33,6 +35,8 @@ const ROLE_PERMISSIONS: Record<InternalRole, InternalPermission[]> = {
     'internal.playbook.run',
     'internal.playbook.approve',
     'internal.audit.read',
+    'internal.status.read',
+    'internal.status.publish',
   ],
   internal_admin: [
     'internal.user.read',
@@ -43,12 +47,14 @@ const ROLE_PERMISSIONS: Record<InternalRole, InternalPermission[]> = {
     'internal.playbook.run',
     'internal.playbook.approve',
     'internal.audit.read',
+    'internal.status.read',
+    'internal.status.publish',
   ],
-  support: ['internal.user.read', 'internal.notification.reset', 'internal.session.revoke', 'internal.playbook.run', 'internal.audit.read'],
-  crm: ['internal.user.read', 'internal.user.update', 'internal.notification.reset', 'internal.playbook.run', 'internal.audit.read'],
-  moderation: ['internal.user.read', 'internal.moderation.override', 'internal.audit.read'],
-  campaign: ['internal.user.read', 'internal.campaign.override', 'internal.audit.read'],
-  read_only: ['internal.user.read', 'internal.audit.read'],
+  support: ['internal.user.read', 'internal.notification.reset', 'internal.session.revoke', 'internal.playbook.run', 'internal.audit.read', 'internal.status.read'],
+  crm: ['internal.user.read', 'internal.user.update', 'internal.notification.reset', 'internal.playbook.run', 'internal.audit.read', 'internal.status.read'],
+  moderation: ['internal.user.read', 'internal.moderation.override', 'internal.audit.read', 'internal.status.read'],
+  campaign: ['internal.user.read', 'internal.campaign.override', 'internal.audit.read', 'internal.status.read'],
+  read_only: ['internal.user.read', 'internal.audit.read', 'internal.status.read'],
 }
 
 function normalizeInternalRoles(rawRoles: unknown): InternalRole[] {

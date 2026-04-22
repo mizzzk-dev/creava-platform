@@ -41,6 +41,7 @@ export default function SubdomainFooter({ legalLinks }: SubdomainFooterProps) {
               <li><SmartLink to={fanclubLink('/')} onClick={() => trackCtaClick('footer', 'network_link', { target: 'fanclub' })}>{t('nav.fanclub')}</SmartLink></li>
               <li><NavLink to={ROUTES.FAQ} onClick={() => trackCtaClick('footer', 'faq')}>{t('nav.faq')}</NavLink></li>
               <li><NavLink to={ROUTES.SUPPORT_CENTER} onClick={() => trackCtaClick('footer', 'support_center')}>{t('support.title')}</NavLink></li>
+              <li><NavLink to={ROUTES.STATUS} onClick={() => trackCtaClick('footer', 'status_page')}>{t('nav.status')}</NavLink></li>
             </ul>
             <div className="mt-4 rounded-2xl border border-gray-200 bg-gray-50/70 p-3 dark:border-gray-800 dark:bg-gray-900/60">
               <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-gray-500">next action</p>

@@ -69,6 +69,12 @@ export default {
     },
     {
       method: 'GET',
+      path: '/status/public-summary',
+      handler: 'analytics-event.publicStatusSummary',
+      config: { auth: false },
+    },
+    {
+      method: 'GET',
       path: '/internal/incidents/dashboard',
       handler: 'analytics-event.internalIncidentDashboard',
       config: { auth: false },
@@ -77,6 +83,18 @@ export default {
       method: 'POST',
       path: '/internal/incidents/triage',
       handler: 'analytics-event.internalIncidentTriageAction',
+      config: { auth: false },
+    },
+    {
+      method: 'GET',
+      path: '/internal/incidents/communications/dashboard',
+      handler: 'analytics-event.internalIncidentCommunicationsDashboard',
+      config: { auth: false },
+    },
+    {
+      method: 'POST',
+      path: '/internal/incidents/communications/publish',
+      handler: 'analytics-event.internalIncidentCommunicationPublish',
       config: { auth: false },
     },
     {

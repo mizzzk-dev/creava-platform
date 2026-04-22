@@ -19,6 +19,8 @@ import { siteScopedCategories } from '@/modules/support/config'
 import { trackMizzzEvent } from '@/modules/analytics/tracking'
 import { useAuthClient } from '@/lib/auth/AuthProvider'
 import { getMySupportHistory, getMySupportSummary, reopenSupportCase, type SupportCaseHistoryItem, type SupportCaseSummary } from '@/modules/support/caseApi'
+import { getPublicStatusSummary, type PublicStatusResponse } from '@/modules/status/api'
+import StatusNoticePanel from '@/modules/status/components/StatusNoticePanel'
 
 const detectSite = (): SourceSite => {
   if (isStoreSite) return 'store'
@@ -40,6 +42,7 @@ export default function SupportCenterPage() {
   const [caseHistory, setCaseHistory] = useState<SupportCaseHistoryItem[]>([])
   const [caseLoading, setCaseLoading] = useState(false)
   const [caseError, setCaseError] = useState<string | null>(null)
+  const [statusSummary, setStatusSummary] = useState<PublicStatusResponse['publicStatusSummary'] | null>(null)
   const site = detectSite()
   const sourceSite = site === 'all' ? 'main' : site
   const benefitState = resolveBenefitExperienceState({ user, lifecycle, sourceSite })
@@ -113,6 +116,10 @@ export default function SupportCenterPage() {
   }, [filteredFaqs, filteredGuides])
 
   useEffect(() => {
+    getPublicStatusSummary().then((res) => setStatusSummary(res.publicStatusSummary)).catch(() => setStatusSummary(null))
+  }, [])
+
+  useEffect(() => {
     trackMizzzEvent('support_center_view', {
       sourceSite,
       locale: document.documentElement.lang || 'ja',
@@ -173,6 +180,7 @@ export default function SupportCenterPage() {
       <PageHead title={t('support.title')} description={t('support.description')} />
 
       <div className="mb-6 space-y-4">
+        {statusSummary && <StatusNoticePanel summary={statusSummary} />}
         <MemberProgressHub sourceSite="support" />
         <CampaignPersonalizationPanel sourceSite="support" />
       </div>

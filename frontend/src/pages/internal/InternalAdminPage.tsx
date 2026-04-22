@@ -17,6 +17,7 @@ import {
   type InternalOperationsSafeActionResponse,
   type InternalIncidentDashboardResponse,
   type InternalScheduledChecksResponse,
+  type InternalIncidentCommunicationsDashboardResponse,
 } from '@/modules/internal-admin/api'
 import { trackMizzzEvent } from '@/modules/analytics/tracking'
 
@@ -46,6 +47,7 @@ export default function InternalAdminPage() {
   const [incidentDashboard, setIncidentDashboard] = useState<InternalIncidentDashboardResponse | null>(null)
   const [scheduledChecksResult, setScheduledChecksResult] = useState<InternalScheduledChecksResponse | null>(null)
   const [triageReason, setTriageReason] = useState('scheduled check で検知した異常を確認')
+  const [communicationsDashboard, setCommunicationsDashboard] = useState<InternalIncidentCommunicationsDashboardResponse | null>(null)
   const [approvalReason, setApprovalReason] = useState('dry-run 結果確認後に承認')
   const [batchReason, setBatchReason] = useState('preview / dry-run による影響確認')
   const selectedUserSummary = (selectedUser?.userSummary ?? {}) as Record<string, any>
@@ -223,6 +225,68 @@ export default function InternalAdminPage() {
         {scheduledChecksResult && (
           <pre className="mt-3 overflow-auto rounded bg-gray-50 p-3 text-xs dark:bg-gray-900">{JSON.stringify(scheduledChecksResult, null, 2)}</pre>
         )}
+
+        <div className="mt-4 rounded border border-gray-200 p-3 dark:border-gray-700">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-gray-500">incident communications / status publish</p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="rounded border border-gray-300 px-2 py-1 text-xs"
+                onClick={() => {
+                  setMessage(null)
+                  api.getIncidentCommunicationsDashboard().then(setCommunicationsDashboard).catch((e: Error) => setMessage(e.message))
+                }}
+              >communications 更新</button>
+              <button
+                type="button"
+                className="rounded border border-amber-300 px-2 py-1 text-xs text-amber-700"
+                onClick={() => {
+                  setMessage(null)
+                  api.publishIncidentCommunication({
+                    sourceSite: 'cross',
+                    sourceArea: 'operations',
+                    statusState: 'degraded_performance',
+                    incidentCommunicationPhase: 'published',
+                    publishingState: 'published',
+                    publicTitle: '一部機能の遅延について',
+                    publicSummary: '現在、通知反映と会員情報同期に遅延が発生しています。',
+                    affectedAreaState: ['notification_center', 'member_sync'],
+                    userActionRecommendationState: '時間をおいて再試行し、急ぎの場合はサポートセンターをご利用ください。',
+                    reason: triageReason,
+                  }).then(() => api.getIncidentCommunicationsDashboard().then(setCommunicationsDashboard)).catch((e: Error) => setMessage(e.message))
+                }}
+              >public notice publish</button>
+              <button
+                type="button"
+                className="rounded border border-emerald-300 px-2 py-1 text-xs text-emerald-700"
+                onClick={() => {
+                  setMessage(null)
+                  api.publishIncidentCommunication({
+                    sourceSite: 'cross',
+                    sourceArea: 'operations',
+                    statusState: 'resolved',
+                    incidentCommunicationPhase: 'resolved_notice_posted',
+                    publishingState: 'published',
+                    publicTitle: '復旧のお知らせ',
+                    publicSummary: '遅延は解消し、main / store / fc の処理が安定しています。',
+                    affectedAreaState: ['notification_center', 'member_sync'],
+                    userActionRecommendationState: '通常どおりご利用いただけます。問題が続く場合はサポートへご連絡ください。',
+                    postmortemState: 'drafting',
+                    reason: triageReason,
+                  }).then(() => api.getIncidentCommunicationsDashboard().then(setCommunicationsDashboard)).catch((e: Error) => setMessage(e.message))
+                }}
+              >resolved notice</button>
+            </div>
+          </div>
+          {communicationsDashboard && (
+            <div className="mt-2 text-xs text-gray-600 dark:text-gray-300">
+              <p>draft/review/published: {communicationsDashboard.summary.draftCount} / {communicationsDashboard.summary.reviewCount} / {communicationsDashboard.summary.publishedCount}</p>
+              <p>postmortem pending: {communicationsDashboard.summary.postmortemPendingCount} · stale: {communicationsDashboard.summary.staleCount}</p>
+              <pre className="mt-2 overflow-auto rounded bg-gray-50 p-3 dark:bg-gray-900">{JSON.stringify(communicationsDashboard.items.slice(0, 8), null, 2)}</pre>
+            </div>
+          )}
+        </div>
 
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           <div className="rounded border border-gray-200 p-3 dark:border-gray-700">

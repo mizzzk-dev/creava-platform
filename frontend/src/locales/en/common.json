@@ -16,7 +16,8 @@
     "member": "Member",
     "skipToContent": "Skip to main content",
     "request": "Request",
-    "discovery": "Discover"
+    "discovery": "Discover",
+    "status": "Status"
   },
   "footer": {
     "copyright": "© 2026 mizzz. All rights reserved.",
@@ -1131,5 +1132,33 @@
     "paymentFixCta": "Update payment method",
     "reactivatedTitle": "Welcome back. Your membership has been reactivated.",
     "reactivatedDescription": "Check recent updates, limited content, and perks to restart smoothly."
+  },
+  "status": {
+    "title": "Service Status",
+    "desc": "Prioritize user impact and current state. Check recommended actions before technical details.",
+    "loading": "Loading status summary…",
+    "current": "Current status",
+    "updated": "Updated",
+    "visibility": "Visibility",
+    "areas": "Affected areas",
+    "none": "None",
+    "active": "Active communications",
+    "noActive": "No active incident communications.",
+    "maintenance": "Planned maintenance",
+    "noMaintenance": "No planned maintenance.",
+    "postmortem": "Postmortem highlights",
+    "noPostmortem": "No published postmortems yet.",
+    "toSupport": "Go to Support Center",
+    "toNotification": "Go to Notification Center",
+    "notice": "status notice",
+    "toStatus": "View status details",
+    "operational": "Operational",
+    "maintenanceScheduled": "Maintenance scheduled",
+    "maintenanceProgress": "Maintenance in progress",
+    "degraded": "Degraded performance",
+    "partial": "Partial outage",
+    "major": "Major outage",
+    "recovering": "Recovering",
+    "resolved": "Resolved"
   }
 }
