@@ -4,6 +4,7 @@ import {
   useInternalAdminApi,
   type InternalLookupUser,
   type InternalOrderLookupItem,
+  type InternalUserSummaryResponse,
   type InternalRevenueSummary,
   type InternalBiOverview,
   type InternalBiCohorts,
@@ -13,13 +14,14 @@ import {
   type InternalAutomationRunsResponse,
   type InternalAutomationRunResponse,
 } from '@/modules/internal-admin/api'
+import { trackMizzzEvent } from '@/modules/analytics/tracking'
 
 export default function InternalAdminPage() {
   const { user, isSignedIn } = useCurrentUser()
   const api = useInternalAdminApi()
   const [query, setQuery] = useState('')
   const [users, setUsers] = useState<InternalLookupUser[]>([])
-  const [selectedUser, setSelectedUser] = useState<any | null>(null)
+  const [selectedUser, setSelectedUser] = useState<InternalUserSummaryResponse | null>(null)
   const [reason, setReason] = useState('')
   const [status, setStatus] = useState('suspended')
   const [message, setMessage] = useState<string | null>(null)
@@ -34,14 +36,19 @@ export default function InternalAdminPage() {
   const [automationPlaybooks, setAutomationPlaybooks] = useState<InternalAutomationPlaybooksResponse | null>(null)
   const [automationRuns, setAutomationRuns] = useState<InternalAutomationRunsResponse | null>(null)
   const [automationRunResult, setAutomationRunResult] = useState<InternalAutomationRunResponse | null>(null)
+  const selectedUserSummary = (selectedUser?.userSummary ?? {}) as Record<string, any>
+
+  const internalRole = user?.internalRole ?? 'user'
+  const canAccessInternalAdmin = user?.role === 'admin' || internalRole === 'admin' || internalRole === 'super_admin' || internalRole === 'support' || internalRole === 'moderator'
 
   if (!isSignedIn) return <section className="mx-auto max-w-4xl px-4 py-16">ログインが必要です。</section>
-  if (user?.role !== 'admin') return <section className="mx-auto max-w-4xl px-4 py-16">internal admin は管理者ロールのみアクセスできます。</section>
+  if (!canAccessInternalAdmin) return <section className="mx-auto max-w-4xl px-4 py-16">internal admin は support / admin ロールのみアクセスできます。</section>
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-16">
       <h1 className="text-2xl font-semibold">Internal Admin Console (Beta)</h1>
       <p className="mt-2 text-sm text-gray-500">user lookup / summary / danger operations を最小機能で提供します。</p>
+      <p className="mt-1 text-xs text-gray-500">閲覧優先（read-heavy）で、safe operation と privileged action を分離しています。現在ロール: {internalRole}</p>
 
       <div className="mt-6 rounded border border-gray-200 p-4 dark:border-gray-800">
         <p className="text-xs text-gray-500">user lookup</p>
@@ -51,6 +58,7 @@ export default function InternalAdminPage() {
             type="button"
             onClick={() => {
               setMessage(null)
+              trackMizzzEvent('user_lookup_start', { actorRole: internalRole, sourceSection: 'lookup' })
               api.searchUsers(query).then((res) => setUsers(res.users)).catch((e: Error) => setMessage(e.message))
             }}
             className="rounded bg-gray-900 px-3 py-2 text-sm text-white"
@@ -64,7 +72,11 @@ export default function InternalAdminPage() {
                 className="w-full text-left"
                 onClick={() => {
                   setMessage(null)
-                  api.getUserSummary(item.authUserId).then(setSelectedUser).catch((e: Error) => setMessage(e.message))
+                  trackMizzzEvent('user_lookup_result_view', { actorRole: internalRole, sourceSection: 'lookup', targetUserState: item.membershipStatus })
+                  api.getUserSummary(item.authUserId).then((summary) => {
+                    setSelectedUser(summary)
+                    trackMizzzEvent('user360_summary_view', { actorRole: internalRole, sourceSection: 'user360', targetUserState: summary.user360Summary.membershipStatus })
+                  }).catch((e: Error) => setMessage(e.message))
                 }}
               >
                 <p>{item.primaryEmail ?? item.authUserId}</p>
@@ -328,37 +340,89 @@ export default function InternalAdminPage() {
 
       {selectedUser && (
         <div className="mt-6 rounded border border-gray-200 p-4 dark:border-gray-800">
-          <h2 className="text-lg font-medium">User Summary</h2>
+          <h2 className="text-lg font-medium">User 360 Summary</h2>
+          <p className="mt-1 text-xs text-gray-500">{selectedUser.operationsSummary.explanation}</p>
           <div className="mt-3 grid gap-2 text-xs md:grid-cols-3">
             <div className="rounded border border-violet-200 bg-violet-50/60 p-2 dark:border-violet-900/60 dark:bg-violet-950/20">
               <p className="text-gray-500 dark:text-gray-300">membership / entitlement</p>
               <p className="mt-1 font-medium">
-                {(selectedUser.userSummary?.membershipStatus ?? selectedUser.appUser?.membershipStatus ?? '-')}
+                {(selectedUserSummary.membershipStatus ?? selectedUser.appUser?.membershipStatus ?? '-')}
                 {' / '}
-                {(selectedUser.userSummary?.entitlementState ?? selectedUser.userSummary?.membership?.entitlementState ?? '-')}
+                {(selectedUserSummary.entitlementState ?? selectedUserSummary.membership?.entitlementState ?? '-')}
               </p>
             </div>
             <div className="rounded border border-violet-200 bg-violet-50/60 p-2 dark:border-violet-900/60 dark:bg-violet-950/20">
               <p className="text-gray-500 dark:text-gray-300">subscription / billing</p>
               <p className="mt-1 font-medium">
-                {(selectedUser.userSummary?.subscriptionState ?? selectedUser.userSummary?.membership?.subscriptionState ?? '-')}
+                {(selectedUserSummary.subscriptionState ?? selectedUserSummary.membership?.subscriptionState ?? '-')}
                 {' / '}
-                {(selectedUser.userSummary?.billingState ?? selectedUser.userSummary?.membership?.billingState ?? '-')}
+                {(selectedUserSummary.billingState ?? selectedUserSummary.membership?.billingState ?? '-')}
               </p>
             </div>
             <div className="rounded border border-violet-200 bg-violet-50/60 p-2 dark:border-violet-900/60 dark:bg-violet-950/20">
               <p className="text-gray-500 dark:text-gray-300">benefit visibility / gate</p>
               <p className="mt-1 font-medium">
-                {(selectedUser.userSummary?.benefitVisibilityState ?? '-')}
+                {(selectedUserSummary.benefitVisibilityState ?? '-')}
                 {' / '}
-                {(selectedUser.userSummary?.accessGateState ?? '-')}
+                {(selectedUserSummary.accessGateState ?? '-')}
               </p>
+            </div>
+            <div className="rounded border border-violet-200 bg-violet-50/60 p-2 dark:border-violet-900/60 dark:bg-violet-950/20">
+              <p className="text-gray-500 dark:text-gray-300">investigation / follow-up</p>
+              <p className="mt-1 font-medium">
+                {selectedUser.investigationSummary.investigationState}
+                {' / '}
+                {selectedUser.investigationSummary.followupState}
+              </p>
+            </div>
+          </div>
+          <div className="mt-3 grid gap-2 text-xs md:grid-cols-3">
+            <div className="rounded border border-gray-200 p-2 dark:border-gray-700">
+              <p className="text-gray-500">data confidence</p>
+              <p className="font-medium">{selectedUser.user360Summary.dataConfidenceState}</p>
+            </div>
+            <div className="rounded border border-gray-200 p-2 dark:border-gray-700">
+              <p className="text-gray-500">audit summary</p>
+              <p className="font-medium">total:{selectedUser.auditSummary.totalCount} / fail:{selectedUser.auditSummary.failedCount}</p>
+            </div>
+            <div className="rounded border border-gray-200 p-2 dark:border-gray-700">
+              <p className="text-gray-500">latest privileged action</p>
+              <p className="font-medium">{selectedUser.auditSummary.latestAction?.action ?? 'none'}</p>
             </div>
           </div>
           <pre className="mt-2 overflow-auto rounded bg-gray-50 p-3 text-xs dark:bg-gray-900">{JSON.stringify(selectedUser.userSummary, null, 2)}</pre>
 
+          <div className="mt-4 rounded border border-gray-200 p-3 dark:border-gray-700">
+            <p className="text-sm font-medium">Timeline / Investigation Context</p>
+            <p className="text-xs text-gray-500">状態の根拠を時系列で追跡します（account / membership / notification / support / privacy / security / audit）。</p>
+            <button
+              type="button"
+              className="mt-2 rounded border border-gray-300 px-2 py-1 text-xs"
+              onClick={() => trackMizzzEvent('timeline_view', { actorRole: internalRole, sourceSection: 'timeline', targetUserState: selectedUser.user360Summary.membershipStatus })}
+            >timeline_view を計測</button>
+            <ul className="mt-2 max-h-72 space-y-2 overflow-auto text-xs">
+              {selectedUser.timeline.slice(0, 20).map((event) => (
+                <li key={event.eventId} className="rounded border border-gray-200 p-2 dark:border-gray-700">
+                  <p className="font-medium">{event.timelineEventType} · {event.timelineEventSeverity}</p>
+                  <p className="text-gray-500">{event.eventAt} / {event.timelineEventSource} / {event.sourceSite}</p>
+                  <p>{event.summary}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="mt-4 rounded border border-emerald-300 p-3 dark:border-emerald-800">
+            <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Safe Operations</p>
+            <ul className="mt-2 space-y-1 text-xs text-gray-600 dark:text-gray-300">
+              {selectedUser.operationsSummary.safeOperations.map((operation) => (
+                <li key={operation.actionType}>{operation.actionType} / {operation.privilegedActionState}</li>
+              ))}
+            </ul>
+          </div>
+
           <div className="mt-4 rounded border border-rose-300 p-3 dark:border-rose-800">
-            <p className="text-sm font-medium text-rose-700 dark:text-rose-300">Danger Zone</p>
+            <p className="text-sm font-medium text-rose-700 dark:text-rose-300">Privileged Actions (理由 + 確認必須)</p>
+            <p className="mt-1 text-xs text-rose-600 dark:text-rose-300">危険操作は one-click では実行しません。操作理由を入力し、監査ログに保存します。</p>
             <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="操作理由 (必須)" className="mt-2 w-full rounded border border-gray-300 px-3 py-2 text-sm" />
             <div className="mt-2 flex flex-wrap gap-2">
               <select value={status} onChange={(e) => setStatus(e.target.value)} className="rounded border border-gray-300 px-2 py-2 text-sm">
@@ -367,12 +431,28 @@ export default function InternalAdminPage() {
                 <option value="suspended">suspended</option>
                 <option value="closed">closed</option>
               </select>
+            {(() => {
+              const targetAuthUserId = String(selectedUser.appUser.authUserId ?? selectedUser.appUser.supabaseUserId ?? selectedUser.appUser.logtoUserId ?? '').trim()
+              return (
+                <>
               <button
                 type="button"
                 className="rounded border border-rose-400 px-3 py-2 text-sm text-rose-700"
                 onClick={() => {
-                  api.updateAccountStatus(selectedUser.appUser.authUserId ?? selectedUser.appUser.supabaseUserId ?? selectedUser.appUser.logtoUserId, status, reason)
-                    .then(() => setMessage('accountStatus を更新しました。'))
+                  if (!targetAuthUserId) {
+                    setMessage('authUserId が取得できません。')
+                    return
+                  }
+                  if (!reason.trim()) {
+                    setMessage('操作理由を入力してください。')
+                    return
+                  }
+                  trackMizzzEvent('privileged_action_start', { actorRole: internalRole, actionType: 'account_status_update', targetUserState: selectedUser.user360Summary.membershipStatus })
+                  api.updateAccountStatus(targetAuthUserId, status, reason)
+                    .then(() => {
+                      trackMizzzEvent('privileged_action_complete', { actorRole: internalRole, actionType: 'account_status_update' })
+                      setMessage('accountStatus を更新しました。')
+                    })
                     .catch((e: Error) => setMessage(e.message))
                 }}
               >accountStatus 更新</button>
@@ -380,11 +460,26 @@ export default function InternalAdminPage() {
                 type="button"
                 className="rounded border border-amber-400 px-3 py-2 text-sm text-amber-700"
                 onClick={() => {
-                  api.resetNotificationPreference(selectedUser.appUser.authUserId ?? selectedUser.appUser.supabaseUserId ?? selectedUser.appUser.logtoUserId, reason)
-                    .then(() => setMessage('notificationPreference をリセットしました。'))
+                  if (!targetAuthUserId) {
+                    setMessage('authUserId が取得できません。')
+                    return
+                  }
+                  if (!reason.trim()) {
+                    setMessage('操作理由を入力してください。')
+                    return
+                  }
+                  trackMizzzEvent('privileged_action_start', { actorRole: internalRole, actionType: 'notification_preference_reset', targetUserState: selectedUser.user360Summary.membershipStatus })
+                  api.resetNotificationPreference(targetAuthUserId, reason)
+                    .then(() => {
+                      trackMizzzEvent('privileged_action_complete', { actorRole: internalRole, actionType: 'notification_preference_reset' })
+                      setMessage('notificationPreference をリセットしました。')
+                    })
                     .catch((e: Error) => setMessage(e.message))
                 }}
               >通知設定リセット</button>
+                </>
+              )
+            })()}
             </div>
           </div>
         </div>

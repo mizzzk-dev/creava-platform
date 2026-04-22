@@ -39,6 +39,66 @@ export type InternalLookupUser = {
   lastSyncedAt: string | null
 }
 
+export type InternalTimelineEvent = {
+  eventId: string
+  eventAt: string
+  timelineEventType: string
+  timelineEventSeverity: 'info' | 'warning' | 'high'
+  timelineEventSource: string
+  sourceSite: string
+  summary: string
+  linkedContextState: 'available' | 'partial' | 'none'
+  dataConfidenceState: 'normal' | 'stale_possible' | 'mismatch_detected' | 'needs_recheck'
+}
+
+export type InternalUser360Summary = {
+  sourceOfTruth: string
+  authSource: string
+  targetUserId: string
+  sourceSite: string
+  membershipStatus: string
+  entitlementState: string
+  subscriptionState: string
+  billingState: string
+  lifecycleStage: string
+  dataConfidenceState: 'normal' | 'stale_possible' | 'mismatch_detected' | 'needs_recheck'
+  staleAt: string | null
+}
+
+export type InternalOperationsSummary = {
+  safeOperations: Array<{ actionType: string; privilegedActionState: string; operationResultState: string }>
+  privilegedActions: Array<{ actionType: string; privilegedActionState: string; privilegedActionApprovalState: string; operationResultState: string }>
+  explanation: string
+}
+
+export type InternalInvestigationSummary = {
+  investigationState: string
+  investigationReason: string | null
+  followupState: string
+  openCount: number
+  latestUpdatedAt: string | null
+  explanation: string
+}
+
+export type InternalAuditSummary = {
+  totalCount: number
+  successCount: number
+  failedCount: number
+  deniedCount: number
+  latestAction: { action: string; status: string; reason: string | null; at: string | null } | null
+}
+
+export type InternalUserSummaryResponse = {
+  appUser: { authUserId?: string | null; supabaseUserId?: string | null; logtoUserId?: string | null; [key: string]: unknown }
+  userSummary: Record<string, unknown>
+  user360Summary: InternalUser360Summary
+  operationsSummary: InternalOperationsSummary
+  investigationSummary: InternalInvestigationSummary
+  auditSummary: InternalAuditSummary
+  timeline: InternalTimelineEvent[]
+  related: Record<string, unknown>
+}
+
 export type InternalRevenueSummary = {
   count: number
   currency: string
@@ -283,8 +343,8 @@ export function useInternalAdminApi() {
   }
 
   return {
-    searchUsers: async (query: string) => withToken((token) => internalFetch<{ count: number; users: InternalLookupUser[] }>(`/internal/users/lookup?email=${encodeURIComponent(query)}`, token)),
-    getUserSummary: async (authUserId: string) => withToken((token) => internalFetch<any>(`/internal/users/${encodeURIComponent(authUserId)}/summary`, token)),
+    searchUsers: async (query: string) => withToken((token) => internalFetch<{ count: number; users: InternalLookupUser[] }>(`/internal/users/lookup?q=${encodeURIComponent(query)}`, token)),
+    getUserSummary: async (authUserId: string) => withToken((token) => internalFetch<InternalUserSummaryResponse>(`/internal/users/${encodeURIComponent(authUserId)}/summary`, token)),
     updateAccountStatus: async (authUserId: string, nextStatus: string, reason: string) => withToken((token) => internalFetch<any>(`/internal/users/${encodeURIComponent(authUserId)}/account-status`, token, { method: 'POST', body: JSON.stringify({ nextStatus, reason }) })),
     resetNotificationPreference: async (authUserId: string, reason: string) => withToken((token) => internalFetch<any>(`/internal/users/${encodeURIComponent(authUserId)}/notification-reset`, token, { method: 'POST', body: JSON.stringify({ reason }) })),
     searchOrders: async (query: string) => withToken((token) => internalFetch<{ count: number; items: InternalOrderLookupItem[] }>(`/internal/orders/lookup?query=${encodeURIComponent(query)}`, token)),

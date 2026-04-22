@@ -809,6 +809,177 @@ async function createInternalAuditLog(strapi: any, payload: {
   })
 }
 
+type UserTimelineEvent = {
+  eventId: string
+  eventAt: string
+  timelineEventType: string
+  timelineEventSeverity: 'info' | 'warning' | 'high'
+  timelineEventSource: string
+  sourceSite: SiteType | 'unknown'
+  summary: string
+  linkedContextState: 'available' | 'partial' | 'none'
+  dataConfidenceState: 'normal' | 'stale_possible' | 'mismatch_detected' | 'needs_recheck'
+  metadata?: Record<string, unknown>
+}
+
+function toIsoOrNull(input: unknown): string | null {
+  if (typeof input !== 'string' || !input.trim()) return null
+  const date = new Date(input)
+  if (Number.isNaN(date.getTime())) return null
+  return date.toISOString()
+}
+
+function toTimelineSeverity(input: unknown): 'info' | 'warning' | 'high' {
+  const value = String(input ?? '').trim().toLowerCase()
+  if (value === 'high' || value === 'critical') return 'high'
+  if (value === 'medium' || value === 'warning') return 'warning'
+  return 'info'
+}
+
+function buildInvestigationSummary(investigations: any[]) {
+  const latest = investigations[0] ?? null
+  const state = String(latest?.investigationState ?? 'none')
+  const openCount = investigations.filter((item) => ['open', 'reviewing', 'escalated'].includes(String(item?.investigationState ?? ''))).length
+  return {
+    investigationState: state === 'not_needed' ? 'none' : state,
+    investigationReason: latest?.investigationReason ?? null,
+    followupState: openCount > 0 ? 'pending' : 'none',
+    openCount,
+    latestUpdatedAt: latest?.updatedAt ?? null,
+    explanation: latest
+      ? `security investigation(${latest.investigationState}) が更新されています。reason=${latest.investigationReason ?? 'manual_review'}`
+      : 'security investigation は未作成です。',
+  }
+}
+
+function buildAuditSummary(auditLogs: any[]) {
+  const latest = auditLogs[0] ?? null
+  return {
+    totalCount: auditLogs.length,
+    successCount: auditLogs.filter((item) => item.status === 'success').length,
+    failedCount: auditLogs.filter((item) => item.status === 'failed').length,
+    deniedCount: auditLogs.filter((item) => item.status === 'denied').length,
+    latestAction: latest
+      ? {
+        action: latest.action,
+        status: latest.status,
+        reason: latest.reason ?? null,
+        at: latest.createdAt ?? null,
+      }
+      : null,
+  }
+}
+
+function buildUserTimeline(params: {
+  lifecycleSummary: ReturnType<typeof buildLifecycleSummary>
+  inquirySubmissions: any[]
+  securityEvents: any[]
+  securityNotices: any[]
+  investigations: any[]
+  auditLogs: any[]
+}): UserTimelineEvent[] {
+  const events: UserTimelineEvent[] = []
+
+  const pushEvent = (event: UserTimelineEvent) => {
+    if (!event.eventAt) return
+    events.push(event)
+  }
+
+  pushEvent({
+    eventId: `lifecycle:${params.lifecycleSummary.lifecycleStage}:${params.lifecycleSummary.statusUpdatedAt ?? 'unknown'}`,
+    eventAt: params.lifecycleSummary.statusUpdatedAt ?? new Date().toISOString(),
+    timelineEventType: 'membership_state',
+    timelineEventSeverity: params.lifecycleSummary.accountStatus === 'suspended' ? 'high' : params.lifecycleSummary.membershipStatus === 'grace' ? 'warning' : 'info',
+    timelineEventSource: 'membership_summary',
+    sourceSite: normalizeSite(params.lifecycleSummary.sourceSite),
+    summary: `membership=${params.lifecycleSummary.membershipStatus} / entitlement=${params.lifecycleSummary.entitlementState} / billing=${params.lifecycleSummary.billingState}`,
+    linkedContextState: 'available',
+    dataConfidenceState: 'normal',
+  })
+
+  for (const inquiry of params.inquirySubmissions.slice(0, 5)) {
+    const occurredAt = toIsoOrNull(inquiry.submittedAt) ?? toIsoOrNull(inquiry.createdAt)
+    if (!occurredAt) continue
+    pushEvent({
+      eventId: `support:${inquiry.documentId ?? inquiry.id ?? occurredAt}`,
+      eventAt: occurredAt,
+      timelineEventType: 'support_case',
+      timelineEventSeverity: inquiry.status === 'urgent' ? 'high' : inquiry.status === 'open' ? 'warning' : 'info',
+      timelineEventSource: 'support',
+      sourceSite: normalizeSite(inquiry.sourceSite),
+      summary: `inquiry status=${inquiry.status ?? 'unknown'} / category=${inquiry.inquiryCategory ?? 'general'}`,
+      linkedContextState: 'available',
+      dataConfidenceState: 'normal',
+    })
+  }
+
+  for (const event of params.securityEvents.slice(0, 10)) {
+    const occurredAt = toIsoOrNull(event.eventOccurredAt) ?? toIsoOrNull(event.createdAt)
+    if (!occurredAt) continue
+    pushEvent({
+      eventId: String(event.eventId ?? event.documentId ?? occurredAt),
+      eventAt: occurredAt,
+      timelineEventType: 'security_event',
+      timelineEventSeverity: toTimelineSeverity(event.eventSeverity),
+      timelineEventSource: 'security',
+      sourceSite: normalizeSite(event.sourceSite),
+      summary: `${event.eventType ?? 'unknown'} (${event.eventState ?? 'detected'})`,
+      linkedContextState: 'available',
+      dataConfidenceState: 'normal',
+    })
+  }
+
+  for (const notice of params.securityNotices.slice(0, 10)) {
+    const occurredAt = toIsoOrNull(notice.publishedAtISO) ?? toIsoOrNull(notice.createdAt)
+    if (!occurredAt) continue
+    pushEvent({
+      eventId: String(notice.noticeId ?? notice.documentId ?? occurredAt),
+      eventAt: occurredAt,
+      timelineEventType: 'security_notice',
+      timelineEventSeverity: toTimelineSeverity(notice.severity),
+      timelineEventSource: 'security_notice',
+      sourceSite: normalizeSite(notice.sourceSite),
+      summary: `${notice.noticeType ?? 'security_notice'} / state=${notice.deliveryState ?? 'unknown'}`,
+      linkedContextState: 'partial',
+      dataConfidenceState: 'normal',
+    })
+  }
+
+  for (const investigation of params.investigations.slice(0, 10)) {
+    const occurredAt = toIsoOrNull(investigation.updatedAt) ?? toIsoOrNull(investigation.createdAt)
+    if (!occurredAt) continue
+    pushEvent({
+      eventId: String(investigation.documentId ?? occurredAt),
+      eventAt: occurredAt,
+      timelineEventType: 'investigation_state',
+      timelineEventSeverity: investigation.investigationState === 'escalated' ? 'high' : investigation.investigationState === 'open' || investigation.investigationState === 'reviewing' ? 'warning' : 'info',
+      timelineEventSource: 'investigation',
+      sourceSite: normalizeSite(investigation.sourceSite),
+      summary: `investigation=${investigation.investigationState} / reason=${investigation.investigationReason ?? 'manual_review'}`,
+      linkedContextState: 'available',
+      dataConfidenceState: 'normal',
+    })
+  }
+
+  for (const log of params.auditLogs.slice(0, 10)) {
+    const occurredAt = toIsoOrNull(log.createdAt)
+    if (!occurredAt) continue
+    pushEvent({
+      eventId: `audit:${log.documentId ?? log.id ?? occurredAt}`,
+      eventAt: occurredAt,
+      timelineEventType: 'privileged_action',
+      timelineEventSeverity: log.status === 'failed' || log.status === 'denied' ? 'high' : 'warning',
+      timelineEventSource: 'internal_audit',
+      sourceSite: normalizeSite(log.sourceSite),
+      summary: `${log.action} / status=${log.status}`,
+      linkedContextState: 'available',
+      dataConfidenceState: log.status === 'failed' ? 'needs_recheck' : 'normal',
+    })
+  }
+
+  return events.sort((a, b) => new Date(b.eventAt).getTime() - new Date(a.eventAt).getTime()).slice(0, 80)
+}
+
 async function buildUserSummary(strapi: any, logtoUserId: string) {
   const appUser = await strapi.documents('api::app-user.app-user').findFirst({
     filters: {
@@ -821,7 +992,7 @@ async function buildUserSummary(strapi: any, logtoUserId: string) {
   })
   if (!appUser) return null
 
-  const [notificationPreference, inquirySubmissions, moderationLogs, favorites, viewHistories, reports, latestSubscription, latestEntitlement, notificationInbox] = await Promise.all([
+  const [notificationPreference, inquirySubmissions, moderationLogs, favorites, viewHistories, reports, latestSubscription, latestEntitlement, notificationInbox, securityEvents, securityNotices, investigations, auditLogs] = await Promise.all([
     strapi.documents('api::notification-preference.notification-preference').findFirst({ filters: { userId: { $eq: logtoUserId } } }),
     strapi.documents('api::inquiry-submission.inquiry-submission').findMany({ filters: { email: { $eqi: appUser.primaryEmail ?? '' } }, limit: 10, sort: ['submittedAt:desc'] }),
     strapi.documents('api::moderation-log.moderation-log').findMany({ filters: { performedBy: { $eq: logtoUserId } }, limit: 10, sort: ['createdAt:desc'] }),
@@ -831,6 +1002,26 @@ async function buildUserSummary(strapi: any, logtoUserId: string) {
     findLatestSubscription(strapi, logtoUserId),
     findLatestEntitlement(strapi, logtoUserId),
     buildNotificationInbox(strapi, logtoUserId, appUser),
+    strapi.documents('api::security-event.security-event').findMany({
+      filters: { securityTargetUserId: { $eq: logtoUserId } },
+      limit: 20,
+      sort: ['eventOccurredAt:desc'],
+    }),
+    strapi.documents('api::security-notice.security-notice').findMany({
+      filters: { securityTargetUserId: { $eq: logtoUserId } },
+      limit: 20,
+      sort: ['publishedAtISO:desc'],
+    }),
+    strapi.documents('api::security-investigation.security-investigation').findMany({
+      filters: { securityTargetUserId: { $eq: logtoUserId } },
+      limit: 20,
+      sort: ['updatedAt:desc'],
+    }),
+    strapi.documents('api::internal-audit-log.internal-audit-log').findMany({
+      filters: { targetId: { $eq: logtoUserId } },
+      limit: 20,
+      sort: ['createdAt:desc'],
+    }),
   ])
 
   const lifecycleSummary = buildLifecycleSummary(appUser, latestSubscription, latestEntitlement)
@@ -841,9 +1032,49 @@ async function buildUserSummary(strapi: any, logtoUserId: string) {
     lifecycleSummary,
     nowIso: new Date().toISOString(),
   })
+  const investigationSummary = buildInvestigationSummary(investigations)
+  const auditSummary = buildAuditSummary(auditLogs)
+  const userTimeline = buildUserTimeline({
+    lifecycleSummary,
+    inquirySubmissions,
+    securityEvents,
+    securityNotices,
+    investigations,
+    auditLogs,
+  })
+  const dataConfidenceState = userTimeline.some((item) => item.dataConfidenceState === 'needs_recheck')
+    ? 'needs_recheck'
+    : 'normal'
 
   return {
     appUser,
+    user360Summary: {
+      sourceOfTruth: 'app_user_domain',
+      authSource: 'supabase_auth',
+      targetUserId: logtoUserId,
+      sourceSite: appUser.sourceSite ?? 'cross',
+      membershipStatus: lifecycleSummary.membershipStatus,
+      entitlementState: lifecycleSummary.entitlementState,
+      subscriptionState: lifecycleSummary.subscriptionState,
+      billingState: lifecycleSummary.billingState,
+      lifecycleStage: lifecycleSummary.lifecycleStage,
+      dataConfidenceState,
+      staleAt: appUser.lastSyncedAt ?? appUser.updatedAt ?? null,
+    },
+    operationsSummary: {
+      safeOperations: [
+        { actionType: 'summary_refresh', privilegedActionState: 'allowed_with_confirm', operationResultState: 'not_started' },
+        { actionType: 'notification_preference_reset', privilegedActionState: 'allowed_with_reason', operationResultState: 'not_started' },
+        { actionType: 'support_followup_create', privilegedActionState: 'allowed_with_reason', operationResultState: 'not_started' },
+      ],
+      privilegedActions: [
+        { actionType: 'account_status_update', privilegedActionState: 'approval_required', privilegedActionApprovalState: 'required', operationResultState: 'not_started' },
+        { actionType: 'session_revoke_support', privilegedActionState: 'approval_required', privilegedActionApprovalState: 'required', operationResultState: 'not_started' },
+      ],
+      explanation: 'safe operation と privileged action を分離し、危険操作は理由入力と確認を必須化します。',
+    },
+    investigationSummary,
+    auditSummary,
     userSummary: {
       membershipStatus: appUser.membershipStatus,
       membershipPlan: appUser.membershipPlan,
@@ -927,6 +1158,7 @@ async function buildUserSummary(strapi: any, logtoUserId: string) {
       viewHistories,
       communityReports: reports,
     },
+    timeline: userTimeline,
   }
 }
 
@@ -1567,12 +1799,17 @@ export default ({ strapi }) => ({
   async supportLookup(ctx) {
     if (!assertOpsToken(ctx)) return ctx.unauthorized('ops token が不正です。')
 
-    const { email, authUserId, logtoUserId, appUserId } = ctx.query ?? {}
-    if (!email && !authUserId && !logtoUserId && !appUserId) {
-      return ctx.badRequest('email, authUserId, logtoUserId, appUserId のいずれかが必要です。')
+    const { email, authUserId, logtoUserId, appUserId, q } = ctx.query ?? {}
+    if (!email && !authUserId && !logtoUserId && !appUserId && !q) {
+      return ctx.badRequest('email, authUserId, logtoUserId, appUserId, q のいずれかが必要です。')
     }
 
     const filters: Record<string, unknown>[] = []
+    if (typeof q === 'string' && q.trim()) {
+      const queryValue = q.trim()
+      if (queryValue.includes('@')) filters.push({ primaryEmail: { $eqi: queryValue } })
+      filters.push({ authUserId: { $eq: queryValue } }, { supabaseUserId: { $eq: queryValue } }, { logtoUserId: { $eq: queryValue } }, { appUserId: { $eq: queryValue } })
+    }
     if (typeof email === 'string' && email) filters.push({ primaryEmail: { $eqi: email } })
     if (typeof authUserId === 'string' && authUserId) filters.push({ authUserId: { $eq: authUserId } })
     if (typeof logtoUserId === 'string' && logtoUserId) filters.push({ logtoUserId: { $eq: logtoUserId } })
@@ -1593,12 +1830,17 @@ export default ({ strapi }) => ({
   async internalLookup(ctx) {
     try {
       const access = await requireInternalPermission(ctx, 'internal.user.read')
-      const { email, authUserId, logtoUserId, appUserId } = ctx.query ?? {}
-      if (!email && !authUserId && !logtoUserId && !appUserId) {
-        return ctx.badRequest('email, authUserId, logtoUserId, appUserId のいずれかが必要です。')
+      const { email, authUserId, logtoUserId, appUserId, q } = ctx.query ?? {}
+      if (!email && !authUserId && !logtoUserId && !appUserId && !q) {
+        return ctx.badRequest('email, authUserId, logtoUserId, appUserId, q のいずれかが必要です。')
       }
 
       const filters: Record<string, unknown>[] = []
+      if (typeof q === 'string' && q.trim()) {
+        const queryValue = q.trim()
+        if (queryValue.includes('@')) filters.push({ primaryEmail: { $eqi: queryValue } })
+        filters.push({ authUserId: { $eq: queryValue } }, { supabaseUserId: { $eq: queryValue } }, { logtoUserId: { $eq: queryValue } }, { appUserId: { $eq: queryValue } })
+      }
       if (typeof email === 'string' && email) filters.push({ primaryEmail: { $eqi: email } })
       if (typeof authUserId === 'string' && authUserId) filters.push({ authUserId: { $eq: authUserId } })
       if (typeof logtoUserId === 'string' && logtoUserId) filters.push({ logtoUserId: { $eq: logtoUserId } })
