@@ -27,6 +27,10 @@ export default function NotificationPreferenceCenter({ location }: { location: s
     void supportsWebPush().then(setPushSupported)
   }, [])
 
+  useEffect(() => {
+    trackMizzzEvent('notification_settings_view', { location })
+  }, [location])
+
   const optionalThemes = useMemo(() => notificationThemes.filter((theme) => !state.themes[theme].required), [state.themes])
 
   const persist = (updater: (prev: typeof state) => typeof state) => {
@@ -70,6 +74,7 @@ export default function NotificationPreferenceCenter({ location }: { location: s
                   }]),
                 ) as typeof prev.themes,
               }))
+              trackMizzzEvent('notification_settings_save', { location, scope: 'all_in_app', enabled: checked })
               trackMizzzEvent(checked ? 'in_app_opt_in' : 'in_app_opt_out', { location })
             }}
           />
@@ -91,6 +96,8 @@ export default function NotificationPreferenceCenter({ location }: { location: s
                   }]),
                 ) as typeof prev.themes,
               }))
+              trackMizzzEvent('notification_settings_save', { location, scope: 'all_email', enabled: checked })
+              trackMizzzEvent('crm_preference_save', { location, channel: 'email', enabled: checked })
               trackMizzzEvent(checked ? 'email_opt_in' : 'email_opt_out', { location })
             }}
           />
@@ -121,6 +128,7 @@ export default function NotificationPreferenceCenter({ location }: { location: s
                       ...prev,
                       themes: { ...prev.themes, [theme]: { ...prev.themes[theme], inApp: checked } },
                     }))
+                    trackMizzzEvent('notification_settings_save', { location, scope: theme, channel: 'in_app', enabled: checked })
                   }}
                 />
               </label>
@@ -136,6 +144,8 @@ export default function NotificationPreferenceCenter({ location }: { location: s
                       ...prev,
                       themes: { ...prev.themes, [theme]: { ...prev.themes[theme], email: checked } },
                     }))
+                    trackMizzzEvent('notification_settings_save', { location, scope: theme, channel: 'email', enabled: checked })
+                    trackMizzzEvent('crm_preference_save', { location, scope: theme, channel: 'email', enabled: checked })
                   }}
                 />
               </label>

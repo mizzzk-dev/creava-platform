@@ -16,11 +16,12 @@ import { getCampaignList } from '@/modules/campaign/api'
 import type { CampaignSummary } from '@/modules/campaign/types'
 import { SITE_TYPE } from '@/lib/siteLinks'
 import { trackMizzzEvent } from '@/modules/analytics/tracking'
-import { resolveAccountCenterUrl } from '@/lib/auth/config'
+import { resolveAccountCenterUrl, SUPABASE_EMAIL_CHANGE_REDIRECT_URL, SUPABASE_PASSWORD_RESET_REDIRECT_URL } from '@/lib/auth/config'
 import { useAuthClient } from '@/lib/auth/AuthProvider'
 import UserLifecycleBanner from '@/components/common/UserLifecycleBanner'
 import MemberValueExperiencePanel from '@/components/common/MemberValueExperiencePanel'
 import MemberProgressHub from '@/components/common/MemberProgressHub'
+import { requestSupabaseEmailChange, sendSupabasePasswordReset } from '@/lib/auth/supabaseAccount'
 
 const MEMBER_BENEFITS = [
   'member.benefitEarly',
@@ -176,6 +177,10 @@ export default function MemberPage() {
   const [cardValidationErrors, setCardValidationErrors] = useState<Record<string, string>>({})
   const [campaigns, setCampaigns] = useState<CampaignSummary[]>([])
   const [billingSummary, setBillingSummary] = useState<MemberBillingSummary | null>(null)
+  const [securityEmail, setSecurityEmail] = useState('')
+  const [securityMessage, setSecurityMessage] = useState<string | null>(null)
+  const [securityError, setSecurityError] = useState<string | null>(null)
+  const [securityLoading, setSecurityLoading] = useState(false)
   const role = user?.role ?? 'guest'
   const isMember = user?.membershipStatus === 'member' || user?.membershipStatus === 'grace'
   const isAdmin = role === 'admin'
@@ -413,6 +418,48 @@ export default function MemberPage() {
     }
   }
 
+  const handlePasswordReset = async () => {
+    if (!user?.email) {
+      setSecurityError(t('member.securityNoEmail', { defaultValue: '登録メールアドレスがないため、パスワード再設定を開始できません。' }))
+      return
+    }
+    setSecurityLoading(true)
+    setSecurityError(null)
+    setSecurityMessage(null)
+    try {
+      const redirectTo = SUPABASE_PASSWORD_RESET_REDIRECT_URL || `${window.location.origin}/callback?redirect=${encodeURIComponent(ROUTES.MEMBER)}`
+      await sendSupabasePasswordReset(user.email, redirectTo)
+      setSecurityMessage(t('member.securityPasswordResetSent', { defaultValue: 'パスワード再設定メールを送信しました。メール内リンクから変更を完了してください。' }))
+      trackMizzzEvent('password_reset_start', { sourceSite: SITE_TYPE, membershipStatus: user.membershipStatus })
+    } catch {
+      setSecurityError(t('member.securityPasswordResetError', { defaultValue: 'パスワード再設定メールの送信に失敗しました。時間をおいて再試行してください。' }))
+    } finally {
+      setSecurityLoading(false)
+    }
+  }
+
+  const handleEmailChange = async () => {
+    if (!securityEmail.trim()) {
+      setSecurityError(t('member.securityEmailRequired', { defaultValue: '変更先メールアドレスを入力してください。' }))
+      return
+    }
+    setSecurityLoading(true)
+    setSecurityError(null)
+    setSecurityMessage(null)
+    try {
+      const token = await authClient.getAccessToken()
+      if (!token) throw new Error('missing token')
+      await requestSupabaseEmailChange(token, securityEmail.trim())
+      const baseMessage = t('member.securityEmailChangeSent', { defaultValue: 'メールアドレス変更確認メールを送信しました。新旧メールで承認を完了してください。' })
+      setSecurityMessage(SUPABASE_EMAIL_CHANGE_REDIRECT_URL ? `${baseMessage} (${SUPABASE_EMAIL_CHANGE_REDIRECT_URL})` : baseMessage)
+      trackMizzzEvent('email_change_start', { sourceSite: SITE_TYPE, membershipStatus: user?.membershipStatus ?? 'non_member' })
+    } catch {
+      setSecurityError(t('member.securityEmailChangeError', { defaultValue: 'メールアドレス変更リクエストに失敗しました。再認証後に再度お試しください。' }))
+    } finally {
+      setSecurityLoading(false)
+    }
+  }
+
   const orderStatusLabel = (status: MemberOrderStatus) => t(`member.orderStatus.${status}`, { defaultValue: status })
   const shipmentStatusLabel = (status: ShipmentStatus) => t(`member.shipmentStatus.${status}`, { defaultValue: status })
   const formatDateTime = (value: string) => {
@@ -457,6 +504,22 @@ export default function MemberPage() {
       return siteOk && localeOk && memberOk
     })
   }, [campaigns, locale, loyaltyProfile])
+
+  useEffect(() => {
+    if (!isSignedIn) return
+    trackMizzzEvent('account_center_view', {
+      sourceSite: SITE_TYPE,
+      membershipStatus: lifecycleSummary?.membershipStatus ?? user?.membershipStatus ?? 'non_member',
+      lifecycleStage: lifecycleSummary?.lifecycleStage ?? lifecycle?.lifecycleStage ?? 'unknown',
+    })
+    trackMizzzEvent('account_summary_view', {
+      sourceSite: SITE_TYPE,
+      membershipStatus: lifecycleSummary?.membershipStatus ?? user?.membershipStatus ?? 'non_member',
+      lifecycleStage: lifecycleSummary?.lifecycleStage ?? lifecycle?.lifecycleStage ?? 'unknown',
+      subscriptionState: lifecycleSummary?.subscriptionState ?? user?.subscriptionState ?? 'none',
+      billingState: lifecycleSummary?.billingState ?? user?.billingState ?? 'clear',
+    })
+  }, [isSignedIn, lifecycle?.lifecycleStage, lifecycleSummary?.billingState, lifecycleSummary?.lifecycleStage, lifecycleSummary?.membershipStatus, lifecycleSummary?.subscriptionState, user?.billingState, user?.membershipStatus, user?.subscriptionState])
 
   useEffect(() => {
     if (!loyaltyProfile) return
@@ -635,7 +698,7 @@ export default function MemberPage() {
           <div className="rounded border border-gray-200 p-5 dark:border-gray-800">
             <p className="font-mono text-[11px] text-gray-400">account center</p>
             <h2 className="mt-2 text-base font-semibold text-gray-900 dark:text-gray-100">{t('member.accountCenterTitle', { defaultValue: 'アカウント設定ハブ' })}</h2>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{t('member.accountCenterLead', { defaultValue: 'セキュリティに関わる設定は Logto Hosted Account Center で安全に管理し、通知や導線はこのマイページで整理します。' })}</p>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{t('member.accountCenterLead', { defaultValue: 'セキュリティに関わる設定は Supabase Auth フローで安全に管理し、通知や導線はこのマイページで整理します。' })}</p>
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
               {accountCenterLinks.map((item) => (
                 <a
@@ -662,7 +725,7 @@ export default function MemberPage() {
               ))}
             </div>
             <div className="mt-3 rounded border border-dashed border-gray-200 p-3 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
-              <p>{t('member.accountCenterHostHint', { defaultValue: 'Hosted UI: パスワード変更 / MFA / passkey / 連携アカウント / セッション管理' })}</p>
+              <p>{t('member.accountCenterHostHint', { defaultValue: 'Supabase Auth Flow: パスワード変更 / メール変更 / MFA(将来拡張) / 連携アカウント / セッション管理' })}</p>
               <p className="mt-1">{t('member.accountCenterCustomHint', { defaultValue: 'Custom UI: 通知設定 / CRM配信設定 / FAQ・Support導線 / 会員向け説明文' })}</p>
               {accountCenterRoot ? (
                 <a href={accountCenterRoot} target="_blank" rel="noreferrer" className="mt-2 inline-flex text-violet-600 underline hover:text-violet-500 dark:text-violet-300 dark:hover:text-violet-200">
@@ -794,7 +857,40 @@ export default function MemberPage() {
               <p className="font-mono text-[11px] text-gray-400">auth</p>
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{t('member.authLead', { defaultValue: 'ソーシャルログイン連携の対応状況を確認できます。' })}</p>
               <SocialAuthProviderStatus isSignedIn={isSignedIn} />
-              <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{t('member.authHelp', { defaultValue: '実際のログイン方式は、Logto サインイン画面で表示される有効なプロバイダー設定に従います。' })}</p>
+              <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{t('member.authHelp', { defaultValue: '実際のログイン方式は、Supabase Auth で有効化されたプロバイダー設定に従います。' })}</p>
+              <div className="mt-4 rounded border border-dashed border-gray-200 p-3 text-xs dark:border-gray-700">
+                <p className="font-semibold text-gray-900 dark:text-gray-100">{t('member.securitySectionTitle', { defaultValue: 'セキュリティ設定（自己管理）' })}</p>
+                <p className="mt-1 text-gray-600 dark:text-gray-300">{t('member.securitySectionLead', { defaultValue: 'パスワード再設定・メール変更は Supabase Auth の安全なフローで実行します。' })}</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { void handlePasswordReset() }}
+                    disabled={securityLoading}
+                    className="rounded border border-gray-300 px-2 py-1 text-[11px] text-gray-700 hover:border-violet-300 hover:text-violet-600 disabled:opacity-60 dark:border-gray-700 dark:text-gray-200"
+                  >
+                    {t('member.securityPasswordResetAction', { defaultValue: 'パスワード再設定メールを送る' })}
+                  </button>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <input
+                    value={securityEmail}
+                    onChange={(event) => setSecurityEmail(event.target.value)}
+                    type="email"
+                    placeholder={t('member.securityEmailInputPlaceholder', { defaultValue: '変更先メールアドレス' })}
+                    className="w-full rounded border border-gray-200 bg-white px-2 py-1.5 text-[11px] dark:border-gray-700 dark:bg-gray-900 md:max-w-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { void handleEmailChange() }}
+                    disabled={securityLoading}
+                    className="rounded border border-gray-300 px-2 py-1 text-[11px] text-gray-700 hover:border-violet-300 hover:text-violet-600 disabled:opacity-60 dark:border-gray-700 dark:text-gray-200"
+                  >
+                    {t('member.securityEmailChangeAction', { defaultValue: 'メール変更を申請' })}
+                  </button>
+                </div>
+                {securityMessage && <p className="mt-2 text-emerald-600 dark:text-emerald-300">{securityMessage}</p>}
+                {securityError && <p className="mt-2 text-rose-600 dark:text-rose-300">{securityError}</p>}
+              </div>
             </div>
           </div>
 

@@ -6,6 +6,8 @@ export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL?.trim() ?? ''
 export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() ?? ''
 export const SUPABASE_OAUTH_DEFAULT_PROVIDER = import.meta.env.VITE_SUPABASE_OAUTH_DEFAULT_PROVIDER?.trim() ?? 'google'
 export const SUPABASE_PROJECT_REF = import.meta.env.VITE_SUPABASE_PROJECT_REF?.trim() ?? ''
+export const SUPABASE_PASSWORD_RESET_REDIRECT_URL = import.meta.env.VITE_SUPABASE_PASSWORD_RESET_REDIRECT_URL?.trim() ?? ''
+export const SUPABASE_EMAIL_CHANGE_REDIRECT_URL = import.meta.env.VITE_SUPABASE_EMAIL_CHANGE_REDIRECT_URL?.trim() ?? ''
 
 export const LOGTO_ENDPOINT = import.meta.env.VITE_LOGTO_ENDPOINT?.trim() ?? ''
 const LOGTO_APP_ID_UNIFIED = import.meta.env.VITE_LOGTO_APP_ID_UNIFIED?.trim() ?? ''
