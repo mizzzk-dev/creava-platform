@@ -334,6 +334,7 @@
 - `PLAYBOOK_APPROVAL_AUDIENCE_THRESHOLD`: audience 規模が閾値以上の場合に approval を強制するための基準値。
 - `PLAYBOOK_SAFE_MODE_DEFAULT`: `true` の場合、playbook 実行 API は safe mode を既定で有効化。
 - `PLAYBOOK_RETRY_LIMIT`: action retry の最大試行回数（metadata と run 表示で利用）。
+- `OPS_STALE_THRESHOLD_HOURS`: operations dashboard で stale summary を判定する閾値時間（既定 6h）。
 
 ### GitHub Secrets / Variables
 - 既存 backend デプロイ secret 群に追加して staging/production で環境分離する。
