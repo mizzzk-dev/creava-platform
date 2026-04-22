@@ -9,6 +9,15 @@ export interface SupportCategoryDef {
 }
 
 export const SUPPORT_CATEGORIES: SupportCategoryDef[] = [
+  { key: 'account_issue', labelKey: 'support.categories.accountIssue', site: 'all', formTypes: ['contact', 'fc_support'] },
+  { key: 'membership_issue', labelKey: 'support.categories.membershipIssue', site: 'all', formTypes: ['fc_support'] },
+  { key: 'billing_issue', labelKey: 'support.categories.billingIssue', site: 'all', formTypes: ['store_support', 'fc_support'] },
+  { key: 'renewal_issue', labelKey: 'support.categories.renewalIssue', site: 'all', formTypes: ['fc_support'] },
+  { key: 'privacy_issue', labelKey: 'support.categories.privacyIssue', site: 'all', formTypes: ['contact'] },
+  { key: 'security_issue', labelKey: 'support.categories.securityIssue', site: 'all', formTypes: ['contact'] },
+  { key: 'technical_issue', labelKey: 'support.categories.technicalIssue', site: 'all', formTypes: ['contact', 'store_support', 'fc_support'] },
+  { key: 'content_issue', labelKey: 'support.categories.contentIssue', site: 'all', formTypes: ['contact', 'fc_support'] },
+  { key: 'other', labelKey: 'support.categories.other', site: 'all', formTypes: ['contact', 'store_support', 'fc_support'] },
   { key: 'general', labelKey: 'support.categories.mainGeneral', site: 'main', formTypes: ['contact'] },
   { key: 'site_usage', labelKey: 'support.categories.mainSiteUsage', site: 'main', formTypes: ['contact'] },
   { key: 'events', labelKey: 'support.categories.mainEvents', site: 'main', formTypes: ['event'] },

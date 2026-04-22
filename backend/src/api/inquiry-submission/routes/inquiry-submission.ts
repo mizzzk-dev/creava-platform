@@ -18,6 +18,38 @@ export default {
     },
     {
       method: 'GET',
+      path: '/inquiry-submissions/me/summary',
+      handler: 'inquiry-submission.mySummary',
+      config: {
+        auth: false,
+      },
+    },
+    {
+      method: 'GET',
+      path: '/inquiry-submissions/me/history',
+      handler: 'inquiry-submission.myHistory',
+      config: {
+        auth: false,
+      },
+    },
+    {
+      method: 'GET',
+      path: '/inquiry-submissions/me/:id',
+      handler: 'inquiry-submission.myDetail',
+      config: {
+        auth: false,
+      },
+    },
+    {
+      method: 'PATCH',
+      path: '/inquiry-submissions/me/:id/reopen',
+      handler: 'inquiry-submission.reopenMyCase',
+      config: {
+        auth: false,
+      },
+    },
+    {
+      method: 'GET',
       path: '/inquiry-submissions/ops/list',
       handler: 'inquiry-submission.opsList',
       config: {

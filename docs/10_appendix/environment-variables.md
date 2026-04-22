@@ -32,6 +32,8 @@
 | `VITE_NOTIFICATION_IMPORTANT_MAX` | 重要通知の表示上限 | 任意 | 推奨 | 推奨 |
 | `VITE_NOTIFICATION_INBOX_PAGE_SIZE` | inbox 取得件数（frontend） | 任意 | 推奨 | 推奨 |
 | `VITE_NOTIFICATION_DIGEST_DEFAULT` | digest 既定（daily/weekly） | 任意 | 任意 | 推奨 |
+| `VITE_SUPPORT_CENTER_HISTORY_PAGE_SIZE` | support hub の case history 表示件数 | 任意 | 推奨 | 推奨 |
+| `VITE_SUPPORT_CENTER_SUGGESTION_MAX` | self-service article 提案件数 | 任意 | 推奨 | 推奨 |
 | `VITE_ONBOARDING_REMINDER_DAYS` | onboarding 再表示までの日数 | 任意 | 任意 | 推奨 |
 | `VITE_MEMBERSHIP_STATE_SYNC_INTERVAL_SEC` | frontend で state summary を再同期する間隔（秒） | 任意 | 推奨 | 推奨 |
 | `VITE_RENEWAL_REMINDER_DAYS` | renewal前 notice 表示開始日数 | 任意 | 推奨 | 推奨 |
@@ -115,6 +117,8 @@
 | `INQUIRY_NOTIFY_TO` | 管理通知メール宛先（カンマ区切り） | 任意 |
 | `INQUIRY_ENABLE_AUTO_REPLY` | 自動返信有効化 (`true/false`) | 任意 |
 | `INQUIRY_REPLY_SLA_DAYS` | 自動返信本文の返信目安日数 | 任意 |
+| `INQUIRY_MY_HISTORY_PAGE_MAX` | `/inquiry-submissions/me/history` の最大 pageSize | 推奨 |
+| `INQUIRY_MY_SUMMARY_MAX_ROWS` | `/inquiry-submissions/me/summary` 集計上限 | 推奨 |
 | `UPLOAD_MAX_FILE_SIZE_BYTES` | Upload Plugin サイズ上限 | 必須 |
 | `LIFECYCLE_EMAIL_FROM` | ライフサイクル配信の送信元メール（SMTP_FROMを上書きする場合） | 任意 |
 | `NOTIFICATION_CENTER_ENABLED` | notification inbox API の有効化 | 推奨 |
@@ -197,6 +201,8 @@
 - `VITE_NOTIFICATION_IMPORTANT_MAX`
 - `VITE_NOTIFICATION_INBOX_PAGE_SIZE`
 - `VITE_NOTIFICATION_DIGEST_DEFAULT`
+- `VITE_SUPPORT_CENTER_HISTORY_PAGE_SIZE`
+- `VITE_SUPPORT_CENTER_SUGGESTION_MAX`
 - `VITE_SHOPIFY_STORE_DOMAIN`
 - `VITE_SHOPIFY_STOREFRONT_TOKEN`
 - `VITE_STRIPE_PUBLISHABLE_KEY`
@@ -208,6 +214,8 @@
 - `STRAPI_PREVIEW_SECRET`（frontend `VITE_PREVIEW_SECRET` と同値）
 - `INQUIRY_IP_HASH_SALT`
 - `INQUIRY_OPS_TOKEN`
+- `INQUIRY_MY_HISTORY_PAGE_MAX`
+- `INQUIRY_MY_SUMMARY_MAX_ROWS`
 - `ANALYTICS_OPS_TOKEN`
 - `BI_DEFAULT_RANGE_DAYS`
 - `BI_MAX_FETCH_ROWS`

@@ -12,7 +12,7 @@
   "attributes": {
     "formType": {
       "type": "enumeration",
-      "enum": ["contact", "request", "restock", "application", "entry", "collaboration"],
+      "enum": ["contact", "request", "restock", "application", "entry", "collaboration", "event", "store_support", "fc_support"],
       "required": true
     },
     "inquiryCategory": { "type": "string" },
@@ -36,6 +36,7 @@
       "enum": ["main", "store", "fc", "unknown"],
       "default": "unknown"
     },
+    "authUserId": { "type": "string" },
     "status": {
       "type": "enumeration",
       "enum": ["new", "in_review", "waiting_reply", "replied", "closed", "spam", "failed"],
@@ -58,6 +59,35 @@
       "enum": ["not_required", "pending", "replied", "failed"],
       "default": "pending"
     },
+    "caseStatus": {
+      "type": "enumeration",
+      "enum": ["draft", "submitted", "triaging", "waiting_user", "in_progress", "resolved", "closed", "reopened"],
+      "default": "submitted",
+      "required": true
+    },
+    "caseResolutionState": {
+      "type": "enumeration",
+      "enum": ["unresolved", "self_resolved", "support_resolved", "info_only", "duplicate", "escalated"],
+      "default": "unresolved",
+      "required": true
+    },
+    "caseVisibilityState": {
+      "type": "enumeration",
+      "enum": ["private_user", "support_only", "internal_only", "linked_article_only"],
+      "default": "private_user",
+      "required": true
+    },
+    "selfServiceState": {
+      "type": "enumeration",
+      "enum": ["not_attempted", "article_suggested", "article_viewed", "self_resolved", "still_need_support"],
+      "default": "still_need_support",
+      "required": true
+    },
+    "firstResponseAt": { "type": "datetime" },
+    "resolvedAt": { "type": "datetime" },
+    "lastUserActionAt": { "type": "datetime" },
+    "lastSupportActionAt": { "type": "datetime" },
+    "caseMetadata": { "type": "json" },
     "repliedAt": { "type": "datetime" },
     "ipHash": { "type": "string" },
     "userAgent": { "type": "string" },

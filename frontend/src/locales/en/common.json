@@ -858,6 +858,15 @@
       "subscription": "Subscription Policy"
     },
     "categories": {
+      "accountIssue": "Account issues",
+      "membershipIssue": "Membership state",
+      "billingIssue": "Billing / payment",
+      "renewalIssue": "Renewal",
+      "privacyIssue": "Privacy",
+      "securityIssue": "Security",
+      "technicalIssue": "Technical issues",
+      "contentIssue": "Content access",
+      "other": "Other",
       "mainGeneral": "General inquiries",
       "mainSiteUsage": "How to use the site",
       "mainEvents": "Events",
@@ -880,6 +889,45 @@
       "fcCancel": "Cancellation",
       "fcError": "Errors / issues",
       "fcMembersOnly": "Members-only pages"
+    },
+    "case": {
+      "title": "Inquiry history / case status",
+      "description": "Track your support cases across main / store / fc in one place.",
+      "signInHint": "Please sign in to view your history.",
+      "loading": "Loading support cases...",
+      "loadError": "Failed to load support cases.",
+      "authRequired": "Could not verify your sign-in session.",
+      "openCases": "Open",
+      "waitingUser": "Waiting for you",
+      "unresolved": "Unresolved",
+      "selfResolved": "Self-resolved",
+      "noSubject": "No subject",
+      "reopen": "Reopen case",
+      "empty": "No inquiry history yet.",
+      "status": {
+        "draft": "Draft",
+        "submitted": "Submitted",
+        "triaging": "Triaging",
+        "waiting_user": "Waiting for user",
+        "in_progress": "In progress",
+        "resolved": "Resolved",
+        "closed": "Closed",
+        "reopened": "Reopened"
+      },
+      "resolution": {
+        "unresolved": "Unresolved",
+        "self_resolved": "Self-resolved",
+        "support_resolved": "Resolved by support",
+        "info_only": "Info only",
+        "duplicate": "Duplicate",
+        "escalated": "Escalated"
+      }
+    },
+    "selfService": {
+      "title": "Self-service resolution",
+      "description": "Relevant FAQ/Guide content is prioritized before inquiry submission.",
+      "empty": "No suggested articles for this condition.",
+      "stillNeedHelp": "Still need help"
     }
   },
   "favoriteAdd": "Add to favorites",

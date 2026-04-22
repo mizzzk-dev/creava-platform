@@ -173,6 +173,17 @@ export type FaqCategory =
   | 'store'
   | 'works'
   | 'contact'
+  | 'account_issue'
+  | 'membership_issue'
+  | 'billing_issue'
+  | 'renewal_issue'
+  | 'privacy_issue'
+  | 'security_issue'
+  | 'order_issue'
+  | 'fc_issue'
+  | 'technical_issue'
+  | 'content_issue'
+  | 'other'
 
 export interface FAQItem extends StrapiBase {
   question: string

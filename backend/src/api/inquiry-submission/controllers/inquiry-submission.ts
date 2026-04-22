@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { factories } from '@strapi/strapi'
 import { mergeWithDefaults, selectFormDefinition } from '../../../utils/form-definitions'
 import { getOrCreateRequestId, withRequestId } from '../../../utils/request-meta'
+import { verifyAccessToken } from '../../../lib/auth/provider'
 
 const MAX_FILE_BYTES = Number(process.env.INQUIRY_MAX_FILE_BYTES ?? 10 * 1024 * 1024)
 const MAX_FILES = Number(process.env.INQUIRY_MAX_FILES ?? 5)
@@ -9,6 +10,8 @@ const SPAM_WINDOW_MS = Number(process.env.INQUIRY_SPAM_WINDOW_MS ?? 10 * 60 * 10
 const SPAM_MAX_PER_WINDOW = Number(process.env.INQUIRY_SPAM_MAX_PER_WINDOW ?? 8)
 const DUPLICATE_WINDOW_MS = Number(process.env.INQUIRY_DUPLICATE_WINDOW_MS ?? 90 * 1000)
 const CONTACT_REPLY_DAYS = Number(process.env.INQUIRY_REPLY_SLA_DAYS ?? 3)
+const MY_HISTORY_PAGE_MAX = Number(process.env.INQUIRY_MY_HISTORY_PAGE_MAX ?? 50)
+const MY_SUMMARY_MAX_ROWS = Number(process.env.INQUIRY_MY_SUMMARY_MAX_ROWS ?? 200)
 
 const ALLOWED_LOCALES = new Set(['ja', 'en', 'ko'])
 const FALLBACK_FORM_TYPES = new Set(['contact', 'request', 'restock', 'application', 'entry', 'collaboration', 'event', 'store_support', 'fc_support'])
@@ -384,6 +387,54 @@ function assertOpsToken(ctx: any): boolean {
   return candidate.length > 0 && candidate === configured
 }
 
+type UserCaseState = {
+  caseStatus: string
+  caseResolutionState: string
+  caseVisibilityState: string
+  selfServiceState: string
+}
+
+function toUserCaseState(entry: Record<string, unknown>): UserCaseState {
+  const status = String(entry.status ?? 'new')
+  const caseStatus = String(entry.caseStatus ?? (status === 'closed' ? 'closed' : status === 'replied' ? 'resolved' : status === 'waiting_reply' ? 'waiting_user' : status === 'in_review' ? 'triaging' : 'submitted'))
+  const caseResolutionState = String(entry.caseResolutionState ?? (status === 'replied' || status === 'closed' ? 'support_resolved' : 'unresolved'))
+  const caseVisibilityState = String(entry.caseVisibilityState ?? 'private_user')
+  const selfServiceState = String(entry.selfServiceState ?? 'still_need_support')
+  return { caseStatus, caseResolutionState, caseVisibilityState, selfServiceState }
+}
+
+async function resolveMyInquiryFilter(ctx: any, strapi: any): Promise<Record<string, unknown>> {
+  const authUser = await verifyAccessToken(ctx.request.headers.authorization)
+  const appUsers = await strapi.entityService.findMany('api::app-user.app-user', {
+    filters: {
+      $or: [
+        { authUserId: { $eq: authUser.userId } },
+        { supabaseUserId: { $eq: authUser.userId } },
+        { logtoUserId: { $eq: authUser.userId } },
+      ],
+    },
+    fields: ['authUserId', 'supabaseUserId', 'logtoUserId', 'email', 'primaryEmail'],
+    limit: 1,
+  })
+
+  const appUser = Array.isArray(appUsers) ? appUsers[0] : null
+  const email = String(appUser?.email ?? appUser?.primaryEmail ?? authUser.email ?? '').trim().toLowerCase()
+  const authUserId = String(appUser?.authUserId ?? appUser?.supabaseUserId ?? appUser?.logtoUserId ?? authUser.userId ?? '').trim()
+
+  const orFilters: Record<string, unknown>[] = []
+  if (email) orFilters.push({ email: { $eqi: email } })
+  if (authUserId) orFilters.push({ authUserId: { $eq: authUserId } })
+  if (orFilters.length === 0) throw new Error('問い合わせ履歴に紐づくユーザー識別子を解決できません。')
+
+  return {
+    $and: [
+      { spamFlag: { $ne: true } },
+      { caseVisibilityState: { $notIn: ['support_only', 'internal_only'] } },
+      { $or: orFilters },
+    ],
+  }
+}
+
 export default factories.createCoreController(
   'api::inquiry-submission.inquiry-submission',
   ({ strapi }) => ({
@@ -471,6 +522,13 @@ export default factories.createCoreController(
       const isSpam = burstSpam || spamScore >= 5
       const fallbackCategory = String(formDefinition?.defaultCategory ?? '')
       const inquiryCategory = normalizeCategory(sourceSite, formType, String(body.inquiryCategory ?? fallbackCategory), requestType)
+      let authUserId = ''
+      try {
+        const authUser = await verifyAccessToken(ctx.request.headers.authorization)
+        authUserId = String(authUser.userId ?? '').trim()
+      } catch {
+        authUserId = ''
+      }
 
       const uploaded = files.length
         ? await strapi.plugin('upload').service('upload').upload({
@@ -496,10 +554,16 @@ export default factories.createCoreController(
           locale,
           sourcePage,
           sourceSite,
+          authUserId: authUserId || undefined,
           status: isSpam ? 'spam' : String(formDefinition?.initialStatus ?? 'new'),
           priority: isSpam ? 'low' : String(formDefinition?.initialPriority ?? 'normal'),
+          caseStatus: isSpam ? 'closed' : 'submitted',
+          caseResolutionState: 'unresolved',
+          caseVisibilityState: 'private_user',
+          selfServiceState: 'still_need_support',
           submittedAt,
           lastActionAt: submittedAt,
+          lastUserActionAt: submittedAt,
           replyStatus: formType === 'restock' ? 'not_required' : 'pending',
           ipHash,
           userAgent,
@@ -515,6 +579,11 @@ export default factories.createCoreController(
             productId: normalizeText(body.productId, 80),
             productSlug: normalizeText(body.productSlug, 160),
             productTitle: normalizeText(body.productTitle, 200),
+          },
+          caseMetadata: {
+            supportCaseType: inquiryCategory,
+            sourceSite,
+            locale,
           },
         },
       })
@@ -580,6 +649,152 @@ export default factories.createCoreController(
           submittedAt,
           requestId,
         },
+      }
+    },
+
+    async mySummary(ctx) {
+      try {
+        const filters = await resolveMyInquiryFilter(ctx, strapi)
+        const rows = await strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', {
+          filters,
+          fields: ['status', 'priority', 'sourceSite', 'inquiryCategory', 'submittedAt', 'updatedAt', 'resolvedAt', 'caseStatus', 'caseResolutionState', 'caseVisibilityState', 'selfServiceState'],
+          sort: 'submittedAt:desc',
+          limit: MY_SUMMARY_MAX_ROWS,
+        })
+        const list = (rows as Array<Record<string, unknown>>).map((row) => ({
+          ...toUserCaseState(row),
+          priority: String(row.priority ?? 'normal'),
+          sourceSite: String(row.sourceSite ?? 'main'),
+          inquiryCategory: String(row.inquiryCategory ?? 'general'),
+          submittedAt: String(row.submittedAt ?? ''),
+          updatedAt: String(row.updatedAt ?? row.submittedAt ?? ''),
+          resolvedAt: row.resolvedAt ? String(row.resolvedAt) : null,
+        }))
+        const openStatuses = new Set(['submitted', 'triaging', 'waiting_user', 'in_progress', 'reopened'])
+        const unresolved = list.filter((row) => row.caseResolutionState === 'unresolved').length
+        const openCases = list.filter((row) => openStatuses.has(row.caseStatus)).length
+        const waitingUser = list.filter((row) => row.caseStatus === 'waiting_user').length
+        const selfResolved = list.filter((row) => row.caseResolutionState === 'self_resolved').length
+
+        ctx.body = {
+          data: {
+            openCases,
+            waitingUser,
+            unresolved,
+            selfResolved,
+            total: list.length,
+            recent: list.slice(0, 3),
+          },
+        }
+      } catch (error) {
+        return ctx.unauthorized((error as Error).message)
+      }
+    },
+
+    async myHistory(ctx) {
+      try {
+        const filters = await resolveMyInquiryFilter(ctx, strapi)
+        const page = Math.max(1, Number(ctx.query.page ?? 1))
+        const pageSize = Math.min(MY_HISTORY_PAGE_MAX, Math.max(1, Number(ctx.query.pageSize ?? 12)))
+        const statusFilter = normalizeText(ctx.query.caseStatus, 40)
+        const categoryFilter = normalizeText(ctx.query.supportCaseType, 60)
+        const scopedFilters: Record<string, unknown> = { ...filters }
+        if (statusFilter) (scopedFilters as any).caseStatus = { $eq: statusFilter }
+        if (categoryFilter) (scopedFilters as any).inquiryCategory = { $eq: categoryFilter }
+
+        const [rows, total] = await Promise.all([
+          strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', {
+            filters: scopedFilters,
+            fields: ['formType', 'inquiryCategory', 'subject', 'message', 'status', 'priority', 'sourceSite', 'submittedAt', 'updatedAt', 'resolvedAt', 'repliedAt', 'attachmentCount', 'replyStatus', 'caseStatus', 'caseResolutionState', 'caseVisibilityState', 'selfServiceState'],
+            sort: 'submittedAt:desc',
+            start: (page - 1) * pageSize,
+            limit: pageSize,
+          }),
+          strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: scopedFilters }),
+        ])
+
+        ctx.body = {
+          data: (rows as Array<Record<string, unknown>>).map((row) => ({
+            id: row.id,
+            formType: row.formType,
+            supportCaseType: row.inquiryCategory ?? 'other',
+            subject: row.subject ?? '',
+            messagePreview: String(row.message ?? '').slice(0, 140),
+            priority: row.priority ?? 'normal',
+            sourceSite: row.sourceSite ?? 'main',
+            submittedAt: row.submittedAt,
+            updatedAt: row.updatedAt,
+            resolvedAt: row.resolvedAt ?? null,
+            repliedAt: row.repliedAt ?? null,
+            attachmentCount: row.attachmentCount ?? 0,
+            replyStatus: row.replyStatus ?? 'pending',
+            ...toUserCaseState(row),
+          })),
+          meta: {
+            pagination: {
+              page,
+              pageSize,
+              pageCount: Math.max(1, Math.ceil(total / pageSize)),
+              total,
+            },
+          },
+        }
+      } catch (error) {
+        return ctx.unauthorized((error as Error).message)
+      }
+    },
+
+    async myDetail(ctx) {
+      try {
+        const id = Number(ctx.params.id)
+        if (!Number.isInteger(id) || id <= 0) return ctx.badRequest('id が不正です')
+        const filters = await resolveMyInquiryFilter(ctx, strapi)
+        const entries = await strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', {
+          filters: { $and: [filters, { id: { $eq: id } }] },
+          fields: ['formType', 'inquiryCategory', 'subject', 'message', 'status', 'priority', 'sourceSite', 'sourcePage', 'locale', 'submittedAt', 'updatedAt', 'resolvedAt', 'repliedAt', 'attachmentCount', 'replyStatus', 'caseStatus', 'caseResolutionState', 'caseVisibilityState', 'selfServiceState', 'firstResponseAt', 'lastUserActionAt', 'lastSupportActionAt'],
+          limit: 1,
+        })
+        const item = Array.isArray(entries) ? entries[0] : null
+        if (!item) return ctx.notFound('case が見つかりません')
+        ctx.body = { data: { ...item, supportCaseType: item.inquiryCategory ?? 'other', ...toUserCaseState(item as Record<string, unknown>) } }
+      } catch (error) {
+        return ctx.unauthorized((error as Error).message)
+      }
+    },
+
+    async reopenMyCase(ctx) {
+      try {
+        const id = Number(ctx.params.id)
+        if (!Number.isInteger(id) || id <= 0) return ctx.badRequest('id が不正です')
+        const filters = await resolveMyInquiryFilter(ctx, strapi)
+        const entries = await strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', {
+          filters: { $and: [filters, { id: { $eq: id } }] },
+          fields: ['caseStatus'],
+          limit: 1,
+        })
+        const item = Array.isArray(entries) ? entries[0] : null
+        if (!item) return ctx.notFound('case が見つかりません')
+
+        const current = String(item.caseStatus ?? '')
+        if (!['resolved', 'closed'].includes(current)) {
+          return ctx.badRequest('resolved / closed の case のみ再オープンできます')
+        }
+
+        const now = new Date().toISOString()
+        await strapi.entityService.update('api::inquiry-submission.inquiry-submission', id, {
+          data: {
+            caseStatus: 'reopened',
+            caseResolutionState: 'unresolved',
+            status: 'in_review',
+            replyStatus: 'pending',
+            lastActionAt: now,
+            lastUserActionAt: now,
+          } as Record<string, unknown>,
+        })
+
+        ctx.body = { data: { id, caseStatus: 'reopened', caseResolutionState: 'unresolved' } }
+      } catch (error) {
+        return ctx.unauthorized((error as Error).message)
       }
     },
 
@@ -738,6 +953,21 @@ export default factories.createCoreController(
       if (status) {
         updateData.status = status
         if (['in_review', 'waiting_reply', 'replied', 'closed'].includes(status)) updateData.handledAt = now
+        if (['in_review'].includes(status)) updateData.caseStatus = 'triaging'
+        if (['waiting_reply'].includes(status)) updateData.caseStatus = 'waiting_user'
+        if (['replied'].includes(status)) {
+          updateData.caseStatus = 'resolved'
+          updateData.caseResolutionState = 'support_resolved'
+          updateData.firstResponseAt = now
+          updateData.resolvedAt = now
+          updateData.lastSupportActionAt = now
+        }
+        if (['closed'].includes(status)) {
+          updateData.caseStatus = 'closed'
+          updateData.caseResolutionState = 'support_resolved'
+          updateData.resolvedAt = now
+          updateData.lastSupportActionAt = now
+        }
         if (status === 'replied') {
           updateData.replyStatus = 'replied'
           updateData.repliedAt = now

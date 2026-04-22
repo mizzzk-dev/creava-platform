@@ -858,6 +858,15 @@
       "subscription": "정기결제 정책"
     },
     "categories": {
+      "accountIssue": "계정 문제",
+      "membershipIssue": "회원 상태",
+      "billingIssue": "청구·결제",
+      "renewalIssue": "갱신·구독",
+      "privacyIssue": "개인정보",
+      "securityIssue": "보안",
+      "technicalIssue": "기술 문제",
+      "contentIssue": "콘텐츠 이용",
+      "other": "기타",
       "mainGeneral": "일반 문의",
       "mainSiteUsage": "사이트 이용 방법",
       "mainEvents": "이벤트 관련",
@@ -880,6 +889,45 @@
       "fcCancel": "해지/탈퇴 관련",
       "fcError": "오류·문제 관련",
       "fcMembersOnly": "회원 전용 페이지 관련"
+    },
+    "case": {
+      "title": "문의 이력 / 케이스 상태",
+      "description": "main / store / fc를 가로지르는 지원 케이스 상태를 한 곳에서 확인합니다.",
+      "signInHint": "이력을 보려면 로그인해 주세요.",
+      "loading": "지원 케이스를 불러오는 중...",
+      "loadError": "지원 케이스를 불러오지 못했습니다.",
+      "authRequired": "로그인 세션을 확인할 수 없습니다.",
+      "openCases": "진행 중",
+      "waitingUser": "사용자 응답 대기",
+      "unresolved": "미해결",
+      "selfResolved": "자체 해결",
+      "noSubject": "제목 없음",
+      "reopen": "케이스 다시 열기",
+      "empty": "문의 이력이 없습니다.",
+      "status": {
+        "draft": "임시저장",
+        "submitted": "접수됨",
+        "triaging": "분류 중",
+        "waiting_user": "사용자 응답 대기",
+        "in_progress": "처리 중",
+        "resolved": "해결됨",
+        "closed": "종료됨",
+        "reopened": "재오픈"
+      },
+      "resolution": {
+        "unresolved": "미해결",
+        "self_resolved": "자체 해결",
+        "support_resolved": "지원팀 해결",
+        "info_only": "정보 제공",
+        "duplicate": "중복 케이스",
+        "escalated": "에스컬레이션"
+      }
+    },
+    "selfService": {
+      "title": "Self-service 해결",
+      "description": "관련 FAQ / Guide를 먼저 제안하고 필요할 때만 문의로 이어집니다.",
+      "empty": "현재 조건에서 제안할 수 있는 문서가 없습니다.",
+      "stillNeedHelp": "아직 해결되지 않아 문의하기"
     }
   },
   "favoriteAdd": "즐겨찾기에 추가",

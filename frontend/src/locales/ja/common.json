@@ -858,6 +858,15 @@
       "subscription": "継続課金ポリシー"
     },
     "categories": {
+      "accountIssue": "アカウント",
+      "membershipIssue": "会員状態",
+      "billingIssue": "請求・決済",
+      "renewalIssue": "更新・継続",
+      "privacyIssue": "プライバシー",
+      "securityIssue": "セキュリティ",
+      "technicalIssue": "技術的な不具合",
+      "contentIssue": "コンテンツ表示",
+      "other": "その他",
       "mainGeneral": "一般お問い合わせ",
       "mainSiteUsage": "サイトの見方",
       "mainEvents": "イベント関連",
@@ -880,6 +889,45 @@
       "fcCancel": "退会・解約について",
       "fcError": "不具合・エラーについて",
       "fcMembersOnly": "会員限定ページについて"
+    },
+    "case": {
+      "title": "問い合わせ履歴 / ケース状況",
+      "description": "main / store / fc を横断したサポートケースの進捗を確認できます。",
+      "signInHint": "履歴表示にはログインが必要です。",
+      "loading": "ケース履歴を読み込み中です...",
+      "loadError": "ケース履歴の取得に失敗しました。",
+      "authRequired": "ログイン状態を確認できませんでした。",
+      "openCases": "対応中",
+      "waitingUser": "ユーザー対応待ち",
+      "unresolved": "未解決",
+      "selfResolved": "自己解決",
+      "noSubject": "件名未設定",
+      "reopen": "再オープンする",
+      "empty": "問い合わせ履歴はありません。",
+      "status": {
+        "draft": "下書き",
+        "submitted": "送信済み",
+        "triaging": "受付確認中",
+        "waiting_user": "追加情報待ち",
+        "in_progress": "対応中",
+        "resolved": "解決済み",
+        "closed": "クローズ",
+        "reopened": "再オープン"
+      },
+      "resolution": {
+        "unresolved": "未解決",
+        "self_resolved": "自己解決",
+        "support_resolved": "サポート解決",
+        "info_only": "情報提供のみ",
+        "duplicate": "重複ケース",
+        "escalated": "エスカレーション中"
+      }
+    },
+    "selfService": {
+      "title": "self-service 解決",
+      "description": "関連FAQ / Guide を優先表示し、必要なときだけ問い合わせへ進めます。",
+      "empty": "現在この条件で提案できる記事がありません。",
+      "stillNeedHelp": "解決しないので問い合わせる"
     }
   },
   "favoriteAdd": "お気に入りに追加",
