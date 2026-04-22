@@ -246,6 +246,176 @@
       "type": "json",
       "required": true
     },
+    "consentState": {
+      "type": "enumeration",
+      "enum": [
+        "unknown",
+        "granted",
+        "partial",
+        "revoked"
+      ],
+      "default": "unknown"
+    },
+    "notificationConsentState": {
+      "type": "enumeration",
+      "enum": [
+        "enabled",
+        "disabled",
+        "partial"
+      ],
+      "default": "enabled"
+    },
+    "crmConsentState": {
+      "type": "enumeration",
+      "enum": [
+        "opted_in",
+        "opted_out",
+        "restricted"
+      ],
+      "default": "opted_in"
+    },
+    "analyticsConsentState": {
+      "type": "enumeration",
+      "enum": [
+        "unknown",
+        "accepted",
+        "declined",
+        "limited"
+      ],
+      "default": "unknown"
+    },
+    "privacySummary": {
+      "type": "json"
+    },
+    "privacyNoticeState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "informational",
+        "review_recommended",
+        "action_required"
+      ],
+      "default": "none"
+    },
+    "dataExportState": {
+      "type": "enumeration",
+      "enum": [
+        "not_requested",
+        "requested",
+        "preparing",
+        "ready",
+        "delivered",
+        "expired",
+        "failed"
+      ],
+      "default": "not_requested"
+    },
+    "dataExportRequestState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "requested",
+        "approved",
+        "rejected",
+        "cancelled"
+      ],
+      "default": "none"
+    },
+    "dataExportRequestedAt": {
+      "type": "datetime"
+    },
+    "dataExportReadyAt": {
+      "type": "datetime"
+    },
+    "deletionState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "requested",
+        "cooling_off",
+        "confirmed",
+        "scheduled",
+        "anonymized",
+        "deleted",
+        "blocked"
+      ],
+      "default": "none"
+    },
+    "deletionRequestState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "requested",
+        "confirmed",
+        "cancelled",
+        "blocked"
+      ],
+      "default": "none"
+    },
+    "deletionRequestedAt": {
+      "type": "datetime"
+    },
+    "deletionConfirmedAt": {
+      "type": "datetime"
+    },
+    "anonymizationState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "scheduled",
+        "completed",
+        "blocked"
+      ],
+      "default": "none"
+    },
+    "retentionState": {
+      "type": "enumeration",
+      "enum": [
+        "active",
+        "retained_minimum",
+        "anonymized_partial",
+        "deletion_pending",
+        "deleted"
+      ],
+      "default": "active"
+    },
+    "retentionReason": {
+      "type": "string"
+    },
+    "cancellationState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "requested",
+        "scheduled",
+        "completed",
+        "reversed"
+      ],
+      "default": "none"
+    },
+    "membershipCancellationState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "requested",
+        "scheduled",
+        "completed",
+        "reversed"
+      ],
+      "default": "none"
+    },
+    "legalHoldState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "active",
+        "released"
+      ],
+      "default": "none"
+    },
+    "privacyUpdatedAt": {
+      "type": "datetime"
+    },
     "profileCompletionState": {
       "type": "enumeration",
       "enum": [

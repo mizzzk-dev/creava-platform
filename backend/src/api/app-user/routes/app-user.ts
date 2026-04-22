@@ -13,6 +13,36 @@ export default {
       config: { auth: false },
     },
     {
+      method: 'GET',
+      path: '/user-sync/privacy/summary',
+      handler: 'app-user.privacySummary',
+      config: { auth: false },
+    },
+    {
+      method: 'POST',
+      path: '/user-sync/privacy/preferences',
+      handler: 'app-user.updatePrivacyPreferences',
+      config: { auth: false },
+    },
+    {
+      method: 'POST',
+      path: '/user-sync/privacy/export-request',
+      handler: 'app-user.requestDataExport',
+      config: { auth: false },
+    },
+    {
+      method: 'POST',
+      path: '/user-sync/privacy/deletion-request',
+      handler: 'app-user.requestDeletion',
+      config: { auth: false },
+    },
+    {
+      method: 'POST',
+      path: '/user-sync/privacy/membership-cancellation',
+      handler: 'app-user.requestMembershipCancellation',
+      config: { auth: false },
+    },
+    {
       method: 'POST',
       path: '/user-sync/security/sensitive-action',
       handler: 'app-user.verifySensitiveAction',
