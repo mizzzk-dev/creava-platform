@@ -82,6 +82,14 @@ export default {
     },
     {
       method: 'GET',
+      path: '/inquiry-submissions/ops/capacity',
+      handler: 'inquiry-submission.opsCapacity',
+      config: {
+        auth: false,
+      },
+    },
+    {
+      method: 'GET',
       path: '/inquiry-submissions/ops/queue',
       handler: 'inquiry-submission.opsQueue',
       config: {

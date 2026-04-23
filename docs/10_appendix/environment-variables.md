@@ -117,6 +117,10 @@
 | `INQUIRY_NOTIFY_TO` | 管理通知メール宛先（カンマ区切り） | 任意 |
 | `INQUIRY_ENABLE_AUTO_REPLY` | 自動返信有効化 (`true/false`) | 任意 |
 | `INQUIRY_REPLY_SLA_DAYS` | 自動返信本文の返信目安日数 | 任意 |
+| `INQUIRY_FORECAST_LOOKBACK_DAYS` | support capacity forecast の基準期間（日） | 推奨 |
+| `INQUIRY_FORECAST_SURGE_RATIO` | 当日件数が baseline 比で surge 判定される比率 | 推奨 |
+| `INQUIRY_COVERAGE_CASES_PER_ASSIGNEE` | assignee 1人あたりの標準カバレッジ件数 | 推奨 |
+| `INQUIRY_SURGE_HIGH_PRIORITY_RATIO` | unresolved 内の high/urgent 比率で surge 補正する閾値 | 任意 |
 | `INQUIRY_QA_REVIEW_QUEUE_DAYS` | QA review queue の標準対象期間（日） | 推奨 |
 | `INQUIRY_QA_LOW_SCORE_THRESHOLD` | QA低品質判定閾値（1-5） | 推奨 |
 | `INQUIRY_CSAT_ENABLED` | CSAT 収集機能有効化 (`true/false`) | 推奨 |

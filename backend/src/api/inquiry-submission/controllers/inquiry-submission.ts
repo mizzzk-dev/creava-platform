@@ -19,6 +19,10 @@ const INQUIRY_FIRST_RESPONSE_SLA_HOURS = Math.max(1, Number(process.env.INQUIRY_
 const INQUIRY_REPLY_DELAY_HOURS = Math.max(1, Number(process.env.INQUIRY_REPLY_DELAY_HOURS ?? 12))
 const INQUIRY_WORKLOAD_HIGH_THRESHOLD = Math.max(3, Number(process.env.INQUIRY_WORKLOAD_HIGH_THRESHOLD ?? 8))
 const INQUIRY_WORKLOAD_OVERLOAD_THRESHOLD = Math.max(INQUIRY_WORKLOAD_HIGH_THRESHOLD + 1, Number(process.env.INQUIRY_WORKLOAD_OVERLOAD_THRESHOLD ?? 14))
+const INQUIRY_FORECAST_LOOKBACK_DAYS = Math.max(7, Number(process.env.INQUIRY_FORECAST_LOOKBACK_DAYS ?? 42))
+const INQUIRY_FORECAST_SURGE_RATIO = Math.max(1.1, Number(process.env.INQUIRY_FORECAST_SURGE_RATIO ?? 1.4))
+const INQUIRY_COVERAGE_CASES_PER_ASSIGNEE = Math.max(2, Number(process.env.INQUIRY_COVERAGE_CASES_PER_ASSIGNEE ?? 8))
+const INQUIRY_SURGE_HIGH_PRIORITY_RATIO = Math.min(0.95, Math.max(0.05, Number(process.env.INQUIRY_SURGE_HIGH_PRIORITY_RATIO ?? 0.35)))
 
 const ALLOWED_LOCALES = new Set(['ja', 'en', 'ko'])
 const FALLBACK_FORM_TYPES = new Set(['contact', 'request', 'restock', 'application', 'entry', 'collaboration', 'event', 'store_support', 'fc_support'])
@@ -625,6 +629,90 @@ function computeWorkloadState(loadCount: number) {
   if (loadCount >= INQUIRY_WORKLOAD_HIGH_THRESHOLD) return 'high_load'
   if (loadCount <= 1) return 'underutilized'
   return 'normal'
+}
+
+function resolveTimeBand(iso: string): 'early' | 'day' | 'evening' | 'night' {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return 'day'
+  const hour = date.getUTCHours()
+  if (hour < 6) return 'night'
+  if (hour < 12) return 'early'
+  if (hour < 18) return 'day'
+  return 'evening'
+}
+
+function computeCoverageState(openCases: number, activeAssignees: number) {
+  const safeAssignees = Math.max(1, activeAssignees)
+  const loadPerAssignee = openCases / safeAssignees
+  if (loadPerAssignee >= INQUIRY_COVERAGE_CASES_PER_ASSIGNEE * 1.8) return { coverageState: 'critical_gap', coverageGapState: 'critical' }
+  if (loadPerAssignee >= INQUIRY_COVERAGE_CASES_PER_ASSIGNEE * 1.3) return { coverageState: 'gap_detected', coverageGapState: 'major' }
+  if (loadPerAssignee >= INQUIRY_COVERAGE_CASES_PER_ASSIGNEE) return { coverageState: 'thin', coverageGapState: 'minor' }
+  return { coverageState: 'covered', coverageGapState: 'none' }
+}
+
+function computeCapacityStates(summary: {
+  openCases: number
+  unresolved: number
+  activeAssignees: number
+  highPriorityCount: number
+  delayedReplyCount: number
+  overdueCount: number
+  surgeCandidateCount: number
+  baselineDailyAverage: number
+  todayCount: number
+  topCategoryRatio: number
+  topSiteRatio: number
+  topAssigneeRatio: number
+}) {
+  const coverage = computeCoverageState(summary.openCases, summary.activeAssignees)
+  const surgeRatio = summary.baselineDailyAverage > 0 ? summary.todayCount / summary.baselineDailyAverage : 0
+  const surgeState = surgeRatio >= INQUIRY_FORECAST_SURGE_RATIO || summary.surgeCandidateCount >= 5
+    ? 'active'
+    : surgeRatio >= INQUIRY_FORECAST_SURGE_RATIO * 0.85
+      ? 'suspected'
+      : 'none'
+  const highPriorityRatio = summary.unresolved > 0 ? summary.highPriorityCount / summary.unresolved : 0
+  const staffingState = summary.activeAssignees <= 1 && summary.unresolved >= 6
+    ? 'insufficient'
+    : coverage.coverageState === 'critical_gap'
+      ? 'overloaded'
+      : coverage.coverageState === 'gap_detected'
+        ? 'stretched'
+        : 'normal'
+  const capacityRiskScore = [
+    summary.overdueCount >= 5 ? 2 : summary.overdueCount >= 2 ? 1 : 0,
+    summary.delayedReplyCount >= 5 ? 2 : summary.delayedReplyCount >= 2 ? 1 : 0,
+    surgeState === 'active' ? 2 : surgeState === 'suspected' ? 1 : 0,
+    coverage.coverageState === 'critical_gap' ? 2 : coverage.coverageState === 'gap_detected' ? 1 : 0,
+    highPriorityRatio >= INQUIRY_SURGE_HIGH_PRIORITY_RATIO ? 1 : 0,
+  ].reduce((a, b) => a + b, 0)
+
+  const capacityRiskState = capacityRiskScore >= 6 ? 'critical' : capacityRiskScore >= 4 ? 'high' : capacityRiskScore >= 2 ? 'medium' : 'low'
+  const forecastState = surgeState === 'active'
+    ? 'surge_active'
+    : surgeState === 'suspected'
+      ? 'surge_likely'
+      : summary.baselineDailyAverage < 3
+        ? 'insufficient_data'
+        : summary.topCategoryRatio >= 0.45 || summary.topSiteRatio >= 0.7
+          ? 'seasonal_pattern_detected'
+          : 'baseline'
+  const forecastConfidenceState = summary.baselineDailyAverage < 2 ? 'low' : summary.baselineDailyAverage < 5 ? 'medium' : 'high'
+  const seasonalLoadState = summary.topCategoryRatio >= 0.55 ? 'strong' : summary.topCategoryRatio >= 0.4 ? 'recurring' : summary.topCategoryRatio >= 0.28 ? 'mild' : 'none'
+
+  return {
+    coverageState: coverage.coverageState,
+    coverageGapState: coverage.coverageGapState,
+    staffingState,
+    surgeState,
+    capacityRiskState,
+    forecastState,
+    forecastConfidenceState,
+    seasonalLoadState,
+    categoryLoadState: summary.topCategoryRatio >= 0.6 ? 'single_category_pressure' : summary.topCategoryRatio >= 0.4 ? 'skewed' : 'balanced',
+    sourceSiteLoadState: summary.topSiteRatio >= 0.75 ? 'single_site_pressure' : summary.topSiteRatio >= 0.5 ? 'skewed' : 'balanced',
+    assigneeLoadState: summary.topAssigneeRatio >= 0.5 ? 'hotspot' : summary.topAssigneeRatio >= 0.35 ? 'skewed' : 'balanced',
+  }
 }
 
 function assertOpsToken(ctx: any): boolean {
@@ -1576,6 +1664,160 @@ export default factories.createCoreController(
       }
     },
 
+    async opsCapacity(ctx) {
+      if (!assertOpsToken(ctx)) return ctx.unauthorized('ops token が不正です')
+      const now = new Date()
+      const todayStart = new Date(now)
+      todayStart.setUTCHours(0, 0, 0, 0)
+      const lookbackStart = new Date(now)
+      lookbackStart.setUTCDate(now.getUTCDate() - INQUIRY_FORECAST_LOOKBACK_DAYS)
+      lookbackStart.setUTCHours(0, 0, 0, 0)
+
+      const rows = await strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', {
+        filters: { submittedAt: { $gte: lookbackStart.toISOString() }, spamFlag: { $ne: true } },
+        fields: [
+          'submittedAt', 'sourceSite', 'inquiryCategory', 'assigneeName', 'assigneeId', 'priority', 'caseStatus', 'status',
+          'replyPerformanceState', 'overdueState', 'slaState', 'workloadState', 'timeBandState', 'capacityRiskState',
+          'supportLastForecastedAt', 'supportLastCoverageCheckedAt', 'supportLastSurgeDetectedAt', 'supportLastCapacityReviewedAt',
+        ],
+        sort: ['submittedAt:desc'],
+        limit: 5000,
+      }) as Array<Record<string, unknown>>
+
+      const unresolvedRows = rows.filter((row) => !['resolved', 'closed'].includes(String(row.caseStatus ?? row.status ?? '')))
+      const activeAssignees = new Set(unresolvedRows.map((row) => String(row.assigneeId ?? row.assigneeName ?? '').trim()).filter(Boolean)).size
+      const totalDays = Math.max(1, INQUIRY_FORECAST_LOOKBACK_DAYS)
+      const todayRows = rows.filter((row) => String(row.submittedAt ?? '').slice(0, 10) === now.toISOString().slice(0, 10))
+      const baselineDailyAverage = Number((rows.length / totalDays).toFixed(2))
+
+      const byCategory = rows.reduce<Record<string, number>>((acc, row) => {
+        const key = String(row.inquiryCategory ?? 'general')
+        acc[key] = (acc[key] ?? 0) + 1
+        return acc
+      }, {})
+      const bySourceSite = rows.reduce<Record<string, number>>((acc, row) => {
+        const key = String(row.sourceSite ?? 'unknown')
+        acc[key] = (acc[key] ?? 0) + 1
+        return acc
+      }, {})
+      const byAssignee = unresolvedRows.reduce<Record<string, number>>((acc, row) => {
+        const key = String(row.assigneeName ?? row.assigneeId ?? 'unassigned')
+        acc[key] = (acc[key] ?? 0) + 1
+        return acc
+      }, {})
+      const byTimeBand = rows.reduce<Record<string, number>>((acc, row) => {
+        const key = String(row.timeBandState ?? resolveTimeBand(String(row.submittedAt ?? '')))
+        acc[key] = (acc[key] ?? 0) + 1
+        return acc
+      }, {})
+
+      const topCategory = Object.entries(byCategory).sort((a, b) => b[1] - a[1])[0]
+      const topSite = Object.entries(bySourceSite).sort((a, b) => b[1] - a[1])[0]
+      const topAssignee = Object.entries(byAssignee).sort((a, b) => b[1] - a[1])[0]
+
+      const highPriorityCount = unresolvedRows.filter((row) => ['high', 'urgent'].includes(String(row.priority ?? ''))).length
+      const delayedReplyCount = unresolvedRows.filter((row) => ['delayed', 'breached_like'].includes(String(row.replyPerformanceState ?? ''))).length
+      const overdueCount = unresolvedRows.filter((row) => String(row.overdueState ?? '') === 'overdue' || String(row.slaState ?? '') === 'breached').length
+      const surgeCandidateCount = todayRows.filter((row) => ['high', 'urgent'].includes(String(row.priority ?? ''))).length
+
+      const states = computeCapacityStates({
+        openCases: unresolvedRows.length,
+        unresolved: unresolvedRows.length,
+        activeAssignees,
+        highPriorityCount,
+        delayedReplyCount,
+        overdueCount,
+        surgeCandidateCount,
+        baselineDailyAverage,
+        todayCount: todayRows.length,
+        topCategoryRatio: rows.length > 0 && topCategory ? topCategory[1] / rows.length : 0,
+        topSiteRatio: rows.length > 0 && topSite ? topSite[1] / rows.length : 0,
+        topAssigneeRatio: unresolvedRows.length > 0 && topAssignee ? topAssignee[1] / unresolvedRows.length : 0,
+      })
+
+      const staffingRecommendationState = states.staffingState === 'normal' ? 'none' : 'suggested'
+      const surgePlaybookState = states.surgeState === 'active' ? 'recommended' : states.surgeState === 'suspected' ? 'candidate' : 'none'
+      const mitigationSuggestionState = states.capacityRiskState === 'low' ? 'none' : 'suggested'
+      const capacityActionState = states.capacityRiskState === 'critical' ? 'escalation_prepared' : states.capacityRiskState === 'high' ? 'coverage_adjusting' : states.capacityRiskState === 'medium' ? 'monitoring' : 'none'
+      const surgeReason = states.surgeState === 'active'
+        ? 'today_volume_or_high_priority_exceeded_baseline'
+        : states.surgeState === 'suspected'
+          ? 'volume_trending_to_surge_threshold'
+          : 'none'
+
+      const supportLastForecastedAt = now.toISOString()
+      const supportLastCoverageCheckedAt = now.toISOString()
+      const supportLastCapacityReviewedAt = now.toISOString()
+      const supportLastSurgeDetectedAt = states.surgeState === 'none' ? null : now.toISOString()
+
+      const recommendations = [
+        staffingRecommendationState === 'suggested'
+          ? { key: 'staffing_gap_review', staffingRecommendationState, title: 'staffing gap review', reason: `open ${unresolvedRows.length} / assignee ${activeAssignees}`, action: '担当可能メンバーを増援し、high/urgent から割り当て' }
+          : null,
+        surgePlaybookState !== 'none'
+          ? { key: 'incident_surge_triage', surgePlaybookState, title: 'incident surge triage tightening', reason: surgeReason, action: '分類を priority 優先に絞り、一次回答 SLA を短縮' }
+          : null,
+        mitigationSuggestionState === 'suggested'
+          ? { key: 'backlog_containment', mitigationSuggestionState, title: 'backlog containment', reason: `overdue=${overdueCount}, delayed=${delayedReplyCount}`, action: 'overdue キューを分離し、定型返信カテゴリを fast lane 化' }
+          : null,
+      ].filter(Boolean)
+
+      ctx.body = {
+        data: {
+          supportForecastSummary: {
+            lookbackDays: INQUIRY_FORECAST_LOOKBACK_DAYS,
+            baselineDailyAverage,
+            todayCount: todayRows.length,
+            forecastState: states.forecastState,
+            forecastConfidenceState: states.forecastConfidenceState,
+            seasonalLoadState: states.seasonalLoadState,
+          },
+          staffingSummary: {
+            staffingState: states.staffingState,
+            activeAssignees,
+            unassignedCount: unresolvedRows.filter((row) => !String(row.assigneeId ?? row.assigneeName ?? '').trim()).length,
+            assigneeLoadTop: Object.entries(byAssignee).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([assignee, count]) => ({ assignee, count })),
+            staffingRecommendationState,
+          },
+          capacitySummary: {
+            capacityRiskState: states.capacityRiskState,
+            openCases: unresolvedRows.length,
+            highPriorityCount,
+            delayedReplyCount,
+            overdueCount,
+            capacityActionState,
+          },
+          surgeSummary: {
+            surgeState: states.surgeState,
+            surgeReason,
+            todayCount: todayRows.length,
+            baselineDailyAverage,
+            triggerRatio: INQUIRY_FORECAST_SURGE_RATIO,
+            surgePlaybookState,
+          },
+          coverageSummary: {
+            coverageState: states.coverageState,
+            coverageGapState: states.coverageGapState,
+            categoryLoadState: states.categoryLoadState,
+            sourceSiteLoadState: states.sourceSiteLoadState,
+            assigneeLoadState: states.assigneeLoadState,
+            timeBandState: Object.entries(byTimeBand).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'stable',
+          },
+          workloadSummary: {
+            bySourceSite: Object.entries(bySourceSite).map(([sourceSite, count]) => ({ sourceSite, count })).sort((a, b) => b.count - a.count),
+            byCategory: Object.entries(byCategory).map(([category, count]) => ({ category, count })).sort((a, b) => b.count - a.count),
+            byTimeBand: Object.entries(byTimeBand).map(([timeBand, count]) => ({ timeBand, count })).sort((a, b) => b.count - a.count),
+          },
+          recommendations,
+          mitigationSuggestionState,
+          supportLastForecastedAt,
+          supportLastCoverageCheckedAt,
+          supportLastSurgeDetectedAt,
+          supportLastCapacityReviewedAt,
+        },
+      }
+    },
+
     async opsList(ctx) {
       if (!assertOpsToken(ctx)) return ctx.unauthorized('ops token が不正です')
 
@@ -1604,6 +1846,11 @@ export default factories.createCoreController(
             'knowledgeFeedbackState', 'knowledgeGapState', 'knowledgeArticleSuggestionState', 'templateUsageState', 'improvementPlaybookState',
             'firstContactResolutionState', 'repeatContactState', 'supportQualityVisibilityState', 'supportQualityActionState',
             'supportLastQaReviewedAt', 'supportLastCsatCollectedAt', 'supportLastReopenedAt', 'supportLastCoachingSuggestedAt',
+            'supportForecastSummary', 'staffingSummary', 'capacitySummary', 'surgeSummary', 'coverageSummary',
+            'capacityRiskState', 'forecastState', 'forecastConfidenceState', 'staffingState', 'coverageState', 'coverageGapState',
+            'seasonalLoadState', 'surgeState', 'surgeReason', 'timeBandState', 'categoryLoadState', 'assigneeLoadState', 'sourceSiteLoadState',
+            'mitigationSuggestionState', 'staffingRecommendationState', 'surgePlaybookState', 'capacityActionState',
+            'supportLastForecastedAt', 'supportLastCoverageCheckedAt', 'supportLastSurgeDetectedAt', 'supportLastCapacityReviewedAt',
           ],
           start: (page - 1) * pageSize,
           limit: pageSize,
@@ -1970,6 +2217,23 @@ export default factories.createCoreController(
       const nextImprovementPlaybookState = normalizeText(body.improvementPlaybookState, 40)
       const nextFirstContactResolutionState = normalizeText(body.firstContactResolutionState, 40)
       const nextRepeatContactState = normalizeText(body.repeatContactState, 40)
+      const nextForecastState = normalizeText(body.forecastState, 40)
+      const nextForecastConfidenceState = normalizeText(body.forecastConfidenceState, 40)
+      const nextStaffingState = normalizeText(body.staffingState, 40)
+      const nextCoverageState = normalizeText(body.coverageState, 40)
+      const nextCoverageGapState = normalizeText(body.coverageGapState, 40)
+      const nextSeasonalLoadState = normalizeText(body.seasonalLoadState, 40)
+      const nextSurgeState = normalizeText(body.surgeState, 40)
+      const nextSurgeReason = normalizeText(body.surgeReason, 240)
+      const nextTimeBandState = normalizeText(body.timeBandState, 40)
+      const nextCategoryLoadState = normalizeText(body.categoryLoadState, 40)
+      const nextAssigneeLoadState = normalizeText(body.assigneeLoadState, 40)
+      const nextSourceSiteLoadState = normalizeText(body.sourceSiteLoadState, 40)
+      const nextCapacityRiskState = normalizeText(body.capacityRiskState, 40)
+      const nextMitigationSuggestionState = normalizeText(body.mitigationSuggestionState, 40)
+      const nextStaffingRecommendationState = normalizeText(body.staffingRecommendationState, 40)
+      const nextSurgePlaybookState = normalizeText(body.surgePlaybookState, 40)
+      const nextCapacityActionState = normalizeText(body.capacityActionState, 40)
 
       if (nextPriority) updateData.priority = nextPriority
       if (nextPriority) updateData.supportPriority = nextPriority
@@ -2038,6 +2302,27 @@ export default factories.createCoreController(
       if (nextImprovementPlaybookState) updateData.improvementPlaybookState = nextImprovementPlaybookState
       if (nextFirstContactResolutionState) updateData.firstContactResolutionState = nextFirstContactResolutionState
       if (nextRepeatContactState) updateData.repeatContactState = nextRepeatContactState
+      if (nextForecastState) updateData.forecastState = nextForecastState
+      if (nextForecastConfidenceState) updateData.forecastConfidenceState = nextForecastConfidenceState
+      if (nextStaffingState) updateData.staffingState = nextStaffingState
+      if (nextCoverageState) updateData.coverageState = nextCoverageState
+      if (nextCoverageGapState) updateData.coverageGapState = nextCoverageGapState
+      if (nextSeasonalLoadState) updateData.seasonalLoadState = nextSeasonalLoadState
+      if (nextSurgeState) updateData.surgeState = nextSurgeState
+      if (nextSurgeReason) updateData.surgeReason = nextSurgeReason
+      if (nextTimeBandState) updateData.timeBandState = nextTimeBandState
+      if (nextCategoryLoadState) updateData.categoryLoadState = nextCategoryLoadState
+      if (nextAssigneeLoadState) updateData.assigneeLoadState = nextAssigneeLoadState
+      if (nextSourceSiteLoadState) updateData.sourceSiteLoadState = nextSourceSiteLoadState
+      if (nextCapacityRiskState) updateData.capacityRiskState = nextCapacityRiskState
+      if (nextMitigationSuggestionState) updateData.mitigationSuggestionState = nextMitigationSuggestionState
+      if (nextStaffingRecommendationState) updateData.staffingRecommendationState = nextStaffingRecommendationState
+      if (nextSurgePlaybookState) updateData.surgePlaybookState = nextSurgePlaybookState
+      if (nextCapacityActionState) updateData.capacityActionState = nextCapacityActionState
+      if (nextForecastState || nextForecastConfidenceState || nextSeasonalLoadState) updateData.supportLastForecastedAt = now
+      if (nextCoverageState || nextCoverageGapState || nextTimeBandState) updateData.supportLastCoverageCheckedAt = now
+      if (nextSurgeState || nextSurgeReason || nextSurgePlaybookState) updateData.supportLastSurgeDetectedAt = now
+      if (nextCapacityRiskState || nextCapacityActionState || nextMitigationSuggestionState || nextStaffingRecommendationState) updateData.supportLastCapacityReviewedAt = now
 
       const hasQualityRisk = ['weak', 'risky'].includes(String(updateData.replyQualityState ?? ''))
         || ['reopened_like', 'unresolved_like'].includes(String(updateData.resolutionQualityState ?? ''))
@@ -2121,6 +2406,11 @@ export default factories.createCoreController(
         reopenState: updateData.reopenState ?? null,
         coachingSuggestionState: updateData.coachingSuggestionState ?? null,
         knowledgeGapState: updateData.knowledgeGapState ?? null,
+        forecastState: updateData.forecastState ?? null,
+        staffingState: updateData.staffingState ?? null,
+        coverageState: updateData.coverageState ?? null,
+        surgeState: updateData.surgeState ?? null,
+        capacityRiskState: updateData.capacityRiskState ?? null,
       }
       updateData.caseMetadata = appendTransitionHistory(current, transition)
 
