@@ -386,6 +386,160 @@
         "member"
       ],
       "default": "guest"
+    },
+    "triageState": {
+      "type": "enumeration",
+      "enum": [
+        "not_triaged",
+        "categorized",
+        "prioritized",
+        "assigned",
+        "escalated"
+      ],
+      "default": "not_triaged"
+    },
+    "triageReason": {
+      "type": "string"
+    },
+    "assigneeId": {
+      "type": "string"
+    },
+    "assigneeName": {
+      "type": "string"
+    },
+    "assigneeState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "active",
+        "handover"
+      ],
+      "default": "none"
+    },
+    "supportSeverity": {
+      "type": "enumeration",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium"
+    },
+    "slaState": {
+      "type": "enumeration",
+      "enum": [
+        "not_started",
+        "within_target",
+        "at_risk",
+        "breached",
+        "paused"
+      ],
+      "default": "not_started"
+    },
+    "slaTargetAt": {
+      "type": "datetime"
+    },
+    "slaBreachedAt": {
+      "type": "datetime"
+    },
+    "overdueState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "due_soon",
+        "overdue"
+      ],
+      "default": "none"
+    },
+    "escalationState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "suggested",
+        "escalated",
+        "resolved_after_escalation"
+      ],
+      "default": "none"
+    },
+    "escalationReason": {
+      "type": "string"
+    },
+    "escalationTarget": {
+      "type": "string"
+    },
+    "templateReplyState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "suggested",
+        "selected",
+        "sent",
+        "dismissed"
+      ],
+      "default": "none"
+    },
+    "templateReplyCategory": {
+      "type": "string"
+    },
+    "templateReplyKey": {
+      "type": "string"
+    },
+    "autoClassificationState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "suggested",
+        "confirmed",
+        "dismissed"
+      ],
+      "default": "none"
+    },
+    "classificationReason": {
+      "type": "string"
+    },
+    "suggestedReplyState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "suggested",
+        "accepted",
+        "rejected"
+      ],
+      "default": "none"
+    },
+    "supportOpsVisibilityState": {
+      "type": "enumeration",
+      "enum": [
+        "default",
+        "needs_attention",
+        "restricted"
+      ],
+      "default": "default"
+    },
+    "supportOpsActionState": {
+      "type": "enumeration",
+      "enum": [
+        "idle",
+        "triage_required",
+        "assignment_required",
+        "reply_required",
+        "waiting_user",
+        "resolved"
+      ],
+      "default": "triage_required"
+    },
+    "supportLastAssignedAt": {
+      "type": "datetime"
+    },
+    "supportLastTriagedAt": {
+      "type": "datetime"
+    },
+    "supportLastEscalatedAt": {
+      "type": "datetime"
+    },
+    "supportLastSlaCheckedAt": {
+      "type": "datetime"
     }
   }
 }

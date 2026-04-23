@@ -74,6 +74,14 @@ export default {
     },
     {
       method: 'GET',
+      path: '/inquiry-submissions/ops/queue',
+      handler: 'inquiry-submission.opsQueue',
+      config: {
+        auth: false,
+      },
+    },
+    {
+      method: 'GET',
       path: '/inquiry-submissions/ops/export.csv',
       handler: 'inquiry-submission.opsExportCsv',
       config: {
@@ -92,6 +100,22 @@ export default {
       method: 'GET',
       path: '/inquiry-submissions/ops/:id/messages',
       handler: 'inquiry-submission.opsCaseMessages',
+      config: {
+        auth: false,
+      },
+    },
+    {
+      method: 'PATCH',
+      path: '/inquiry-submissions/ops/:id',
+      handler: 'inquiry-submission.opsCaseUpdate',
+      config: {
+        auth: false,
+      },
+    },
+    {
+      method: 'GET',
+      path: '/inquiry-submissions/ops/:id/template-suggestions',
+      handler: 'inquiry-submission.opsTemplateSuggestions',
       config: {
         auth: false,
       },

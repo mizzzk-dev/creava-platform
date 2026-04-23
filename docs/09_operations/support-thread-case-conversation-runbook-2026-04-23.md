@@ -100,3 +100,40 @@ curl -X POST "$API/api/inquiry-submissions/ops/123/internal-note" \
 - guest inquiry の返信投稿は今回は対象外（閲覧追跡は `public/track` 継続）。
 - support/internal の詳細UIは次PRで整備し、今回は API と user-facing thread を優先。
 - 通知センター連携は event 保存を真実源として後続接続する。
+
+## 12. support operations（queue / triage / assignment / SLA / escalation）
+
+### 12-1. 追加API
+- `GET /api/inquiry-submissions/ops/queue`
+  - queue filter: `queueView`, `sourceSite`, `inquiryCategory`, `requesterType`, `assigneeId`, `priority`, `triageState`, `slaState`, `overdueState`, `escalationState`
+- `PATCH /api/inquiry-submissions/ops/:id`
+  - assignment / triage / priority / SLA 再計算 / escalation / template reply state を更新
+- `GET /api/inquiry-submissions/ops/:id/template-suggestions`
+  - rule-based auto classification と template reply 候補を返却
+
+### 12-2. state 分離方針
+- user-facing: `caseStatus`, `supportThreadState`, `supportWaitingState`
+- triage: `triageState`, `triageReason`
+- assignment: `assignmentState`, `assigneeId`, `assigneeName`, `assigneeState`
+- SLA: `slaState`, `slaTargetAt`, `slaBreachedAt`, `overdueState`
+- escalation: `escalationState`, `escalationReason`, `escalationTarget`
+- template/automation: `templateReplyState`, `templateReplyCategory`, `templateReplyKey`, `autoClassificationState`, `classificationReason`, `suggestedReplyState`
+- ops 可視化: `supportOpsVisibilityState`, `supportOpsActionState`, `supportLastAssignedAt`, `supportLastTriagedAt`, `supportLastEscalatedAt`, `supportLastSlaCheckedAt`
+
+### 12-3. queue 運用で見るべき優先列
+1. `assignmentState=unassigned`
+2. `overdueState=overdue` または `slaState=breached`
+3. `priority in (high, urgent)`
+4. `caseStatus=waiting_user`（ユーザー待ち停滞確認）
+5. `supportUnreadSupportCount > 0`（support 未読）
+
+### 12-4. SLA/overdue 判定の初期ルール
+- urgent: 4h、high: 12h、その他: 24h
+- `INQUIRY_SLA_RISK_HOURS` 以内で `at_risk/due_soon`
+- `INQUIRY_ESCALATION_LEAD_HOURS` 以内は escalation `suggested`
+- `waiting_user` 中は `slaState=paused`
+
+### 12-5. template reply / auto classification
+- 返金・決済・ログイン問題を keyword で rule-based classify
+- template は suggestion のみ（自動送信しない）
+- internal note と template reply は別 API / 別 visibility を維持

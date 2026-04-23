@@ -61,6 +61,26 @@
 - フィルタ: `status`, `sourceSite`, `inquiryCategory`, `locale`, `priority`, `formType`, `hasAttachment`, `spamFlag`, `dateFrom`, `dateTo`, `q`
 - 並び替え: `sortBy=submittedAt|updatedAt|priority|status`, `sortOrder=asc|desc`
 
+### 5.1.1 support queue API（triage / assignment / SLA 向け）
+`GET /api/inquiry-submissions/ops/queue`
+- 追加フィルタ:
+  - `queueView=unassigned|overdue|waiting_user|in_progress|reply_required`
+  - `requesterType`, `assigneeId`, `triageState`, `slaState`, `overdueState`, `escalationState`, `caseStatus`
+- queue item には `triageState`, `assignmentState`, `slaState`, `overdueState`, `escalationState`, `templateReplyState`, `autoClassificationState` を含む
+
+### 5.1.2 case 個別更新 API
+`PATCH /api/inquiry-submissions/ops/:id`
+- 更新可能: `priority`, `assigneeId`, `assigneeName`, `triageState`, `triageReason`, `escalationState`, `escalationReason`, `escalationTarget`, `templateReplyState`, `templateReplyKey`, `templateReplyCategory`, `autoClassificationState`, `classificationReason`
+- 方針:
+  - caseStatus / triageState / assignmentState / slaState を分離して更新
+  - 更新時に `support-case-event` へ `status_update` を記録
+  - SLA は `slaTargetAt` を再計算し `slaState` / `overdueState` を更新
+
+### 5.1.3 template suggestion API
+`GET /api/inquiry-submissions/ops/:id/template-suggestions`
+- rule-based auto classification と template 候補を返却
+- 完全自動送信は行わず、人間確認を前提に運用
+
 ### 5.2 CSV エクスポート
 `GET /api/inquiry-submissions/ops/export.csv`
 - 一覧APIと同じフィルタを利用可能
@@ -135,6 +155,7 @@ npm run dev:frontend
 2. `INQUIRY_NOTIFY_TO` を設定した場合、通知メールが届く。
 3. 自動返信を有効化した場合、ja/en/ko で文言崩れがない。
 4. 添付上限・スパム判定・CSV export が期待通り。
+5. `INQUIRY_SLA_RISK_HOURS`, `INQUIRY_ESCALATION_LEAD_HOURS` が運用目標に合っている。
 
 ## 11. トラブルシュート
 
