@@ -352,6 +352,103 @@
       ],
       "default": "idle"
     },
+    "replyChannelState": {
+      "type": "enumeration",
+      "enum": [
+        "in_app",
+        "email",
+        "synced_multi_channel"
+      ],
+      "default": "in_app"
+    },
+    "mailSyncState": {
+      "type": "enumeration",
+      "enum": [
+        "not_applicable",
+        "pending",
+        "synced",
+        "failed",
+        "partial"
+      ],
+      "default": "not_applicable"
+    },
+    "deliveryState": {
+      "type": "enumeration",
+      "enum": [
+        "not_sent",
+        "queued",
+        "delivered",
+        "bounced_like",
+        "failed",
+        "unknown"
+      ],
+      "default": "not_sent"
+    },
+    "threadSyncState": {
+      "type": "enumeration",
+      "enum": [
+        "not_synced",
+        "synced",
+        "duplicate_suppressed",
+        "parse_failed",
+        "needs_review"
+      ],
+      "default": "not_synced"
+    },
+    "inboundReplyState": {
+      "type": "enumeration",
+      "enum": [
+        "idle",
+        "received",
+        "synced",
+        "failed",
+        "needs_review"
+      ],
+      "default": "idle"
+    },
+    "outboundReplyState": {
+      "type": "enumeration",
+      "enum": [
+        "idle",
+        "queued",
+        "sent",
+        "failed"
+      ],
+      "default": "idle"
+    },
+    "attachmentState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "uploaded",
+        "linked",
+        "failed",
+        "blocked"
+      ],
+      "default": "none"
+    },
+    "supportAttachmentCount": {
+      "type": "integer",
+      "default": 0
+    },
+    "supportLastMailSentAt": {
+      "type": "datetime"
+    },
+    "supportLastMailReceivedAt": {
+      "type": "datetime"
+    },
+    "supportLastSyncAt": {
+      "type": "datetime"
+    },
+    "supportExternalThreadId": {
+      "type": "string"
+    },
+    "supportLastOutboundMessageId": {
+      "type": "string"
+    },
+    "supportLastInboundMessageId": {
+      "type": "string"
+    },
     "supportUnreadUserCount": {
       "type": "integer",
       "default": 0

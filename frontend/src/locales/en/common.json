@@ -920,11 +920,38 @@
       "replySending": "Sending...",
       "replySent": "Reply sent.",
       "replyError": "Failed to send reply. Please try again later.",
+      "channelStateLabel": "Reply channel",
+      "deliveryStateLabel": "Delivery state",
+      "mailSyncStateLabel": "Mail sync",
       "replyType": {
         "user_message": "Your reply",
         "admin_reply": "Support reply",
         "system_message": "System message",
-        "internal_note": "Internal note"
+        "internal_note": "Internal note",
+        "inbound_mail": "Inbound email reply",
+        "outbound_mail": "Outbound support email",
+        "delivery_event": "Delivery event",
+        "sync_event": "Sync event"
+      },
+      "replyChannelState": {
+        "in_app": "In-app",
+        "email": "Email",
+        "synced_multi_channel": "In-app + Email"
+      },
+      "deliveryState": {
+        "not_sent": "Not sent",
+        "queued": "Queued",
+        "delivered": "Delivered",
+        "bounced_like": "Bounce suspected",
+        "failed": "Failed",
+        "unknown": "Unknown"
+      },
+      "mailSyncState": {
+        "not_applicable": "N/A",
+        "pending": "Pending",
+        "synced": "Synced",
+        "failed": "Failed",
+        "partial": "Partial"
       },
       "status": {
         "draft": "Draft",

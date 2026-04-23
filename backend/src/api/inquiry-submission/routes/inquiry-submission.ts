@@ -136,5 +136,21 @@ export default {
         auth: false,
       },
     },
+    {
+      method: 'POST',
+      path: '/inquiry-submissions/mailbox/inbound',
+      handler: 'inquiry-submission.mailboxInbound',
+      config: {
+        auth: false,
+      },
+    },
+    {
+      method: 'POST',
+      path: '/inquiry-submissions/mailbox/delivery',
+      handler: 'inquiry-submission.mailboxDeliveryEvent',
+      config: {
+        auth: false,
+      },
+    },
   ],
 }

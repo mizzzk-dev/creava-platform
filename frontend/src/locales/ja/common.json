@@ -920,11 +920,38 @@
       "replySending": "送信中...",
       "replySent": "返信を送信しました。",
       "replyError": "返信の送信に失敗しました。時間をおいて再試行してください。",
+      "channelStateLabel": "返信チャネル",
+      "deliveryStateLabel": "配信状態",
+      "mailSyncStateLabel": "メール同期",
       "replyType": {
         "user_message": "あなたからの返信",
         "admin_reply": "サポートからの返信",
         "system_message": "システム通知",
-        "internal_note": "内部メモ"
+        "internal_note": "内部メモ",
+        "inbound_mail": "メール返信（受信）",
+        "outbound_mail": "サポート返信（メール送信）",
+        "delivery_event": "配信イベント",
+        "sync_event": "同期イベント"
+      },
+      "replyChannelState": {
+        "in_app": "画面内",
+        "email": "メール",
+        "synced_multi_channel": "画面 + メール同期"
+      },
+      "deliveryState": {
+        "not_sent": "未送信",
+        "queued": "送信キュー",
+        "delivered": "配信完了",
+        "bounced_like": "バウンス疑い",
+        "failed": "配信失敗",
+        "unknown": "不明"
+      },
+      "mailSyncState": {
+        "not_applicable": "対象外",
+        "pending": "同期待ち",
+        "synced": "同期済み",
+        "failed": "同期失敗",
+        "partial": "一部同期"
       },
       "status": {
         "draft": "下書き",

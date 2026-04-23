@@ -25,6 +25,12 @@
 - `caseStatus`: `submitted|triaging|waiting_user|in_progress|resolved|closed|reopened`
 - `supportThreadState`: `open|waiting_user|waiting_support|resolved|closed`
 - `supportWaitingState`: `none|waiting_support|waiting_user|waiting_internal_review`
+- mail/thread 追加 state
+  - `replyChannelState`: `in_app|email|synced_multi_channel`
+  - `mailSyncState`: `not_applicable|pending|synced|failed|partial`
+  - `deliveryState`: `not_sent|queued|delivered|bounced_like|failed|unknown`
+  - `threadSyncState`: `not_synced|synced|duplicate_suppressed|parse_failed|needs_review`
+  - `attachmentState`: `none|uploaded|linked|failed|blocked`
 
 ## 4. API
 ### user-facing
@@ -39,8 +45,13 @@
   - `INQUIRY_OPS_TOKEN` 必須
 - `POST /api/inquiry-submissions/ops/:id/reply`
   - user-visible 返信
+  - `replyChannelState=email` で outbound mail イベントを thread 保存
 - `POST /api/inquiry-submissions/ops/:id/internal-note`
   - internal-only メモ
+- `POST /api/inquiry-submissions/mailbox/inbound`
+  - mailbox webhook 経由で inbound mail を thread 同期（`x-mailbox-webhook-secret` 必須）
+- `POST /api/inquiry-submissions/mailbox/delivery`
+  - provider delivery event を case の `deliveryState` に同期
 - 既存 `PATCH /api/inquiry-submissions/ops/bulk-update` は status/priority 一括更新で継続利用
 
 ## 5. unread / acknowledgement
@@ -74,6 +85,10 @@ curl -X POST "$API/api/inquiry-submissions/ops/123/internal-note" \
 ## 8. env / secrets
 - backend runtime env
   - `INQUIRY_OPS_TOKEN`
+  - `INQUIRY_MAILBOX_WEBHOOK_SECRET`
+  - `INQUIRY_MAILBOX_DEFAULT_FROM`
+  - `INQUIRY_MAILBOX_DEFAULT_REPLY_TO`
+  - `INQUIRY_MAILBOX_INBOUND_DOMAIN`
   - `INQUIRY_CASE_REPLY_MAX_LENGTH`
   - `INQUIRY_NOTIFY_TO*`
 - GitHub Secrets
@@ -95,6 +110,8 @@ curl -X POST "$API/api/inquiry-submissions/ops/123/internal-note" \
 - user token なしで reply → 401
 - JSON 以外の応答混入 → frontend API エラー
 - 二重投稿 → `idempotencyKey` を付与して再送
+- inbound webhook secret mismatch → 401 / thread同期されない
+- delivery event は到達したが case detail 更新されない → `mailMessageId` と `inquiryId` の紐付けを確認
 
 ## 11. 仮定
 - guest inquiry の返信投稿は今回は対象外（閲覧追跡は `public/track` 継続）。
@@ -137,3 +154,23 @@ curl -X POST "$API/api/inquiry-submissions/ops/123/internal-note" \
 - 返金・決済・ログイン問題を keyword で rule-based classify
 - template は suggestion のみ（自動送信しない）
 - internal note と template reply は別 API / 別 visibility を維持
+
+## 13. mailbox bridge / inbound reply sync / attachment
+
+### 13-1. 同期フロー
+1. support が `ops/:id/reply` を `replyChannelState=email` で実行
+2. thread に `outbound_mail` + `delivery_event(queued)` を保存
+3. provider webhook で `mailbox/delivery` を受信して `deliveryState` 更新
+4. user がメール返信すると `mailbox/inbound` で `inbound_mail` を保存
+5. case の `mailSyncState/threadSyncState/supportLastMailReceivedAt` を更新
+
+### 13-2. 添付扱い
+- 初期段階は metadata のみ同期（`attachments[]`）
+- `name/mime/size/url` を記録し、binary は provider / upload storage の責務で分離
+- user timeline には user-visible のみ表示し、internal note 添付は混在させない
+
+### 13-3. 運用チェック
+1. `replyChannelState=email` 返信後、case が `deliveryState=queued` になる
+2. delivery webhook 後、`deliveryState` が `delivered or failed` に更新
+3. inbound webhook 後、timeline に `inbound_mail` が追加される
+4. `supportUnreadSupportCount` が増え、support queue で未読として検知できる
