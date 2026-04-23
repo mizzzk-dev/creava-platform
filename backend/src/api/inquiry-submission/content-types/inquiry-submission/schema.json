@@ -761,6 +761,109 @@
     "automationSuggestionReason": {
       "type": "string"
     },
+    "qaReviewState": {
+      "type": "enumeration",
+      "enum": ["not_reviewed", "queued", "in_review", "reviewed", "followup_needed"],
+      "default": "not_reviewed"
+    },
+    "qaReviewReason": {
+      "type": "string"
+    },
+    "qaScoreState": {
+      "type": "enumeration",
+      "enum": ["not_scored", "excellent", "good", "fair", "poor"],
+      "default": "not_scored"
+    },
+    "replyQualityState": {
+      "type": "enumeration",
+      "enum": ["unknown", "strong", "acceptable", "weak", "risky"],
+      "default": "unknown"
+    },
+    "resolutionQualityState": {
+      "type": "enumeration",
+      "enum": ["unknown", "resolved_well", "resolved_but_fragile", "unresolved_like", "reopened_like"],
+      "default": "unknown"
+    },
+    "csatState": {
+      "type": "enumeration",
+      "enum": ["not_sent", "sent", "responded", "no_response", "suppressed"],
+      "default": "not_sent"
+    },
+    "csatScoreState": {
+      "type": "enumeration",
+      "enum": ["unrated", "very_satisfied", "satisfied", "neutral", "dissatisfied", "very_dissatisfied"],
+      "default": "unrated"
+    },
+    "csatScore": {
+      "type": "integer",
+      "default": 0
+    },
+    "reopenState": {
+      "type": "enumeration",
+      "enum": ["none", "reopened", "repeat_contact", "monitoring"],
+      "default": "none"
+    },
+    "reopenReason": {
+      "type": "string"
+    },
+    "coachingState": {
+      "type": "enumeration",
+      "enum": ["none", "suggested", "acknowledged", "completed"],
+      "default": "none"
+    },
+    "coachingReason": {
+      "type": "string"
+    },
+    "coachingSuggestionState": {
+      "type": "enumeration",
+      "enum": ["none", "suggested", "accepted", "dismissed"],
+      "default": "none"
+    },
+    "knowledgeFeedbackState": {
+      "type": "enumeration",
+      "enum": ["none", "queued", "reviewed", "accepted", "dismissed"],
+      "default": "none"
+    },
+    "knowledgeGapState": {
+      "type": "enumeration",
+      "enum": ["none", "suspected", "confirmed", "article_needed", "article_updated"],
+      "default": "none"
+    },
+    "knowledgeArticleSuggestionState": {
+      "type": "enumeration",
+      "enum": ["none", "suggested", "accepted", "dismissed", "published"],
+      "default": "none"
+    },
+    "templateUsageState": {
+      "type": "enumeration",
+      "enum": ["unknown", "manual_only", "template_assisted", "template_heavy", "template_overused"],
+      "default": "unknown"
+    },
+    "improvementPlaybookState": {
+      "type": "enumeration",
+      "enum": ["none", "candidate", "queued", "in_progress", "completed", "dismissed"],
+      "default": "none"
+    },
+    "firstContactResolutionState": {
+      "type": "enumeration",
+      "enum": ["unknown", "yes", "no", "needs_review"],
+      "default": "unknown"
+    },
+    "repeatContactState": {
+      "type": "enumeration",
+      "enum": ["none", "suspected", "confirmed"],
+      "default": "none"
+    },
+    "supportQualityVisibilityState": {
+      "type": "enumeration",
+      "enum": ["default", "review_queue", "restricted"],
+      "default": "default"
+    },
+    "supportQualityActionState": {
+      "type": "enumeration",
+      "enum": ["idle", "qa_required", "csat_followup", "coaching_review", "knowledge_review"],
+      "default": "idle"
+    },
     "supportLastAssignedAt": {
       "type": "datetime"
     },
@@ -774,6 +877,18 @@
       "type": "datetime"
     },
     "supportLastReplyMeasuredAt": {
+      "type": "datetime"
+    },
+    "supportLastQaReviewedAt": {
+      "type": "datetime"
+    },
+    "supportLastCsatCollectedAt": {
+      "type": "datetime"
+    },
+    "supportLastReopenedAt": {
+      "type": "datetime"
+    },
+    "supportLastCoachingSuggestedAt": {
       "type": "datetime"
     }
   }

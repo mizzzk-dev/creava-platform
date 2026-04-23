@@ -215,3 +215,59 @@ curl -X POST "$API/api/inquiry-submissions/ops/123/internal-note" \
 3. `ops/queue?queueView=reply_delayed` で返信遅延を確認
 4. `meta.analytics.assigneeLoadSummary` の偏りを確認
 5. `PATCH /ops/:id` で `routingSuggestionState=accepted`→`assignmentState=assigned` を確認
+
+## 15. support QA / CSAT / resolution quality / coaching / knowledge feedback（2026-04-23 追記）
+
+### 15-1. 状態分離（混同禁止）
+- case 進行: `caseStatus`
+- QA: `qaReviewState`, `qaReviewReason`, `qaScoreState`
+- 返信品質: `replyQualityState`
+- 解決品質: `resolutionQualityState`
+- CSAT: `csatState`, `csatScoreState`, `csatScore`
+- 再オープン/再問い合わせ: `reopenState`, `reopenReason`, `repeatContactState`
+- coaching: `coachingState`, `coachingReason`, `coachingSuggestionState`
+- knowledge: `knowledgeFeedbackState`, `knowledgeGapState`, `knowledgeArticleSuggestionState`
+- quality workflow: `supportQualityVisibilityState`, `supportQualityActionState`, `improvementPlaybookState`
+
+### 15-2. 追加 API / queue filter
+- user-facing
+  - `POST /api/inquiry-submissions/me/:id/csat`
+    - body: `{ "score": 1-5, "comment": "..." }`
+    - `csatState=responded` と score を保存
+- support/internal
+  - `PATCH /api/inquiry-submissions/ops/:id`
+    - QA / quality / CSAT / coaching / knowledge feedback state を更新
+  - `GET /api/inquiry-submissions/ops/summary`
+    - `quality` summary（`qaPending`, `lowQuality`, `reopened`, `lowCsat`, `knowledgeGap`, `coachingSuggested`）
+  - `GET /api/inquiry-submissions/ops/queue`
+    - `meta.analytics` に `assigneeQualitySummary`, `categoryQualitySummary` を追加
+    - `queueView=qa_not_reviewed|low_quality|reopened|low_csat|knowledge_gap|coaching_suggested`
+
+### 15-3. review queue 運用手順
+1. `queueView=qa_not_reviewed` で未レビューを確認。
+2. `queueView=low_quality` / `low_csat` / `reopened` を優先確認。
+3. case detail を開き、`PATCH /ops/:id` で QA/quality/coaching/knowledge state を理由付き更新。
+4. `coachingSuggestionState=suggested` は支援提案であり、評価確定ではない。
+5. `knowledgeGapState=article_needed` は runbook / article 更新タスクを別管理する。
+
+### 15-4. timeline / 監査
+- `support-case-event` の `eventType` に以下を追加:
+  - `qa_review`
+  - `csat_feedback`
+  - `coaching`
+  - `knowledge_feedback`
+- quality 更新は `caseMetadata.transitionHistory` と timeline の双方で追跡する。
+
+### 15-5. テスト送信 / テスト返信 / テスト QA review / テスト feedback
+1. 問い合わせを送信し `caseStatus=submitted` を確認。
+2. support reply で `waiting_user` へ遷移。
+3. `PATCH /ops/:id` で `qaReviewState=reviewed`, `replyQualityState=acceptable`, `resolutionQualityState=resolved_but_fragile` を保存。
+4. user として `POST /me/:id/csat`（score=2）を送信し `csatState=responded`, `csatScoreState=dissatisfied` を確認。
+5. `ops/queue?queueView=low_csat` に当該 case が載ることを確認。
+6. `knowledgeGapState=article_needed` を更新し `queueView=knowledge_gap` で再確認。
+
+### 15-6. よくあるトラブル
+- `caseStatus` を `resolved` にしただけで品質済みと誤判定 → `resolutionQualityState` を別途更新する。
+- CSAT 未回答を低評価扱いしてしまう → `csatState=no_response` と `csatScoreState=unrated` を維持する。
+- coaching 提案を自動ペナルティ化してしまう → `coachingSuggestionState` と `coachingState` を分離する。
+- knowledge gap を template 問題と混同 → `templateUsageState` と `knowledgeGapState` を分離する。

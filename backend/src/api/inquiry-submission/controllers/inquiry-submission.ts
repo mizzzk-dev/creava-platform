@@ -387,6 +387,9 @@ function buildOpsFilters(query: Record<string, unknown>) {
     'status', 'sourceSite', 'inquiryCategory', 'locale', 'priority', 'formType', 'requesterType',
     'caseStatus', 'assignmentState', 'triageState', 'slaState', 'overdueState', 'escalationState',
     'routingState', 'routingSuggestionState', 'workloadState', 'replyPerformanceState', 'firstResponseState', 'automationSuggestionState',
+    'qaReviewState', 'replyQualityState', 'resolutionQualityState', 'csatState', 'csatScoreState', 'reopenState',
+    'coachingState', 'coachingSuggestionState', 'knowledgeFeedbackState', 'knowledgeGapState', 'knowledgeArticleSuggestionState',
+    'templateUsageState', 'improvementPlaybookState', 'firstContactResolutionState', 'repeatContactState',
   ]
   directKeys.forEach((key) => {
     const value = String(query[key] ?? '').trim()
@@ -404,6 +407,12 @@ function buildOpsFilters(query: Record<string, unknown>) {
   if (queueView === 'overdue') filters.overdueState = 'overdue'
   if (queueView === 'reply_delayed') filters.replyPerformanceState = 'delayed'
   if (queueView === 'sla_risk') filters.slaState = 'at_risk'
+  if (queueView === 'qa_not_reviewed') filters.qaReviewState = 'not_reviewed'
+  if (queueView === 'low_quality') filters.replyQualityState = { $in: ['weak', 'risky'] }
+  if (queueView === 'reopened') filters.reopenState = 'reopened'
+  if (queueView === 'low_csat') filters.csatScoreState = { $in: ['dissatisfied', 'very_dissatisfied'] }
+  if (queueView === 'knowledge_gap') filters.knowledgeGapState = { $in: ['suspected', 'confirmed', 'article_needed'] }
+  if (queueView === 'coaching_suggested') filters.coachingSuggestionState = 'suggested'
 
   const hasAttachment = normalizeBooleanParam(query.hasAttachment)
   if (hasAttachment === true) filters.attachmentCount = { $gt: 0 }
@@ -644,9 +653,9 @@ function toUserCaseState(entry: Record<string, unknown>): UserCaseState {
   return { caseStatus, caseResolutionState, caseVisibilityState, selfServiceState }
 }
 
-function normalizeCaseEventType(value: unknown): 'user_message' | 'admin_reply' | 'system_message' | 'internal_note' | 'status_update' | 'inbound_mail' | 'outbound_mail' | 'delivery_event' | 'sync_event' {
+function normalizeCaseEventType(value: unknown): 'user_message' | 'admin_reply' | 'system_message' | 'internal_note' | 'status_update' | 'inbound_mail' | 'outbound_mail' | 'delivery_event' | 'sync_event' | 'qa_review' | 'csat_feedback' | 'coaching' | 'knowledge_feedback' {
   const raw = String(value ?? '')
-  if (raw === 'admin_reply' || raw === 'system_message' || raw === 'internal_note' || raw === 'status_update' || raw === 'inbound_mail' || raw === 'outbound_mail' || raw === 'delivery_event' || raw === 'sync_event') return raw
+  if (raw === 'admin_reply' || raw === 'system_message' || raw === 'internal_note' || raw === 'status_update' || raw === 'inbound_mail' || raw === 'outbound_mail' || raw === 'delivery_event' || raw === 'sync_event' || raw === 'qa_review' || raw === 'csat_feedback' || raw === 'coaching' || raw === 'knowledge_feedback') return raw
   return 'user_message'
 }
 
@@ -674,7 +683,7 @@ function normalizeCaseEventVisibility(value: unknown): 'user_visible' | 'support
 
 async function createSupportCaseEvent(strapi: any, input: {
   inquiryId: number
-  eventType: 'user_message' | 'admin_reply' | 'system_message' | 'internal_note' | 'status_update' | 'inbound_mail' | 'outbound_mail' | 'delivery_event' | 'sync_event'
+  eventType: 'user_message' | 'admin_reply' | 'system_message' | 'internal_note' | 'status_update' | 'inbound_mail' | 'outbound_mail' | 'delivery_event' | 'sync_event' | 'qa_review' | 'csat_feedback' | 'coaching' | 'knowledge_feedback'
   visibility: 'user_visible' | 'support_only' | 'internal_only'
   authorType: 'guest' | 'authenticated_user' | 'support' | 'internal_admin' | 'system'
   authorId?: string
@@ -1196,7 +1205,7 @@ export default factories.createCoreController(
         const filters = await resolveMyInquiryFilter(ctx, strapi)
         const rows = await strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', {
           filters,
-          fields: ['status', 'priority', 'sourceSite', 'inquiryCategory', 'submittedAt', 'updatedAt', 'resolvedAt', 'caseStatus', 'caseResolutionState', 'caseVisibilityState', 'selfServiceState'],
+          fields: ['status', 'priority', 'sourceSite', 'inquiryCategory', 'submittedAt', 'updatedAt', 'resolvedAt', 'caseStatus', 'caseResolutionState', 'caseVisibilityState', 'selfServiceState', 'csatState', 'csatScoreState', 'reopenState'],
           sort: 'submittedAt:desc',
           limit: MY_SUMMARY_MAX_ROWS,
         })
@@ -1244,7 +1253,7 @@ export default factories.createCoreController(
         const [rows, total] = await Promise.all([
           strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', {
             filters: scopedFilters,
-            fields: ['formType', 'inquiryCategory', 'subject', 'message', 'status', 'priority', 'sourceSite', 'submittedAt', 'updatedAt', 'resolvedAt', 'repliedAt', 'attachmentCount', 'replyStatus', 'caseStatus', 'caseResolutionState', 'caseVisibilityState', 'selfServiceState', 'inquiryNumber', 'inquiryTraceId', 'requesterType', 'supportLastReplyAt', 'supportLastUserReplyAt', 'supportLastAdminReplyAt', 'supportUnreadState', 'supportUnreadUserCount', 'replyChannelState', 'mailSyncState', 'deliveryState', 'threadSyncState', 'attachmentState'],
+            fields: ['formType', 'inquiryCategory', 'subject', 'message', 'status', 'priority', 'sourceSite', 'submittedAt', 'updatedAt', 'resolvedAt', 'repliedAt', 'attachmentCount', 'replyStatus', 'caseStatus', 'caseResolutionState', 'caseVisibilityState', 'selfServiceState', 'inquiryNumber', 'inquiryTraceId', 'requesterType', 'supportLastReplyAt', 'supportLastUserReplyAt', 'supportLastAdminReplyAt', 'supportUnreadState', 'supportUnreadUserCount', 'replyChannelState', 'mailSyncState', 'deliveryState', 'threadSyncState', 'attachmentState', 'csatState', 'csatScoreState', 'reopenState'],
             sort: 'submittedAt:desc',
             start: (page - 1) * pageSize,
             limit: pageSize,
@@ -1303,7 +1312,7 @@ export default factories.createCoreController(
         const filters = await resolveMyInquiryFilter(ctx, strapi)
         const entries = await strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', {
           filters: { $and: [filters, { id: { $eq: id } }] },
-          fields: ['formType', 'inquiryCategory', 'subject', 'message', 'status', 'priority', 'sourceSite', 'sourcePage', 'locale', 'submittedAt', 'updatedAt', 'resolvedAt', 'repliedAt', 'attachmentCount', 'attachmentMetadata', 'replyStatus', 'caseStatus', 'caseResolutionState', 'caseVisibilityState', 'selfServiceState', 'firstResponseAt', 'lastUserActionAt', 'lastSupportActionAt', 'inquiryNumber', 'inquiryTraceId', 'requesterType', 'notificationState', 'supportLastReplyAt', 'supportLastUserReplyAt', 'supportLastAdminReplyAt', 'supportUnreadState', 'supportUnreadUserCount', 'replyChannelState', 'mailSyncState', 'deliveryState', 'threadSyncState', 'inboundReplyState', 'outboundReplyState', 'attachmentState', 'supportLastMailSentAt', 'supportLastMailReceivedAt', 'supportLastSyncAt'],
+          fields: ['formType', 'inquiryCategory', 'subject', 'message', 'status', 'priority', 'sourceSite', 'sourcePage', 'locale', 'submittedAt', 'updatedAt', 'resolvedAt', 'repliedAt', 'attachmentCount', 'attachmentMetadata', 'replyStatus', 'caseStatus', 'caseResolutionState', 'caseVisibilityState', 'selfServiceState', 'firstResponseAt', 'lastUserActionAt', 'lastSupportActionAt', 'inquiryNumber', 'inquiryTraceId', 'requesterType', 'notificationState', 'supportLastReplyAt', 'supportLastUserReplyAt', 'supportLastAdminReplyAt', 'supportUnreadState', 'supportUnreadUserCount', 'replyChannelState', 'mailSyncState', 'deliveryState', 'threadSyncState', 'inboundReplyState', 'outboundReplyState', 'attachmentState', 'supportLastMailSentAt', 'supportLastMailReceivedAt', 'supportLastSyncAt', 'csatState', 'csatScoreState', 'csatScore', 'reopenState'],
           limit: 1,
         })
         const item = Array.isArray(entries) ? entries[0] : null
@@ -1375,10 +1384,13 @@ export default factories.createCoreController(
             caseStatus: ['resolved', 'closed'].includes(String(item.caseStatus ?? '')) ? 'reopened' : 'in_progress',
             caseResolutionState: 'unresolved',
             status: 'in_review',
+            reopenState: ['resolved', 'closed'].includes(String(item.caseStatus ?? '')) ? 'reopened' : 'none',
+            repeatContactState: ['resolved', 'closed'].includes(String(item.caseStatus ?? '')) ? 'confirmed' : 'suspected',
             supportThreadState: 'open',
             supportWaitingState: 'waiting_support',
             supportLastReplyAt: now,
             supportLastUserReplyAt: now,
+            supportLastReopenedAt: ['resolved', 'closed'].includes(String(item.caseStatus ?? '')) ? now : null,
             lastActionAt: now,
             lastUserActionAt: now,
             supportAcknowledgementState: 'acknowledged_by_user',
@@ -1416,9 +1428,12 @@ export default factories.createCoreController(
             caseStatus: 'reopened',
             caseResolutionState: 'unresolved',
             status: 'in_review',
+            reopenState: 'reopened',
+            repeatContactState: 'confirmed',
             replyStatus: 'pending',
             lastActionAt: now,
             lastUserActionAt: now,
+            supportLastReopenedAt: now,
             adminReviewState: 'triaging',
             caseMetadata: appendTransitionHistory(item as Record<string, unknown>, {
               at: now,
@@ -1435,6 +1450,61 @@ export default factories.createCoreController(
       }
     },
 
+    async submitMyCsat(ctx) {
+      try {
+        const id = Number(ctx.params.id)
+        if (!Number.isInteger(id) || id <= 0) return ctx.badRequest('id が不正です')
+        const body = (ctx.request.body ?? {}) as Record<string, unknown>
+        const score = Math.max(1, Math.min(5, Number(body.score ?? 0)))
+        if (!Number.isFinite(score) || score < 1 || score > 5) return ctx.badRequest('score は 1-5 で指定してください')
+        const comment = normalizeText(body.comment, CASE_REPLY_MAX_LENGTH)
+        const filters = await resolveMyInquiryFilter(ctx, strapi)
+        const entries = await strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', {
+          filters: { $and: [filters, { id: { $eq: id } }] },
+          fields: ['caseStatus', 'caseMetadata', 'authUserId', 'name'],
+          limit: 1,
+        })
+        const item = Array.isArray(entries) ? entries[0] as Record<string, unknown> : null
+        if (!item) return ctx.notFound('case が見つかりません')
+        const csatScoreState = score >= 5
+          ? 'very_satisfied'
+          : score === 4
+            ? 'satisfied'
+            : score === 3
+              ? 'neutral'
+              : score === 2
+                ? 'dissatisfied'
+                : 'very_dissatisfied'
+        const now = new Date().toISOString()
+        await strapi.entityService.update('api::inquiry-submission.inquiry-submission', id, {
+          data: {
+            csatState: 'responded',
+            csatScore: score,
+            csatScoreState,
+            supportLastCsatCollectedAt: now,
+            supportQualityVisibilityState: ['dissatisfied', 'very_dissatisfied'].includes(csatScoreState) ? 'review_queue' : 'default',
+            supportQualityActionState: ['dissatisfied', 'very_dissatisfied'].includes(csatScoreState) ? 'qa_required' : 'idle',
+            caseMetadata: appendTransitionHistory(item, { at: now, actorType: 'user', action: 'csat_feedback', csatScore: score, csatScoreState }),
+          } as Record<string, unknown>,
+        })
+        await createSupportCaseEvent(strapi, {
+          inquiryId: id,
+          eventType: 'csat_feedback',
+          visibility: 'support_only',
+          authorType: 'authenticated_user',
+          authorId: String(item.authUserId ?? ''),
+          authorName: String(item.name ?? ''),
+          message: comment,
+          timelineEvent: 'csat_feedback_submitted',
+          traceId: getOrCreateRequestId(ctx),
+          meta: { csatScore: score, csatScoreState },
+        }).catch(() => undefined)
+        ctx.body = { data: { id, csatState: 'responded', csatScore: score, csatScoreState } }
+      } catch (error) {
+        return ctx.unauthorized((error as Error).message)
+      }
+    },
+
     async opsSummary(ctx) {
       if (!assertOpsToken(ctx)) return ctx.unauthorized('ops token が不正です')
 
@@ -1445,7 +1515,7 @@ export default factories.createCoreController(
       startOfWeek.setUTCDate(now.getUTCDate() - 6)
       startOfWeek.setUTCHours(0, 0, 0, 0)
 
-      const [total, today, week, unhandled, spam, closed, unassigned, overdue, highPriority, waitingUser, delayedReply, routingSuggested, byStatus] = await Promise.all([
+      const [total, today, week, unhandled, spam, closed, unassigned, overdue, highPriority, waitingUser, delayedReply, routingSuggested, qaPending, lowQuality, reopened, lowCsat, knowledgeGap, coachingSuggested, byStatus] = await Promise.all([
         strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: {} }),
         strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { submittedAt: { $gte: startOfToday.toISOString() } } }),
         strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { submittedAt: { $gte: startOfWeek.toISOString() } } }),
@@ -1458,6 +1528,12 @@ export default factories.createCoreController(
         strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { caseStatus: 'waiting_user', spamFlag: { $ne: true } } }),
         strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { replyPerformanceState: { $in: ['delayed', 'breached_like'] }, spamFlag: { $ne: true } } }),
         strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { routingSuggestionState: 'suggested', spamFlag: { $ne: true } } }),
+        strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { qaReviewState: { $in: ['not_reviewed', 'queued', 'followup_needed'] }, spamFlag: { $ne: true } } }),
+        strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { replyQualityState: { $in: ['weak', 'risky'] }, spamFlag: { $ne: true } } }),
+        strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { reopenState: 'reopened', spamFlag: { $ne: true } } }),
+        strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { csatScoreState: { $in: ['dissatisfied', 'very_dissatisfied'] }, spamFlag: { $ne: true } } }),
+        strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { knowledgeGapState: { $in: ['suspected', 'confirmed', 'article_needed'] }, spamFlag: { $ne: true } } }),
+        strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { coachingSuggestionState: 'suggested', spamFlag: { $ne: true } } }),
         strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', {
           fields: ['status'],
           start: 0,
@@ -1487,6 +1563,14 @@ export default factories.createCoreController(
             delayedReply,
             routingSuggested,
           },
+          quality: {
+            qaPending,
+            lowQuality,
+            reopened,
+            lowCsat,
+            knowledgeGap,
+            coachingSuggested,
+          },
           statusCounts,
         },
       }
@@ -1515,7 +1599,11 @@ export default factories.createCoreController(
             'supportLastEscalatedAt', 'supportLastSlaCheckedAt', 'supportLastReplyMeasuredAt', 'routingState', 'routingReason', 'routingSuggestionState',
             'workloadState', 'workloadBalanceState', 'supportPriority', 'replyPerformanceState', 'firstResponseState', 'responseLatencyState', 'resolutionLatencyState',
             'firstResponseDueAt', 'firstResponseBreachedAt', 'firstResponseMinutes', 'resolutionMinutes', 'automationSuggestionState', 'automationPlaybookState',
-            'automationSuggestionReason',
+            'automationSuggestionReason', 'qaReviewState', 'qaReviewReason', 'qaScoreState', 'replyQualityState', 'resolutionQualityState', 'csatState',
+            'csatScoreState', 'csatScore', 'reopenState', 'reopenReason', 'coachingState', 'coachingReason', 'coachingSuggestionState',
+            'knowledgeFeedbackState', 'knowledgeGapState', 'knowledgeArticleSuggestionState', 'templateUsageState', 'improvementPlaybookState',
+            'firstContactResolutionState', 'repeatContactState', 'supportQualityVisibilityState', 'supportQualityActionState',
+            'supportLastQaReviewedAt', 'supportLastCsatCollectedAt', 'supportLastReopenedAt', 'supportLastCoachingSuggestedAt',
           ],
           start: (page - 1) * pageSize,
           limit: pageSize,
@@ -1698,6 +1786,11 @@ export default factories.createCoreController(
           'workloadState', 'workloadBalanceState', 'supportPriority', 'replyPerformanceState', 'firstResponseState', 'responseLatencyState',
           'resolutionLatencyState', 'firstResponseDueAt', 'firstResponseBreachedAt', 'firstResponseMinutes', 'resolutionMinutes', 'automationSuggestionState',
           'automationPlaybookState', 'automationSuggestionReason', 'supportLastUserReplyAt', 'supportLastAdminReplyAt', 'resolvedAt',
+          'qaReviewState', 'qaReviewReason', 'qaScoreState', 'replyQualityState', 'resolutionQualityState', 'csatState',
+          'csatScoreState', 'csatScore', 'reopenState', 'reopenReason', 'coachingState', 'coachingReason', 'coachingSuggestionState',
+          'knowledgeFeedbackState', 'knowledgeGapState', 'knowledgeArticleSuggestionState', 'templateUsageState', 'improvementPlaybookState',
+          'firstContactResolutionState', 'repeatContactState', 'supportQualityVisibilityState', 'supportQualityActionState',
+          'supportLastQaReviewedAt', 'supportLastCsatCollectedAt', 'supportLastReopenedAt', 'supportLastCoachingSuggestedAt',
         ],
         start: (page - 1) * pageSize,
         limit: pageSize,
@@ -1763,6 +1856,34 @@ export default factories.createCoreController(
       const routingSuggestionCount = data.filter((row: any) => String(row.routingSuggestionState ?? 'none') === 'suggested').length
       const delayedReplyCount = data.filter((row: any) => ['delayed', 'breached_like'].includes(String(row.replyPerformanceState ?? ''))).length
       const atRiskSlaCount = data.filter((row: any) => ['at_risk', 'breached'].includes(String(row.slaState ?? ''))).length
+      const lowQualityCount = data.filter((row: any) => ['weak', 'risky'].includes(String(row.replyQualityState ?? ''))).length
+      const qaPendingCount = data.filter((row: any) => ['not_reviewed', 'queued', 'followup_needed'].includes(String(row.qaReviewState ?? ''))).length
+      const lowCsatCount = data.filter((row: any) => ['dissatisfied', 'very_dissatisfied'].includes(String(row.csatScoreState ?? ''))).length
+      const reopenedCount = data.filter((row: any) => String(row.reopenState ?? '') === 'reopened').length
+      const knowledgeGapCount = data.filter((row: any) => ['suspected', 'confirmed', 'article_needed'].includes(String(row.knowledgeGapState ?? ''))).length
+      const coachingSuggestedCount = data.filter((row: any) => String(row.coachingSuggestionState ?? '') === 'suggested').length
+      const byCategory = data.reduce<Record<string, { total: number; lowQuality: number; lowCsat: number; reopened: number; knowledgeGap: number }>>((acc, row: any) => {
+        const category = String(row.inquiryCategory ?? 'unknown')
+        if (!acc[category]) acc[category] = { total: 0, lowQuality: 0, lowCsat: 0, reopened: 0, knowledgeGap: 0 }
+        acc[category].total += 1
+        if (['weak', 'risky'].includes(String(row.replyQualityState ?? ''))) acc[category].lowQuality += 1
+        if (['dissatisfied', 'very_dissatisfied'].includes(String(row.csatScoreState ?? ''))) acc[category].lowCsat += 1
+        if (String(row.reopenState ?? '') === 'reopened') acc[category].reopened += 1
+        if (['suspected', 'confirmed', 'article_needed'].includes(String(row.knowledgeGapState ?? ''))) acc[category].knowledgeGap += 1
+        return acc
+      }, {})
+      const categoryQualitySummary = Object.entries(byCategory).map(([category, summary]) => ({ category, ...summary })).sort((a, b) => b.total - a.total)
+      const assigneeQualitySummary = assigneeLoadSummary.map((item) => {
+        const related = data.filter((row: any) => String(row.assigneeName ?? row.assigneeId ?? 'unassigned') === item.assignee)
+        return {
+          assignee: item.assignee,
+          count: item.count,
+          lowQuality: related.filter((row: any) => ['weak', 'risky'].includes(String(row.replyQualityState ?? ''))).length,
+          lowCsat: related.filter((row: any) => ['dissatisfied', 'very_dissatisfied'].includes(String(row.csatScoreState ?? ''))).length,
+          reopened: related.filter((row: any) => String(row.reopenState ?? '') === 'reopened').length,
+          coachingSuggested: related.filter((row: any) => String(row.coachingSuggestionState ?? '') === 'suggested').length,
+        }
+      })
 
       ctx.body = {
         data,
@@ -1779,8 +1900,16 @@ export default factories.createCoreController(
             routingSuggestionCount,
             delayedReplyCount,
             atRiskSlaCount,
+            lowQualityCount,
+            qaPendingCount,
+            lowCsatCount,
+            reopenedCount,
+            knowledgeGapCount,
+            coachingSuggestedCount,
             workloadBalanceState,
             assigneeLoadSummary,
+            assigneeQualitySummary,
+            categoryQualitySummary,
           },
         },
       }
@@ -1821,6 +1950,26 @@ export default factories.createCoreController(
       const nextAutomationSuggestionState = normalizeText(body.automationSuggestionState, 40)
       const nextAutomationPlaybookState = normalizeText(body.automationPlaybookState, 40)
       const nextAutomationSuggestionReason = normalizeText(body.automationSuggestionReason, 240)
+      const nextQaReviewState = normalizeText(body.qaReviewState, 40)
+      const nextQaReviewReason = normalizeText(body.qaReviewReason, 240)
+      const nextQaScoreState = normalizeText(body.qaScoreState, 40)
+      const nextReplyQualityState = normalizeText(body.replyQualityState, 40)
+      const nextResolutionQualityState = normalizeText(body.resolutionQualityState, 48)
+      const nextCsatState = normalizeText(body.csatState, 40)
+      const nextCsatScoreState = normalizeText(body.csatScoreState, 40)
+      const nextCsatScore = Number(body.csatScore)
+      const nextReopenState = normalizeText(body.reopenState, 40)
+      const nextReopenReason = normalizeText(body.reopenReason, 240)
+      const nextCoachingState = normalizeText(body.coachingState, 40)
+      const nextCoachingReason = normalizeText(body.coachingReason, 240)
+      const nextCoachingSuggestionState = normalizeText(body.coachingSuggestionState, 40)
+      const nextKnowledgeFeedbackState = normalizeText(body.knowledgeFeedbackState, 40)
+      const nextKnowledgeGapState = normalizeText(body.knowledgeGapState, 40)
+      const nextKnowledgeArticleSuggestionState = normalizeText(body.knowledgeArticleSuggestionState, 40)
+      const nextTemplateUsageState = normalizeText(body.templateUsageState, 40)
+      const nextImprovementPlaybookState = normalizeText(body.improvementPlaybookState, 40)
+      const nextFirstContactResolutionState = normalizeText(body.firstContactResolutionState, 40)
+      const nextRepeatContactState = normalizeText(body.repeatContactState, 40)
 
       if (nextPriority) updateData.priority = nextPriority
       if (nextPriority) updateData.supportPriority = nextPriority
@@ -1857,6 +2006,57 @@ export default factories.createCoreController(
       if (nextAutomationSuggestionState) updateData.automationSuggestionState = nextAutomationSuggestionState
       if (nextAutomationPlaybookState) updateData.automationPlaybookState = nextAutomationPlaybookState
       if (nextAutomationSuggestionReason) updateData.automationSuggestionReason = nextAutomationSuggestionReason
+      if (nextQaReviewState) {
+        updateData.qaReviewState = nextQaReviewState
+        updateData.supportLastQaReviewedAt = now
+      }
+      if (nextQaReviewReason) updateData.qaReviewReason = nextQaReviewReason
+      if (nextQaScoreState) updateData.qaScoreState = nextQaScoreState
+      if (nextReplyQualityState) updateData.replyQualityState = nextReplyQualityState
+      if (nextResolutionQualityState) updateData.resolutionQualityState = nextResolutionQualityState
+      if (nextCsatState) {
+        updateData.csatState = nextCsatState
+        if (nextCsatState === 'responded') updateData.supportLastCsatCollectedAt = now
+      }
+      if (nextCsatScoreState) updateData.csatScoreState = nextCsatScoreState
+      if (Number.isFinite(nextCsatScore) && nextCsatScore >= 0 && nextCsatScore <= 5) updateData.csatScore = Math.round(nextCsatScore)
+      if (nextReopenState) {
+        updateData.reopenState = nextReopenState
+        updateData.supportLastReopenedAt = now
+      }
+      if (nextReopenReason) updateData.reopenReason = nextReopenReason
+      if (nextCoachingState) updateData.coachingState = nextCoachingState
+      if (nextCoachingReason) updateData.coachingReason = nextCoachingReason
+      if (nextCoachingSuggestionState) {
+        updateData.coachingSuggestionState = nextCoachingSuggestionState
+        updateData.supportLastCoachingSuggestedAt = now
+      }
+      if (nextKnowledgeFeedbackState) updateData.knowledgeFeedbackState = nextKnowledgeFeedbackState
+      if (nextKnowledgeGapState) updateData.knowledgeGapState = nextKnowledgeGapState
+      if (nextKnowledgeArticleSuggestionState) updateData.knowledgeArticleSuggestionState = nextKnowledgeArticleSuggestionState
+      if (nextTemplateUsageState) updateData.templateUsageState = nextTemplateUsageState
+      if (nextImprovementPlaybookState) updateData.improvementPlaybookState = nextImprovementPlaybookState
+      if (nextFirstContactResolutionState) updateData.firstContactResolutionState = nextFirstContactResolutionState
+      if (nextRepeatContactState) updateData.repeatContactState = nextRepeatContactState
+
+      const hasQualityRisk = ['weak', 'risky'].includes(String(updateData.replyQualityState ?? ''))
+        || ['reopened_like', 'unresolved_like'].includes(String(updateData.resolutionQualityState ?? ''))
+        || ['dissatisfied', 'very_dissatisfied'].includes(String(updateData.csatScoreState ?? ''))
+      if (hasQualityRisk) {
+        updateData.supportQualityVisibilityState = 'review_queue'
+        updateData.supportQualityActionState = 'qa_required'
+      } else if (String(updateData.knowledgeGapState ?? '').length > 0 && String(updateData.knowledgeGapState) !== 'none') {
+        updateData.supportQualityVisibilityState = 'review_queue'
+        updateData.supportQualityActionState = 'knowledge_review'
+      } else if (String(updateData.coachingSuggestionState ?? '') === 'suggested') {
+        updateData.supportQualityVisibilityState = 'review_queue'
+        updateData.supportQualityActionState = 'coaching_review'
+      } else if (String(updateData.csatState ?? '') === 'sent') {
+        updateData.supportQualityActionState = 'csat_followup'
+      } else if (Object.prototype.hasOwnProperty.call(updateData, 'replyQualityState') || Object.prototype.hasOwnProperty.call(updateData, 'qaReviewState')) {
+        updateData.supportQualityVisibilityState = 'default'
+        updateData.supportQualityActionState = 'idle'
+      }
 
       const effectivePriority = String(updateData.priority ?? current.priority ?? 'normal')
       const effectiveCategory = String(current.inquiryCategory ?? 'general')
@@ -1913,6 +2113,14 @@ export default factories.createCoreController(
         slaState: updateData.slaState ?? null,
         escalationState: updateData.escalationState ?? null,
         templateReplyState: updateData.templateReplyState ?? null,
+        qaReviewState: updateData.qaReviewState ?? null,
+        replyQualityState: updateData.replyQualityState ?? null,
+        resolutionQualityState: updateData.resolutionQualityState ?? null,
+        csatState: updateData.csatState ?? null,
+        csatScoreState: updateData.csatScoreState ?? null,
+        reopenState: updateData.reopenState ?? null,
+        coachingSuggestionState: updateData.coachingSuggestionState ?? null,
+        knowledgeGapState: updateData.knowledgeGapState ?? null,
       }
       updateData.caseMetadata = appendTransitionHistory(current, transition)
 
@@ -1976,11 +2184,34 @@ export default factories.createCoreController(
           recommendedAction: 'テンプレ返信候補を選択して返信し、SLAを再計算する',
         },
       ]
+      const qualitySuggestions = [
+        {
+          key: 'reply-quality-review',
+          qaReviewState: 'queued',
+          replyQualityState: 'unknown',
+          resolutionQualityState: 'unknown',
+          reason: '初回は QA review queue で品質を確認',
+        },
+        {
+          key: 'knowledge-gap-check',
+          knowledgeFeedbackState: 'queued',
+          knowledgeGapState: 'suspected',
+          reason: 'カテゴリ別に再発防止ナレッジを確認',
+        },
+      ]
+      const coachingSuggestions = [
+        {
+          key: 'weak-reply-coaching',
+          coachingSuggestionState: 'suggested',
+          coachingState: 'suggested',
+          reason: 'reply quality が weak/risky の場合にレビューを推奨',
+        },
+      ]
       const templates = [
         { key: `${suggestion.templateCategory}-initial`, category: suggestion.templateCategory, locale: String(row.locale ?? 'ja'), title: '初回確認テンプレート', body: 'お問い合わせありがとうございます。内容を確認し、必要な追加情報をご案内します。' },
         { key: `${suggestion.templateCategory}-waiting-user`, category: suggestion.templateCategory, locale: String(row.locale ?? 'ja'), title: '追加情報依頼テンプレート', body: '解決のため、注文番号または会員IDなど追加情報をご共有ください。' },
       ]
-      ctx.body = { data: { classification: suggestion, routingSuggestion, automationPlaybookSuggestions, templates } }
+      ctx.body = { data: { classification: suggestion, routingSuggestion, automationPlaybookSuggestions, qualitySuggestions, coachingSuggestions, templates } }
     },
 
     async opsCaseMessages(ctx) {
