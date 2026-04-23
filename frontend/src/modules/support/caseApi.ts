@@ -2,6 +2,9 @@ export type SupportCaseStatus = 'draft' | 'submitted' | 'triaging' | 'waiting_us
 export type SupportCaseResolutionState = 'unresolved' | 'self_resolved' | 'support_resolved' | 'info_only' | 'duplicate' | 'escalated'
 export type SupportCaseVisibilityState = 'private_user' | 'support_only' | 'internal_only' | 'linked_article_only'
 export type SelfServiceState = 'not_attempted' | 'article_suggested' | 'article_viewed' | 'self_resolved' | 'still_need_support'
+export type CsatState = 'not_sent' | 'sent' | 'responded' | 'no_response' | 'suppressed'
+export type CsatScoreState = 'unrated' | 'very_satisfied' | 'satisfied' | 'neutral' | 'dissatisfied' | 'very_dissatisfied'
+export type ReopenState = 'none' | 'reopened' | 'repeat_contact' | 'monitoring'
 
 export interface SupportCaseSummary {
   openCases: number
@@ -54,6 +57,10 @@ export interface SupportCaseHistoryItem {
   caseVisibilityState: SupportCaseVisibilityState
   selfServiceState: SelfServiceState
   requesterType: 'guest' | 'authenticated_user' | 'member'
+  csatState?: CsatState
+  csatScoreState?: CsatScoreState
+  csatScore?: number
+  reopenState?: ReopenState
 }
 
 export interface SupportCaseDetail extends SupportCaseHistoryItem {
@@ -146,6 +153,22 @@ export async function postMySupportReply(token: string, id: number, payload: { m
     method: 'POST',
     body: JSON.stringify(payload),
   })
+}
+
+export async function submitSupportCsat(
+  token: string,
+  id: number,
+  payload: { score: 1 | 2 | 3 | 4 | 5; comment?: string },
+): Promise<{ id: number; csatState: CsatState; csatScore: number; csatScoreState: CsatScoreState }> {
+  const res = await call<{ data: { id: number; csatState: CsatState; csatScore: number; csatScoreState: CsatScoreState } }>(
+    token,
+    `/api/inquiry-submissions/me/${id}/csat`,
+    {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    },
+  )
+  return res.data
 }
 function getApiBaseUrl(): string {
   const base = import.meta.env.VITE_STRAPI_API_URL

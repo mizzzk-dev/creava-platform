@@ -65,6 +65,14 @@ export default {
       },
     },
     {
+      method: 'POST',
+      path: '/inquiry-submissions/me/:id/csat',
+      handler: 'inquiry-submission.submitMyCsat',
+      config: {
+        auth: false,
+      },
+    },
+    {
       method: 'GET',
       path: '/inquiry-submissions/ops/list',
       handler: 'inquiry-submission.opsList',

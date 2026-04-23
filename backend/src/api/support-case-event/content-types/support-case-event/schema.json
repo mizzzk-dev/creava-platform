@@ -18,7 +18,7 @@
     },
     "eventType": {
       "type": "enumeration",
-      "enum": ["user_message", "admin_reply", "system_message", "internal_note", "status_update", "inbound_mail", "outbound_mail", "delivery_event", "sync_event"],
+      "enum": ["user_message", "admin_reply", "system_message", "internal_note", "status_update", "inbound_mail", "outbound_mail", "delivery_event", "sync_event", "qa_review", "csat_feedback", "coaching", "knowledge_feedback"],
       "required": true
     },
     "visibility": {

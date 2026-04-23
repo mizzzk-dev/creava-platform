@@ -117,6 +117,15 @@
 | `INQUIRY_NOTIFY_TO` | 管理通知メール宛先（カンマ区切り） | 任意 |
 | `INQUIRY_ENABLE_AUTO_REPLY` | 自動返信有効化 (`true/false`) | 任意 |
 | `INQUIRY_REPLY_SLA_DAYS` | 自動返信本文の返信目安日数 | 任意 |
+| `INQUIRY_QA_REVIEW_QUEUE_DAYS` | QA review queue の標準対象期間（日） | 推奨 |
+| `INQUIRY_QA_LOW_SCORE_THRESHOLD` | QA低品質判定閾値（1-5） | 推奨 |
+| `INQUIRY_CSAT_ENABLED` | CSAT 収集機能有効化 (`true/false`) | 推奨 |
+| `INQUIRY_CSAT_AUTO_SEND_ON_RESOLVE` | resolve 時に CSAT 送信状態へ遷移 | 任意 |
+| `INQUIRY_CSAT_LOW_SCORE_THRESHOLD` | low CSAT 判定閾値（1-5） | 推奨 |
+| `INQUIRY_REOPEN_MONITOR_DAYS` | reopen/repeat contact を監視する期間（日） | 推奨 |
+| `INQUIRY_KNOWLEDGE_GAP_MIN_CASES` | knowledge gap 疑いの最小件数 | 推奨 |
+| `INQUIRY_COACHING_SUGGESTION_ENABLED` | coaching suggestion の生成有効化 | 推奨 |
+| `INQUIRY_TEMPLATE_OVERUSE_RATIO` | template overuse 判定の比率閾値（0-1） | 任意 |
 | `INQUIRY_MY_HISTORY_PAGE_MAX` | `/inquiry-submissions/me/history` の最大 pageSize | 推奨 |
 | `INQUIRY_MY_SUMMARY_MAX_ROWS` | `/inquiry-submissions/me/summary` 集計上限 | 推奨 |
 | `INQUIRY_MAILBOX_WEBHOOK_SECRET` | mailbox inbound/delivery webhook 保護シークレット | 必須 |
