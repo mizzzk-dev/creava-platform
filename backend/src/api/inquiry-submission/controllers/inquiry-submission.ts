@@ -13,6 +13,8 @@ const CONTACT_REPLY_DAYS = Number(process.env.INQUIRY_REPLY_SLA_DAYS ?? 3)
 const MY_HISTORY_PAGE_MAX = Number(process.env.INQUIRY_MY_HISTORY_PAGE_MAX ?? 50)
 const MY_SUMMARY_MAX_ROWS = Number(process.env.INQUIRY_MY_SUMMARY_MAX_ROWS ?? 200)
 const CASE_REPLY_MAX_LENGTH = Number(process.env.INQUIRY_CASE_REPLY_MAX_LENGTH ?? 8000)
+const INQUIRY_SLA_RISK_HOURS = Math.max(1, Number(process.env.INQUIRY_SLA_RISK_HOURS ?? 8))
+const INQUIRY_ESCALATION_LEAD_HOURS = Math.max(0, Number(process.env.INQUIRY_ESCALATION_LEAD_HOURS ?? 2))
 
 const ALLOWED_LOCALES = new Set(['ja', 'en', 'ko'])
 const FALLBACK_FORM_TYPES = new Set(['contact', 'request', 'restock', 'application', 'entry', 'collaboration', 'event', 'store_support', 'fc_support'])
@@ -377,11 +379,24 @@ function buildOpsFilters(query: Record<string, unknown>) {
     ]
   }
 
-  const directKeys = ['status', 'sourceSite', 'inquiryCategory', 'locale', 'priority', 'formType']
+  const directKeys = [
+    'status', 'sourceSite', 'inquiryCategory', 'locale', 'priority', 'formType', 'requesterType',
+    'caseStatus', 'assignmentState', 'triageState', 'slaState', 'overdueState', 'escalationState',
+  ]
   directKeys.forEach((key) => {
     const value = String(query[key] ?? '').trim()
     if (value) filters[key] = value
   })
+
+  const assigneeId = String(query.assigneeId ?? '').trim()
+  if (assigneeId) filters.assigneeId = assigneeId
+
+  const queueView = String(query.queueView ?? '').trim()
+  if (queueView === 'unassigned') filters.assignmentState = 'unassigned'
+  if (queueView === 'waiting_user') filters.caseStatus = 'waiting_user'
+  if (queueView === 'in_progress') filters.caseStatus = 'in_progress'
+  if (queueView === 'reply_required') filters.supportOpsActionState = 'reply_required'
+  if (queueView === 'overdue') filters.overdueState = 'overdue'
 
   const hasAttachment = normalizeBooleanParam(query.hasAttachment)
   if (hasAttachment === true) filters.attachmentCount = { $gt: 0 }
@@ -400,6 +415,91 @@ function buildOpsFilters(query: Record<string, unknown>) {
   }
 
   return filters
+}
+
+function resolveSlaHours(priority: string, category: string): number {
+  const normalizedPriority = String(priority || 'normal')
+  const normalizedCategory = String(category || 'general')
+  if (normalizedPriority === 'urgent') return 4
+  if (normalizedPriority === 'high') return 12
+  if (normalizedCategory.includes('payment') || normalizedCategory.includes('refund')) return 12
+  if (normalizedCategory.includes('security') || normalizedCategory.includes('fraud')) return 8
+  return 24
+}
+
+function computeSlaState(input: {
+  caseStatus: string
+  submittedAt?: string | null
+  slaTargetAt?: string | null
+}): { slaState: string; overdueState: string; slaTargetAt: string | null; slaBreachedAt: string | null; shouldEscalate: boolean } {
+  const caseStatus = String(input.caseStatus || 'submitted')
+  if (caseStatus === 'closed' || caseStatus === 'resolved' || caseStatus === 'waiting_user') {
+    return { slaState: caseStatus === 'waiting_user' ? 'paused' : 'within_target', overdueState: 'none', slaTargetAt: input.slaTargetAt ?? null, slaBreachedAt: null, shouldEscalate: false }
+  }
+
+  const nowMs = Date.now()
+  const fallbackSubmittedAt = input.submittedAt ? new Date(input.submittedAt).getTime() : nowMs
+  const targetAtMs = input.slaTargetAt ? new Date(input.slaTargetAt).getTime() : fallbackSubmittedAt
+  const diffHours = (targetAtMs - nowMs) / (1000 * 60 * 60)
+
+  if (diffHours <= 0) {
+    return {
+      slaState: 'breached',
+      overdueState: 'overdue',
+      slaTargetAt: new Date(targetAtMs).toISOString(),
+      slaBreachedAt: new Date(nowMs).toISOString(),
+      shouldEscalate: true,
+    }
+  }
+
+  if (diffHours <= INQUIRY_ESCALATION_LEAD_HOURS) {
+    return {
+      slaState: 'at_risk',
+      overdueState: 'due_soon',
+      slaTargetAt: new Date(targetAtMs).toISOString(),
+      slaBreachedAt: null,
+      shouldEscalate: true,
+    }
+  }
+
+  if (diffHours <= INQUIRY_SLA_RISK_HOURS) {
+    return {
+      slaState: 'at_risk',
+      overdueState: 'due_soon',
+      slaTargetAt: new Date(targetAtMs).toISOString(),
+      slaBreachedAt: null,
+      shouldEscalate: false,
+    }
+  }
+
+  return {
+    slaState: 'within_target',
+    overdueState: 'none',
+    slaTargetAt: new Date(targetAtMs).toISOString(),
+    slaBreachedAt: null,
+    shouldEscalate: false,
+  }
+}
+
+function buildClassificationSuggestion(input: { sourceSite: string; inquiryCategory: string; subject: string; message: string; requesterType: string }) {
+  const text = `${input.subject} ${input.message}`.toLowerCase()
+  const category = String(input.inquiryCategory || '').toLowerCase()
+  if (text.includes('refund') || text.includes('返金') || category.includes('refund')) {
+    return { suggestion: 'billing_refund', reason: 'refund keyword matched', priority: 'high', severity: 'high', templateCategory: 'refund_policy' }
+  }
+  if (text.includes('payment') || text.includes('決済') || text.includes('カード')) {
+    return { suggestion: 'billing_payment', reason: 'payment keyword matched', priority: 'high', severity: 'high', templateCategory: 'payment_help' }
+  }
+  if (text.includes('ログイン') || text.includes('login') || text.includes('password')) {
+    return { suggestion: 'account_access', reason: 'auth keyword matched', priority: 'normal', severity: 'medium', templateCategory: 'auth_support' }
+  }
+  if (String(input.sourceSite) === 'fc') {
+    return { suggestion: 'fanclub_membership', reason: 'sourceSite=fc default', priority: 'normal', severity: 'medium', templateCategory: 'fanclub_membership' }
+  }
+  if (String(input.sourceSite) === 'store') {
+    return { suggestion: 'store_order', reason: 'sourceSite=store default', priority: 'normal', severity: 'medium', templateCategory: 'store_order' }
+  }
+  return { suggestion: category || 'general_support', reason: 'fallback by category', priority: 'normal', severity: 'low', templateCategory: 'general_support' }
 }
 
 function assertOpsToken(ctx: any): boolean {
@@ -650,6 +750,21 @@ export default factories.createCoreController(
 
       const submittedAt = getNowIso()
       const requesterType = mapRequesterType(authUserId)
+      const autoClassification = buildClassificationSuggestion({
+        sourceSite,
+        inquiryCategory,
+        subject,
+        message,
+        requesterType,
+      })
+      const initialPriority = isSpam ? 'low' : String(formDefinition?.initialPriority ?? autoClassification.priority ?? 'normal')
+      const slaHours = resolveSlaHours(initialPriority, inquiryCategory)
+      const slaTargetAt = new Date(new Date(submittedAt).getTime() + slaHours * 60 * 60 * 1000).toISOString()
+      const slaComputed = computeSlaState({
+        caseStatus: isSpam ? 'closed' : 'submitted',
+        submittedAt,
+        slaTargetAt,
+      })
       const created = await strapi.entityService.create('api::inquiry-submission.inquiry-submission', {
         data: {
           formType,
@@ -672,7 +787,8 @@ export default factories.createCoreController(
           authUserId: authUserId || undefined,
           supportRequesterId: authUserId || undefined,
           status: isSpam ? 'spam' : String(formDefinition?.initialStatus ?? 'new'),
-          priority: isSpam ? 'low' : String(formDefinition?.initialPriority ?? 'normal'),
+          priority: initialPriority,
+          supportSeverity: autoClassification.severity,
           caseStatus: isSpam ? 'closed' : 'submitted',
           caseResolutionState: 'unresolved',
           caseVisibilityState: 'private_user',
@@ -690,6 +806,24 @@ export default factories.createCoreController(
           supportLastReplyAt: submittedAt,
           supportLastUserReplyAt: submittedAt,
           replyStatus: formType === 'restock' ? 'not_required' : 'pending',
+          triageState: isSpam ? 'categorized' : 'not_triaged',
+          triageReason: autoClassification.reason,
+          assignmentState: 'unassigned',
+          assigneeState: 'none',
+          slaState: slaComputed.slaState,
+          slaTargetAt,
+          overdueState: slaComputed.overdueState,
+          escalationState: isSpam ? 'none' : (slaComputed.shouldEscalate ? 'suggested' : 'none'),
+          escalationReason: slaComputed.shouldEscalate ? 'initial_sla_at_risk' : null,
+          templateReplyState: 'suggested',
+          templateReplyCategory: autoClassification.templateCategory,
+          autoClassificationState: 'suggested',
+          classificationReason: autoClassification.reason,
+          suggestedReplyState: 'suggested',
+          supportOpsVisibilityState: isSpam ? 'restricted' : 'needs_attention',
+          supportOpsActionState: isSpam ? 'resolved' : 'triage_required',
+          supportLastTriagedAt: submittedAt,
+          supportLastSlaCheckedAt: submittedAt,
           ipHash,
           userAgent,
           policyAgree,
@@ -716,6 +850,10 @@ export default factories.createCoreController(
               status: isSpam ? 'spam' : 'new',
               caseStatus: isSpam ? 'closed' : 'submitted',
               note: 'public submit',
+              triageState: isSpam ? 'categorized' : 'not_triaged',
+              assignmentState: 'unassigned',
+              slaState: slaComputed.slaState,
+              templateReplyState: 'suggested',
             }],
           },
         },
@@ -1126,13 +1264,17 @@ export default factories.createCoreController(
       startOfWeek.setUTCDate(now.getUTCDate() - 6)
       startOfWeek.setUTCHours(0, 0, 0, 0)
 
-      const [total, today, week, unhandled, spam, closed, byStatus] = await Promise.all([
+      const [total, today, week, unhandled, spam, closed, unassigned, overdue, highPriority, waitingUser, byStatus] = await Promise.all([
         strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: {} }),
         strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { submittedAt: { $gte: startOfToday.toISOString() } } }),
         strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { submittedAt: { $gte: startOfWeek.toISOString() } } }),
         strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { status: { $in: ['new', 'in_review', 'waiting_reply'] } } }),
         strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { status: 'spam' } }),
         strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { status: 'closed' } }),
+        strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { assignmentState: 'unassigned', spamFlag: { $ne: true } } }),
+        strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { overdueState: 'overdue', spamFlag: { $ne: true } } }),
+        strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { priority: { $in: ['high', 'urgent'] }, caseStatus: { $notIn: ['resolved', 'closed'] }, spamFlag: { $ne: true } } }),
+        strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { caseStatus: 'waiting_user', spamFlag: { $ne: true } } }),
         strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', {
           fields: ['status'],
           start: 0,
@@ -1154,6 +1296,12 @@ export default factories.createCoreController(
           unhandled,
           spam,
           closed,
+          queue: {
+            unassigned,
+            overdue,
+            highPriority,
+            waitingUser,
+          },
           statusCounts,
         },
       }
@@ -1176,6 +1324,10 @@ export default factories.createCoreController(
             'formType', 'inquiryCategory', 'name', 'email', 'subject', 'status', 'priority', 'sourceSite', 'sourcePage', 'locale',
             'attachmentCount', 'spamFlag', 'spamReason', 'submittedAt', 'updatedAt', 'handledAt', 'handler', 'replyStatus', 'repliedAt', 'lastActionAt',
             'inquiryNumber', 'inquiryTraceId', 'requesterType', 'notificationState', 'caseStatus', 'caseResolutionState', 'assignmentState', 'adminReviewState',
+            'triageState', 'triageReason', 'assigneeId', 'assigneeName', 'assigneeState', 'supportSeverity', 'slaState', 'slaTargetAt', 'slaBreachedAt', 'overdueState',
+            'escalationState', 'escalationReason', 'escalationTarget', 'templateReplyState', 'templateReplyCategory', 'templateReplyKey', 'autoClassificationState',
+            'classificationReason', 'suggestedReplyState', 'supportOpsVisibilityState', 'supportOpsActionState', 'supportLastAssignedAt', 'supportLastTriagedAt',
+            'supportLastEscalatedAt', 'supportLastSlaCheckedAt',
           ],
           start: (page - 1) * pageSize,
           limit: pageSize,
@@ -1336,6 +1488,189 @@ export default factories.createCoreController(
       }
 
       ctx.body = { data: { updated, ids } }
+    },
+
+    async opsQueue(ctx) {
+      if (!assertOpsToken(ctx)) return ctx.unauthorized('ops token が不正です')
+      const query = ctx.query as Record<string, unknown>
+      const page = Math.max(1, Number(query.page ?? 1))
+      const pageSize = Math.min(200, Math.max(1, Number(query.pageSize ?? 50)))
+      const filters = buildOpsFilters(query)
+      const sort = normalizeSort(query.sortBy, query.sortOrder)
+      const rows = await strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', {
+        filters,
+        sort,
+        fields: [
+          'inquiryNumber', 'inquiryTraceId', 'sourceSite', 'inquiryCategory', 'requesterType', 'subject', 'status', 'caseStatus', 'priority',
+          'supportSeverity', 'assignmentState', 'assigneeId', 'assigneeName', 'triageState', 'triageReason', 'slaState', 'slaTargetAt', 'slaBreachedAt',
+          'overdueState', 'escalationState', 'escalationReason', 'escalationTarget', 'templateReplyState', 'templateReplyCategory', 'templateReplyKey',
+          'autoClassificationState', 'classificationReason', 'supportOpsActionState', 'supportOpsVisibilityState', 'supportUnreadState',
+          'supportUnreadUserCount', 'supportUnreadSupportCount', 'submittedAt', 'updatedAt', 'supportLastAssignedAt', 'supportLastTriagedAt',
+          'supportLastEscalatedAt', 'supportLastSlaCheckedAt',
+        ],
+        start: (page - 1) * pageSize,
+        limit: pageSize,
+      }) as Array<Record<string, unknown>>
+      const total = await strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters })
+
+      const data = rows.map((row) => {
+        const computed = computeSlaState({
+          caseStatus: String(row.caseStatus ?? row.status ?? 'submitted'),
+          submittedAt: String(row.submittedAt ?? ''),
+          slaTargetAt: String(row.slaTargetAt ?? ''),
+        })
+        return {
+          ...row,
+          slaState: computed.slaState,
+          overdueState: computed.overdueState,
+          slaBreachedAt: row.slaBreachedAt ?? computed.slaBreachedAt ?? null,
+          escalationState: row.escalationState ?? (computed.shouldEscalate ? 'suggested' : 'none'),
+        }
+      })
+
+      ctx.body = {
+        data,
+        meta: {
+          pagination: {
+            page,
+            pageSize,
+            pageCount: Math.max(1, Math.ceil(total / pageSize)),
+            total,
+          },
+          sort,
+        },
+      }
+    },
+
+    async opsCaseUpdate(ctx) {
+      if (!assertOpsToken(ctx)) return ctx.unauthorized('ops token が不正です')
+      const id = Number(ctx.params.id)
+      if (!Number.isInteger(id) || id <= 0) return ctx.badRequest('id が不正です')
+      const body = (ctx.request.body ?? {}) as Record<string, unknown>
+      const actorName = normalizeText(body.actorName, 120) || 'support'
+      const now = new Date().toISOString()
+      const rows = await strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', {
+        filters: { id: { $eq: id } },
+        fields: ['priority', 'inquiryCategory', 'caseStatus', 'caseMetadata', 'assignmentState', 'triageState', 'submittedAt', 'slaTargetAt'],
+        limit: 1,
+      })
+      const current = Array.isArray(rows) ? rows[0] as Record<string, unknown> : null
+      if (!current) return ctx.notFound('case が見つかりません')
+
+      const updateData: Record<string, unknown> = { lastActionAt: now }
+      const nextPriority = normalizeText(body.priority, 20)
+      const nextAssigneeId = normalizeText(body.assigneeId, 120)
+      const nextAssigneeName = normalizeText(body.assigneeName, 120)
+      const nextTriageState = normalizeText(body.triageState, 40)
+      const nextTriageReason = normalizeText(body.triageReason, 200)
+      const nextEscalationState = normalizeText(body.escalationState, 48)
+      const nextEscalationReason = normalizeText(body.escalationReason, 240)
+      const nextEscalationTarget = normalizeText(body.escalationTarget, 120)
+      const nextTemplateReplyState = normalizeText(body.templateReplyState, 40)
+      const nextTemplateReplyKey = normalizeText(body.templateReplyKey, 120)
+      const nextTemplateReplyCategory = normalizeText(body.templateReplyCategory, 120)
+      const nextClassificationState = normalizeText(body.autoClassificationState, 40)
+      const nextClassificationReason = normalizeText(body.classificationReason, 200)
+
+      if (nextPriority) updateData.priority = nextPriority
+      if (nextAssigneeId || nextAssigneeName) {
+        updateData.assigneeId = nextAssigneeId || null
+        updateData.assigneeName = nextAssigneeName || null
+        updateData.assignmentState = nextAssigneeId || nextAssigneeName ? 'assigned' : 'unassigned'
+        updateData.assigneeState = nextAssigneeId || nextAssigneeName ? 'active' : 'none'
+        updateData.supportLastAssignedAt = now
+        updateData.supportOpsActionState = nextAssigneeId || nextAssigneeName ? 'reply_required' : 'assignment_required'
+      }
+      if (nextTriageState) {
+        updateData.triageState = nextTriageState
+        updateData.supportLastTriagedAt = now
+        updateData.supportOpsActionState = nextTriageState === 'assigned' ? 'reply_required' : 'assignment_required'
+      }
+      if (nextTriageReason) updateData.triageReason = nextTriageReason
+      if (nextEscalationState) {
+        updateData.escalationState = nextEscalationState
+        updateData.supportLastEscalatedAt = now
+      }
+      if (nextEscalationReason) updateData.escalationReason = nextEscalationReason
+      if (nextEscalationTarget) updateData.escalationTarget = nextEscalationTarget
+      if (nextTemplateReplyState) updateData.templateReplyState = nextTemplateReplyState
+      if (nextTemplateReplyKey) updateData.templateReplyKey = nextTemplateReplyKey
+      if (nextTemplateReplyCategory) updateData.templateReplyCategory = nextTemplateReplyCategory
+      if (nextClassificationState) updateData.autoClassificationState = nextClassificationState
+      if (nextClassificationReason) updateData.classificationReason = nextClassificationReason
+
+      const effectivePriority = String(updateData.priority ?? current.priority ?? 'normal')
+      const effectiveCategory = String(current.inquiryCategory ?? 'general')
+      const effectiveCaseStatus = String(current.caseStatus ?? 'submitted')
+      const computedSla = computeSlaState({
+        caseStatus: effectiveCaseStatus,
+        submittedAt: String(current.submittedAt ?? now),
+        slaTargetAt: String(body.slaTargetAt ?? current.slaTargetAt ?? new Date(Date.now() + resolveSlaHours(effectivePriority, effectiveCategory) * 60 * 60 * 1000).toISOString()),
+      })
+      updateData.slaTargetAt = computedSla.slaTargetAt
+      updateData.slaState = computedSla.slaState
+      updateData.overdueState = computedSla.overdueState
+      updateData.slaBreachedAt = computedSla.slaBreachedAt
+      updateData.supportLastSlaCheckedAt = now
+      if (computedSla.shouldEscalate && !nextEscalationState) {
+        updateData.escalationState = 'suggested'
+        updateData.escalationReason = 'sla_at_risk_or_breached'
+      }
+
+      const transition = {
+        at: now,
+        actorType: 'support',
+        actorName,
+        action: 'ops_case_update',
+        priority: updateData.priority ?? null,
+        assignmentState: updateData.assignmentState ?? null,
+        triageState: updateData.triageState ?? null,
+        slaState: updateData.slaState ?? null,
+        escalationState: updateData.escalationState ?? null,
+        templateReplyState: updateData.templateReplyState ?? null,
+      }
+      updateData.caseMetadata = appendTransitionHistory(current, transition)
+
+      await strapi.entityService.update('api::inquiry-submission.inquiry-submission', id, {
+        data: updateData as Record<string, unknown>,
+      })
+      await createSupportCaseEvent(strapi, {
+        inquiryId: id,
+        eventType: 'status_update',
+        visibility: 'internal_only',
+        authorType: 'support',
+        authorName: actorName,
+        timelineEvent: 'ops_case_update',
+        traceId: getOrCreateRequestId(ctx),
+        meta: transition,
+      }).catch(() => undefined)
+
+      ctx.body = { data: { id, ...updateData } }
+    },
+
+    async opsTemplateSuggestions(ctx) {
+      if (!assertOpsToken(ctx)) return ctx.unauthorized('ops token が不正です')
+      const id = Number(ctx.params.id)
+      if (!Number.isInteger(id) || id <= 0) return ctx.badRequest('id が不正です')
+      const rows = await strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', {
+        filters: { id: { $eq: id } },
+        fields: ['sourceSite', 'inquiryCategory', 'locale', 'subject', 'message'],
+        limit: 1,
+      })
+      const row = Array.isArray(rows) ? rows[0] as Record<string, unknown> : null
+      if (!row) return ctx.notFound('case が見つかりません')
+      const suggestion = buildClassificationSuggestion({
+        sourceSite: String(row.sourceSite ?? 'main'),
+        inquiryCategory: String(row.inquiryCategory ?? ''),
+        subject: String(row.subject ?? ''),
+        message: String(row.message ?? ''),
+        requesterType: 'guest',
+      })
+      const templates = [
+        { key: `${suggestion.templateCategory}-initial`, category: suggestion.templateCategory, locale: String(row.locale ?? 'ja'), title: '初回確認テンプレート', body: 'お問い合わせありがとうございます。内容を確認し、必要な追加情報をご案内します。' },
+        { key: `${suggestion.templateCategory}-waiting-user`, category: suggestion.templateCategory, locale: String(row.locale ?? 'ja'), title: '追加情報依頼テンプレート', body: '解決のため、注文番号または会員IDなど追加情報をご共有ください。' },
+      ]
+      ctx.body = { data: { classification: suggestion, templates } }
     },
 
     async opsCaseMessages(ctx) {
