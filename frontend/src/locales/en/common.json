@@ -984,6 +984,20 @@
       "empty": "No suggested articles for this condition.",
       "stillNeedHelp": "Still need help"
     },
+    "assistant": {
+      "title": "Conversational help assistant",
+      "description": "The assistant gathers context, suggests FAQ/guide/known issue content, and guides next actions. If unresolved, hand off to human support with context.",
+      "placeholder": "Describe your issue (e.g. I placed an order but got no shipping notice)",
+      "run": "Start guided help",
+      "minQueryHint": "Please enter at least {{count}} characters.",
+      "stateLabel": "assistant state",
+      "noCandidates": "No strong match found. Add detail or hand off to human support.",
+      "troubleshooting": "guided troubleshooting",
+      "markDone": "Mark done",
+      "completed": "Done",
+      "resolved": "Issue resolved",
+      "handoff": "Handoff to human support"
+    },
     "searchResultState": {
       "results_found": "Relevant results found",
       "low_confidence": "Few results found, try refining your query",

@@ -14,14 +14,37 @@ function pickLocale(localized: Record<string, string>, locale: string): string {
   return localized[normalized] ?? localized.ja ?? Object.values(localized)[0] ?? ''
 }
 
-export default function DynamicForm({ definition, sourcePage }: { definition: FormDefinition; sourcePage: string }) {
+interface PrefillState {
+  subject?: string
+  message?: string
+  inquiryCategory?: string
+  assistantSessionState?: string
+  semanticRetrievalState?: string
+  retrievalConfidenceState?: string
+}
+
+export default function DynamicForm({ definition, sourcePage, prefill }: { definition: FormDefinition; sourcePage: string; prefill?: PrefillState }) {
   const { i18n, t } = useTranslation()
   const orderedFields = useMemo(() => [...definition.fields].sort((a, b) => a.order - b.order), [definition.fields])
   const initialValues = useMemo<Record<string, string | boolean>>(() => {
     const next: Record<string, string | boolean> = { honeypot: '' }
-    for (const field of orderedFields) next[field.name] = field.fieldType === 'checkbox' || field.fieldType === 'consent' ? false : ''
+    for (const field of orderedFields) {
+      if (field.fieldType === 'checkbox' || field.fieldType === 'consent') {
+        next[field.name] = false
+        continue
+      }
+      if (field.name === 'subject' && prefill?.subject) {
+        next[field.name] = prefill.subject
+        continue
+      }
+      if (field.name === 'message' && prefill?.message) {
+        next[field.name] = prefill.message
+        continue
+      }
+      next[field.name] = ''
+    }
     return next
-  }, [orderedFields])
+  }, [orderedFields, prefill?.message, prefill?.subject])
 
   const [values, setValues] = useState<Record<string, string | boolean>>(initialValues)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -97,7 +120,7 @@ export default function DynamicForm({ definition, sourcePage }: { definition: Fo
       }
       const result = await submitGenericForm({
         formType: definition.formType,
-        inquiryCategory: definition.defaultCategory,
+        inquiryCategory: prefill?.inquiryCategory || definition.defaultCategory,
         locale: i18n.language,
         sourcePage,
         honeypot: String(values.honeypot ?? ''),
@@ -214,6 +237,11 @@ export default function DynamicForm({ definition, sourcePage }: { definition: Fo
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); setSubmitState('validating'); if (validate()) { setSubmitState('ready_to_confirm'); setStep('confirm') } else { setSubmitState('idle') } }} noValidate className="space-y-6">
+      {(prefill?.assistantSessionState || prefill?.semanticRetrievalState) && (
+        <div className="rounded-xl border border-cyan-900/40 bg-cyan-950/20 p-3 text-[11px] text-cyan-100">
+          assistantSessionState: {prefill.assistantSessionState ?? '-'} / semanticRetrievalState: {prefill.semanticRetrievalState ?? '-'} / retrievalConfidenceState: {prefill.retrievalConfidenceState ?? '-'}
+        </div>
+      )}
       <div className="hidden"><input name="honeypot" value={String(values.honeypot ?? '')} onChange={handleFieldChange} tabIndex={-1} autoComplete="off" /></div>
       {orderedFields.map((field) => {
         if (field.fieldType === 'hidden' || field.name === 'honeypot') return null

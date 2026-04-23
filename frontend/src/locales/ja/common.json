@@ -984,6 +984,20 @@
       "empty": "現在この条件で提案できる記事がありません。",
       "stillNeedHelp": "解決しないので問い合わせる"
     },
+    "assistant": {
+      "title": "会話型ヘルプアシスタント",
+      "description": "状況を会話で絞り込み、関連FAQ・ガイド・known issue・次の手順を案内します。解決しない場合はそのまま問い合わせへ引き継げます。",
+      "placeholder": "困っている内容を入力（例: 注文したのに配送通知が来ない）",
+      "run": "会話で案内を開始",
+      "minQueryHint": "{{count}}文字以上で入力してください。",
+      "stateLabel": "assistant 状態",
+      "noCandidates": "関連候補が見つからないため、追加情報を入力するか human support へ引き継いでください。",
+      "troubleshooting": "guided troubleshooting",
+      "markDone": "実施済みにする",
+      "completed": "完了",
+      "resolved": "自己解決できた",
+      "handoff": "human support に引き継ぐ"
+    },
     "searchResultState": {
       "results_found": "候補が見つかりました",
       "low_confidence": "候補が少ないためキーワード調整を推奨",
