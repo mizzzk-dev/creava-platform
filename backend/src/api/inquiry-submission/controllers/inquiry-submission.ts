@@ -528,10 +528,26 @@ function toUserCaseState(entry: Record<string, unknown>): UserCaseState {
   return { caseStatus, caseResolutionState, caseVisibilityState, selfServiceState }
 }
 
-function normalizeCaseEventType(value: unknown): 'user_message' | 'admin_reply' | 'system_message' | 'internal_note' | 'status_update' {
+function normalizeCaseEventType(value: unknown): 'user_message' | 'admin_reply' | 'system_message' | 'internal_note' | 'status_update' | 'inbound_mail' | 'outbound_mail' | 'delivery_event' | 'sync_event' {
   const raw = String(value ?? '')
-  if (raw === 'admin_reply' || raw === 'system_message' || raw === 'internal_note' || raw === 'status_update') return raw
+  if (raw === 'admin_reply' || raw === 'system_message' || raw === 'internal_note' || raw === 'status_update' || raw === 'inbound_mail' || raw === 'outbound_mail' || raw === 'delivery_event' || raw === 'sync_event') return raw
   return 'user_message'
+}
+
+function normalizePlainTextFromEmail(raw: string): string {
+  const normalized = raw.replace(/\r\n/g, '\n')
+  const withoutQuoted = normalized
+    .split('\n')
+    .filter((line) => !line.trim().startsWith('>') && !line.includes('wrote:'))
+    .join('\n')
+  return withoutQuoted.trim().slice(0, CASE_REPLY_MAX_LENGTH)
+}
+
+function verifyWebhookSecret(ctx: any): boolean {
+  const secret = String(process.env.INQUIRY_MAILBOX_WEBHOOK_SECRET ?? '').trim()
+  if (!secret) return false
+  const headerSecret = String(ctx.request.headers['x-mailbox-webhook-secret'] ?? '').trim()
+  return headerSecret.length > 0 && headerSecret === secret
 }
 
 function normalizeCaseEventVisibility(value: unknown): 'user_visible' | 'support_only' | 'internal_only' {
@@ -542,7 +558,7 @@ function normalizeCaseEventVisibility(value: unknown): 'user_visible' | 'support
 
 async function createSupportCaseEvent(strapi: any, input: {
   inquiryId: number
-  eventType: 'user_message' | 'admin_reply' | 'system_message' | 'internal_note' | 'status_update'
+  eventType: 'user_message' | 'admin_reply' | 'system_message' | 'internal_note' | 'status_update' | 'inbound_mail' | 'outbound_mail' | 'delivery_event' | 'sync_event'
   visibility: 'user_visible' | 'support_only' | 'internal_only'
   authorType: 'guest' | 'authenticated_user' | 'support' | 'internal_admin' | 'system'
   authorId?: string
@@ -583,7 +599,7 @@ async function listSupportCaseEvents(strapi: any, inquiryId: number, visibility:
         { visibility: { $in: visibility } },
       ],
     },
-    fields: ['eventType', 'visibility', 'authorType', 'authorId', 'authorName', 'message', 'statusFrom', 'statusTo', 'timelineEvent', 'postedAt', 'traceId'],
+    fields: ['eventType', 'visibility', 'authorType', 'authorId', 'authorName', 'message', 'statusFrom', 'statusTo', 'timelineEvent', 'postedAt', 'traceId', 'meta'],
     sort: ['postedAt:asc', 'id:asc'],
     limit: 300,
   })
@@ -1069,7 +1085,7 @@ export default factories.createCoreController(
         const [rows, total] = await Promise.all([
           strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', {
             filters: scopedFilters,
-            fields: ['formType', 'inquiryCategory', 'subject', 'message', 'status', 'priority', 'sourceSite', 'submittedAt', 'updatedAt', 'resolvedAt', 'repliedAt', 'attachmentCount', 'replyStatus', 'caseStatus', 'caseResolutionState', 'caseVisibilityState', 'selfServiceState', 'inquiryNumber', 'inquiryTraceId', 'requesterType', 'supportLastReplyAt', 'supportLastUserReplyAt', 'supportLastAdminReplyAt', 'supportUnreadState', 'supportUnreadUserCount'],
+            fields: ['formType', 'inquiryCategory', 'subject', 'message', 'status', 'priority', 'sourceSite', 'submittedAt', 'updatedAt', 'resolvedAt', 'repliedAt', 'attachmentCount', 'replyStatus', 'caseStatus', 'caseResolutionState', 'caseVisibilityState', 'selfServiceState', 'inquiryNumber', 'inquiryTraceId', 'requesterType', 'supportLastReplyAt', 'supportLastUserReplyAt', 'supportLastAdminReplyAt', 'supportUnreadState', 'supportUnreadUserCount', 'replyChannelState', 'mailSyncState', 'deliveryState', 'threadSyncState', 'attachmentState'],
             sort: 'submittedAt:desc',
             start: (page - 1) * pageSize,
             limit: pageSize,
@@ -1097,6 +1113,11 @@ export default factories.createCoreController(
             supportLastAdminReplyAt: row.supportLastAdminReplyAt ?? null,
             supportUnreadState: row.supportUnreadState ?? 'none',
             supportUnreadUserCount: Number(row.supportUnreadUserCount ?? 0),
+            replyChannelState: row.replyChannelState ?? 'in_app',
+            mailSyncState: row.mailSyncState ?? 'not_applicable',
+            deliveryState: row.deliveryState ?? 'not_sent',
+            threadSyncState: row.threadSyncState ?? 'not_synced',
+            attachmentState: row.attachmentState ?? 'none',
             attachmentCount: row.attachmentCount ?? 0,
             replyStatus: row.replyStatus ?? 'pending',
             requesterType: row.requesterType ?? 'guest',
@@ -1123,7 +1144,7 @@ export default factories.createCoreController(
         const filters = await resolveMyInquiryFilter(ctx, strapi)
         const entries = await strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', {
           filters: { $and: [filters, { id: { $eq: id } }] },
-          fields: ['formType', 'inquiryCategory', 'subject', 'message', 'status', 'priority', 'sourceSite', 'sourcePage', 'locale', 'submittedAt', 'updatedAt', 'resolvedAt', 'repliedAt', 'attachmentCount', 'replyStatus', 'caseStatus', 'caseResolutionState', 'caseVisibilityState', 'selfServiceState', 'firstResponseAt', 'lastUserActionAt', 'lastSupportActionAt', 'inquiryNumber', 'inquiryTraceId', 'requesterType', 'notificationState', 'supportLastReplyAt', 'supportLastUserReplyAt', 'supportLastAdminReplyAt', 'supportUnreadState', 'supportUnreadUserCount'],
+          fields: ['formType', 'inquiryCategory', 'subject', 'message', 'status', 'priority', 'sourceSite', 'sourcePage', 'locale', 'submittedAt', 'updatedAt', 'resolvedAt', 'repliedAt', 'attachmentCount', 'attachmentMetadata', 'replyStatus', 'caseStatus', 'caseResolutionState', 'caseVisibilityState', 'selfServiceState', 'firstResponseAt', 'lastUserActionAt', 'lastSupportActionAt', 'inquiryNumber', 'inquiryTraceId', 'requesterType', 'notificationState', 'supportLastReplyAt', 'supportLastUserReplyAt', 'supportLastAdminReplyAt', 'supportUnreadState', 'supportUnreadUserCount', 'replyChannelState', 'mailSyncState', 'deliveryState', 'threadSyncState', 'inboundReplyState', 'outboundReplyState', 'attachmentState', 'supportLastMailSentAt', 'supportLastMailReceivedAt', 'supportLastSyncAt'],
           limit: 1,
         })
         const item = Array.isArray(entries) ? entries[0] : null
@@ -1143,6 +1164,7 @@ export default factories.createCoreController(
           supportTimelineEvent: event.timelineEvent ?? null,
           supportStatusFrom: event.statusFrom ?? null,
           supportStatusTo: event.statusTo ?? null,
+          supportReplyMeta: event.meta ?? null,
         }))
         await updateUnreadState(strapi, id, { userCount: 0 }).catch(() => undefined)
         ctx.body = { data: { ...item, supportCaseType: item.inquiryCategory ?? 'other', supportTimeline: timeline, ...toUserCaseState(item as Record<string, unknown>) } }
@@ -1693,12 +1715,18 @@ export default factories.createCoreController(
       const traceId = normalizeText(body.traceId, 120) || getOrCreateRequestId(ctx)
       const actorName = normalizeText(body.actorName, 120) || 'support'
       const statusTo = normalizeText(body.statusTo, 40) || 'waiting_reply'
-      const entries = await strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', { filters: { id: { $eq: id } }, fields: ['caseMetadata', 'caseStatus'], limit: 1 })
+      const replyChannel = normalizeText(body.replyChannelState, 40) === 'email' ? 'email' : 'in_app'
+      const mailSubject = normalizeText(body.mailSubject, 200)
+      const entries = await strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', { filters: { id: { $eq: id } }, fields: ['caseMetadata', 'caseStatus', 'email', 'inquiryNumber', 'supportLastOutboundMessageId'], limit: 1 })
       const item = Array.isArray(entries) ? entries[0] as Record<string, unknown> : null
       if (!item) return ctx.notFound('case が見つかりません')
+      const now = new Date().toISOString()
+      const outboundMessageId = replyChannel === 'email'
+        ? `mz-out-${id}-${Date.now()}`
+        : null
       await createSupportCaseEvent(strapi, {
         inquiryId: id,
-        eventType: 'admin_reply',
+        eventType: replyChannel === 'email' ? 'outbound_mail' : 'admin_reply',
         visibility: 'user_visible',
         authorType: 'support',
         authorName: actorName,
@@ -1707,8 +1735,31 @@ export default factories.createCoreController(
         statusTo,
         timelineEvent: 'support_reply',
         traceId,
+        meta: {
+          replyChannelState: replyChannel,
+          outboundReplyState: replyChannel === 'email' ? 'queued' : 'sent',
+          deliveryState: replyChannel === 'email' ? 'queued' : 'not_sent',
+          mailMessageId: outboundMessageId,
+          externalThreadId: String(item.inquiryNumber ?? `case-${id}`),
+          subject: mailSubject || null,
+        },
       })
-      const now = new Date().toISOString()
+      if (replyChannel === 'email') {
+        await createSupportCaseEvent(strapi, {
+          inquiryId: id,
+          eventType: 'delivery_event',
+          visibility: 'support_only',
+          authorType: 'system',
+          message: 'mail delivery queued',
+          timelineEvent: 'delivery_queued',
+          traceId,
+          meta: {
+            deliveryState: 'queued',
+            deliveryAttemptState: 'initial',
+            mailMessageId: outboundMessageId,
+          },
+        }).catch(() => undefined)
+      }
       await strapi.entityService.update('api::inquiry-submission.inquiry-submission', id, {
         data: {
           status: statusTo === 'resolved' || statusTo === 'closed' ? 'replied' : 'waiting_reply',
@@ -1722,6 +1773,13 @@ export default factories.createCoreController(
           lastSupportActionAt: now,
           supportLastReplyAt: now,
           supportLastAdminReplyAt: now,
+          supportLastMailSentAt: replyChannel === 'email' ? now : null,
+          replyChannelState: replyChannel,
+          outboundReplyState: replyChannel === 'email' ? 'queued' : 'sent',
+          deliveryState: replyChannel === 'email' ? 'queued' : 'not_sent',
+          mailSyncState: replyChannel === 'email' ? 'pending' : 'not_applicable',
+          threadSyncState: replyChannel === 'email' ? 'not_synced' : 'synced',
+          supportLastOutboundMessageId: outboundMessageId,
           supportAcknowledgementState: 'acknowledged_by_support',
           supportResolvedAt: statusTo === 'resolved' || statusTo === 'closed' ? now : null,
           supportClosedAt: statusTo === 'closed' ? now : null,
@@ -1729,7 +1787,7 @@ export default factories.createCoreController(
         } as Record<string, unknown>,
       })
       await updateUnreadState(strapi, id, { userCount: 1, supportCount: 0 }).catch(() => undefined)
-      ctx.body = { data: { id, repliedAt: now, caseStatus: statusTo } }
+      ctx.body = { data: { id, repliedAt: now, caseStatus: statusTo, replyChannelState: replyChannel, deliveryState: replyChannel === 'email' ? 'queued' : 'not_sent', mailMessageId: outboundMessageId } }
     },
 
     async opsInternalNote(ctx) {
@@ -1758,6 +1816,139 @@ export default factories.createCoreController(
         } as Record<string, unknown>,
       })
       ctx.body = { data: { accepted: true, internalNoteState: 'updated', notedAt: now } }
+    },
+
+    async mailboxInbound(ctx) {
+      if (!verifyWebhookSecret(ctx)) return ctx.unauthorized('mailbox webhook secret が不正です')
+      const body = (ctx.request.body ?? {}) as Record<string, unknown>
+      const inboundMessageId = normalizeText(body.mailMessageId, 200) || `mz-in-${Date.now()}`
+      const replyToMessageId = normalizeText(body.replyToMessageId, 200)
+      const externalThreadId = normalizeText(body.externalThreadId, 200)
+      const senderEmail = normalizeText(body.senderEmail, 200).toLowerCase()
+      const rawText = normalizeText(body.textBody, CASE_REPLY_MAX_LENGTH * 2)
+      const parsedText = normalizePlainTextFromEmail(rawText)
+      const attachments = Array.isArray(body.attachments) ? body.attachments.slice(0, MAX_FILES) : []
+      const traceId = normalizeText(body.traceId, 120) || getOrCreateRequestId(ctx)
+
+      if (!senderEmail || !parsedText) return ctx.badRequest('senderEmail と textBody は必須です')
+
+      const maybeByThread = externalThreadId
+        ? await strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', {
+            filters: { inquiryNumber: { $eq: externalThreadId } },
+            fields: ['id', 'email', 'caseMetadata', 'supportUnreadSupportCount'],
+            limit: 1,
+          })
+        : []
+      let target = Array.isArray(maybeByThread) && maybeByThread.length > 0 ? maybeByThread[0] as Record<string, unknown> : null
+      if (!target && replyToMessageId) {
+        const byReplyTo = await strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', {
+          filters: { supportLastOutboundMessageId: { $eq: replyToMessageId } },
+          fields: ['id', 'email', 'caseMetadata', 'supportUnreadSupportCount'],
+          limit: 1,
+        })
+        target = Array.isArray(byReplyTo) && byReplyTo.length > 0 ? byReplyTo[0] as Record<string, unknown> : null
+      }
+      if (!target) {
+        strapi.log.warn(withRequestId(`[inquiry-submission] unmatched inbound mail sender=${senderEmail} externalThreadId=${externalThreadId}`, traceId))
+        return ctx.body = { data: { accepted: false, state: 'needs_review', reason: 'unmatched_mail' } }
+      }
+
+      const inquiryId = Number(target.id)
+      const duplicate = await strapi.entityService.findMany('api::support-case-event.support-case-event', {
+        filters: { $and: [{ inquirySubmission: { id: { $eq: inquiryId } } }, { idempotencyKey: { $eq: inboundMessageId } }] },
+        fields: ['id'],
+        limit: 1,
+      })
+      if (Array.isArray(duplicate) && duplicate.length > 0) {
+        await strapi.entityService.update('api::inquiry-submission.inquiry-submission', inquiryId, {
+          data: { threadSyncState: 'duplicate_suppressed', mailSyncState: 'synced' } as Record<string, unknown>,
+        }).catch(() => undefined)
+        return ctx.body = { data: { accepted: true, duplicated: true, threadSyncState: 'duplicate_suppressed' } }
+      }
+
+      await createSupportCaseEvent(strapi, {
+        inquiryId,
+        eventType: 'inbound_mail',
+        visibility: 'user_visible',
+        authorType: 'authenticated_user',
+        authorId: senderEmail,
+        authorName: senderEmail,
+        message: parsedText,
+        timelineEvent: 'inbound_reply_sync',
+        traceId,
+        idempotencyKey: inboundMessageId,
+        meta: {
+          replyChannelState: 'email',
+          inboundReplyState: 'synced',
+          mailMessageId: inboundMessageId,
+          replyToMessageId: replyToMessageId || null,
+          externalThreadId: externalThreadId || null,
+          attachmentState: attachments.length > 0 ? 'linked' : 'none',
+          attachments,
+        },
+      })
+
+      const now = new Date().toISOString()
+      await strapi.entityService.update('api::inquiry-submission.inquiry-submission', inquiryId, {
+        data: {
+          status: 'in_review',
+          caseStatus: 'in_progress',
+          supportThreadState: 'open',
+          supportWaitingState: 'waiting_support',
+          replyChannelState: 'synced_multi_channel',
+          mailSyncState: 'synced',
+          threadSyncState: 'synced',
+          inboundReplyState: 'synced',
+          attachmentState: attachments.length > 0 ? 'linked' : 'none',
+          supportAttachmentCount: attachments.length > 0 ? attachments.length : undefined,
+          supportLastReplyAt: now,
+          supportLastUserReplyAt: now,
+          supportLastMailReceivedAt: now,
+          supportLastSyncAt: now,
+          supportLastInboundMessageId: inboundMessageId,
+          lastActionAt: now,
+          lastUserActionAt: now,
+          caseMetadata: appendTransitionHistory(target, { at: now, actorType: 'user', action: 'inbound_mail_sync', caseStatus: 'in_progress' }),
+        } as Record<string, unknown>,
+      })
+      await updateUnreadState(strapi, inquiryId, { supportCount: Number(target.supportUnreadSupportCount ?? 0) + 1 }).catch(() => undefined)
+      ctx.body = { data: { accepted: true, inquiryId, inboundReplyState: 'synced', attachmentCount: attachments.length } }
+    },
+
+    async mailboxDeliveryEvent(ctx) {
+      if (!verifyWebhookSecret(ctx)) return ctx.unauthorized('mailbox webhook secret が不正です')
+      const body = (ctx.request.body ?? {}) as Record<string, unknown>
+      const inquiryId = Number(body.inquiryId)
+      if (!Number.isInteger(inquiryId) || inquiryId <= 0) return ctx.badRequest('inquiryId が不正です')
+      const deliveryState = normalizeText(body.deliveryState, 40) || 'unknown'
+      const mailMessageId = normalizeText(body.mailMessageId, 200)
+      const traceId = normalizeText(body.traceId, 120) || getOrCreateRequestId(ctx)
+      const now = new Date().toISOString()
+      await createSupportCaseEvent(strapi, {
+        inquiryId,
+        eventType: 'delivery_event',
+        visibility: 'support_only',
+        authorType: 'system',
+        message: `delivery state: ${deliveryState}`,
+        timelineEvent: 'mail_delivery_event',
+        traceId,
+        meta: {
+          deliveryState,
+          mailMessageId: mailMessageId || null,
+          deliveryAttemptState: normalizeText(body.deliveryAttemptState, 40) || 'unknown',
+          providerEventId: normalizeText(body.providerEventId, 200) || null,
+        },
+      }).catch(() => undefined)
+      await strapi.entityService.update('api::inquiry-submission.inquiry-submission', inquiryId, {
+        data: {
+          deliveryState,
+          outboundReplyState: deliveryState === 'failed' || deliveryState === 'bounced_like' ? 'failed' : 'sent',
+          mailSyncState: deliveryState === 'failed' || deliveryState === 'bounced_like' ? 'failed' : 'pending',
+          supportLastSyncAt: now,
+          supportNotificationState: deliveryState === 'failed' || deliveryState === 'bounced_like' ? 'failed' : 'sent',
+        } as Record<string, unknown>,
+      }).catch(() => undefined)
+      ctx.body = { data: { accepted: true, inquiryId, deliveryState } }
     },
   }),
 )

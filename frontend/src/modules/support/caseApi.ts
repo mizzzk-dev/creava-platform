@@ -42,6 +42,11 @@ export interface SupportCaseHistoryItem {
   supportLastAdminReplyAt?: string | null
   supportUnreadState?: 'none' | 'unread_for_user' | 'unread_for_support' | 'unread_both'
   supportUnreadUserCount?: number
+  replyChannelState?: 'in_app' | 'email' | 'synced_multi_channel'
+  mailSyncState?: 'not_applicable' | 'pending' | 'synced' | 'failed' | 'partial'
+  deliveryState?: 'not_sent' | 'queued' | 'delivered' | 'bounced_like' | 'failed' | 'unknown'
+  threadSyncState?: 'not_synced' | 'synced' | 'duplicate_suppressed' | 'parse_failed' | 'needs_review'
+  attachmentState?: 'none' | 'uploaded' | 'linked' | 'failed' | 'blocked'
   attachmentCount: number
   replyStatus: string
   caseStatus: SupportCaseStatus
@@ -56,6 +61,12 @@ export interface SupportCaseDetail extends SupportCaseHistoryItem {
   locale?: string
   message?: string
   notificationState?: 'not_configured' | 'sent' | 'failed' | 'unknown'
+  inboundReplyState?: 'idle' | 'received' | 'synced' | 'failed' | 'needs_review'
+  outboundReplyState?: 'idle' | 'queued' | 'sent' | 'failed'
+  supportLastMailSentAt?: string | null
+  supportLastMailReceivedAt?: string | null
+  supportLastSyncAt?: string | null
+  attachmentMetadata?: Array<Record<string, unknown>>
   supportTimeline?: SupportCaseReply[]
 }
 
@@ -73,6 +84,7 @@ export interface SupportCaseReply {
   supportTimelineEvent: string | null
   supportStatusFrom: string | null
   supportStatusTo: string | null
+  supportReplyMeta?: Record<string, unknown> | null
 }
 
 function ensureJson(response: Response, label: string): Promise<any> {

@@ -119,6 +119,13 @@
 | `INQUIRY_REPLY_SLA_DAYS` | 自動返信本文の返信目安日数 | 任意 |
 | `INQUIRY_MY_HISTORY_PAGE_MAX` | `/inquiry-submissions/me/history` の最大 pageSize | 推奨 |
 | `INQUIRY_MY_SUMMARY_MAX_ROWS` | `/inquiry-submissions/me/summary` 集計上限 | 推奨 |
+| `INQUIRY_MAILBOX_WEBHOOK_SECRET` | mailbox inbound/delivery webhook 保護シークレット | 必須 |
+| `INQUIRY_MAILBOX_PROVIDER` | mailbox bridge プロバイダ名（監査ログ用） | 任意 |
+| `INQUIRY_MAILBOX_DEFAULT_FROM` | support outbound メール送信元 | 推奨 |
+| `INQUIRY_MAILBOX_DEFAULT_REPLY_TO` | user reply のデフォルト返信先 | 推奨 |
+| `INQUIRY_MAILBOX_INBOUND_DOMAIN` | inbound reply 受信ドメイン | 推奨 |
+| `INQUIRY_MAILBOX_ATTACHMENT_MAX_BYTES` | mailbox 添付の受信サイズ上限 | 推奨 |
+| `INQUIRY_MAILBOX_ATTACHMENT_MAX_FILES` | mailbox 添付の受信件数上限 | 推奨 |
 | `UPLOAD_MAX_FILE_SIZE_BYTES` | Upload Plugin サイズ上限 | 必須 |
 | `LIFECYCLE_EMAIL_FROM` | ライフサイクル配信の送信元メール（SMTP_FROMを上書きする場合） | 任意 |
 | `NOTIFICATION_CENTER_ENABLED` | notification inbox API の有効化 | 推奨 |
@@ -233,6 +240,10 @@
 - `BI_FORECAST_HORIZON_DAYS`
 - `ANALYTICS_IP_HASH_SALT`
 - `INQUIRY_NOTIFY_TO`（通知を使う場合）
+- `INQUIRY_MAILBOX_WEBHOOK_SECRET`
+- `INQUIRY_MAILBOX_DEFAULT_FROM`
+- `INQUIRY_MAILBOX_DEFAULT_REPLY_TO`
+- `INQUIRY_MAILBOX_INBOUND_DOMAIN`
 - SMTP で必要な Secret（`SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM`）
 - `LOGTO_USER_SYNC_OPS_TOKEN`（user lookup API 用。staging/prod で分離）
 - `USER_STATE_RECONCILE_INTERVAL_MIN`
@@ -273,6 +284,7 @@
 2. `INQUIRY_OPS_TOKEN` を 32 文字以上のランダム値で生成。
 3. 通知を有効化する場合は SMTP 設定 + `INQUIRY_NOTIFY_TO` を設定。
 4. 自動返信を有効化する場合のみ `INQUIRY_ENABLE_AUTO_REPLY=true` を設定。
+5. mailbox bridge を有効化する場合は `INQUIRY_MAILBOX_WEBHOOK_SECRET` を設定し、provider 側 webhook ヘッダ `x-mailbox-webhook-secret` と一致させる。
 
 ## 6. DNS 変更要否
 - `auth.mizzz.jp` を既に運用している前提で env / docs / UI 導線のみ更新する場合は、**DNS 変更不要**。

@@ -260,6 +260,9 @@ export default function SupportCenterPage() {
           </div>
           <p className="mt-2 text-gray-600 dark:text-gray-300">{selectedCase.inquiryNumber} / trace: {selectedCase.inquiryTraceId ?? '-'}</p>
           <p className="mt-1 text-gray-600 dark:text-gray-300">{t(`support.case.status.${selectedCase.caseStatus}`)} / {t(`support.case.resolution.${selectedCase.caseResolutionState}`)}</p>
+          <p className="mt-1 text-gray-600 dark:text-gray-300">
+            {t('support.case.channelStateLabel')}: {t(`support.case.replyChannelState.${selectedCase.replyChannelState ?? 'in_app'}`)} / {t('support.case.deliveryStateLabel')}: {t(`support.case.deliveryState.${selectedCase.deliveryState ?? 'not_sent'}`)} / {t('support.case.mailSyncStateLabel')}: {t(`support.case.mailSyncState.${selectedCase.mailSyncState ?? 'not_applicable'}`)}
+          </p>
           <p className="mt-2 whitespace-pre-wrap text-gray-700 dark:text-gray-200">{selectedCase.message || selectedCase.messagePreview}</p>
           <div className="mt-4 rounded-xl border border-cyan-200/80 bg-white/70 p-3 dark:border-cyan-800/70 dark:bg-gray-950/40">
             <p className="font-semibold text-gray-800 dark:text-gray-100">{t('support.case.timelineTitle')}</p>
@@ -270,6 +273,15 @@ export default function SupportCenterPage() {
                     {t(`support.case.replyType.${event.supportReplyType}`)} · {event.supportReplyPostedAt ? new Date(event.supportReplyPostedAt).toLocaleString() : '-'}
                   </p>
                   <p className="mt-1 whitespace-pre-wrap text-xs text-gray-700 dark:text-gray-200">{event.supportReplyBody}</p>
+                  {Array.isArray(event.supportReplyMeta?.attachments) && event.supportReplyMeta.attachments.length > 0 && (
+                    <ul className="mt-2 space-y-1">
+                      {(event.supportReplyMeta.attachments as Array<Record<string, unknown>>).map((attachment, idx) => (
+                        <li key={`${event.id}-attachment-${idx}`} className="text-[11px] text-gray-500 dark:text-gray-400">
+                          📎 {String(attachment.name ?? attachment.fileName ?? `attachment-${idx + 1}`)} ({String(attachment.mime ?? 'unknown')})
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </li>
               ))}
               {(!selectedCase.supportTimeline || selectedCase.supportTimeline.length === 0) && <li className="text-xs text-gray-500">{t('support.case.timelineEmpty')}</li>}
