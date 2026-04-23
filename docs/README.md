@@ -1,6 +1,6 @@
 # プロジェクトドキュメントハブ
 
-- 更新日: 2026-04-22
+- 更新日: 2026-04-23
 - 対象: `creava-platform` の frontend / backend / docs
 - 目的: 未経験者でも「構成・実装・運用・保守」の全体像を理解できるようにする
 - 前提: 本書は実装コード（`frontend/src`, `backend/src`, `backend/config`, `.github/workflows`）を基準に作成
@@ -67,6 +67,7 @@
 - [internal admin / support / 監査ログ 基盤整備 (2026-04-18)](./internal-admin-support-audit-foundation-2026-04-18.md)
 - [フォーム運用マニュアル](./09_operations/form-operations-manual.md)
 - [お問い合わせフォーム復旧 runbook (2026-04-22)](./09_operations/contact-inquiry-recovery-runbook-2026-04-22.md)
+- [support forecasting / staffing / capacity / surge / coverage 基盤整備 (2026-04-23)](./support-forecasting-staffing-capacity-foundation-2026-04-23.md)
 - [分析基盤・改善運用ガイド](./09_operations/analytics-improvement-foundation.md)
 - [SEO/コンテンツ流入基盤メモ（2026-04）](./seo-content-growth-foundation.md)
 - [パーソナライズ導線運用メモ](./personalization-notification-center.md)

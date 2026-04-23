@@ -763,7 +763,13 @@
     },
     "qaReviewState": {
       "type": "enumeration",
-      "enum": ["not_reviewed", "queued", "in_review", "reviewed", "followup_needed"],
+      "enum": [
+        "not_reviewed",
+        "queued",
+        "in_review",
+        "reviewed",
+        "followup_needed"
+      ],
       "default": "not_reviewed"
     },
     "qaReviewReason": {
@@ -771,27 +777,58 @@
     },
     "qaScoreState": {
       "type": "enumeration",
-      "enum": ["not_scored", "excellent", "good", "fair", "poor"],
+      "enum": [
+        "not_scored",
+        "excellent",
+        "good",
+        "fair",
+        "poor"
+      ],
       "default": "not_scored"
     },
     "replyQualityState": {
       "type": "enumeration",
-      "enum": ["unknown", "strong", "acceptable", "weak", "risky"],
+      "enum": [
+        "unknown",
+        "strong",
+        "acceptable",
+        "weak",
+        "risky"
+      ],
       "default": "unknown"
     },
     "resolutionQualityState": {
       "type": "enumeration",
-      "enum": ["unknown", "resolved_well", "resolved_but_fragile", "unresolved_like", "reopened_like"],
+      "enum": [
+        "unknown",
+        "resolved_well",
+        "resolved_but_fragile",
+        "unresolved_like",
+        "reopened_like"
+      ],
       "default": "unknown"
     },
     "csatState": {
       "type": "enumeration",
-      "enum": ["not_sent", "sent", "responded", "no_response", "suppressed"],
+      "enum": [
+        "not_sent",
+        "sent",
+        "responded",
+        "no_response",
+        "suppressed"
+      ],
       "default": "not_sent"
     },
     "csatScoreState": {
       "type": "enumeration",
-      "enum": ["unrated", "very_satisfied", "satisfied", "neutral", "dissatisfied", "very_dissatisfied"],
+      "enum": [
+        "unrated",
+        "very_satisfied",
+        "satisfied",
+        "neutral",
+        "dissatisfied",
+        "very_dissatisfied"
+      ],
       "default": "unrated"
     },
     "csatScore": {
@@ -800,7 +837,12 @@
     },
     "reopenState": {
       "type": "enumeration",
-      "enum": ["none", "reopened", "repeat_contact", "monitoring"],
+      "enum": [
+        "none",
+        "reopened",
+        "repeat_contact",
+        "monitoring"
+      ],
       "default": "none"
     },
     "reopenReason": {
@@ -808,7 +850,12 @@
     },
     "coachingState": {
       "type": "enumeration",
-      "enum": ["none", "suggested", "acknowledged", "completed"],
+      "enum": [
+        "none",
+        "suggested",
+        "acknowledged",
+        "completed"
+      ],
       "default": "none"
     },
     "coachingReason": {
@@ -816,52 +863,107 @@
     },
     "coachingSuggestionState": {
       "type": "enumeration",
-      "enum": ["none", "suggested", "accepted", "dismissed"],
+      "enum": [
+        "none",
+        "suggested",
+        "accepted",
+        "dismissed"
+      ],
       "default": "none"
     },
     "knowledgeFeedbackState": {
       "type": "enumeration",
-      "enum": ["none", "queued", "reviewed", "accepted", "dismissed"],
+      "enum": [
+        "none",
+        "queued",
+        "reviewed",
+        "accepted",
+        "dismissed"
+      ],
       "default": "none"
     },
     "knowledgeGapState": {
       "type": "enumeration",
-      "enum": ["none", "suspected", "confirmed", "article_needed", "article_updated"],
+      "enum": [
+        "none",
+        "suspected",
+        "confirmed",
+        "article_needed",
+        "article_updated"
+      ],
       "default": "none"
     },
     "knowledgeArticleSuggestionState": {
       "type": "enumeration",
-      "enum": ["none", "suggested", "accepted", "dismissed", "published"],
+      "enum": [
+        "none",
+        "suggested",
+        "accepted",
+        "dismissed",
+        "published"
+      ],
       "default": "none"
     },
     "templateUsageState": {
       "type": "enumeration",
-      "enum": ["unknown", "manual_only", "template_assisted", "template_heavy", "template_overused"],
+      "enum": [
+        "unknown",
+        "manual_only",
+        "template_assisted",
+        "template_heavy",
+        "template_overused"
+      ],
       "default": "unknown"
     },
     "improvementPlaybookState": {
       "type": "enumeration",
-      "enum": ["none", "candidate", "queued", "in_progress", "completed", "dismissed"],
+      "enum": [
+        "none",
+        "candidate",
+        "queued",
+        "in_progress",
+        "completed",
+        "dismissed"
+      ],
       "default": "none"
     },
     "firstContactResolutionState": {
       "type": "enumeration",
-      "enum": ["unknown", "yes", "no", "needs_review"],
+      "enum": [
+        "unknown",
+        "yes",
+        "no",
+        "needs_review"
+      ],
       "default": "unknown"
     },
     "repeatContactState": {
       "type": "enumeration",
-      "enum": ["none", "suspected", "confirmed"],
+      "enum": [
+        "none",
+        "suspected",
+        "confirmed"
+      ],
       "default": "none"
     },
     "supportQualityVisibilityState": {
       "type": "enumeration",
-      "enum": ["default", "review_queue", "restricted"],
+      "enum": [
+        "default",
+        "review_queue",
+        "restricted"
+      ],
       "default": "default"
     },
     "supportQualityActionState": {
       "type": "enumeration",
-      "enum": ["idle", "qa_required", "csat_followup", "coaching_review", "knowledge_review"],
+      "enum": [
+        "idle",
+        "qa_required",
+        "csat_followup",
+        "coaching_review",
+        "knowledge_review"
+      ],
       "default": "idle"
     },
     "supportLastAssignedAt": {
@@ -889,6 +991,200 @@
       "type": "datetime"
     },
     "supportLastCoachingSuggestedAt": {
+      "type": "datetime"
+    },
+    "supportForecastSummary": {
+      "type": "json"
+    },
+    "staffingSummary": {
+      "type": "json"
+    },
+    "capacitySummary": {
+      "type": "json"
+    },
+    "surgeSummary": {
+      "type": "json"
+    },
+    "coverageSummary": {
+      "type": "json"
+    },
+    "capacityRiskState": {
+      "type": "enumeration",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "low"
+    },
+    "forecastState": {
+      "type": "enumeration",
+      "enum": [
+        "insufficient_data",
+        "baseline",
+        "seasonal_pattern_detected",
+        "surge_likely",
+        "surge_active"
+      ],
+      "default": "insufficient_data"
+    },
+    "forecastConfidenceState": {
+      "type": "enumeration",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "low"
+    },
+    "staffingState": {
+      "type": "enumeration",
+      "enum": [
+        "normal",
+        "stretched",
+        "insufficient",
+        "overloaded"
+      ],
+      "default": "normal"
+    },
+    "coverageState": {
+      "type": "enumeration",
+      "enum": [
+        "covered",
+        "thin",
+        "gap_detected",
+        "critical_gap"
+      ],
+      "default": "covered"
+    },
+    "coverageGapState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "minor",
+        "major",
+        "critical"
+      ],
+      "default": "none"
+    },
+    "seasonalLoadState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "mild",
+        "recurring",
+        "strong"
+      ],
+      "default": "none"
+    },
+    "surgeState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "suspected",
+        "active",
+        "stabilizing",
+        "resolved"
+      ],
+      "default": "none"
+    },
+    "surgeReason": {
+      "type": "string"
+    },
+    "timeBandState": {
+      "type": "enumeration",
+      "enum": [
+        "stable",
+        "daytime_peak",
+        "night_peak",
+        "weekend_peak",
+        "offhour_gap"
+      ],
+      "default": "stable"
+    },
+    "categoryLoadState": {
+      "type": "enumeration",
+      "enum": [
+        "balanced",
+        "skewed",
+        "single_category_pressure"
+      ],
+      "default": "balanced"
+    },
+    "assigneeLoadState": {
+      "type": "enumeration",
+      "enum": [
+        "balanced",
+        "skewed",
+        "hotspot"
+      ],
+      "default": "balanced"
+    },
+    "sourceSiteLoadState": {
+      "type": "enumeration",
+      "enum": [
+        "balanced",
+        "skewed",
+        "single_site_pressure"
+      ],
+      "default": "balanced"
+    },
+    "mitigationSuggestionState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "suggested",
+        "accepted",
+        "dismissed",
+        "applied"
+      ],
+      "default": "none"
+    },
+    "staffingRecommendationState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "suggested",
+        "accepted",
+        "dismissed",
+        "applied"
+      ],
+      "default": "none"
+    },
+    "surgePlaybookState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "candidate",
+        "recommended",
+        "acknowledged",
+        "executed",
+        "dismissed"
+      ],
+      "default": "none"
+    },
+    "capacityActionState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "monitoring",
+        "coverage_adjusting",
+        "escalation_prepared",
+        "mitigating"
+      ],
+      "default": "none"
+    },
+    "supportLastForecastedAt": {
+      "type": "datetime"
+    },
+    "supportLastCoverageCheckedAt": {
+      "type": "datetime"
+    },
+    "supportLastSurgeDetectedAt": {
+      "type": "datetime"
+    },
+    "supportLastCapacityReviewedAt": {
       "type": "datetime"
     }
   }
