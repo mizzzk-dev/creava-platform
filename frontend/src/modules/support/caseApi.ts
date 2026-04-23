@@ -37,6 +37,11 @@ export interface SupportCaseHistoryItem {
   updatedAt: string
   resolvedAt: string | null
   repliedAt: string | null
+  supportLastReplyAt?: string | null
+  supportLastUserReplyAt?: string | null
+  supportLastAdminReplyAt?: string | null
+  supportUnreadState?: 'none' | 'unread_for_user' | 'unread_for_support' | 'unread_both'
+  supportUnreadUserCount?: number
   attachmentCount: number
   replyStatus: string
   caseStatus: SupportCaseStatus
@@ -51,6 +56,23 @@ export interface SupportCaseDetail extends SupportCaseHistoryItem {
   locale?: string
   message?: string
   notificationState?: 'not_configured' | 'sent' | 'failed' | 'unknown'
+  supportTimeline?: SupportCaseReply[]
+}
+
+export interface SupportCaseReply {
+  id: number
+  supportReplyType: 'user_message' | 'admin_reply' | 'system_message' | 'internal_note'
+  supportReplyVisibility: 'user_visible' | 'support_only' | 'internal_only'
+  supportReplyAuthorType: string
+  supportReplyAuthorId: string | null
+  supportReplyAuthorName: string | null
+  supportReplyBody: string
+  supportReplyPostedAt: string | null
+  supportReplyState: string
+  supportReplyTraceId: string | null
+  supportTimelineEvent: string | null
+  supportStatusFrom: string | null
+  supportStatusTo: string | null
 }
 
 function ensureJson(response: Response, label: string): Promise<any> {
@@ -105,6 +127,13 @@ export async function reopenSupportCase(token: string, id: number): Promise<void
 export async function getMySupportCaseDetail(token: string, id: number): Promise<SupportCaseDetail> {
   const res = await call<{ data: SupportCaseDetail }>(token, `/api/inquiry-submissions/me/${id}`)
   return res.data
+}
+
+export async function postMySupportReply(token: string, id: number, payload: { message: string; idempotencyKey?: string; traceId?: string }): Promise<void> {
+  await call<{ data: { accepted: boolean } }>(token, `/api/inquiry-submissions/me/${id}/replies`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
 }
 function getApiBaseUrl(): string {
   const base = import.meta.env.VITE_STRAPI_API_URL

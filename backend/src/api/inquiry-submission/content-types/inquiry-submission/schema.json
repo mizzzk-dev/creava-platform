@@ -12,120 +12,380 @@
   "attributes": {
     "formType": {
       "type": "enumeration",
-      "enum": ["contact", "request", "restock", "application", "entry", "collaboration", "event", "store_support", "fc_support"],
+      "enum": [
+        "contact",
+        "request",
+        "restock",
+        "application",
+        "entry",
+        "collaboration",
+        "event",
+        "store_support",
+        "fc_support"
+      ],
       "required": true
     },
-    "inquiryCategory": { "type": "string" },
-    "name": { "type": "string" },
-    "companyOrOrganization": { "type": "string" },
-    "email": { "type": "email", "required": true },
-    "phone": { "type": "string" },
-    "subject": { "type": "string" },
-    "message": { "type": "text" },
+    "inquiryCategory": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "companyOrOrganization": {
+      "type": "string"
+    },
+    "email": {
+      "type": "email",
+      "required": true
+    },
+    "phone": {
+      "type": "string"
+    },
+    "subject": {
+      "type": "string"
+    },
+    "message": {
+      "type": "text"
+    },
     "attachments": {
       "type": "media",
       "multiple": true,
-      "allowedTypes": ["files", "images"]
+      "allowedTypes": [
+        "files",
+        "images"
+      ]
     },
-    "attachmentCount": { "type": "integer", "default": 0 },
-    "attachmentMetadata": { "type": "json" },
-    "locale": { "type": "string", "default": "ja" },
-    "sourcePage": { "type": "string" },
+    "attachmentCount": {
+      "type": "integer",
+      "default": 0
+    },
+    "attachmentMetadata": {
+      "type": "json"
+    },
+    "locale": {
+      "type": "string",
+      "default": "ja"
+    },
+    "sourcePage": {
+      "type": "string"
+    },
     "sourceSite": {
       "type": "enumeration",
-      "enum": ["main", "store", "fc", "unknown"],
+      "enum": [
+        "main",
+        "store",
+        "fc",
+        "unknown"
+      ],
       "default": "unknown"
     },
-    "inquiryNumber": { "type": "string", "unique": true },
-    "inquiryTraceId": { "type": "string" },
+    "inquiryNumber": {
+      "type": "string",
+      "unique": true
+    },
+    "inquiryTraceId": {
+      "type": "string"
+    },
     "requesterType": {
       "type": "enumeration",
-      "enum": ["guest", "authenticated_user", "member"],
+      "enum": [
+        "guest",
+        "authenticated_user",
+        "member"
+      ],
       "default": "guest"
     },
-    "authUserId": { "type": "string" },
+    "authUserId": {
+      "type": "string"
+    },
     "status": {
       "type": "enumeration",
-      "enum": ["new", "in_review", "waiting_reply", "replied", "closed", "spam", "failed"],
+      "enum": [
+        "new",
+        "in_review",
+        "waiting_reply",
+        "replied",
+        "closed",
+        "spam",
+        "failed"
+      ],
       "default": "new",
       "required": true
     },
     "priority": {
       "type": "enumeration",
-      "enum": ["low", "normal", "high", "urgent"],
+      "enum": [
+        "low",
+        "normal",
+        "high",
+        "urgent"
+      ],
       "default": "normal"
     },
-    "adminMemo": { "type": "text" },
-    "internalTags": { "type": "json" },
-    "submittedAt": { "type": "datetime", "required": true },
-    "handledAt": { "type": "datetime" },
-    "handler": { "type": "string" },
-    "lastActionAt": { "type": "datetime" },
+    "adminMemo": {
+      "type": "text"
+    },
+    "internalTags": {
+      "type": "json"
+    },
+    "submittedAt": {
+      "type": "datetime",
+      "required": true
+    },
+    "handledAt": {
+      "type": "datetime"
+    },
+    "handler": {
+      "type": "string"
+    },
+    "lastActionAt": {
+      "type": "datetime"
+    },
     "replyStatus": {
       "type": "enumeration",
-      "enum": ["not_required", "pending", "replied", "failed"],
+      "enum": [
+        "not_required",
+        "pending",
+        "replied",
+        "failed"
+      ],
       "default": "pending"
     },
     "caseStatus": {
       "type": "enumeration",
-      "enum": ["draft", "submitted", "triaging", "waiting_user", "in_progress", "resolved", "closed", "reopened"],
+      "enum": [
+        "draft",
+        "submitted",
+        "triaging",
+        "waiting_user",
+        "in_progress",
+        "resolved",
+        "closed",
+        "reopened"
+      ],
       "default": "submitted",
       "required": true
     },
     "caseResolutionState": {
       "type": "enumeration",
-      "enum": ["unresolved", "self_resolved", "support_resolved", "info_only", "duplicate", "escalated"],
+      "enum": [
+        "unresolved",
+        "self_resolved",
+        "support_resolved",
+        "info_only",
+        "duplicate",
+        "escalated"
+      ],
       "default": "unresolved",
       "required": true
     },
     "caseVisibilityState": {
       "type": "enumeration",
-      "enum": ["private_user", "support_only", "internal_only", "linked_article_only"],
+      "enum": [
+        "private_user",
+        "support_only",
+        "internal_only",
+        "linked_article_only"
+      ],
       "default": "private_user",
       "required": true
     },
     "selfServiceState": {
       "type": "enumeration",
-      "enum": ["not_attempted", "article_suggested", "article_viewed", "self_resolved", "still_need_support"],
+      "enum": [
+        "not_attempted",
+        "article_suggested",
+        "article_viewed",
+        "self_resolved",
+        "still_need_support"
+      ],
       "default": "still_need_support",
       "required": true
     },
-    "firstResponseAt": { "type": "datetime" },
-    "resolvedAt": { "type": "datetime" },
-    "lastUserActionAt": { "type": "datetime" },
-    "lastSupportActionAt": { "type": "datetime" },
-    "caseMetadata": { "type": "json" },
-    "acknowledgedAt": { "type": "datetime" },
-    "firstReviewedAt": { "type": "datetime" },
-    "closedAt": { "type": "datetime" },
+    "firstResponseAt": {
+      "type": "datetime"
+    },
+    "resolvedAt": {
+      "type": "datetime"
+    },
+    "lastUserActionAt": {
+      "type": "datetime"
+    },
+    "lastSupportActionAt": {
+      "type": "datetime"
+    },
+    "caseMetadata": {
+      "type": "json"
+    },
+    "acknowledgedAt": {
+      "type": "datetime"
+    },
+    "firstReviewedAt": {
+      "type": "datetime"
+    },
+    "closedAt": {
+      "type": "datetime"
+    },
     "notificationState": {
       "type": "enumeration",
-      "enum": ["not_configured", "sent", "failed", "unknown"],
+      "enum": [
+        "not_configured",
+        "sent",
+        "failed",
+        "unknown"
+      ],
       "default": "unknown"
     },
     "assignmentState": {
       "type": "enumeration",
-      "enum": ["unassigned", "assigned"],
+      "enum": [
+        "unassigned",
+        "assigned"
+      ],
       "default": "unassigned"
     },
     "adminReviewState": {
       "type": "enumeration",
-      "enum": ["new", "triaging", "reviewed", "resolved", "closed", "spam"],
+      "enum": [
+        "new",
+        "triaging",
+        "reviewed",
+        "resolved",
+        "closed",
+        "spam"
+      ],
       "default": "new"
     },
     "internalNoteState": {
       "type": "enumeration",
-      "enum": ["empty", "updated"],
+      "enum": [
+        "empty",
+        "updated"
+      ],
       "default": "empty"
     },
-    "repliedAt": { "type": "datetime" },
-    "ipHash": { "type": "string" },
-    "userAgent": { "type": "string" },
-    "policyAgree": { "type": "boolean", "default": false, "required": true },
-    "consentTextVersion": { "type": "string" },
-    "spamFlag": { "type": "boolean", "default": false },
-    "spamScore": { "type": "integer", "default": 0 },
-    "spamReason": { "type": "string" },
-    "meta": { "type": "json" }
+    "repliedAt": {
+      "type": "datetime"
+    },
+    "ipHash": {
+      "type": "string"
+    },
+    "userAgent": {
+      "type": "string"
+    },
+    "policyAgree": {
+      "type": "boolean",
+      "default": false,
+      "required": true
+    },
+    "consentTextVersion": {
+      "type": "string"
+    },
+    "spamFlag": {
+      "type": "boolean",
+      "default": false
+    },
+    "spamScore": {
+      "type": "integer",
+      "default": 0
+    },
+    "spamReason": {
+      "type": "string"
+    },
+    "meta": {
+      "type": "json"
+    },
+    "supportCaseEvents": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::support-case-event.support-case-event",
+      "mappedBy": "inquirySubmission"
+    },
+    "supportThreadState": {
+      "type": "enumeration",
+      "enum": [
+        "open",
+        "waiting_user",
+        "waiting_support",
+        "resolved",
+        "closed"
+      ],
+      "default": "open"
+    },
+    "supportWaitingState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "waiting_support",
+        "waiting_user",
+        "waiting_internal_review"
+      ],
+      "default": "waiting_support"
+    },
+    "supportUnreadState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "unread_for_user",
+        "unread_for_support",
+        "unread_both"
+      ],
+      "default": "none"
+    },
+    "supportAcknowledgementState": {
+      "type": "enumeration",
+      "enum": [
+        "unacknowledged",
+        "acknowledged_by_user",
+        "acknowledged_by_support",
+        "acknowledged_both"
+      ],
+      "default": "unacknowledged"
+    },
+    "supportNotificationState": {
+      "type": "enumeration",
+      "enum": [
+        "idle",
+        "queued",
+        "sent",
+        "failed"
+      ],
+      "default": "idle"
+    },
+    "supportUnreadUserCount": {
+      "type": "integer",
+      "default": 0
+    },
+    "supportUnreadSupportCount": {
+      "type": "integer",
+      "default": 0
+    },
+    "supportLastReplyAt": {
+      "type": "datetime"
+    },
+    "supportLastUserReplyAt": {
+      "type": "datetime"
+    },
+    "supportLastAdminReplyAt": {
+      "type": "datetime"
+    },
+    "supportResolvedAt": {
+      "type": "datetime"
+    },
+    "supportClosedAt": {
+      "type": "datetime"
+    },
+    "supportRequesterId": {
+      "type": "string"
+    },
+    "supportRequesterType": {
+      "type": "enumeration",
+      "enum": [
+        "guest",
+        "authenticated_user",
+        "member"
+      ],
+      "default": "guest"
+    }
   }
 }

@@ -57,6 +57,14 @@ export default {
       },
     },
     {
+      method: 'POST',
+      path: '/inquiry-submissions/me/:id/replies',
+      handler: 'inquiry-submission.postMyReply',
+      config: {
+        auth: false,
+      },
+    },
+    {
       method: 'GET',
       path: '/inquiry-submissions/ops/list',
       handler: 'inquiry-submission.opsList',
@@ -76,6 +84,30 @@ export default {
       method: 'PATCH',
       path: '/inquiry-submissions/ops/bulk-update',
       handler: 'inquiry-submission.opsBulkUpdate',
+      config: {
+        auth: false,
+      },
+    },
+    {
+      method: 'GET',
+      path: '/inquiry-submissions/ops/:id/messages',
+      handler: 'inquiry-submission.opsCaseMessages',
+      config: {
+        auth: false,
+      },
+    },
+    {
+      method: 'POST',
+      path: '/inquiry-submissions/ops/:id/reply',
+      handler: 'inquiry-submission.opsReply',
+      config: {
+        auth: false,
+      },
+    },
+    {
+      method: 'POST',
+      path: '/inquiry-submissions/ops/:id/internal-note',
+      handler: 'inquiry-submission.opsInternalNote',
       config: {
         auth: false,
       },

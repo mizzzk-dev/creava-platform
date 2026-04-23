@@ -912,6 +912,20 @@
       "closeDetail": "Close detail",
       "reopen": "Reopen case",
       "empty": "No inquiry history yet.",
+      "timelineTitle": "Reply timeline",
+      "timelineEmpty": "No replies yet.",
+      "replyInputLabel": "Add a reply",
+      "replyPlaceholder": "Share additional details (order number, occurred time, reproduction steps, etc.).",
+      "replySubmit": "Send reply",
+      "replySending": "Sending...",
+      "replySent": "Reply sent.",
+      "replyError": "Failed to send reply. Please try again later.",
+      "replyType": {
+        "user_message": "Your reply",
+        "admin_reply": "Support reply",
+        "system_message": "System message",
+        "internal_note": "Internal note"
+      },
       "status": {
         "draft": "Draft",
         "submitted": "Submitted",
@@ -929,7 +943,8 @@
         "info_only": "Info only",
         "duplicate": "Duplicate",
         "escalated": "Escalated"
-      }
+      },
+      "unreadBadge": "{{count}} unread replies"
     },
     "selfService": {
       "title": "Self-service resolution",

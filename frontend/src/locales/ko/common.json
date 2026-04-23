@@ -912,6 +912,20 @@
       "closeDetail": "상세 닫기",
       "reopen": "케이스 다시 열기",
       "empty": "문의 이력이 없습니다.",
+      "timelineTitle": "답변 이력",
+      "timelineEmpty": "아직 답변 이력이 없습니다.",
+      "replyInputLabel": "추가 답변",
+      "replyPlaceholder": "추가로 전달할 정보(주문번호, 발생 시각, 재현 절차 등)를 입력해 주세요.",
+      "replySubmit": "답변 보내기",
+      "replySending": "전송 중...",
+      "replySent": "답변을 전송했습니다.",
+      "replyError": "답변 전송에 실패했습니다. 잠시 후 다시 시도해 주세요.",
+      "replyType": {
+        "user_message": "내 답변",
+        "admin_reply": "지원팀 답변",
+        "system_message": "시스템 안내",
+        "internal_note": "내부 메모"
+      },
       "status": {
         "draft": "임시저장",
         "submitted": "접수됨",
@@ -929,7 +943,8 @@
         "info_only": "정보 제공",
         "duplicate": "중복 케이스",
         "escalated": "에스컬레이션"
-      }
+      },
+      "unreadBadge": "읽지 않은 답변 {{count}}건"
     },
     "selfService": {
       "title": "Self-service 해결",

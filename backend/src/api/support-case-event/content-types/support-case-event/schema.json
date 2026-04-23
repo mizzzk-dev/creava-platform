@@ -1,0 +1,59 @@
+{
+  "kind": "collectionType",
+  "collectionName": "support_case_events",
+  "info": {
+    "singularName": "support-case-event",
+    "pluralName": "support-case-events",
+    "displayName": "Support Case Event"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "inquirySubmission": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::inquiry-submission.inquiry-submission",
+      "inversedBy": "supportCaseEvents"
+    },
+    "eventType": {
+      "type": "enumeration",
+      "enum": ["user_message", "admin_reply", "system_message", "internal_note", "status_update"],
+      "required": true
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["user_visible", "support_only", "internal_only"],
+      "required": true,
+      "default": "user_visible"
+    },
+    "authorType": {
+      "type": "enumeration",
+      "enum": ["guest", "authenticated_user", "support", "internal_admin", "system"],
+      "required": true,
+      "default": "system"
+    },
+    "authorId": { "type": "string" },
+    "authorName": { "type": "string" },
+    "message": { "type": "text" },
+    "messageState": {
+      "type": "enumeration",
+      "enum": ["active", "edited", "deleted"],
+      "default": "active",
+      "required": true
+    },
+    "statusFrom": { "type": "string" },
+    "statusTo": { "type": "string" },
+    "timelineEvent": { "type": "string" },
+    "notificationState": {
+      "type": "enumeration",
+      "enum": ["not_sent", "sent", "failed", "unknown"],
+      "default": "unknown",
+      "required": true
+    },
+    "idempotencyKey": { "type": "string" },
+    "traceId": { "type": "string" },
+    "meta": { "type": "json" },
+    "postedAt": { "type": "datetime", "required": true }
+  }
+}

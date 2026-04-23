@@ -912,6 +912,20 @@
       "closeDetail": "詳細を閉じる",
       "reopen": "再オープンする",
       "empty": "問い合わせ履歴はありません。",
+      "timelineTitle": "返信履歴",
+      "timelineEmpty": "まだ返信履歴はありません。",
+      "replyInputLabel": "追加返信",
+      "replyPlaceholder": "追加で伝えたい情報を入力してください（注文番号、発生時刻、再現手順など）。",
+      "replySubmit": "返信を送信",
+      "replySending": "送信中...",
+      "replySent": "返信を送信しました。",
+      "replyError": "返信の送信に失敗しました。時間をおいて再試行してください。",
+      "replyType": {
+        "user_message": "あなたからの返信",
+        "admin_reply": "サポートからの返信",
+        "system_message": "システム通知",
+        "internal_note": "内部メモ"
+      },
       "status": {
         "draft": "下書き",
         "submitted": "送信済み",
@@ -929,7 +943,8 @@
         "info_only": "情報提供のみ",
         "duplicate": "重複ケース",
         "escalated": "エスカレーション中"
-      }
+      },
+      "unreadBadge": "未読返信 {{count}} 件"
     },
     "selfService": {
       "title": "self-service 解決",

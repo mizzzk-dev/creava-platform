@@ -12,6 +12,7 @@ const DUPLICATE_WINDOW_MS = Number(process.env.INQUIRY_DUPLICATE_WINDOW_MS ?? 90
 const CONTACT_REPLY_DAYS = Number(process.env.INQUIRY_REPLY_SLA_DAYS ?? 3)
 const MY_HISTORY_PAGE_MAX = Number(process.env.INQUIRY_MY_HISTORY_PAGE_MAX ?? 50)
 const MY_SUMMARY_MAX_ROWS = Number(process.env.INQUIRY_MY_SUMMARY_MAX_ROWS ?? 200)
+const CASE_REPLY_MAX_LENGTH = Number(process.env.INQUIRY_CASE_REPLY_MAX_LENGTH ?? 8000)
 
 const ALLOWED_LOCALES = new Set(['ja', 'en', 'ko'])
 const FALLBACK_FORM_TYPES = new Set(['contact', 'request', 'restock', 'application', 'entry', 'collaboration', 'event', 'store_support', 'fc_support'])
@@ -427,6 +428,92 @@ function toUserCaseState(entry: Record<string, unknown>): UserCaseState {
   return { caseStatus, caseResolutionState, caseVisibilityState, selfServiceState }
 }
 
+function normalizeCaseEventType(value: unknown): 'user_message' | 'admin_reply' | 'system_message' | 'internal_note' | 'status_update' {
+  const raw = String(value ?? '')
+  if (raw === 'admin_reply' || raw === 'system_message' || raw === 'internal_note' || raw === 'status_update') return raw
+  return 'user_message'
+}
+
+function normalizeCaseEventVisibility(value: unknown): 'user_visible' | 'support_only' | 'internal_only' {
+  const raw = String(value ?? '')
+  if (raw === 'support_only' || raw === 'internal_only') return raw
+  return 'user_visible'
+}
+
+async function createSupportCaseEvent(strapi: any, input: {
+  inquiryId: number
+  eventType: 'user_message' | 'admin_reply' | 'system_message' | 'internal_note' | 'status_update'
+  visibility: 'user_visible' | 'support_only' | 'internal_only'
+  authorType: 'guest' | 'authenticated_user' | 'support' | 'internal_admin' | 'system'
+  authorId?: string
+  authorName?: string
+  message?: string
+  statusFrom?: string
+  statusTo?: string
+  timelineEvent?: string
+  traceId?: string
+  idempotencyKey?: string
+  meta?: Record<string, unknown>
+}) {
+  return strapi.entityService.create('api::support-case-event.support-case-event', {
+    data: {
+      inquirySubmission: input.inquiryId,
+      eventType: input.eventType,
+      visibility: input.visibility,
+      authorType: input.authorType,
+      authorId: input.authorId ?? null,
+      authorName: input.authorName ?? null,
+      message: input.message ?? '',
+      statusFrom: input.statusFrom ?? null,
+      statusTo: input.statusTo ?? null,
+      timelineEvent: input.timelineEvent ?? null,
+      traceId: input.traceId ?? null,
+      idempotencyKey: input.idempotencyKey ?? null,
+      postedAt: new Date().toISOString(),
+      meta: input.meta ?? {},
+    },
+  })
+}
+
+async function listSupportCaseEvents(strapi: any, inquiryId: number, visibility: Array<'user_visible' | 'support_only' | 'internal_only'>) {
+  return strapi.entityService.findMany('api::support-case-event.support-case-event', {
+    filters: {
+      $and: [
+        { inquirySubmission: { id: { $eq: inquiryId } } },
+        { visibility: { $in: visibility } },
+      ],
+    },
+    fields: ['eventType', 'visibility', 'authorType', 'authorId', 'authorName', 'message', 'statusFrom', 'statusTo', 'timelineEvent', 'postedAt', 'traceId'],
+    sort: ['postedAt:asc', 'id:asc'],
+    limit: 300,
+  })
+}
+
+function resolveUnreadState(userCount: number, supportCount: number): 'none' | 'unread_for_user' | 'unread_for_support' | 'unread_both' {
+  if (userCount > 0 && supportCount > 0) return 'unread_both'
+  if (userCount > 0) return 'unread_for_user'
+  if (supportCount > 0) return 'unread_for_support'
+  return 'none'
+}
+
+async function updateUnreadState(strapi: any, inquiryId: number, next: { userCount?: number; supportCount?: number }) {
+  const rows = await strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', {
+    filters: { id: { $eq: inquiryId } },
+    fields: ['supportUnreadUserCount', 'supportUnreadSupportCount'],
+    limit: 1,
+  })
+  const row = Array.isArray(rows) ? rows[0] as Record<string, unknown> : {}
+  const userCount = Math.max(0, Number(next.userCount ?? row.supportUnreadUserCount ?? 0))
+  const supportCount = Math.max(0, Number(next.supportCount ?? row.supportUnreadSupportCount ?? 0))
+  await strapi.entityService.update('api::inquiry-submission.inquiry-submission', inquiryId, {
+    data: {
+      supportUnreadUserCount: userCount,
+      supportUnreadSupportCount: supportCount,
+      supportUnreadState: resolveUnreadState(userCount, supportCount),
+    } as Record<string, unknown>,
+  })
+}
+
 async function resolveMyInquiryFilter(ctx: any, strapi: any): Promise<Record<string, unknown>> {
   const authUser = await verifyAccessToken(ctx.request.headers.authorization)
   const appUsers = await strapi.entityService.findMany('api::app-user.app-user', {
@@ -581,7 +668,9 @@ export default factories.createCoreController(
           sourceSite,
           inquiryTraceId: requestId,
           requesterType,
+          supportRequesterType: requesterType,
           authUserId: authUserId || undefined,
+          supportRequesterId: authUserId || undefined,
           status: isSpam ? 'spam' : String(formDefinition?.initialStatus ?? 'new'),
           priority: isSpam ? 'low' : String(formDefinition?.initialPriority ?? 'normal'),
           caseStatus: isSpam ? 'closed' : 'submitted',
@@ -591,6 +680,15 @@ export default factories.createCoreController(
           submittedAt,
           lastActionAt: submittedAt,
           lastUserActionAt: submittedAt,
+          supportThreadState: isSpam ? 'closed' : 'open',
+          supportWaitingState: isSpam ? 'none' : 'waiting_support',
+          supportUnreadState: 'unread_for_support',
+          supportUnreadSupportCount: 1,
+          supportUnreadUserCount: 0,
+          supportAcknowledgementState: 'unacknowledged',
+          supportNotificationState: 'idle',
+          supportLastReplyAt: submittedAt,
+          supportLastUserReplyAt: submittedAt,
           replyStatus: formType === 'restock' ? 'not_required' : 'pending',
           ipHash,
           userAgent,
@@ -629,6 +727,17 @@ export default factories.createCoreController(
         } as Record<string, unknown>,
       })
       const entry = { ...created, inquiryNumber }
+      await createSupportCaseEvent(strapi, {
+        inquiryId: Number(entry.id),
+        eventType: 'user_message',
+        visibility: 'user_visible',
+        authorType: requesterType === 'guest' ? 'guest' : 'authenticated_user',
+        authorId: authUserId || undefined,
+        authorName: name || undefined,
+        message: message || subject || '(no message)',
+        timelineEvent: 'case_submitted',
+        traceId: requestId,
+      }).catch(() => undefined)
 
       const notifyTo = resolveNotificationTargets(formDefinition, sourceSite)
 
@@ -822,7 +931,7 @@ export default factories.createCoreController(
         const [rows, total] = await Promise.all([
           strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', {
             filters: scopedFilters,
-            fields: ['formType', 'inquiryCategory', 'subject', 'message', 'status', 'priority', 'sourceSite', 'submittedAt', 'updatedAt', 'resolvedAt', 'repliedAt', 'attachmentCount', 'replyStatus', 'caseStatus', 'caseResolutionState', 'caseVisibilityState', 'selfServiceState', 'inquiryNumber', 'inquiryTraceId', 'requesterType'],
+            fields: ['formType', 'inquiryCategory', 'subject', 'message', 'status', 'priority', 'sourceSite', 'submittedAt', 'updatedAt', 'resolvedAt', 'repliedAt', 'attachmentCount', 'replyStatus', 'caseStatus', 'caseResolutionState', 'caseVisibilityState', 'selfServiceState', 'inquiryNumber', 'inquiryTraceId', 'requesterType', 'supportLastReplyAt', 'supportLastUserReplyAt', 'supportLastAdminReplyAt', 'supportUnreadState', 'supportUnreadUserCount'],
             sort: 'submittedAt:desc',
             start: (page - 1) * pageSize,
             limit: pageSize,
@@ -845,6 +954,11 @@ export default factories.createCoreController(
             updatedAt: row.updatedAt,
             resolvedAt: row.resolvedAt ?? null,
             repliedAt: row.repliedAt ?? null,
+            supportLastReplyAt: row.supportLastReplyAt ?? null,
+            supportLastUserReplyAt: row.supportLastUserReplyAt ?? null,
+            supportLastAdminReplyAt: row.supportLastAdminReplyAt ?? null,
+            supportUnreadState: row.supportUnreadState ?? 'none',
+            supportUnreadUserCount: Number(row.supportUnreadUserCount ?? 0),
             attachmentCount: row.attachmentCount ?? 0,
             replyStatus: row.replyStatus ?? 'pending',
             requesterType: row.requesterType ?? 'guest',
@@ -871,12 +985,89 @@ export default factories.createCoreController(
         const filters = await resolveMyInquiryFilter(ctx, strapi)
         const entries = await strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', {
           filters: { $and: [filters, { id: { $eq: id } }] },
-          fields: ['formType', 'inquiryCategory', 'subject', 'message', 'status', 'priority', 'sourceSite', 'sourcePage', 'locale', 'submittedAt', 'updatedAt', 'resolvedAt', 'repliedAt', 'attachmentCount', 'replyStatus', 'caseStatus', 'caseResolutionState', 'caseVisibilityState', 'selfServiceState', 'firstResponseAt', 'lastUserActionAt', 'lastSupportActionAt', 'inquiryNumber', 'inquiryTraceId', 'requesterType', 'notificationState'],
+          fields: ['formType', 'inquiryCategory', 'subject', 'message', 'status', 'priority', 'sourceSite', 'sourcePage', 'locale', 'submittedAt', 'updatedAt', 'resolvedAt', 'repliedAt', 'attachmentCount', 'replyStatus', 'caseStatus', 'caseResolutionState', 'caseVisibilityState', 'selfServiceState', 'firstResponseAt', 'lastUserActionAt', 'lastSupportActionAt', 'inquiryNumber', 'inquiryTraceId', 'requesterType', 'notificationState', 'supportLastReplyAt', 'supportLastUserReplyAt', 'supportLastAdminReplyAt', 'supportUnreadState', 'supportUnreadUserCount'],
           limit: 1,
         })
         const item = Array.isArray(entries) ? entries[0] : null
         if (!item) return ctx.notFound('case が見つかりません')
-        ctx.body = { data: { ...item, supportCaseType: item.inquiryCategory ?? 'other', ...toUserCaseState(item as Record<string, unknown>) } }
+        const timelineRows = await listSupportCaseEvents(strapi, id, ['user_visible'])
+        const timeline = (Array.isArray(timelineRows) ? timelineRows : []).map((event: Record<string, unknown>) => ({
+          id: event.id,
+          supportReplyType: normalizeCaseEventType(event.eventType),
+          supportReplyVisibility: normalizeCaseEventVisibility(event.visibility),
+          supportReplyAuthorType: String(event.authorType ?? 'system'),
+          supportReplyAuthorId: event.authorId ?? null,
+          supportReplyAuthorName: event.authorName ?? null,
+          supportReplyBody: event.message ?? '',
+          supportReplyPostedAt: event.postedAt ?? null,
+          supportReplyState: 'active',
+          supportReplyTraceId: event.traceId ?? null,
+          supportTimelineEvent: event.timelineEvent ?? null,
+          supportStatusFrom: event.statusFrom ?? null,
+          supportStatusTo: event.statusTo ?? null,
+        }))
+        await updateUnreadState(strapi, id, { userCount: 0 }).catch(() => undefined)
+        ctx.body = { data: { ...item, supportCaseType: item.inquiryCategory ?? 'other', supportTimeline: timeline, ...toUserCaseState(item as Record<string, unknown>) } }
+      } catch (error) {
+        return ctx.unauthorized((error as Error).message)
+      }
+    },
+
+    async postMyReply(ctx) {
+      try {
+        const id = Number(ctx.params.id)
+        if (!Number.isInteger(id) || id <= 0) return ctx.badRequest('id が不正です')
+        const body = (ctx.request.body ?? {}) as Record<string, unknown>
+        const message = normalizeText(body.message, CASE_REPLY_MAX_LENGTH)
+        if (!message) return ctx.badRequest('message は必須です')
+        const idempotencyKey = normalizeText(body.idempotencyKey, 100)
+        const traceId = normalizeText(body.traceId, 120) || getOrCreateRequestId(ctx)
+        const filters = await resolveMyInquiryFilter(ctx, strapi)
+        const entries = await strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', {
+          filters: { $and: [filters, { id: { $eq: id } }] },
+          fields: ['name', 'authUserId', 'caseStatus', 'caseMetadata', 'supportUnreadSupportCount'],
+          limit: 1,
+        })
+        const item = Array.isArray(entries) ? entries[0] as Record<string, unknown> : null
+        if (!item) return ctx.notFound('case が見つかりません')
+        if (idempotencyKey) {
+          const dup = await strapi.entityService.findMany('api::support-case-event.support-case-event', {
+            filters: { $and: [{ inquirySubmission: { id: { $eq: id } } }, { idempotencyKey: { $eq: idempotencyKey } }] },
+            fields: ['id'],
+            limit: 1,
+          })
+          if (Array.isArray(dup) && dup.length > 0) return ctx.body = { data: { accepted: true, duplicated: true } }
+        }
+        await createSupportCaseEvent(strapi, {
+          inquiryId: id,
+          eventType: 'user_message',
+          visibility: 'user_visible',
+          authorType: 'authenticated_user',
+          authorId: String(item.authUserId ?? ''),
+          authorName: String(item.name ?? ''),
+          message,
+          timelineEvent: 'user_reply',
+          traceId,
+          idempotencyKey: idempotencyKey || undefined,
+        })
+        const now = new Date().toISOString()
+        await strapi.entityService.update('api::inquiry-submission.inquiry-submission', id, {
+          data: {
+            caseStatus: ['resolved', 'closed'].includes(String(item.caseStatus ?? '')) ? 'reopened' : 'in_progress',
+            caseResolutionState: 'unresolved',
+            status: 'in_review',
+            supportThreadState: 'open',
+            supportWaitingState: 'waiting_support',
+            supportLastReplyAt: now,
+            supportLastUserReplyAt: now,
+            lastActionAt: now,
+            lastUserActionAt: now,
+            supportAcknowledgementState: 'acknowledged_by_user',
+            caseMetadata: appendTransitionHistory(item, { at: now, actorType: 'user', action: 'reply', caseStatus: 'in_progress' }),
+          } as Record<string, unknown>,
+        })
+        await updateUnreadState(strapi, id, { supportCount: Number(item.supportUnreadSupportCount ?? 0) + 1 }).catch(() => undefined)
+        ctx.body = { data: { accepted: true, postedAt: now, supportReplyType: 'user_message' } }
       } catch (error) {
         return ctx.unauthorized((error as Error).message)
       }
@@ -1145,6 +1336,93 @@ export default factories.createCoreController(
       }
 
       ctx.body = { data: { updated, ids } }
+    },
+
+    async opsCaseMessages(ctx) {
+      if (!assertOpsToken(ctx)) return ctx.unauthorized('ops token が不正です')
+      const id = Number(ctx.params.id)
+      if (!Number.isInteger(id) || id <= 0) return ctx.badRequest('id が不正です')
+      const visibilityRaw = normalizeText(ctx.query.visibility, 64)
+      const visibility = visibilityRaw === 'internal' ? ['user_visible', 'support_only', 'internal_only'] as const : ['user_visible', 'support_only'] as const
+      const events = await listSupportCaseEvents(strapi, id, [...visibility])
+      ctx.body = { data: events }
+    },
+
+    async opsReply(ctx) {
+      if (!assertOpsToken(ctx)) return ctx.unauthorized('ops token が不正です')
+      const id = Number(ctx.params.id)
+      if (!Number.isInteger(id) || id <= 0) return ctx.badRequest('id が不正です')
+      const body = (ctx.request.body ?? {}) as Record<string, unknown>
+      const replyText = normalizeText(body.message, CASE_REPLY_MAX_LENGTH)
+      if (!replyText) return ctx.badRequest('message は必須です')
+      const traceId = normalizeText(body.traceId, 120) || getOrCreateRequestId(ctx)
+      const actorName = normalizeText(body.actorName, 120) || 'support'
+      const statusTo = normalizeText(body.statusTo, 40) || 'waiting_reply'
+      const entries = await strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', { filters: { id: { $eq: id } }, fields: ['caseMetadata', 'caseStatus'], limit: 1 })
+      const item = Array.isArray(entries) ? entries[0] as Record<string, unknown> : null
+      if (!item) return ctx.notFound('case が見つかりません')
+      await createSupportCaseEvent(strapi, {
+        inquiryId: id,
+        eventType: 'admin_reply',
+        visibility: 'user_visible',
+        authorType: 'support',
+        authorName: actorName,
+        message: replyText,
+        statusFrom: String(item.caseStatus ?? ''),
+        statusTo,
+        timelineEvent: 'support_reply',
+        traceId,
+      })
+      const now = new Date().toISOString()
+      await strapi.entityService.update('api::inquiry-submission.inquiry-submission', id, {
+        data: {
+          status: statusTo === 'resolved' || statusTo === 'closed' ? 'replied' : 'waiting_reply',
+          caseStatus: statusTo,
+          supportThreadState: statusTo === 'closed' ? 'closed' : statusTo === 'resolved' ? 'resolved' : 'waiting_user',
+          supportWaitingState: statusTo === 'closed' || statusTo === 'resolved' ? 'none' : 'waiting_user',
+          replyStatus: 'replied',
+          repliedAt: now,
+          firstResponseAt: now,
+          lastActionAt: now,
+          lastSupportActionAt: now,
+          supportLastReplyAt: now,
+          supportLastAdminReplyAt: now,
+          supportAcknowledgementState: 'acknowledged_by_support',
+          supportResolvedAt: statusTo === 'resolved' || statusTo === 'closed' ? now : null,
+          supportClosedAt: statusTo === 'closed' ? now : null,
+          caseMetadata: appendTransitionHistory(item, { at: now, actorType: 'support', action: 'reply', caseStatus: statusTo }),
+        } as Record<string, unknown>,
+      })
+      await updateUnreadState(strapi, id, { userCount: 1, supportCount: 0 }).catch(() => undefined)
+      ctx.body = { data: { id, repliedAt: now, caseStatus: statusTo } }
+    },
+
+    async opsInternalNote(ctx) {
+      if (!assertOpsToken(ctx)) return ctx.unauthorized('ops token が不正です')
+      const id = Number(ctx.params.id)
+      if (!Number.isInteger(id) || id <= 0) return ctx.badRequest('id が不正です')
+      const body = (ctx.request.body ?? {}) as Record<string, unknown>
+      const note = normalizeText(body.note, CASE_REPLY_MAX_LENGTH)
+      if (!note) return ctx.badRequest('note は必須です')
+      const actorName = normalizeText(body.actorName, 120) || 'internal'
+      await createSupportCaseEvent(strapi, {
+        inquiryId: id,
+        eventType: 'internal_note',
+        visibility: 'internal_only',
+        authorType: 'internal_admin',
+        authorName: actorName,
+        message: note,
+        timelineEvent: 'internal_note',
+        traceId: normalizeText(body.traceId, 120) || getOrCreateRequestId(ctx),
+      })
+      const now = new Date().toISOString()
+      await strapi.entityService.update('api::inquiry-submission.inquiry-submission', id, {
+        data: {
+          internalNoteState: 'updated',
+          lastActionAt: now,
+        } as Record<string, unknown>,
+      })
+      ctx.body = { data: { accepted: true, internalNoteState: 'updated', notedAt: now } }
     },
   }),
 )

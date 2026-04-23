@@ -18,7 +18,7 @@ import type { FAQItem, GuideItem, SourceSite } from '@/types'
 import { siteScopedCategories } from '@/modules/support/config'
 import { trackMizzzEvent } from '@/modules/analytics/tracking'
 import { useAuthClient } from '@/lib/auth/AuthProvider'
-import { getMySupportCaseDetail, getMySupportHistory, getMySupportSummary, reopenSupportCase, type SupportCaseDetail, type SupportCaseHistoryItem, type SupportCaseSummary } from '@/modules/support/caseApi'
+import { getMySupportCaseDetail, getMySupportHistory, getMySupportSummary, postMySupportReply, reopenSupportCase, type SupportCaseDetail, type SupportCaseHistoryItem, type SupportCaseSummary } from '@/modules/support/caseApi'
 import { getPublicStatusSummary, type PublicStatusResponse } from '@/modules/status/api'
 import StatusNoticePanel from '@/modules/status/components/StatusNoticePanel'
 
@@ -44,6 +44,8 @@ export default function SupportCenterPage() {
   const [caseError, setCaseError] = useState<string | null>(null)
   const [statusSummary, setStatusSummary] = useState<PublicStatusResponse['publicStatusSummary'] | null>(null)
   const [selectedCase, setSelectedCase] = useState<SupportCaseDetail | null>(null)
+  const [replyBody, setReplyBody] = useState('')
+  const [replyState, setReplyState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const site = detectSite()
   const sourceSite = site === 'all' ? 'main' : site
   const benefitState = resolveBenefitExperienceState({ user, lifecycle, sourceSite })
@@ -208,6 +210,11 @@ export default function SupportCenterPage() {
                   <p className="text-xs text-gray-500 dark:text-gray-400">{item.inquiryNumber} · {item.supportCaseType} · {item.sourceSite}</p>
                   <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100">{item.subject || t('support.case.noSubject')}</p>
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-300">{t(`support.case.status.${item.caseStatus}`)} / {t(`support.case.resolution.${item.caseResolutionState}`)}</p>
+                  {(item.supportUnreadUserCount ?? 0) > 0 && (
+                    <p className="mt-1 inline-flex rounded-full border border-emerald-300 px-2 py-0.5 text-[11px] text-emerald-700 dark:border-emerald-800 dark:text-emerald-300">
+                      {t('support.case.unreadBadge', { count: item.supportUnreadUserCount ?? 0 })}
+                    </p>
+                  )}
                   <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">trace: {item.inquiryTraceId ?? '-'}</p>
                   <button
                     type="button"
@@ -254,6 +261,57 @@ export default function SupportCenterPage() {
           <p className="mt-2 text-gray-600 dark:text-gray-300">{selectedCase.inquiryNumber} / trace: {selectedCase.inquiryTraceId ?? '-'}</p>
           <p className="mt-1 text-gray-600 dark:text-gray-300">{t(`support.case.status.${selectedCase.caseStatus}`)} / {t(`support.case.resolution.${selectedCase.caseResolutionState}`)}</p>
           <p className="mt-2 whitespace-pre-wrap text-gray-700 dark:text-gray-200">{selectedCase.message || selectedCase.messagePreview}</p>
+          <div className="mt-4 rounded-xl border border-cyan-200/80 bg-white/70 p-3 dark:border-cyan-800/70 dark:bg-gray-950/40">
+            <p className="font-semibold text-gray-800 dark:text-gray-100">{t('support.case.timelineTitle')}</p>
+            <ul className="mt-2 space-y-2">
+              {(selectedCase.supportTimeline ?? []).filter((event) => event.supportReplyVisibility === 'user_visible').map((event) => (
+                <li key={event.id} className="rounded-lg border border-gray-100 bg-white p-2 dark:border-gray-800 dark:bg-gray-900/40">
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                    {t(`support.case.replyType.${event.supportReplyType}`)} · {event.supportReplyPostedAt ? new Date(event.supportReplyPostedAt).toLocaleString() : '-'}
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-xs text-gray-700 dark:text-gray-200">{event.supportReplyBody}</p>
+                </li>
+              ))}
+              {(!selectedCase.supportTimeline || selectedCase.supportTimeline.length === 0) && <li className="text-xs text-gray-500">{t('support.case.timelineEmpty')}</li>}
+            </ul>
+          </div>
+          <div className="mt-4">
+            <label className="mb-1 block text-xs font-semibold text-gray-700 dark:text-gray-200" htmlFor="case-reply-input">{t('support.case.replyInputLabel')}</label>
+            <textarea
+              id="case-reply-input"
+              rows={4}
+              value={replyBody}
+              onChange={(event) => setReplyBody(event.target.value)}
+              className="w-full rounded-xl border border-cyan-200 bg-white px-3 py-2 text-xs text-gray-800 outline-none focus:ring-2 focus:ring-cyan-300 dark:border-cyan-900/70 dark:bg-gray-950 dark:text-gray-100"
+              placeholder={t('support.case.replyPlaceholder')}
+            />
+            <div className="mt-2 flex items-center gap-3">
+              <button
+                type="button"
+                className="rounded-full border border-cyan-300 px-3 py-1 text-xs text-cyan-700 dark:border-cyan-700 dark:text-cyan-300 disabled:opacity-60"
+                disabled={!replyBody.trim() || replyState === 'sending'}
+                onClick={() => {
+                  void auth.getAccessToken().then(async (token) => {
+                    if (!token || !selectedCase) return
+                    setReplyState('sending')
+                    try {
+                      await postMySupportReply(token, selectedCase.id, { message: replyBody, idempotencyKey: `${selectedCase.id}-${Date.now()}` })
+                      const detail = await getMySupportCaseDetail(token, selectedCase.id)
+                      setSelectedCase(detail)
+                      setReplyBody('')
+                      setReplyState('sent')
+                    } catch {
+                      setReplyState('error')
+                    }
+                  })
+                }}
+              >
+                {replyState === 'sending' ? t('support.case.replySending') : t('support.case.replySubmit')}
+              </button>
+              {replyState === 'sent' && <span className="text-[11px] text-emerald-600">{t('support.case.replySent')}</span>}
+              {replyState === 'error' && <span className="text-[11px] text-rose-500">{t('support.case.replyError')}</span>}
+            </div>
+          </div>
         </section>
       )}
 
