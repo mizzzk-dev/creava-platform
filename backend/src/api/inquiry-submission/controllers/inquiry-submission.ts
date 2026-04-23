@@ -609,15 +609,29 @@ export default factories.createCoreController(
         message || '-',
       ].join('\n')
 
-      try {
-        await sendNotificationMail(strapi, {
-          to: notifyTo,
-          subject: notifySubject,
-          text: notifyText,
-          replyTo: email,
-        })
-      } catch (error) {
-        strapi.log.error(withRequestId(`[inquiry-submission] notify mail failed id=${entry.id}: ${(error as Error).message}`, requestId))
+      let notificationState: 'not_configured' | 'sent' | 'failed' | 'unknown' = 'unknown'
+      let deliveryState: 'not_sent' | 'queued' | 'delivered' | 'failed' | 'unknown' = 'unknown'
+      let notificationErrorMessage = ''
+
+      if (notifyTo.length === 0) {
+        notificationState = 'not_configured'
+        deliveryState = 'unknown'
+      } else {
+        try {
+          await sendNotificationMail(strapi, {
+            to: notifyTo,
+            subject: notifySubject,
+            text: notifyText,
+            replyTo: email,
+          })
+          notificationState = 'sent'
+          deliveryState = 'delivered'
+        } catch (error) {
+          notificationState = 'failed'
+          deliveryState = 'failed'
+          notificationErrorMessage = (error as Error).message
+          strapi.log.error(withRequestId(`[inquiry-submission] notify mail failed id=${entry.id}: ${(error as Error).message}`, requestId))
+        }
       }
 
       const envAutoReply = String(process.env.INQUIRY_ENABLE_AUTO_REPLY ?? 'false').toLowerCase() === 'true'
@@ -642,12 +656,30 @@ export default factories.createCoreController(
         }
       }
 
+      const submitState = 'succeeded'
+      const resultState = notificationState === 'failed' ? 'delivery_error' : 'success'
+
       ctx.body = {
         data: {
           id: entry.id,
           status: isSpam ? 'spam' : 'new',
           submittedAt,
           requestId,
+          inquiryTraceId: requestId,
+          inquirySubmitState: submitState,
+          inquiryDeliveryState: deliveryState,
+          inquiryResultState: resultState,
+          inquiryRequesterType: authUserId ? 'authenticated_user' : 'guest',
+          inquiryReceivedAt: submittedAt,
+          inquiryConfirmedAt: submittedAt,
+          inquirySentAt: submittedAt,
+          inquiryFailedAt: notificationState === 'failed' ? submittedAt : null,
+          inquiryNotificationState: notificationState,
+          inquiryStorageState: 'stored',
+          inquiryAdminReviewState: isSpam ? 'spam' : 'new',
+          inquiryErrorState: notificationState === 'failed'
+            ? { type: 'notification', message: notificationErrorMessage || 'notify failed' }
+            : null,
         },
       }
     },
