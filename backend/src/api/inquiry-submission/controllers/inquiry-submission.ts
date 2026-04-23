@@ -15,6 +15,10 @@ const MY_SUMMARY_MAX_ROWS = Number(process.env.INQUIRY_MY_SUMMARY_MAX_ROWS ?? 20
 const CASE_REPLY_MAX_LENGTH = Number(process.env.INQUIRY_CASE_REPLY_MAX_LENGTH ?? 8000)
 const INQUIRY_SLA_RISK_HOURS = Math.max(1, Number(process.env.INQUIRY_SLA_RISK_HOURS ?? 8))
 const INQUIRY_ESCALATION_LEAD_HOURS = Math.max(0, Number(process.env.INQUIRY_ESCALATION_LEAD_HOURS ?? 2))
+const INQUIRY_FIRST_RESPONSE_SLA_HOURS = Math.max(1, Number(process.env.INQUIRY_FIRST_RESPONSE_SLA_HOURS ?? 6))
+const INQUIRY_REPLY_DELAY_HOURS = Math.max(1, Number(process.env.INQUIRY_REPLY_DELAY_HOURS ?? 12))
+const INQUIRY_WORKLOAD_HIGH_THRESHOLD = Math.max(3, Number(process.env.INQUIRY_WORKLOAD_HIGH_THRESHOLD ?? 8))
+const INQUIRY_WORKLOAD_OVERLOAD_THRESHOLD = Math.max(INQUIRY_WORKLOAD_HIGH_THRESHOLD + 1, Number(process.env.INQUIRY_WORKLOAD_OVERLOAD_THRESHOLD ?? 14))
 
 const ALLOWED_LOCALES = new Set(['ja', 'en', 'ko'])
 const FALLBACK_FORM_TYPES = new Set(['contact', 'request', 'restock', 'application', 'entry', 'collaboration', 'event', 'store_support', 'fc_support'])
@@ -382,6 +386,7 @@ function buildOpsFilters(query: Record<string, unknown>) {
   const directKeys = [
     'status', 'sourceSite', 'inquiryCategory', 'locale', 'priority', 'formType', 'requesterType',
     'caseStatus', 'assignmentState', 'triageState', 'slaState', 'overdueState', 'escalationState',
+    'routingState', 'routingSuggestionState', 'workloadState', 'replyPerformanceState', 'firstResponseState', 'automationSuggestionState',
   ]
   directKeys.forEach((key) => {
     const value = String(query[key] ?? '').trim()
@@ -397,6 +402,8 @@ function buildOpsFilters(query: Record<string, unknown>) {
   if (queueView === 'in_progress') filters.caseStatus = 'in_progress'
   if (queueView === 'reply_required') filters.supportOpsActionState = 'reply_required'
   if (queueView === 'overdue') filters.overdueState = 'overdue'
+  if (queueView === 'reply_delayed') filters.replyPerformanceState = 'delayed'
+  if (queueView === 'sla_risk') filters.slaState = 'at_risk'
 
   const hasAttachment = normalizeBooleanParam(query.hasAttachment)
   if (hasAttachment === true) filters.attachmentCount = { $gt: 0 }
@@ -481,6 +488,88 @@ function computeSlaState(input: {
   }
 }
 
+function computeFirstResponseState(input: {
+  submittedAt?: string | null
+  firstResponseAt?: string | null
+  firstResponseDueAt?: string | null
+  caseStatus?: string | null
+}) {
+  const submittedMs = input.submittedAt ? new Date(input.submittedAt).getTime() : Date.now()
+  const dueMs = input.firstResponseDueAt ? new Date(input.firstResponseDueAt).getTime() : (submittedMs + INQUIRY_FIRST_RESPONSE_SLA_HOURS * 60 * 60 * 1000)
+  const firstResponseMs = input.firstResponseAt ? new Date(input.firstResponseAt).getTime() : null
+  const nowMs = Date.now()
+  const caseStatus = String(input.caseStatus ?? 'submitted')
+
+  if (firstResponseMs) {
+    const minutes = Math.max(0, Math.round((firstResponseMs - submittedMs) / (1000 * 60)))
+    return {
+      firstResponseState: firstResponseMs <= dueMs ? 'within_target' : 'breached',
+      responseLatencyState: minutes <= 60 ? 'within_target' : minutes <= INQUIRY_REPLY_DELAY_HOURS * 60 ? 'slowing' : 'delayed',
+      firstResponseMinutes: minutes,
+      firstResponseDueAt: new Date(dueMs).toISOString(),
+      firstResponseBreachedAt: firstResponseMs <= dueMs ? null : new Date(firstResponseMs).toISOString(),
+    }
+  }
+
+  if (['resolved', 'closed'].includes(caseStatus)) {
+    return {
+      firstResponseState: 'within_target',
+      responseLatencyState: 'within_target',
+      firstResponseMinutes: 0,
+      firstResponseDueAt: new Date(dueMs).toISOString(),
+      firstResponseBreachedAt: null,
+    }
+  }
+
+  if (nowMs > dueMs) {
+    return {
+      firstResponseState: 'breached',
+      responseLatencyState: 'delayed',
+      firstResponseMinutes: 0,
+      firstResponseDueAt: new Date(dueMs).toISOString(),
+      firstResponseBreachedAt: new Date(nowMs).toISOString(),
+    }
+  }
+
+  const remainHours = (dueMs - nowMs) / (1000 * 60 * 60)
+  return {
+    firstResponseState: remainHours <= 2 ? 'at_risk' : 'pending',
+    responseLatencyState: 'not_started',
+    firstResponseMinutes: 0,
+    firstResponseDueAt: new Date(dueMs).toISOString(),
+    firstResponseBreachedAt: null,
+  }
+}
+
+function computeReplyPerformanceState(input: { firstResponseState: string; caseStatus: string; supportLastUserReplyAt?: string | null; supportLastAdminReplyAt?: string | null }) {
+  const caseStatus = String(input.caseStatus || 'submitted')
+  if (['resolved', 'closed'].includes(caseStatus)) return 'healthy'
+  if (input.firstResponseState === 'breached') return 'breached_like'
+  if (input.firstResponseState === 'at_risk') return 'delayed'
+
+  const userMs = input.supportLastUserReplyAt ? new Date(input.supportLastUserReplyAt).getTime() : null
+  const adminMs = input.supportLastAdminReplyAt ? new Date(input.supportLastAdminReplyAt).getTime() : null
+  if (userMs && (!adminMs || userMs > adminMs)) {
+    const diffHours = (Date.now() - userMs) / (1000 * 60 * 60)
+    if (diffHours > INQUIRY_REPLY_DELAY_HOURS * 1.5) return 'breached_like'
+    if (diffHours > INQUIRY_REPLY_DELAY_HOURS) return 'delayed'
+    if (diffHours > INQUIRY_REPLY_DELAY_HOURS * 0.5) return 'slowing'
+  }
+  return adminMs ? 'healthy' : 'not_started'
+}
+
+function computeResolutionLatencyState(input: { caseStatus: string; submittedAt?: string | null; resolvedAt?: string | null; priority?: string | null }) {
+  const caseStatus = String(input.caseStatus || 'submitted')
+  const submittedMs = input.submittedAt ? new Date(input.submittedAt).getTime() : Date.now()
+  const resolvedMs = input.resolvedAt ? new Date(input.resolvedAt).getTime() : null
+  const targetHours = resolveSlaHours(String(input.priority ?? 'normal'), 'general') * 2
+  const ageHours = ((resolvedMs ?? Date.now()) - submittedMs) / (1000 * 60 * 60)
+  if (['resolved', 'closed'].includes(caseStatus)) return { resolutionLatencyState: 'resolved', resolutionMinutes: Math.max(0, Math.round(ageHours * 60)) }
+  if (ageHours <= targetHours * 0.5) return { resolutionLatencyState: 'within_target', resolutionMinutes: Math.max(0, Math.round(ageHours * 60)) }
+  if (ageHours <= targetHours) return { resolutionLatencyState: 'aging', resolutionMinutes: Math.max(0, Math.round(ageHours * 60)) }
+  return { resolutionLatencyState: 'delayed', resolutionMinutes: Math.max(0, Math.round(ageHours * 60)) }
+}
+
 function buildClassificationSuggestion(input: { sourceSite: string; inquiryCategory: string; subject: string; message: string; requesterType: string }) {
   const text = `${input.subject} ${input.message}`.toLowerCase()
   const category = String(input.inquiryCategory || '').toLowerCase()
@@ -500,6 +589,33 @@ function buildClassificationSuggestion(input: { sourceSite: string; inquiryCateg
     return { suggestion: 'store_order', reason: 'sourceSite=store default', priority: 'normal', severity: 'medium', templateCategory: 'store_order' }
   }
   return { suggestion: category || 'general_support', reason: 'fallback by category', priority: 'normal', severity: 'low', templateCategory: 'general_support' }
+}
+
+function buildRoutingSuggestion(input: { sourceSite: string; inquiryCategory: string; requesterType: string; priority: string; workloadState: string }) {
+  const category = String(input.inquiryCategory || '').toLowerCase()
+  const site = String(input.sourceSite || 'main')
+  const priority = String(input.priority || 'normal')
+  const baseAssignee = site === 'store' ? 'store_support_queue' : site === 'fc' ? 'fanclub_support_queue' : 'main_support_queue'
+  if (priority === 'urgent') {
+    return { routingState: 'suggested', routingReason: 'urgent_case_priority', routingSuggestionState: 'suggested', suggestedAssignee: `${baseAssignee}:urgent` }
+  }
+  if (category.includes('billing') || category.includes('refund') || category.includes('payment')) {
+    return { routingState: 'suggested', routingReason: 'billing_category_detected', routingSuggestionState: 'suggested', suggestedAssignee: 'billing_support_queue' }
+  }
+  if (String(input.workloadState) === 'overloaded') {
+    return { routingState: 'blocked', routingReason: 'assignee_overloaded_reassign_needed', routingSuggestionState: 'suggested', suggestedAssignee: `${baseAssignee}:fallback` }
+  }
+  if (String(input.requesterType) === 'member') {
+    return { routingState: 'suggested', routingReason: 'member_requester_priority', routingSuggestionState: 'suggested', suggestedAssignee: `${baseAssignee}:member` }
+  }
+  return { routingState: 'not_routed', routingReason: 'manual_routing_required', routingSuggestionState: 'none', suggestedAssignee: baseAssignee }
+}
+
+function computeWorkloadState(loadCount: number) {
+  if (loadCount >= INQUIRY_WORKLOAD_OVERLOAD_THRESHOLD) return 'overloaded'
+  if (loadCount >= INQUIRY_WORKLOAD_HIGH_THRESHOLD) return 'high_load'
+  if (loadCount <= 1) return 'underutilized'
+  return 'normal'
 }
 
 function assertOpsToken(ctx: any): boolean {
@@ -781,6 +897,30 @@ export default factories.createCoreController(
         submittedAt,
         slaTargetAt,
       })
+      const firstResponseComputed = computeFirstResponseState({
+        submittedAt,
+        firstResponseAt: null,
+        caseStatus: isSpam ? 'closed' : 'submitted',
+      })
+      const replyPerformanceState = computeReplyPerformanceState({
+        firstResponseState: firstResponseComputed.firstResponseState,
+        caseStatus: isSpam ? 'closed' : 'submitted',
+        supportLastUserReplyAt: submittedAt,
+        supportLastAdminReplyAt: null,
+      })
+      const resolutionLatency = computeResolutionLatencyState({
+        caseStatus: isSpam ? 'closed' : 'submitted',
+        submittedAt,
+        priority: initialPriority,
+      })
+      const initialWorkloadState = computeWorkloadState(0)
+      const routing = buildRoutingSuggestion({
+        sourceSite,
+        inquiryCategory,
+        requesterType,
+        priority: initialPriority,
+        workloadState: initialWorkloadState,
+      })
       const created = await strapi.entityService.create('api::inquiry-submission.inquiry-submission', {
         data: {
           formType,
@@ -804,6 +944,7 @@ export default factories.createCoreController(
           supportRequesterId: authUserId || undefined,
           status: isSpam ? 'spam' : String(formDefinition?.initialStatus ?? 'new'),
           priority: initialPriority,
+          supportPriority: initialPriority,
           supportSeverity: autoClassification.severity,
           caseStatus: isSpam ? 'closed' : 'submitted',
           caseResolutionState: 'unresolved',
@@ -824,6 +965,11 @@ export default factories.createCoreController(
           replyStatus: formType === 'restock' ? 'not_required' : 'pending',
           triageState: isSpam ? 'categorized' : 'not_triaged',
           triageReason: autoClassification.reason,
+          routingState: routing.routingState,
+          routingReason: routing.routingReason,
+          routingSuggestionState: routing.routingSuggestionState,
+          workloadState: initialWorkloadState,
+          workloadBalanceState: 'review_needed',
           assignmentState: 'unassigned',
           assigneeState: 'none',
           slaState: slaComputed.slaState,
@@ -838,8 +984,20 @@ export default factories.createCoreController(
           suggestedReplyState: 'suggested',
           supportOpsVisibilityState: isSpam ? 'restricted' : 'needs_attention',
           supportOpsActionState: isSpam ? 'resolved' : 'triage_required',
+          firstResponseState: firstResponseComputed.firstResponseState,
+          responseLatencyState: firstResponseComputed.responseLatencyState,
+          replyPerformanceState,
+          firstResponseDueAt: firstResponseComputed.firstResponseDueAt,
+          firstResponseBreachedAt: firstResponseComputed.firstResponseBreachedAt,
+          firstResponseMinutes: firstResponseComputed.firstResponseMinutes,
+          resolutionLatencyState: resolutionLatency.resolutionLatencyState,
+          resolutionMinutes: resolutionLatency.resolutionMinutes,
+          automationSuggestionState: 'suggested',
+          automationPlaybookState: 'ready',
+          automationSuggestionReason: isSpam ? 'no_automation_for_spam' : 'triage_and_routing_review',
           supportLastTriagedAt: submittedAt,
           supportLastSlaCheckedAt: submittedAt,
+          supportLastReplyMeasuredAt: submittedAt,
           ipHash,
           userAgent,
           policyAgree,
@@ -868,6 +1026,7 @@ export default factories.createCoreController(
               note: 'public submit',
               triageState: isSpam ? 'categorized' : 'not_triaged',
               assignmentState: 'unassigned',
+              routingState: routing.routingState,
               slaState: slaComputed.slaState,
               templateReplyState: 'suggested',
             }],
@@ -1286,7 +1445,7 @@ export default factories.createCoreController(
       startOfWeek.setUTCDate(now.getUTCDate() - 6)
       startOfWeek.setUTCHours(0, 0, 0, 0)
 
-      const [total, today, week, unhandled, spam, closed, unassigned, overdue, highPriority, waitingUser, byStatus] = await Promise.all([
+      const [total, today, week, unhandled, spam, closed, unassigned, overdue, highPriority, waitingUser, delayedReply, routingSuggested, byStatus] = await Promise.all([
         strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: {} }),
         strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { submittedAt: { $gte: startOfToday.toISOString() } } }),
         strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { submittedAt: { $gte: startOfWeek.toISOString() } } }),
@@ -1297,6 +1456,8 @@ export default factories.createCoreController(
         strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { overdueState: 'overdue', spamFlag: { $ne: true } } }),
         strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { priority: { $in: ['high', 'urgent'] }, caseStatus: { $notIn: ['resolved', 'closed'] }, spamFlag: { $ne: true } } }),
         strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { caseStatus: 'waiting_user', spamFlag: { $ne: true } } }),
+        strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { replyPerformanceState: { $in: ['delayed', 'breached_like'] }, spamFlag: { $ne: true } } }),
+        strapi.entityService.count('api::inquiry-submission.inquiry-submission', { filters: { routingSuggestionState: 'suggested', spamFlag: { $ne: true } } }),
         strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', {
           fields: ['status'],
           start: 0,
@@ -1323,6 +1484,8 @@ export default factories.createCoreController(
             overdue,
             highPriority,
             waitingUser,
+            delayedReply,
+            routingSuggested,
           },
           statusCounts,
         },
@@ -1349,7 +1512,10 @@ export default factories.createCoreController(
             'triageState', 'triageReason', 'assigneeId', 'assigneeName', 'assigneeState', 'supportSeverity', 'slaState', 'slaTargetAt', 'slaBreachedAt', 'overdueState',
             'escalationState', 'escalationReason', 'escalationTarget', 'templateReplyState', 'templateReplyCategory', 'templateReplyKey', 'autoClassificationState',
             'classificationReason', 'suggestedReplyState', 'supportOpsVisibilityState', 'supportOpsActionState', 'supportLastAssignedAt', 'supportLastTriagedAt',
-            'supportLastEscalatedAt', 'supportLastSlaCheckedAt',
+            'supportLastEscalatedAt', 'supportLastSlaCheckedAt', 'supportLastReplyMeasuredAt', 'routingState', 'routingReason', 'routingSuggestionState',
+            'workloadState', 'workloadBalanceState', 'supportPriority', 'replyPerformanceState', 'firstResponseState', 'responseLatencyState', 'resolutionLatencyState',
+            'firstResponseDueAt', 'firstResponseBreachedAt', 'firstResponseMinutes', 'resolutionMinutes', 'automationSuggestionState', 'automationPlaybookState',
+            'automationSuggestionReason',
           ],
           start: (page - 1) * pageSize,
           limit: pageSize,
@@ -1527,8 +1693,11 @@ export default factories.createCoreController(
           'supportSeverity', 'assignmentState', 'assigneeId', 'assigneeName', 'triageState', 'triageReason', 'slaState', 'slaTargetAt', 'slaBreachedAt',
           'overdueState', 'escalationState', 'escalationReason', 'escalationTarget', 'templateReplyState', 'templateReplyCategory', 'templateReplyKey',
           'autoClassificationState', 'classificationReason', 'supportOpsActionState', 'supportOpsVisibilityState', 'supportUnreadState',
-          'supportUnreadUserCount', 'supportUnreadSupportCount', 'submittedAt', 'updatedAt', 'supportLastAssignedAt', 'supportLastTriagedAt',
-          'supportLastEscalatedAt', 'supportLastSlaCheckedAt',
+          'supportUnreadUserCount', 'supportUnreadSupportCount', 'submittedAt', 'updatedAt', 'firstResponseAt', 'supportLastAssignedAt', 'supportLastTriagedAt',
+          'supportLastEscalatedAt', 'supportLastSlaCheckedAt', 'supportLastReplyMeasuredAt', 'routingState', 'routingReason', 'routingSuggestionState',
+          'workloadState', 'workloadBalanceState', 'supportPriority', 'replyPerformanceState', 'firstResponseState', 'responseLatencyState',
+          'resolutionLatencyState', 'firstResponseDueAt', 'firstResponseBreachedAt', 'firstResponseMinutes', 'resolutionMinutes', 'automationSuggestionState',
+          'automationPlaybookState', 'automationSuggestionReason', 'supportLastUserReplyAt', 'supportLastAdminReplyAt', 'resolvedAt',
         ],
         start: (page - 1) * pageSize,
         limit: pageSize,
@@ -1541,14 +1710,59 @@ export default factories.createCoreController(
           submittedAt: String(row.submittedAt ?? ''),
           slaTargetAt: String(row.slaTargetAt ?? ''),
         })
+        const firstResponseComputed = computeFirstResponseState({
+          submittedAt: String(row.submittedAt ?? ''),
+          firstResponseAt: String(row.firstResponseAt ?? ''),
+          firstResponseDueAt: String(row.firstResponseDueAt ?? ''),
+          caseStatus: String(row.caseStatus ?? row.status ?? 'submitted'),
+        })
+        const replyPerformanceState = computeReplyPerformanceState({
+          firstResponseState: firstResponseComputed.firstResponseState,
+          caseStatus: String(row.caseStatus ?? row.status ?? 'submitted'),
+          supportLastUserReplyAt: String(row.supportLastUserReplyAt ?? ''),
+          supportLastAdminReplyAt: String(row.supportLastAdminReplyAt ?? ''),
+        })
+        const resolutionLatency = computeResolutionLatencyState({
+          caseStatus: String(row.caseStatus ?? row.status ?? 'submitted'),
+          submittedAt: String(row.submittedAt ?? ''),
+          resolvedAt: String(row.resolvedAt ?? ''),
+          priority: String(row.priority ?? 'normal'),
+        })
         return {
           ...row,
           slaState: computed.slaState,
           overdueState: computed.overdueState,
           slaBreachedAt: row.slaBreachedAt ?? computed.slaBreachedAt ?? null,
           escalationState: row.escalationState ?? (computed.shouldEscalate ? 'suggested' : 'none'),
+          firstResponseState: firstResponseComputed.firstResponseState,
+          responseLatencyState: firstResponseComputed.responseLatencyState,
+          firstResponseDueAt: row.firstResponseDueAt ?? firstResponseComputed.firstResponseDueAt,
+          firstResponseBreachedAt: row.firstResponseBreachedAt ?? firstResponseComputed.firstResponseBreachedAt,
+          firstResponseMinutes: Number(row.firstResponseMinutes ?? firstResponseComputed.firstResponseMinutes),
+          replyPerformanceState: row.replyPerformanceState ?? replyPerformanceState,
+          resolutionLatencyState: row.resolutionLatencyState ?? resolutionLatency.resolutionLatencyState,
+          resolutionMinutes: Number(row.resolutionMinutes ?? resolutionLatency.resolutionMinutes),
         }
       })
+
+      const assigneeLoad = data.reduce<Record<string, number>>((acc, row: any) => {
+        const key = String(row.assigneeName ?? row.assigneeId ?? 'unassigned')
+        acc[key] = (acc[key] ?? 0) + 1
+        return acc
+      }, {})
+      const assigneeLoadSummary = Object.entries(assigneeLoad).map(([assignee, count]) => ({
+        assignee,
+        count,
+        workloadState: computeWorkloadState(count),
+      })).sort((a, b) => b.count - a.count)
+      const maxLoad = assigneeLoadSummary[0]?.count ?? 0
+      const minLoad = assigneeLoadSummary[assigneeLoadSummary.length - 1]?.count ?? 0
+      const workloadBalanceState = assigneeLoadSummary.length <= 1
+        ? 'balanced'
+        : maxLoad - minLoad >= 5 ? 'skewed' : 'balanced'
+      const routingSuggestionCount = data.filter((row: any) => String(row.routingSuggestionState ?? 'none') === 'suggested').length
+      const delayedReplyCount = data.filter((row: any) => ['delayed', 'breached_like'].includes(String(row.replyPerformanceState ?? ''))).length
+      const atRiskSlaCount = data.filter((row: any) => ['at_risk', 'breached'].includes(String(row.slaState ?? ''))).length
 
       ctx.body = {
         data,
@@ -1560,6 +1774,14 @@ export default factories.createCoreController(
             total,
           },
           sort,
+          analytics: {
+            queueCount: total,
+            routingSuggestionCount,
+            delayedReplyCount,
+            atRiskSlaCount,
+            workloadBalanceState,
+            assigneeLoadSummary,
+          },
         },
       }
     },
@@ -1573,7 +1795,7 @@ export default factories.createCoreController(
       const now = new Date().toISOString()
       const rows = await strapi.entityService.findMany('api::inquiry-submission.inquiry-submission', {
         filters: { id: { $eq: id } },
-        fields: ['priority', 'inquiryCategory', 'caseStatus', 'caseMetadata', 'assignmentState', 'triageState', 'submittedAt', 'slaTargetAt'],
+        fields: ['priority', 'inquiryCategory', 'caseStatus', 'caseMetadata', 'assignmentState', 'triageState', 'submittedAt', 'slaTargetAt', 'firstResponseAt', 'supportLastUserReplyAt', 'supportLastAdminReplyAt', 'resolvedAt'],
         limit: 1,
       })
       const current = Array.isArray(rows) ? rows[0] as Record<string, unknown> : null
@@ -1593,13 +1815,22 @@ export default factories.createCoreController(
       const nextTemplateReplyCategory = normalizeText(body.templateReplyCategory, 120)
       const nextClassificationState = normalizeText(body.autoClassificationState, 40)
       const nextClassificationReason = normalizeText(body.classificationReason, 200)
+      const nextRoutingState = normalizeText(body.routingState, 40)
+      const nextRoutingReason = normalizeText(body.routingReason, 240)
+      const nextRoutingSuggestionState = normalizeText(body.routingSuggestionState, 40)
+      const nextAutomationSuggestionState = normalizeText(body.automationSuggestionState, 40)
+      const nextAutomationPlaybookState = normalizeText(body.automationPlaybookState, 40)
+      const nextAutomationSuggestionReason = normalizeText(body.automationSuggestionReason, 240)
 
       if (nextPriority) updateData.priority = nextPriority
+      if (nextPriority) updateData.supportPriority = nextPriority
       if (nextAssigneeId || nextAssigneeName) {
         updateData.assigneeId = nextAssigneeId || null
         updateData.assigneeName = nextAssigneeName || null
         updateData.assignmentState = nextAssigneeId || nextAssigneeName ? 'assigned' : 'unassigned'
         updateData.assigneeState = nextAssigneeId || nextAssigneeName ? 'active' : 'none'
+        updateData.routingState = nextAssigneeId || nextAssigneeName ? 'assigned' : 'not_routed'
+        updateData.routingSuggestionState = nextAssigneeId || nextAssigneeName ? 'accepted' : (nextRoutingSuggestionState || 'none')
         updateData.supportLastAssignedAt = now
         updateData.supportOpsActionState = nextAssigneeId || nextAssigneeName ? 'reply_required' : 'assignment_required'
       }
@@ -1620,6 +1851,12 @@ export default factories.createCoreController(
       if (nextTemplateReplyCategory) updateData.templateReplyCategory = nextTemplateReplyCategory
       if (nextClassificationState) updateData.autoClassificationState = nextClassificationState
       if (nextClassificationReason) updateData.classificationReason = nextClassificationReason
+      if (nextRoutingState) updateData.routingState = nextRoutingState
+      if (nextRoutingReason) updateData.routingReason = nextRoutingReason
+      if (nextRoutingSuggestionState) updateData.routingSuggestionState = nextRoutingSuggestionState
+      if (nextAutomationSuggestionState) updateData.automationSuggestionState = nextAutomationSuggestionState
+      if (nextAutomationPlaybookState) updateData.automationPlaybookState = nextAutomationPlaybookState
+      if (nextAutomationSuggestionReason) updateData.automationSuggestionReason = nextAutomationSuggestionReason
 
       const effectivePriority = String(updateData.priority ?? current.priority ?? 'normal')
       const effectiveCategory = String(current.inquiryCategory ?? 'general')
@@ -1634,6 +1871,32 @@ export default factories.createCoreController(
       updateData.overdueState = computedSla.overdueState
       updateData.slaBreachedAt = computedSla.slaBreachedAt
       updateData.supportLastSlaCheckedAt = now
+      const firstResponseComputed = computeFirstResponseState({
+        submittedAt: String(current.submittedAt ?? now),
+        firstResponseAt: String(current.firstResponseAt ?? ''),
+        firstResponseDueAt: String(body.firstResponseDueAt ?? ''),
+        caseStatus: effectiveCaseStatus,
+      })
+      updateData.firstResponseState = firstResponseComputed.firstResponseState
+      updateData.responseLatencyState = firstResponseComputed.responseLatencyState
+      updateData.firstResponseDueAt = firstResponseComputed.firstResponseDueAt
+      updateData.firstResponseBreachedAt = firstResponseComputed.firstResponseBreachedAt
+      updateData.firstResponseMinutes = firstResponseComputed.firstResponseMinutes
+      updateData.replyPerformanceState = computeReplyPerformanceState({
+        firstResponseState: firstResponseComputed.firstResponseState,
+        caseStatus: effectiveCaseStatus,
+        supportLastUserReplyAt: String(current.supportLastUserReplyAt ?? ''),
+        supportLastAdminReplyAt: String(current.supportLastAdminReplyAt ?? ''),
+      })
+      const resolutionLatency = computeResolutionLatencyState({
+        caseStatus: effectiveCaseStatus,
+        submittedAt: String(current.submittedAt ?? ''),
+        resolvedAt: String(current.resolvedAt ?? ''),
+        priority: effectivePriority,
+      })
+      updateData.resolutionLatencyState = resolutionLatency.resolutionLatencyState
+      updateData.resolutionMinutes = resolutionLatency.resolutionMinutes
+      updateData.supportLastReplyMeasuredAt = now
       if (computedSla.shouldEscalate && !nextEscalationState) {
         updateData.escalationState = 'suggested'
         updateData.escalationReason = 'sla_at_risk_or_breached'
@@ -1688,11 +1951,36 @@ export default factories.createCoreController(
         message: String(row.message ?? ''),
         requesterType: 'guest',
       })
+      const routingSuggestion = buildRoutingSuggestion({
+        sourceSite: String(row.sourceSite ?? 'main'),
+        inquiryCategory: String(row.inquiryCategory ?? ''),
+        requesterType: 'guest',
+        priority: String(suggestion.priority ?? 'normal'),
+        workloadState: 'normal',
+      })
+      const automationPlaybookSuggestions = [
+        {
+          key: 'unassigned-urgent-routing',
+          automationSuggestionState: 'suggested',
+          automationPlaybookState: 'ready',
+          title: '未割当 urgent case の優先ルーティング',
+          reason: '未割当 + 高優先度で見落とし防止が必要',
+          recommendedAction: 'routing suggestion を確認して担当を割り当てる',
+        },
+        {
+          key: 'overdue-first-response-followup',
+          automationSuggestionState: 'suggested',
+          automationPlaybookState: 'ready',
+          title: '初回返信遅延のフォローアップ',
+          reason: 'first response SLA の超過を防止',
+          recommendedAction: 'テンプレ返信候補を選択して返信し、SLAを再計算する',
+        },
+      ]
       const templates = [
         { key: `${suggestion.templateCategory}-initial`, category: suggestion.templateCategory, locale: String(row.locale ?? 'ja'), title: '初回確認テンプレート', body: 'お問い合わせありがとうございます。内容を確認し、必要な追加情報をご案内します。' },
         { key: `${suggestion.templateCategory}-waiting-user`, category: suggestion.templateCategory, locale: String(row.locale ?? 'ja'), title: '追加情報依頼テンプレート', body: '解決のため、注文番号または会員IDなど追加情報をご共有ください。' },
       ]
-      ctx.body = { data: { classification: suggestion, templates } }
+      ctx.body = { data: { classification: suggestion, routingSuggestion, automationPlaybookSuggestions, templates } }
     },
 
     async opsCaseMessages(ctx) {

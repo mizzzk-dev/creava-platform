@@ -513,6 +513,50 @@
       ],
       "default": "none"
     },
+    "routingState": {
+      "type": "enumeration",
+      "enum": [
+        "not_routed",
+        "suggested",
+        "assigned",
+        "rerouted",
+        "blocked"
+      ],
+      "default": "not_routed"
+    },
+    "routingReason": {
+      "type": "string"
+    },
+    "routingSuggestionState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "suggested",
+        "accepted",
+        "dismissed",
+        "executed"
+      ],
+      "default": "none"
+    },
+    "workloadState": {
+      "type": "enumeration",
+      "enum": [
+        "normal",
+        "high_load",
+        "overloaded",
+        "underutilized"
+      ],
+      "default": "normal"
+    },
+    "workloadBalanceState": {
+      "type": "enumeration",
+      "enum": [
+        "balanced",
+        "skewed",
+        "review_needed"
+      ],
+      "default": "balanced"
+    },
     "supportSeverity": {
       "type": "enumeration",
       "enum": [
@@ -539,6 +583,16 @@
     },
     "slaBreachedAt": {
       "type": "datetime"
+    },
+    "supportPriority": {
+      "type": "enumeration",
+      "enum": [
+        "low",
+        "normal",
+        "high",
+        "urgent"
+      ],
+      "default": "normal"
     },
     "overdueState": {
       "type": "enumeration",
@@ -626,6 +680,87 @@
       ],
       "default": "triage_required"
     },
+    "replyPerformanceState": {
+      "type": "enumeration",
+      "enum": [
+        "not_started",
+        "healthy",
+        "slowing",
+        "delayed",
+        "breached_like"
+      ],
+      "default": "not_started"
+    },
+    "firstResponseState": {
+      "type": "enumeration",
+      "enum": [
+        "pending",
+        "within_target",
+        "at_risk",
+        "breached"
+      ],
+      "default": "pending"
+    },
+    "responseLatencyState": {
+      "type": "enumeration",
+      "enum": [
+        "not_started",
+        "within_target",
+        "slowing",
+        "delayed"
+      ],
+      "default": "not_started"
+    },
+    "resolutionLatencyState": {
+      "type": "enumeration",
+      "enum": [
+        "open",
+        "within_target",
+        "aging",
+        "delayed",
+        "resolved"
+      ],
+      "default": "open"
+    },
+    "firstResponseDueAt": {
+      "type": "datetime"
+    },
+    "firstResponseBreachedAt": {
+      "type": "datetime"
+    },
+    "firstResponseMinutes": {
+      "type": "integer",
+      "default": 0
+    },
+    "resolutionMinutes": {
+      "type": "integer",
+      "default": 0
+    },
+    "automationSuggestionState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "suggested",
+        "accepted",
+        "dismissed",
+        "executed"
+      ],
+      "default": "none"
+    },
+    "automationPlaybookState": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "ready",
+        "in_review",
+        "executed",
+        "dismissed"
+      ],
+      "default": "none"
+    },
+    "automationSuggestionReason": {
+      "type": "string"
+    },
     "supportLastAssignedAt": {
       "type": "datetime"
     },
@@ -636,6 +771,9 @@
       "type": "datetime"
     },
     "supportLastSlaCheckedAt": {
+      "type": "datetime"
+    },
+    "supportLastReplyMeasuredAt": {
       "type": "datetime"
     }
   }

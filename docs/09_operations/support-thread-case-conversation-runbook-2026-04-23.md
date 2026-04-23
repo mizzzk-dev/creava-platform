@@ -174,3 +174,44 @@ curl -X POST "$API/api/inquiry-submissions/ops/123/internal-note" \
 2. delivery webhook 後、`deliveryState` が `delivered or failed` に更新
 3. inbound webhook 後、timeline に `inbound_mail` が追加される
 4. `supportUnreadSupportCount` が増え、support queue で未読として検知できる
+
+## 14. support analytics / workload balancing / auto routing / SLA dashboard（2026-04-23 追記）
+
+### 14-1. 追加 state（混同禁止）
+- routing: `routingState`, `routingReason`, `routingSuggestionState`
+- workload: `workloadState`, `workloadBalanceState`
+- SLA/reply: `slaState`, `overdueState`, `firstResponseState`, `replyPerformanceState`, `responseLatencyState`, `resolutionLatencyState`
+- automation: `automationSuggestionState`, `automationPlaybookState`, `automationSuggestionReason`
+- timestamp: `supportLastReplyMeasuredAt`, `firstResponseDueAt`, `firstResponseBreachedAt`
+
+### 14-2. queue / dashboard API の見方
+- `GET /api/inquiry-submissions/ops/summary`
+  - queue summary に `delayedReply`, `routingSuggested` を追加
+- `GET /api/inquiry-submissions/ops/queue`
+  - `meta.analytics` で `assigneeLoadSummary`, `workloadBalanceState`, `routingSuggestionCount`, `atRiskSlaCount` を返却
+  - queue filter 追加: `routingState`, `routingSuggestionState`, `replyPerformanceState`, `firstResponseState`, `automationSuggestionState`
+  - `queueView=reply_delayed|sla_risk` を追加
+
+### 14-3. routing / assignment 分離ルール
+1. `routingSuggestionState=suggested` は「候補提示」であり割当完了ではない
+2. `assignmentState=assigned` へ更新した時のみ `routingState=assigned` に遷移
+3. overloaded 担当は `workloadState=overloaded` とし、再割当候補を提示
+
+### 14-4. SLA / reply performance 判断
+- first response SLA: `INQUIRY_FIRST_RESPONSE_SLA_HOURS`（既定 6h）
+- reply delay 判定: `INQUIRY_REPLY_DELAY_HOURS`（既定 12h）
+- SLA at risk/breached と reply delayed は別状態として扱う
+- `waiting_user` は `slaState=paused` だが、長期停滞ケースは playbook で再確認
+
+### 14-5. automation playbook（suggestion only）
+- unassigned urgent case routing suggestion
+- overdue first-response follow-up suggestion
+- waiting_user 長期停滞 review suggestion（次PRで UI 追加予定）
+- repeated category template suggestion
+
+### 14-6. runbook チェック手順
+1. `ops/queue?queueView=unassigned` で未割当件数を確認
+2. `ops/queue?queueView=sla_risk` で危険ケースを確認
+3. `ops/queue?queueView=reply_delayed` で返信遅延を確認
+4. `meta.analytics.assigneeLoadSummary` の偏りを確認
+5. `PATCH /ops/:id` で `routingSuggestionState=accepted`→`assignmentState=assigned` を確認
