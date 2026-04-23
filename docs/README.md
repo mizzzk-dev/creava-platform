@@ -66,6 +66,7 @@
 - [Logto ユーザー同期/プロビジョニング基盤 (2026-04-18)](./logto-user-sync-foundation-2026-04-18.md)
 - [internal admin / support / 監査ログ 基盤整備 (2026-04-18)](./internal-admin-support-audit-foundation-2026-04-18.md)
 - [フォーム運用マニュアル](./09_operations/form-operations-manual.md)
+- [お問い合わせフォーム復旧 runbook (2026-04-22)](./09_operations/contact-inquiry-recovery-runbook-2026-04-22.md)
 - [分析基盤・改善運用ガイド](./09_operations/analytics-improvement-foundation.md)
 - [SEO/コンテンツ流入基盤メモ（2026-04）](./seo-content-growth-foundation.md)
 - [パーソナライズ導線運用メモ](./personalization-notification-center.md)

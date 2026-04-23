@@ -5,7 +5,7 @@ import { ROUTES } from '@/lib/routeConstants'
 import TerminalField from './TerminalField'
 import TerminalSelect from './TerminalSelect'
 import type { FormDefinition } from '@/modules/contact/lib/formDefinitions'
-import { DEFAULT_ALLOWED_TYPES, MAX_FILE_BYTES, MAX_FILES, submitGenericForm, validateFile } from '@/modules/contact/lib/submit'
+import { DEFAULT_ALLOWED_TYPES, InquirySubmitError, MAX_FILE_BYTES, MAX_FILES, submitGenericForm, validateFile, type InquiryDeliveryState, type InquiryResultState, type InquirySubmitState, type InquirySubmissionResult } from '@/modules/contact/lib/submit'
 
 type Step = 'input' | 'confirm'
 
@@ -28,8 +28,12 @@ export default function DynamicForm({ definition, sourcePage }: { definition: Fo
   const [files, setFiles] = useState<File[]>([])
   const [fileError, setFileError] = useState<string | null>(null)
   const [step, setStep] = useState<Step>('input')
-  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
+  const [submitState, setSubmitState] = useState<InquirySubmitState>('idle')
+  const [resultState, setResultState] = useState<InquiryResultState>('none')
+  const [deliveryState, setDeliveryState] = useState<InquiryDeliveryState>('not_sent')
+  const [submissionResult, setSubmissionResult] = useState<InquirySubmissionResult | null>(null)
   const [submittedId, setSubmittedId] = useState<number | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string>('')
   const fileRef = useRef<HTMLInputElement>(null)
 
   const maxFiles = definition.maxFiles || MAX_FILES
@@ -80,8 +84,11 @@ export default function DynamicForm({ definition, sourcePage }: { definition: Fo
   }
 
   async function onSubmit() {
-    if (status === 'submitting') return
-    setStatus('submitting')
+    if (submitState === 'submitting') return
+    setSubmitState('confirmed')
+    setResultState('none')
+    setErrorMessage('')
+    setSubmitState('submitting')
     try {
       const mapped: Record<string, string | boolean> = {}
       for (const field of orderedFields) {
@@ -100,9 +107,24 @@ export default function DynamicForm({ definition, sourcePage }: { definition: Fo
         maxFiles,
       })
       setSubmittedId(result.id)
-      setStatus('success')
-    } catch {
-      setStatus('error')
+      setSubmissionResult(result)
+      setDeliveryState(result.inquiryDeliveryState)
+      setResultState(result.inquiryResultState)
+      setSubmitState('succeeded')
+    } catch (error) {
+      const fallback = t('contact.errorMessage')
+      if (error instanceof InquirySubmitError) {
+        setResultState(error.resultState)
+        setErrorMessage(error.message || fallback)
+      } else if (error instanceof Error) {
+        setResultState('system_error')
+        setErrorMessage(error.message || fallback)
+      } else {
+        setResultState('system_error')
+        setErrorMessage(fallback)
+      }
+      setDeliveryState('failed')
+      setSubmitState('failed')
     }
   }
 
@@ -110,14 +132,18 @@ export default function DynamicForm({ definition, sourcePage }: { definition: Fo
     setValues(initialValues)
     setErrors({})
     setStep('input')
-    setStatus('idle')
+    setSubmitState('idle')
+    setResultState('none')
+    setDeliveryState('not_sent')
     setSubmittedId(null)
+    setSubmissionResult(null)
+    setErrorMessage('')
     setFiles([])
     setFileError(null)
   }
 
-  if (status === 'success' || status === 'error') {
-    const success = status === 'success'
+  if (submitState === 'succeeded' || submitState === 'failed') {
+    const success = submitState === 'succeeded'
     const suggestedSupportLinks = definition.sourceSite === 'store'
       ? [
           { to: ROUTES.SUPPORT_CENTER, label: t('support.toSupportCenter') },
@@ -140,7 +166,12 @@ export default function DynamicForm({ definition, sourcePage }: { definition: Fo
         <p className={`font-mono text-sm ${success ? 'text-emerald-400' : 'text-red-400'}`}>
           {success ? pickLocale(definition.successMessage, i18n.language) : pickLocale(definition.failureMessage, i18n.language)}
         </p>
-        {success ? <p className="text-xs text-gray-500">#{submittedId ?? '-'} / {new Date().toLocaleString()}</p> : null}
+        {success ? <p className="text-xs text-gray-500">#{submittedId ?? '-'} / {submissionResult?.inquiryReceivedAt ? new Date(submissionResult.inquiryReceivedAt).toLocaleString() : new Date().toLocaleString()}</p> : null}
+        {success ? <p className="text-xs text-gray-500">traceId: {submissionResult?.inquiryTraceId ?? submissionResult?.requestId ?? '-'}</p> : null}
+        {success ? <p className="text-xs text-gray-500">delivery: {deliveryState}</p> : null}
+        {success ? <p className="text-xs text-gray-500">result: {resultState}</p> : null}
+        {!success ? <p className="text-xs text-gray-500">result: {resultState}</p> : null}
+        {!success && errorMessage ? <p className="text-xs text-red-300 whitespace-pre-wrap">{errorMessage}</p> : null}
         <div className="rounded-xl border border-cyan-800/50 bg-cyan-950/20 p-4">
           <p className="text-xs text-cyan-300">{t('support.postSubmitHelpTitle')}</p>
           <p className="mt-1 text-xs text-gray-400">{t('support.postSubmitHelpDescription')}</p>
@@ -153,7 +184,7 @@ export default function DynamicForm({ definition, sourcePage }: { definition: Fo
           </div>
         </div>
         <div className="flex gap-3 text-xs font-mono">
-          {success ? <button type="button" onClick={resetAll} className="text-gray-500 hover:text-gray-300">{t('contact.sendAnother')}</button> : <button type="button" onClick={() => { setStatus('idle'); setStep('confirm') }} className="text-gray-500 hover:text-gray-300">{t('contact.retry')}</button>}
+          {success ? <button type="button" onClick={resetAll} className="text-gray-500 hover:text-gray-300">{t('contact.sendAnother')}</button> : <button type="button" onClick={() => { setSubmitState('idle'); setResultState('none'); setStep('confirm') }} className="text-gray-500 hover:text-gray-300">{t('contact.retry')}</button>}
           <Link to={ROUTES.CONTACT} className="text-gray-500 hover:text-gray-300">{t('contact.backToContactTop')}</Link>
         </div>
       </div>
@@ -175,14 +206,14 @@ export default function DynamicForm({ definition, sourcePage }: { definition: Fo
         </dl>
         <div className="flex flex-wrap gap-3">
           <button type="button" onClick={() => setStep('input')} className="font-mono text-xs text-gray-500 hover:text-gray-300">{t('contact.backToEdit')}</button>
-          <button type="button" onClick={onSubmit} disabled={status === 'submitting'} className="border border-emerald-700 px-4 py-2 font-mono text-xs text-emerald-400 disabled:opacity-50">{status === 'submitting' ? t('contact.submitting') : t('contact.sendConfirmed')}</button>
+          <button type="button" onClick={onSubmit} disabled={submitState === 'submitting'} className="border border-emerald-700 px-4 py-2 font-mono text-xs text-emerald-400 disabled:opacity-50">{submitState === 'submitting' ? t('contact.submitting') : t('contact.sendConfirmed')}</button>
         </div>
       </div>
     )
   }
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); if (validate()) setStep('confirm') }} noValidate className="space-y-6">
+    <form onSubmit={(e) => { e.preventDefault(); setSubmitState('validating'); if (validate()) { setSubmitState('ready_to_confirm'); setStep('confirm') } else { setSubmitState('idle') } }} noValidate className="space-y-6">
       <div className="hidden"><input name="honeypot" value={String(values.honeypot ?? '')} onChange={handleFieldChange} tabIndex={-1} autoComplete="off" /></div>
       {orderedFields.map((field) => {
         if (field.fieldType === 'hidden' || field.name === 'honeypot') return null

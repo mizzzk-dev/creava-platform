@@ -31,6 +31,42 @@ export interface RestockPayload {
   locale: string
 }
 
+export type InquirySubmitState = 'idle' | 'validating' | 'ready_to_confirm' | 'confirmed' | 'submitting' | 'succeeded' | 'failed'
+export type InquiryDeliveryState = 'not_sent' | 'queued' | 'delivered' | 'failed' | 'unknown'
+export type InquiryResultState = 'none' | 'success' | 'validation_error' | 'delivery_error' | 'system_error'
+export type InquiryRequesterType = 'guest' | 'authenticated_user' | 'member'
+
+export interface InquirySubmissionResult {
+  id: number
+  status: string
+  submittedAt: string
+  requestId?: string
+  inquiryTraceId?: string
+  inquirySubmitState: InquirySubmitState
+  inquiryDeliveryState: InquiryDeliveryState
+  inquiryResultState: InquiryResultState
+  inquiryRequesterType: InquiryRequesterType
+  inquiryReceivedAt: string
+  inquiryConfirmedAt: string
+  inquirySentAt: string
+  inquiryFailedAt: string | null
+  inquiryNotificationState: 'not_configured' | 'sent' | 'failed' | 'unknown'
+  inquiryStorageState: 'stored' | 'failed'
+  inquiryAdminReviewState: 'new' | 'spam' | 'unknown'
+}
+
+export class InquirySubmitError extends Error {
+  constructor(
+    message: string,
+    public readonly resultState: Exclude<InquiryResultState, 'none' | 'success'>,
+    public readonly requestId?: string,
+    public readonly statusCode?: number,
+  ) {
+    super(message)
+    this.name = 'InquirySubmitError'
+  }
+}
+
 export interface GenericFormSubmitPayload {
   formType: string
   inquiryCategory?: string
@@ -67,7 +103,9 @@ export function validateFile(file: File, allowedTypes = DEFAULT_ALLOWED_TYPES, m
 
 function getStrapiBaseUrl(): string {
   const baseUrl = import.meta.env.VITE_STRAPI_API_URL as string | undefined
-  if (!baseUrl) throw new Error('VITE_STRAPI_API_URL is not set')
+  if (!baseUrl) {
+    throw new InquirySubmitError('VITE_STRAPI_API_URL が未設定のため送信できません。運用設定を確認してください。', 'system_error')
+  }
   return baseUrl.replace(/\/$/, '')
 }
 
@@ -97,7 +135,15 @@ function getDefaultInquiryCategory(formType: string, requestType?: string): stri
   return 'general'
 }
 
-async function submitInquiry(formData: FormData): Promise<{ id: number; status: string; submittedAt: string; requestId?: string }> {
+function classifyError(statusCode: number | undefined, message: string): Exclude<InquiryResultState, 'none' | 'success'> {
+  if (statusCode === 400) return 'validation_error'
+  if (statusCode === 429) return 'delivery_error'
+  if (/policy|required|不正|不足|validation/i.test(message)) return 'validation_error'
+  if (/timeout|network|html|cors|delivery|retry|429/i.test(message)) return 'delivery_error'
+  return 'system_error'
+}
+
+async function submitInquiry(formData: FormData): Promise<InquirySubmissionResult> {
   const res = await fetch(`${getStrapiBaseUrl()}/api/inquiry-submissions/public`, {
     method: 'POST',
     body: formData,
@@ -121,18 +167,33 @@ async function submitInquiry(formData: FormData): Promise<{ id: number; status: 
         message = 'フォーム送信APIがHTMLを返しました。サーバー障害またはURL設定を確認してください。'
       }
     }
+
     if (requestId) {
       message = `${message} (requestId: ${requestId})`
     }
-    throw new Error(message)
+
+    throw new InquirySubmitError(message, classifyError(res.status, message), requestId, res.status)
   }
 
   if (!contentType.includes('application/json')) {
-    throw new Error('フォーム送信APIのレスポンス形式が不正です。')
+    throw new InquirySubmitError('フォーム送信APIのレスポンス形式が不正です。', 'system_error', requestId, res.status)
   }
 
-  const json = await res.json() as { data: { id: number; status: string; submittedAt: string; requestId?: string } }
-  return json.data
+  const json = await res.json() as { data: InquirySubmissionResult }
+  return {
+    ...json.data,
+    inquirySubmitState: json.data.inquirySubmitState ?? 'succeeded',
+    inquiryDeliveryState: json.data.inquiryDeliveryState ?? 'unknown',
+    inquiryResultState: json.data.inquiryResultState ?? 'success',
+    inquiryRequesterType: json.data.inquiryRequesterType ?? 'guest',
+    inquiryReceivedAt: json.data.inquiryReceivedAt ?? json.data.submittedAt,
+    inquiryConfirmedAt: json.data.inquiryConfirmedAt ?? json.data.submittedAt,
+    inquirySentAt: json.data.inquirySentAt ?? json.data.submittedAt,
+    inquiryFailedAt: json.data.inquiryFailedAt ?? null,
+    inquiryNotificationState: json.data.inquiryNotificationState ?? 'unknown',
+    inquiryStorageState: json.data.inquiryStorageState ?? 'stored',
+    inquiryAdminReviewState: json.data.inquiryAdminReviewState ?? 'unknown',
+  }
 }
 
 function appendCommon(fd: FormData, values: Record<string, string | boolean | number | undefined>, files?: File[], maxFiles = MAX_FILES) {
