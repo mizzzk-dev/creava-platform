@@ -1,4 +1,4 @@
-# public help center / FAQ search / self-service deflection / knowledge operations runbook（2026-04-23）
+# public help center / FAQ search / conversational self-service / handoff runbook（2026-04-23）
 
 ## 1. 現状確認サマリ（課題）
 1. FAQ/Guide は存在するが、検索結果状態（no-result / low-confidence）と問い合わせ流入の接続が弱い。
@@ -13,6 +13,12 @@
 - `deflectionState`: `not_attempted | article_viewed | article_helpful | self_resolved | still_need_support`
 - `knownIssueState`: `none | suspected | confirmed | published | resolved | archived`
 - `knowledgeGapState`: `none | suspected | confirmed | article_needed | article_update_needed`
+- `assistantSessionState`: `idle | active | awaiting_input | suggesting | troubleshooting | handing_off | completed | abandoned`
+- `semanticRetrievalState`: `not_run | results_found | low_confidence | no_results | ambiguous`
+- `retrievalConfidenceState`: `low | medium | high`
+- `troubleshootingState`: `not_started | guided | blocked | self_resolved | failed | escalated_to_human`
+- `handoffState`: `not_needed | suggested | preparing | submitted | linked_to_case | failed`
+- `casePrefillState`: `none | partial | prepared | attached_to_case`
 
 > `articleState` と `articleEffectivenessState` は別。公開中の記事でも effectiveness は低い可能性がある。
 
@@ -22,6 +28,9 @@
 - guide detail の表示/feedback を `help_article_view` / `help_article_feedback` で記録。
 - 問い合わせ遷移時の deflection を `self_service_deflection` で記録。
 - suggestion クリック時に article view + deflection の連続イベントを送信。
+- conversational help assistant を `/support` に追加し、FAQ/Guide/known issue 候補を会話入力から提案。
+- retrieval / troubleshooting / handoff を state として明示し、問い合わせ時に case prefill を URL で連携。
+- Contact フォームで `prefill_subject` `prefill_message` `prefill_category` を受け取り、handoff 文脈を保持。
 
 ## 4. 計測イベント（public）
 - `help_hub_view`: support center の閲覧。
@@ -30,6 +39,11 @@
 - `help_article_view`: FAQ/Guide/Known issue の閲覧。
 - `help_article_feedback`: helpful/not_helpful。
 - `self_service_deflection`: article_viewed / article_helpful / still_need_support。
+- `assistant_session_start`: conversation 開始（intent/retrieval/confidence）。
+- `assistant_article_suggestion_click`: assistant 提案記事の閲覧。
+- `assistant_troubleshooting_step_complete`: 手順実施ログ。
+- `assistant_handoff_accept`: human handoff 受理。
+- `assistant_feedback_submit`: self_resolved or unresolved フィードバック。
 
 ## 5. support / internal admin / operations 連携
 - support queue 側は `knowledgeGapState` を継続使用。
@@ -47,11 +61,17 @@
 3. `/support/guides/:slug` で閲覧時に `help_article_view` が送信されること。
 4. Guide詳細の helpful/not_helpful 押下で `help_article_feedback` が送信されること。
 5. 「解決しないので問い合わせる」で `self_service_deflection=still_need_support` が送信されること。
+6. `/support` の conversational assistant で 4 文字以上入力し、retrieval state と候補表示が更新されること。
+7. troubleshooting step を完了にすると `assistant_troubleshooting_step_complete` が送信されること。
+8. handoff ボタンで `/contact` へ遷移し、subject / message / category が prefill されること。
+9. Contact の assist panel に assistantSessionState / semanticRetrievalState が表示されること。
 
 ## 8. env / secrets
 - frontend:
   - `VITE_HELP_SEARCH_MIN_QUERY_LENGTH`
   - `VITE_HELP_SEARCH_DEBOUNCE_MS`
+  - `VITE_HELP_ASSISTANT_MIN_QUERY_LENGTH`
+  - `VITE_HELP_ASSISTANT_MAX_CANDIDATES`
 - backend:
   - `INQUIRY_KNOWLEDGE_NO_RESULT_MIN_DAILY`
   - `INQUIRY_KNOWLEDGE_EFFECTIVENESS_LOOKBACK_DAYS`
@@ -61,8 +81,12 @@
 - no-result query の管理画面 UI。
 - article effectiveness summary の専用 API（category/sourceSite/userState 別）。
 - known issue 専用 content-type と article linkage の強化。
+- assistant session 永続化（現在は frontend state 起点）。
+- handoff context の backend 保存/API 連携（現状は inquiry message prefill ベース）。
+- multilingual assistant tuning（ja/en/ko の intent 判定精度改善）。
 
 ## 10. 仮定
 1. support forecasting/staffing 基盤は前PRで稼働済み。
 2. operations dashboard は analytics-event 集約を取り込める。
 3. guide/faq の publish 運用は Strapi editorial workflow を継続する。
+4. conversational help は suggestion / guided flow を優先し、自動解決・自動クローズは行わない。

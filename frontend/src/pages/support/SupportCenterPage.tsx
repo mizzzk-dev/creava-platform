@@ -22,6 +22,7 @@ import { getMySupportCaseDetail, getMySupportHistory, getMySupportSummary, postM
 import { getPublicStatusSummary, type PublicStatusResponse } from '@/modules/status/api'
 import StatusNoticePanel from '@/modules/status/components/StatusNoticePanel'
 import { resolveSearchResultState, trackDeflectionState, trackKnowledgeArticleView, trackKnowledgeSearch } from '@/modules/support/knowledgeOps'
+import ConversationalHelpAssistant from '@/modules/support/components/ConversationalHelpAssistant'
 
 const detectSite = (): SourceSite => {
   if (isStoreSite) return 'store'
@@ -45,7 +46,7 @@ export default function SupportCenterPage() {
   const [caseHistory, setCaseHistory] = useState<SupportCaseHistoryItem[]>([])
   const [caseLoading, setCaseLoading] = useState(false)
   const [caseError, setCaseError] = useState<string | null>(null)
-  const [statusSummary, setStatusSummary] = useState<PublicStatusResponse['publicStatusSummary'] | null>(null)
+  const [statusData, setStatusData] = useState<PublicStatusResponse | null>(null)
   const [selectedCase, setSelectedCase] = useState<SupportCaseDetail | null>(null)
   const [replyBody, setReplyBody] = useState('')
   const [replyState, setReplyState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
@@ -123,7 +124,7 @@ export default function SupportCenterPage() {
   }, [filteredFaqs, filteredGuides])
 
   useEffect(() => {
-    getPublicStatusSummary().then((res) => setStatusSummary(res.publicStatusSummary)).catch(() => setStatusSummary(null))
+    getPublicStatusSummary().then((res) => setStatusData(res)).catch(() => setStatusData(null))
   }, [])
 
   useEffect(() => {
@@ -201,7 +202,7 @@ export default function SupportCenterPage() {
       <PageHead title={t('support.title')} description={t('support.description')} />
 
       <div className="mb-6 space-y-4">
-        {statusSummary && <StatusNoticePanel summary={statusSummary} />}
+        {statusData?.publicStatusSummary && <StatusNoticePanel summary={statusData.publicStatusSummary} />}
         <MemberProgressHub sourceSite="support" />
         <CampaignPersonalizationPanel sourceSite="support" />
       </div>
@@ -475,6 +476,15 @@ export default function SupportCenterPage() {
           {t('support.selfService.stillNeedHelp')}
         </Link>
       </section>
+
+      <ConversationalHelpAssistant
+        sourceSite={sourceSite}
+        category={category}
+        search={search}
+        faqs={filteredFaqs}
+        guides={filteredGuides}
+        statusSummary={statusData}
+      />
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <section className="rounded-2xl border border-gray-200 p-5 dark:border-gray-800">

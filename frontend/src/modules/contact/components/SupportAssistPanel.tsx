@@ -9,9 +9,14 @@ import { ROUTES } from '@/lib/routeConstants'
 
 interface Props {
   formDefinition?: FormDefinition
+  handoffContext?: {
+    assistantSessionState?: string
+    semanticRetrievalState?: string
+    retrievalConfidenceState?: string
+  }
 }
 
-export default function SupportAssistPanel({ formDefinition }: Props) {
+export default function SupportAssistPanel({ formDefinition, handoffContext }: Props) {
   const { t } = useTranslation()
   const { items: faqs } = useStrapiCollection<FAQItem>(() => getFaqList())
   const { items: guides } = useStrapiCollection<GuideItem>(() => getGuideList())
@@ -38,6 +43,11 @@ export default function SupportAssistPanel({ formDefinition }: Props) {
     <aside className="mt-6 rounded-xl border border-cyan-800/40 bg-cyan-950/20 p-4">
       <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-cyan-400">{t('support.beforeContactTitle')}</p>
       <p className="mt-1 text-xs text-gray-400">{t('support.preFormDescription')}</p>
+      {(handoffContext?.assistantSessionState || handoffContext?.semanticRetrievalState) && (
+        <p className="mt-2 rounded-md border border-cyan-900/50 bg-cyan-950/40 px-2 py-1 text-[11px] text-cyan-100">
+          assistant: {handoffContext.assistantSessionState ?? '-'} / retrieval: {handoffContext.semanticRetrievalState ?? '-'} ({handoffContext.retrievalConfidenceState ?? '-'})
+        </p>
+      )}
 
       {relatedFaqs.length > 0 && (
         <div className="mt-3">

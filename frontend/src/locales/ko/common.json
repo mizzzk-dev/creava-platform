@@ -984,6 +984,20 @@
       "empty": "현재 조건에서 제안할 수 있는 문서가 없습니다.",
       "stillNeedHelp": "아직 해결되지 않아 문의하기"
     },
+    "assistant": {
+      "title": "대화형 헬프 어시스턴트",
+      "description": "상황을 대화로 파악해 FAQ/가이드/known issue를 제안하고 다음 조치를 안내합니다. 해결되지 않으면 문맥을 포함해 상담원에게 전달합니다.",
+      "placeholder": "문제 상황을 입력해 주세요 (예: 주문했는데 배송 알림이 오지 않아요)",
+      "run": "대화 안내 시작",
+      "minQueryHint": "{{count}}자 이상 입력해 주세요.",
+      "stateLabel": "assistant 상태",
+      "noCandidates": "충분한 후보를 찾지 못했습니다. 정보를 더 입력하거나 상담원에게 전달해 주세요.",
+      "troubleshooting": "guided troubleshooting",
+      "markDone": "완료로 표시",
+      "completed": "완료",
+      "resolved": "자체 해결됨",
+      "handoff": "상담원에게 전달"
+    },
     "searchResultState": {
       "results_found": "관련 결과를 찾았습니다",
       "low_confidence": "결과가 적어 키워드 조정을 권장합니다",

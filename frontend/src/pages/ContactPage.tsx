@@ -38,6 +38,14 @@ export default function ContactPage() {
     return tabs[0]?.key ?? 'contact'
   }, [searchParams, tabs])
   const [activeTab, setActiveTab] = useState<string>(initialTab)
+  const prefill = useMemo(() => ({
+    subject: searchParams.get('prefill_subject') ?? '',
+    message: searchParams.get('prefill_message') ?? '',
+    inquiryCategory: searchParams.get('prefill_category') ?? '',
+    assistantSessionState: searchParams.get('assistant_session_state') ?? '',
+    semanticRetrievalState: searchParams.get('semantic_retrieval_state') ?? '',
+    retrievalConfidenceState: searchParams.get('retrieval_confidence_state') ?? '',
+  }), [searchParams])
 
   useEffect(() => {
     setActiveTab(initialTab)
@@ -104,8 +112,8 @@ export default function ContactPage() {
 
           <AnimatePresence mode="wait">
             <motion.div key={active?.key ?? 'none'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.25 }} className="px-6 py-8">
-              <SupportAssistPanel formDefinition={active?.definition} />
-              {active ? <DynamicForm definition={active.definition} sourcePage={`/contact?tab=${active.definition.formType}`} /> : <p className="text-sm text-gray-500">Loading...</p>}
+              <SupportAssistPanel formDefinition={active?.definition} handoffContext={prefill} />
+              {active ? <DynamicForm definition={active.definition} sourcePage={`/contact?tab=${active.definition.formType}`} prefill={prefill} /> : <p className="text-sm text-gray-500">Loading...</p>}
             </motion.div>
           </AnimatePresence>
         </motion.div>
