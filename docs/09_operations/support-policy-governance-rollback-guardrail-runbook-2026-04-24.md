@@ -13,13 +13,22 @@
 
 ## 3. state 定義（混同禁止）
 - `policyState`: draft / under_review / approved / active / paused / deprecated / rolled_back
+- `publishState`: not_published / staged / partially_published / fully_published / suppressed
 - `policyReviewState`: not_started / in_review / approved / rejected / changes_requested
 - `policyApprovalState`: pending / approved / rejected / expired
+- `approvalActorState`: unassigned / reviewer_assigned / approver_assigned / approved_by_human
 - `experimentState`: none / draft / running / paused / completed / stopped / invalidated
 - `experimentGuardrailState`: not_configured / healthy / warning / breached / auto_paused_like
 - `multilingualSafetyState`: not_checked / safe / review_needed / blocked / degraded_like
+- `multilingualSafetyReviewState`: not_started / queued / in_review / approved / changes_requested / blocked
+- `translationSafetyState`: healthy / warning / risky / blocked
 - `rollbackState`: not_needed / prepared / recommended / running / completed / failed
+- `suppressionState`: none / suggested / suppressed / released
 - `auditState`: not_recorded / recorded / reviewed / anomaly_detected
+- `auditEventState`: proposal_logged / approval_logged / publish_logged / rollback_logged / guardrail_logged / safety_review_logged
+- `regressionState`: none / suspected / detected / confirmed / mitigated
+
+> 方針: proposal・approval・publish・suppression・rollback を同一 state にまとめない。
 
 ## 4. 実装構成
 ### 4-1. frontend
@@ -39,28 +48,33 @@
 ### 4-2. backend
 - `GET /api/internal/support-policies/dashboard`
   - internal audit log（`ops-support-policy:*`）を source of truth として集計
-  - review queue / guardrail breach / rollback ready / locale impact / risk summary を返却
+  - review queue / approval queue / multilingual safety review queue / guardrail breach / rollback suggested / rollback ready / locale impact / risk summary を返却
 - `POST /api/internal/support-policies/action`
-  - draft / request_review / approve / activate / rollback_prepare / rollback_execute / audit_record を監査付きで記録
-  - reason 必須、activate/rollback_execute は confirmed=true 必須
+  - draft / request_review / request_approval / approve / activate / publish / suppress / rollback_prepare / rollback_execute / audit_record を監査付きで記録
+  - reason 必須、activate/publish/suppress/rollback_execute は confirmed=true 必須
 - `internal_audit_log` metadata に governance state を保持し、後続 analytics で利用
 
 ## 5. policy registry 運用手順
 1. internal admin で `support policy summary 更新` を実行。
 2. `reviewQueue` で `policyReviewState in (in_review, changes_requested)` を優先確認。
-3. `guardrailBreaches` が 1 件以上なら staged activation を停止し rollback recommendation を確認。
-4. locale impact が high/critical の場合、multilingual safety review を完了するまで active へ進めない。
+3. `approvalQueue` で pending/expired を処理し、approved まで publish へ進めない。
+4. `guardrailBreaches` が 1 件以上なら staged activation を停止し rollback recommendation を確認。
+5. locale impact が high/critical の場合、multilingual safety review を完了するまで active/publish へ進めない。
 
 ## 6. staged rollout / rollback 手順
 1. action: `request_review`（dry-run）で review queue へ投入。
-2. safety check 通過後に action: `activate`（confirmed=true）で staged rollout。
-3. guardrail breach / multilingual degraded が出たら action: `rollback_execute` を実行。
-4. rollback 後は `auditState=recorded` と `policyLastRolledBackAt` を確認し、post-change learning を記録。
+2. action: `request_approval` で approver queue へ投入し、human approval を明示記録。
+3. safety check 通過後に action: `activate`（confirmed=true）で staged rollout。
+4. partial/full publish は action: `publish`（confirmed=true）で別操作に分離する。
+5. guardrail breach / multilingual degraded が出たら action: `suppress`（公開停止）または `rollback_execute` を実行。
+6. rollback 後は `auditState=recorded` と `policyLastRolledBackAt` を確認し、post-change learning を記録。
 
 ## 7. 監査・効果確認
 - audit source: `internal_audit_log` (`ops-support-policy:*`)
 - 監視すべき summary:
   - `guardrailSummary.breachedCount`
+  - `approvalSummary.pendingCount`
+  - `publishSummary.suppressedCount`
   - `multilingualSafetySummary.reviewNeededCount`
   - `rollbackSummary.recommendedCount`
   - `auditSummary.anomalyCount`
@@ -70,7 +84,8 @@
 ## 8. runbook チェックリスト
 1. policy registry に draft/under_review/active/rolled_back が区別表示される。
 2. multilingual safety review queue と guardrail breach が抽出できる。
-3. rollback prepared/recommended/completed が分離表示される。
+3. approval queue / publish summary / suppression state が分離表示される。
+4. rollback prepared/recommended/completed が分離表示される。
 4. Contact prefill に governance state が渡り、support 側で文脈確認できる。
 5. internal note / unpublished article / secret が user-facing に露出しない。
 
@@ -83,6 +98,9 @@
   - `SUPPORT_POLICY_GOVERNANCE_ENABLED`
   - `SUPPORT_POLICY_GUARDRAIL_BREACH_THRESHOLD`
   - `SUPPORT_POLICY_GOVERNANCE_AUDIT_WINDOW_HOURS`
+  - `SUPPORT_POLICY_APPROVAL_REQUIRED`
+  - `SUPPORT_POLICY_PUBLISH_REQUIRE_APPROVAL`
+  - `SUPPORT_POLICY_SUPPRESSION_REQUIRE_REASON`
 
 ## 10. よくあるトラブル
 - `support policy dashboard の権限がありません`
@@ -96,3 +114,4 @@
 1. internal audit log は support governance の一次ストアとして継続利用する。
 2. dedicated policy table は次段で追加し、今回は metadata 集計を優先する。
 3. staged rollout の配信制御は既存 feature flag / policy engine と連携可能な前提。
+4. publish/suppress の最終実行は internal role permission で制御される前提。

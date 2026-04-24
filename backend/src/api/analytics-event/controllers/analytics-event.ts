@@ -14,6 +14,8 @@ const PLAYBOOK_APPROVAL_AUDIENCE_THRESHOLD = Number(process.env.PLAYBOOK_APPROVA
 const PLAYBOOK_SAFE_MODE_DEFAULT = String(process.env.PLAYBOOK_SAFE_MODE_DEFAULT ?? 'true').toLowerCase() !== 'false'
 const PLAYBOOK_RETRY_LIMIT = Number(process.env.PLAYBOOK_RETRY_LIMIT ?? 3)
 const STATUS_PUBLIC_HISTORY_LIMIT = Number(process.env.STATUS_PUBLIC_HISTORY_LIMIT ?? 10)
+const SUPPORT_POLICY_APPROVAL_REQUIRED = String(process.env.SUPPORT_POLICY_APPROVAL_REQUIRED ?? 'true').toLowerCase() !== 'false'
+const SUPPORT_POLICY_PUBLISH_REQUIRE_APPROVAL = String(process.env.SUPPORT_POLICY_PUBLISH_REQUIRE_APPROVAL ?? 'true').toLowerCase() !== 'false'
 
 const ALLOWED_EVENTS = new Set([
   'page_view', 'cta_click', 'nav_click', 'hero_click', 'card_click',
@@ -342,26 +344,39 @@ type SupportPolicyAuditItem = {
   sourceArea: string
   policySummary: string
   policyState: string
+  publishState: string
   policyDraftState: string
   policyReviewState: string
   policyApprovalState: string
+  approvalReason: string
+  approvalActorState: string
   policyActivationState: string
   policyEffectivenessState: string
   experimentState: string
   experimentVariantState: string
   experimentGuardrailState: string
   guardrailState: string
+  guardrailBreachState: string
   guardrailReason: string
   multilingualSafetyState: string
   multilingualSafetyReviewState: string
+  translationSafetyState: string
   rollbackState: string
+  suppressionState: string
   rollbackReason: string
   rollbackPreparednessState: string
   auditState: string
+  auditEventState: string
   auditTrailState: string
   auditVisibilityState: string
   localeImpactState: string
+  localeRolloutState: string
   changeRiskState: string
+  regressionState: string
+  incidentLinkageState: string
+  recommendationState: string
+  articleState: string
+  localeRecommendationState: string
   regionalPolicyTemplateState: string
   policyLastReviewedAt: string | null
   policyLastActivatedAt: string | null
@@ -446,26 +461,39 @@ function toSupportPolicyAuditItem(row: Record<string, unknown>): SupportPolicyAu
     sourceArea: String(metadata.sourceArea ?? 'support-governance'),
     policySummary: String(metadata.policySummary ?? 'support optimization governance summary'),
     policyState: String(metadata.policyState ?? 'draft'),
+    publishState: String(metadata.publishState ?? 'not_published'),
     policyDraftState: String(metadata.policyDraftState ?? 'drafting'),
     policyReviewState: String(metadata.policyReviewState ?? 'not_started'),
     policyApprovalState: String(metadata.policyApprovalState ?? 'pending'),
+    approvalReason: String(metadata.approvalReason ?? 'reason not recorded'),
+    approvalActorState: String(metadata.approvalActorState ?? 'unassigned'),
     policyActivationState: String(metadata.policyActivationState ?? 'not_scheduled'),
     policyEffectivenessState: String(metadata.policyEffectivenessState ?? 'unknown'),
     experimentState: String(metadata.experimentState ?? 'none'),
     experimentVariantState: String(metadata.experimentVariantState ?? 'control'),
     experimentGuardrailState: String(metadata.experimentGuardrailState ?? 'not_configured'),
     guardrailState: String(metadata.guardrailState ?? 'not_configured'),
+    guardrailBreachState: String(metadata.guardrailBreachState ?? 'none'),
     guardrailReason: String(metadata.guardrailReason ?? 'not evaluated'),
     multilingualSafetyState: String(metadata.multilingualSafetyState ?? 'not_checked'),
     multilingualSafetyReviewState: String(metadata.multilingualSafetyReviewState ?? 'not_started'),
+    translationSafetyState: String(metadata.translationSafetyState ?? 'healthy'),
     rollbackState: String(metadata.rollbackState ?? 'not_needed'),
+    suppressionState: String(metadata.suppressionState ?? 'none'),
     rollbackReason: String(metadata.rollbackReason ?? 'not required'),
     rollbackPreparednessState: String(metadata.rollbackPreparednessState ?? 'not_ready'),
     auditState: String(metadata.auditState ?? 'not_recorded'),
+    auditEventState: String(metadata.auditEventState ?? 'proposal_logged'),
     auditTrailState: String(metadata.auditTrailState ?? 'missing'),
     auditVisibilityState: String(metadata.auditVisibilityState ?? 'internal_only'),
     localeImpactState: String(metadata.localeImpactState ?? 'not_evaluated'),
+    localeRolloutState: String(metadata.localeRolloutState ?? 'not_started'),
     changeRiskState: String(metadata.changeRiskState ?? 'low'),
+    regressionState: String(metadata.regressionState ?? 'none'),
+    incidentLinkageState: String(metadata.incidentLinkageState ?? 'none'),
+    recommendationState: String(metadata.recommendationState ?? 'active'),
+    articleState: String(metadata.articleState ?? 'draft'),
+    localeRecommendationState: String(metadata.localeRecommendationState ?? 'default'),
     regionalPolicyTemplateState: String(metadata.regionalPolicyTemplateState ?? 'draft'),
     policyLastReviewedAt: metadata.policyLastReviewedAt ? String(metadata.policyLastReviewedAt) : null,
     policyLastActivatedAt: metadata.policyLastActivatedAt ? String(metadata.policyLastActivatedAt) : null,
@@ -2145,8 +2173,11 @@ export default factories.createCoreController('api::analytics-event.analytics-ev
       })
       const policies = (rows as Array<Record<string, unknown>>).map(toSupportPolicyAuditItem).slice(0, 120)
       const reviewQueue = policies.filter((item) => ['under_review', 'draft'].includes(item.policyState) || ['in_review', 'changes_requested'].includes(item.policyReviewState))
+      const approvalQueue = policies.filter((item) => ['pending', 'expired'].includes(item.policyApprovalState))
+      const multilingualSafetyReviewQueue = policies.filter((item) => ['queued', 'in_review', 'changes_requested', 'blocked'].includes(item.multilingualSafetyReviewState))
       const guardrailBreaches = policies.filter((item) => ['breached', 'auto_paused_like'].includes(item.experimentGuardrailState) || item.guardrailState === 'breached')
       const rollbackReadyItems = policies.filter((item) => ['prepared', 'recommended'].includes(item.rollbackState))
+      const rollbackSuggestedItems = policies.filter((item) => item.rollbackState === 'recommended')
 
       ctx.body = {
         sourceOfTruth: {
@@ -2162,6 +2193,9 @@ export default factories.createCoreController('api::analytics-event.analytics-ev
           pausedCount: policies.filter((item) => item.policyState === 'paused').length,
           rolledBackCount: policies.filter((item) => item.policyState === 'rolled_back').length,
           reviewNeededCount: reviewQueue.length,
+          pendingApprovalCount: approvalQueue.length,
+          publishedCount: policies.filter((item) => ['fully_published', 'partially_published'].includes(item.publishState)).length,
+          suppressedCount: policies.filter((item) => item.suppressionState === 'suppressed' || item.publishState === 'suppressed').length,
           nextRecommendedAction: guardrailBreaches.length > 0
             ? 'guardrail breach の rollback recommendation を優先確認'
             : reviewQueue.length > 0
@@ -2179,6 +2213,18 @@ export default factories.createCoreController('api::analytics-event.analytics-ev
           warningCount: policies.filter((item) => ['warning'].includes(item.experimentGuardrailState)).length,
           breachedCount: policies.filter((item) => item.experimentGuardrailState === 'breached' || item.guardrailState === 'breached').length,
           autoPausedLikeCount: policies.filter((item) => item.experimentGuardrailState === 'auto_paused_like').length,
+        },
+        approvalSummary: {
+          pendingCount: approvalQueue.filter((item) => item.policyApprovalState === 'pending').length,
+          approvedCount: policies.filter((item) => item.policyApprovalState === 'approved').length,
+          rejectedCount: policies.filter((item) => item.policyApprovalState === 'rejected').length,
+          expiredCount: approvalQueue.filter((item) => item.policyApprovalState === 'expired').length,
+        },
+        publishSummary: {
+          stagedCount: policies.filter((item) => item.publishState === 'staged').length,
+          partiallyPublishedCount: policies.filter((item) => item.publishState === 'partially_published').length,
+          fullyPublishedCount: policies.filter((item) => item.publishState === 'fully_published').length,
+          suppressedCount: policies.filter((item) => item.publishState === 'suppressed').length,
         },
         rollbackSummary: {
           preparedCount: policies.filter((item) => item.rollbackState === 'prepared').length,
@@ -2212,7 +2258,10 @@ export default factories.createCoreController('api::analytics-event.analytics-ev
           criticalCount: policies.filter((item) => item.changeRiskState === 'critical').length,
         },
         reviewQueue: reviewQueue.slice(0, 30),
+        approvalQueue: approvalQueue.slice(0, 30),
+        multilingualSafetyReviewQueue: multilingualSafetyReviewQueue.slice(0, 30),
         guardrailBreaches: guardrailBreaches.slice(0, 30),
+        rollbackSuggestedItems: rollbackSuggestedItems.slice(0, 30),
         rollbackReadyItems: rollbackReadyItems.slice(0, 30),
         policies,
       }
@@ -2230,7 +2279,7 @@ export default factories.createCoreController('api::analytics-event.analytics-ev
       const actionType = sanitizeText(body.actionType, 40) ?? 'draft'
       const permission = actionType === 'approve'
         ? 'internal.support.policy.approve'
-        : ['activate', 'rollback_execute'].includes(actionType)
+        : ['activate', 'publish', 'suppress', 'rollback_execute'].includes(actionType)
           ? 'internal.support.policy.execute'
           : 'internal.support.read'
       const access = await requireInternalPermission(ctx, permission)
@@ -2241,17 +2290,25 @@ export default factories.createCoreController('api::analytics-event.analytics-ev
       const sourceSite = sanitizeSourceSite(body.sourceSite) === 'unknown' ? 'cross' : sanitizeSourceSite(body.sourceSite)
       const dryRun = body.dryRun !== false
       const confirmed = Boolean(body.confirmed)
-      if (['activate', 'rollback_execute'].includes(actionType) && !confirmed) return ctx.badRequest('activate / rollback_execute は confirmed=true が必要です。')
+      if (['activate', 'publish', 'suppress', 'rollback_execute'].includes(actionType) && !confirmed) return ctx.badRequest('activate / publish / suppress / rollback_execute は confirmed=true が必要です。')
 
       const nowIso = new Date().toISOString()
       const policyState = sanitizeText(body.policyState, 32)
-        ?? (actionType === 'activate' ? 'active' : actionType === 'rollback_execute' ? 'rolled_back' : actionType === 'pause' ? 'paused' : actionType === 'request_review' ? 'under_review' : 'draft')
+        ?? (actionType === 'activate' ? 'active' : actionType === 'rollback_execute' ? 'rolled_back' : actionType === 'pause' ? 'paused' : actionType === 'request_review' ? 'under_review' : actionType === 'publish' ? 'approved' : 'draft')
       const policyReviewState = sanitizeText(body.policyReviewState, 32)
         ?? (actionType === 'request_review' ? 'in_review' : actionType === 'approve' ? 'approved' : 'not_started')
       const policyApprovalState = sanitizeText(body.policyApprovalState, 32)
-        ?? (actionType === 'approve' ? 'approved' : 'pending')
+        ?? (actionType === 'approve' ? 'approved' : actionType === 'request_approval' ? 'pending' : 'pending')
+      const publishState = sanitizeText(body.publishState, 32)
+        ?? (actionType === 'publish' ? 'fully_published' : actionType === 'suppress' ? 'suppressed' : actionType === 'activate' ? 'staged' : 'not_published')
       const rollbackState = sanitizeText(body.rollbackState, 32)
         ?? (actionType === 'rollback_execute' ? 'completed' : actionType === 'rollback_prepare' ? 'prepared' : 'not_needed')
+      if (actionType === 'publish' && SUPPORT_POLICY_PUBLISH_REQUIRE_APPROVAL && policyApprovalState !== 'approved') {
+        return ctx.badRequest('publish には approvalState=approved が必要です。')
+      }
+      if (actionType === 'activate' && SUPPORT_POLICY_APPROVAL_REQUIRED && policyApprovalState !== 'approved') {
+        return ctx.badRequest('activate には approvalState=approved が必要です。')
+      }
 
       await strapi.documents('api::internal-audit-log.internal-audit-log').create({
         data: {
@@ -2273,26 +2330,48 @@ export default factories.createCoreController('api::analytics-event.analytics-ev
             confirmed,
             policySummary: sanitizeText(body.policySummary, 240) ?? 'support optimization governance update',
             policyState,
+            publishState,
             policyDraftState: sanitizeText(body.policyDraftState, 32) ?? (actionType === 'draft' ? 'drafting' : 'ready_for_review'),
             policyReviewState,
             policyApprovalState,
+            approvalReason: sanitizeText(body.approvalReason, 240) ?? (actionType === 'approve' ? 'manual approval completed' : 'approval pending'),
+            approvalActorState: sanitizeText(body.approvalActorState, 32) ?? (actionType === 'approve' ? 'approved_by_human' : 'approver_assigned'),
             policyActivationState: sanitizeText(body.policyActivationState, 32) ?? (actionType === 'activate' ? 'staged_rollout' : 'not_scheduled'),
             policyEffectivenessState: sanitizeText(body.policyEffectivenessState, 32) ?? 'unknown',
             experimentState: sanitizeText(body.experimentState, 32) ?? (actionType === 'activate' ? 'running' : 'draft'),
             experimentVariantState: sanitizeText(body.experimentVariantState, 40) ?? 'control',
             experimentGuardrailState: sanitizeText(body.experimentGuardrailState, 32) ?? 'healthy',
             guardrailState: sanitizeText(body.guardrailState, 32) ?? 'healthy',
+            guardrailBreachState: sanitizeText(body.guardrailBreachState, 32) ?? (actionType === 'rollback_execute' ? 'confirmed' : 'none'),
             guardrailReason: sanitizeText(body.guardrailReason, 240) ?? 'initial guardrail check',
             multilingualSafetyState: sanitizeText(body.multilingualSafetyState, 32) ?? 'not_checked',
             multilingualSafetyReviewState: sanitizeText(body.multilingualSafetyReviewState, 32) ?? 'not_started',
+            translationSafetyState: sanitizeText(body.translationSafetyState, 32) ?? 'healthy',
             rollbackState,
+            suppressionState: sanitizeText(body.suppressionState, 32) ?? (actionType === 'suppress' ? 'suppressed' : 'none'),
             rollbackReason: sanitizeText(body.rollbackReason, 240) ?? (actionType === 'rollback_execute' ? 'guardrail breach detected' : 'rollback plan maintained'),
             rollbackPreparednessState: sanitizeText(body.rollbackPreparednessState, 32) ?? (['rollback_prepare', 'activate'].includes(actionType) ? 'ready' : 'not_ready'),
             auditState: sanitizeText(body.auditState, 32) ?? 'recorded',
+            auditEventState: sanitizeText(body.auditEventState, 40)
+              ?? (actionType === 'approve'
+                ? 'approval_logged'
+                : actionType === 'publish'
+                  ? 'publish_logged'
+                  : actionType === 'rollback_execute'
+                    ? 'rollback_logged'
+                    : actionType === 'request_review'
+                      ? 'safety_review_logged'
+                      : 'proposal_logged'),
             auditTrailState: sanitizeText(body.auditTrailState, 32) ?? 'complete',
             auditVisibilityState: sanitizeText(body.auditVisibilityState, 32) ?? 'ops_and_support',
             localeImpactState: sanitizeText(body.localeImpactState, 32) ?? 'medium',
+            localeRolloutState: sanitizeText(body.localeRolloutState, 32) ?? (actionType === 'activate' ? 'limited' : actionType === 'publish' ? 'full' : 'not_started'),
             changeRiskState: sanitizeText(body.changeRiskState, 32) ?? (actionType === 'rollback_execute' ? 'high' : 'medium'),
+            regressionState: sanitizeText(body.regressionState, 32) ?? (actionType === 'rollback_execute' ? 'mitigated' : 'none'),
+            incidentLinkageState: sanitizeText(body.incidentLinkageState, 32) ?? 'none',
+            recommendationState: sanitizeText(body.recommendationState, 32) ?? (actionType === 'suppress' ? 'suppressed' : 'active'),
+            articleState: sanitizeText(body.articleState, 32) ?? (actionType === 'publish' ? 'published' : 'review_pending'),
+            localeRecommendationState: sanitizeText(body.localeRecommendationState, 32) ?? 'locale_tuned',
             regionalPolicyTemplateState: sanitizeText(body.regionalPolicyTemplateState, 32) ?? 'active',
             policyLastReviewedAt: nowIso,
             policyLastActivatedAt: actionType === 'activate' ? nowIso : null,

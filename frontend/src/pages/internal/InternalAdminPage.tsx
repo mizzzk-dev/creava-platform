@@ -216,11 +216,15 @@ export default function InternalAdminPage() {
                 <p>active: {supportPolicyDashboard.policySummary.activeCount}</p>
                 <p>under review: {supportPolicyDashboard.policySummary.underReviewCount}</p>
                 <p>review needed: {supportPolicyDashboard.policySummary.reviewNeededCount}</p>
+                <p>pending approval: {supportPolicyDashboard.policySummary.pendingApprovalCount}</p>
+                <p>published: {supportPolicyDashboard.policySummary.publishedCount}</p>
+                <p>suppressed: {supportPolicyDashboard.policySummary.suppressedCount}</p>
                 <p>rolled back: {supportPolicyDashboard.policySummary.rolledBackCount}</p>
               </div>
               <div className="rounded border border-gray-200 p-3 dark:border-gray-700">
                 <p className="font-medium">guardrail / safety / rollback / audit</p>
                 <p>guardrail breached: {supportPolicyDashboard.guardrailSummary.breachedCount}</p>
+                <p>approval pending: {supportPolicyDashboard.approvalSummary.pendingCount}</p>
                 <p>safety review needed: {supportPolicyDashboard.multilingualSafetySummary.reviewNeededCount}</p>
                 <p>rollback recommended: {supportPolicyDashboard.rollbackSummary.recommendedCount}</p>
                 <p>audit anomaly: {supportPolicyDashboard.auditSummary.anomalyCount}</p>
@@ -229,15 +233,38 @@ export default function InternalAdminPage() {
             </div>
             <pre className="overflow-auto rounded bg-gray-50 p-3 dark:bg-gray-900">{JSON.stringify({
               reviewQueue: supportPolicyDashboard.reviewQueue.slice(0, 8),
+              approvalQueue: supportPolicyDashboard.approvalQueue.slice(0, 8),
+              multilingualSafetyReviewQueue: supportPolicyDashboard.multilingualSafetyReviewQueue.slice(0, 8),
               guardrailBreaches: supportPolicyDashboard.guardrailBreaches.slice(0, 8),
+              rollbackSuggestedItems: supportPolicyDashboard.rollbackSuggestedItems.slice(0, 8),
               rollbackReadyItems: supportPolicyDashboard.rollbackReadyItems.slice(0, 8),
             }, null, 2)}</pre>
           </div>
         )}
         <div className="mt-4 rounded border border-gray-200 p-3 dark:border-gray-700">
-          <p className="text-xs text-gray-500">support policy safe actions (review / activate / rollback / audit)</p>
+          <p className="text-xs text-gray-500">support policy safe actions (review / approval / publish / suppress / activate / rollback / audit)</p>
           <div className="mt-2 flex flex-col gap-2 md:flex-row">
             <input value={supportPolicyReason} onChange={(e) => setSupportPolicyReason(e.target.value)} className="w-full rounded border border-gray-300 px-2 py-2 text-xs" placeholder="support policy action reason を入力" />
+            <button
+              type="button"
+              className="rounded border border-blue-300 px-3 py-2 text-xs text-blue-700"
+              onClick={() => {
+                setMessage(null)
+                api.runSupportPolicyAction({
+                  actionType: 'request_approval',
+                  sourceSite: 'cross',
+                  reason: supportPolicyReason,
+                  dryRun: true,
+                  policyState: 'approved',
+                  policyApprovalState: 'pending',
+                  publishState: 'staged',
+                  approvalActorState: 'approver_assigned',
+                }).then((result) => {
+                  setSupportPolicyActionResult(result)
+                  return api.getSupportPolicyDashboard().then(setSupportPolicyDashboard)
+                }).catch((e: Error) => setMessage(e.message))
+              }}
+            >approval request</button>
             <button
               type="button"
               className="rounded border border-gray-300 px-3 py-2 text-xs"
@@ -271,6 +298,7 @@ export default function InternalAdminPage() {
                   confirmed: true,
                   policyState: 'active',
                   policyActivationState: 'staged_rollout',
+                  policyApprovalState: 'approved',
                   experimentState: 'running',
                   experimentGuardrailState: 'warning',
                   guardrailState: 'warning',
@@ -283,6 +311,48 @@ export default function InternalAdminPage() {
                 }).catch((e: Error) => setMessage(e.message))
               }}
             >staged activation</button>
+            <button
+              type="button"
+              className="rounded border border-emerald-300 px-3 py-2 text-xs text-emerald-700"
+              onClick={() => {
+                setMessage(null)
+                api.runSupportPolicyAction({
+                  actionType: 'publish',
+                  sourceSite: 'cross',
+                  reason: supportPolicyReason,
+                  dryRun: false,
+                  confirmed: true,
+                  publishState: 'fully_published',
+                  policyApprovalState: 'approved',
+                  approvalActorState: 'approved_by_human',
+                  policyState: 'active',
+                }).then((result) => {
+                  setSupportPolicyActionResult(result)
+                  return api.getSupportPolicyDashboard().then(setSupportPolicyDashboard)
+                }).catch((e: Error) => setMessage(e.message))
+              }}
+            >publish confirmed</button>
+            <button
+              type="button"
+              className="rounded border border-rose-300 px-3 py-2 text-xs text-rose-700"
+              onClick={() => {
+                setMessage(null)
+                api.runSupportPolicyAction({
+                  actionType: 'suppress',
+                  sourceSite: 'cross',
+                  reason: supportPolicyReason,
+                  dryRun: false,
+                  confirmed: true,
+                  publishState: 'suppressed',
+                  suppressionState: 'suppressed',
+                  recommendationState: 'suppressed',
+                  rollbackState: 'recommended',
+                }).then((result) => {
+                  setSupportPolicyActionResult(result)
+                  return api.getSupportPolicyDashboard().then(setSupportPolicyDashboard)
+                }).catch((e: Error) => setMessage(e.message))
+              }}
+            >suppress publish</button>
             <button
               type="button"
               className="rounded border border-red-300 px-3 py-2 text-xs text-red-700"

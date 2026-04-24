@@ -158,6 +158,9 @@
 | `SUPPORT_POLICY_GOVERNANCE_ENABLED` | support policy governance control plane を有効化 | 任意 |
 | `SUPPORT_POLICY_GUARDRAIL_BREACH_THRESHOLD` | support policy guardrail breach 判定閾値（0-1） | 任意 |
 | `SUPPORT_POLICY_GOVERNANCE_AUDIT_WINDOW_HOURS` | governance audit 集計対象時間（h） | 任意 |
+| `SUPPORT_POLICY_APPROVAL_REQUIRED` | policy publish 前に approval queue を必須化するか | 任意 |
+| `SUPPORT_POLICY_PUBLISH_REQUIRE_APPROVAL` | publish 操作で approvalState=approved を必須化するか | 任意 |
+| `SUPPORT_POLICY_SUPPRESSION_REQUIRE_REASON` | suppress 操作で監査理由を必須化するか | 任意 |
 | `INQUIRY_COACHING_SUGGESTION_ENABLED` | coaching suggestion の生成有効化 | 推奨 |
 | `INQUIRY_TEMPLATE_OVERUSE_RATIO` | template overuse 判定の比率閾値（0-1） | 任意 |
 | `INQUIRY_MY_HISTORY_PAGE_MAX` | `/inquiry-submissions/me/history` の最大 pageSize | 推奨 |

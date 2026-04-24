@@ -650,17 +650,25 @@ export type InternalSupportPolicyDashboardResponse = {
     pausedCount: number
     rolledBackCount: number
     reviewNeededCount: number
+    pendingApprovalCount: number
+    publishedCount: number
+    suppressedCount: number
     nextRecommendedAction: string
   }
   experimentSummary: { runningCount: number; pausedCount: number; completedCount: number; invalidatedCount: number }
   guardrailSummary: { healthyCount: number; warningCount: number; breachedCount: number; autoPausedLikeCount: number }
+  approvalSummary: { pendingCount: number; approvedCount: number; rejectedCount: number; expiredCount: number }
+  publishSummary: { stagedCount: number; partiallyPublishedCount: number; fullyPublishedCount: number; suppressedCount: number }
   rollbackSummary: { preparedCount: number; recommendedCount: number; runningCount: number; completedCount: number; failedCount: number }
   multilingualSafetySummary: { safeCount: number; reviewNeededCount: number; blockedCount: number; degradedLikeCount: number }
   auditSummary: { recordedCount: number; reviewedCount: number; anomalyCount: number; completeTrailCount: number }
   localeImpactSummary: { lowCount: number; mediumCount: number; highCount: number; criticalCount: number }
   riskSummary: { lowCount: number; mediumCount: number; highCount: number; criticalCount: number }
   reviewQueue: Array<Record<string, unknown>>
+  approvalQueue: Array<Record<string, unknown>>
+  multilingualSafetyReviewQueue: Array<Record<string, unknown>>
   guardrailBreaches: Array<Record<string, unknown>>
+  rollbackSuggestedItems: Array<Record<string, unknown>>
   rollbackReadyItems: Array<Record<string, unknown>>
   policies: Array<Record<string, unknown>>
 }
@@ -820,29 +828,42 @@ export function useInternalAdminApi() {
       body: JSON.stringify(payload),
     })),
     runSupportPolicyAction: async (payload: {
-      actionType: 'draft' | 'request_review' | 'approve' | 'activate' | 'pause' | 'rollback_prepare' | 'rollback_execute' | 'audit_record'
+      actionType: 'draft' | 'request_review' | 'request_approval' | 'approve' | 'activate' | 'publish' | 'suppress' | 'pause' | 'rollback_prepare' | 'rollback_execute' | 'audit_record'
       policyId?: string
       sourceSite?: 'main' | 'store' | 'fc' | 'cross'
       reason: string
       dryRun?: boolean
       confirmed?: boolean
       policyState?: string
+      publishState?: string
       policyReviewState?: string
       policyApprovalState?: string
+      approvalReason?: string
+      approvalActorState?: string
       policyActivationState?: string
       experimentState?: string
       experimentVariantState?: string
       experimentGuardrailState?: string
       guardrailState?: string
+      guardrailBreachState?: string
       multilingualSafetyState?: string
       multilingualSafetyReviewState?: string
+      translationSafetyState?: string
       rollbackState?: string
+      suppressionState?: string
       rollbackPreparednessState?: string
       auditState?: string
+      auditEventState?: string
       auditTrailState?: string
       auditVisibilityState?: string
       localeImpactState?: string
+      localeRolloutState?: string
       changeRiskState?: string
+      regressionState?: string
+      incidentLinkageState?: string
+      recommendationState?: string
+      articleState?: string
+      localeRecommendationState?: string
       regionalPolicyTemplateState?: string
       nextRecommendedAction?: string
     }) => withToken((token) => internalFetch<any>('/internal/support-policies/action', token, {
