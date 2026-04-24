@@ -79,6 +79,12 @@ export default {
       config: { auth: false },
     },
     {
+      method: 'GET',
+      path: '/internal/editorial/dashboard',
+      handler: 'analytics-event.internalEditorialDashboard',
+      config: { auth: false },
+    },
+    {
       method: 'POST',
       path: '/internal/flags/action',
       handler: 'analytics-event.internalFlagAction',

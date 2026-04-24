@@ -665,6 +665,38 @@ export type InternalSupportPolicyDashboardResponse = {
   policies: Array<Record<string, unknown>>
 }
 
+export type InternalEditorialDashboardResponse = {
+  generatedAt: string
+  timezone: string
+  sourceOfTruth: Record<string, string>
+  editorialSummary: {
+    totalEntries: number
+    draftCount: number
+    reviewPendingCount: number
+    approvalPendingCount: number
+    scheduledCount: number
+    publishedCount: number
+    rollbackCount: number
+    localePendingCount: number
+    validationBlockedCount: number
+  }
+  publishAuditSummary: {
+    totalCount: number
+    successCount: number
+    failedCount: number
+    deniedCount: number
+  }
+  reviewQueue: Array<Record<string, unknown>>
+  approvalQueue: Array<Record<string, unknown>>
+  scheduledQueue: Array<Record<string, unknown>>
+  failedScheduleQueue: Array<Record<string, unknown>>
+  localePendingQueue: Array<Record<string, unknown>>
+  seoPendingQueue: Array<Record<string, unknown>>
+  mediaPendingQueue: Array<Record<string, unknown>>
+  recentlyPublished: Array<Record<string, unknown>>
+  publishAudit: Array<Record<string, unknown>>
+}
+
 function getApiBaseUrl(): string {
   const baseUrl = import.meta.env.VITE_STRAPI_API_URL
   if (!baseUrl) throw new Error('VITE_STRAPI_API_URL が未設定です。')
@@ -761,6 +793,7 @@ export function useInternalAdminApi() {
     getReleaseDashboard: async () => withToken((token) => internalFetch<InternalReleaseDashboardResponse>('/internal/releases/dashboard', token)),
     getFlagDashboard: async () => withToken((token) => internalFetch<InternalFlagDashboardResponse>('/internal/flags/dashboard', token)),
     getSupportPolicyDashboard: async () => withToken((token) => internalFetch<InternalSupportPolicyDashboardResponse>('/internal/support-policies/dashboard', token)),
+    getEditorialDashboard: async () => withToken((token) => internalFetch<InternalEditorialDashboardResponse>('/internal/editorial/dashboard', token)),
     getFlagEvaluation: async (query: {
       flagKey?: string
       sourceSite?: 'main' | 'store' | 'fc' | 'cross'
