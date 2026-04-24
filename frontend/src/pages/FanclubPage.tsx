@@ -24,6 +24,7 @@ import UserLifecycleBanner from '@/components/common/UserLifecycleBanner'
 import MemberValueExperiencePanel from '@/components/common/MemberValueExperiencePanel'
 import MemberProgressHub from '@/components/common/MemberProgressHub'
 import CampaignPersonalizationPanel from '@/components/common/CampaignPersonalizationPanel'
+import { useExperiment } from '@/modules/analytics/experimentOps'
 
 export default function FanclubPage() {
   const { t, i18n } = useTranslation()
@@ -31,11 +32,13 @@ export default function FanclubPage() {
   const { item: settings } = useStrapiSingle(() =>
     getSiteSettings({ locale: i18n.resolvedLanguage }),
   )
+  const fanclubExperiment = useExperiment('fc-join-login-2026q2')
+  const heroVariant = fanclubExperiment.variantId === 'challenger' ? 'challenger' : 'control'
 
   return (
     <div className="min-h-screen">
       <PageHead title={t('nav.fanclub')} description={t('seo.fanclub')} noindex />
-      <FanclubHeroSection />
+      <FanclubHeroSection heroVariant={heroVariant} />
       <div className="mx-auto max-w-5xl px-4 pt-6">
         <UserLifecycleBanner user={user} lifecycle={lifecycle} context="fc" />
       </div>

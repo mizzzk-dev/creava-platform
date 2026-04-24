@@ -15,7 +15,9 @@ const BENEFITS = [
   { icon: '❋', labelKey: 'fanclub.benefit.qanda', color: 'text-violet-500 dark:text-violet-400' },
 ] as const
 
-export default function FanclubHeroSection() {
+type FanclubHeroVariant = 'control' | 'challenger'
+
+export default function FanclubHeroSection({ heroVariant = 'control' }: { heroVariant?: FanclubHeroVariant }) {
   const { t, i18n } = useTranslation()
   const reduceMotion = useReducedMotion()
   const { item: settings } = useStrapiSingle(() =>
@@ -86,9 +88,13 @@ export default function FanclubHeroSection() {
             {t('nav.fanclub')}
           </h1>
           <p className="mt-4 max-w-xl text-sm leading-relaxed text-violet-100/85 drop-shadow-[0_2px_10px_rgba(0,0,0,0.3)]">
-            {t('fanclub.pageLead', {
-              defaultValue: '今週の更新・限定公開・会員向け導線をまとめて確認できます。',
-            })}
+            {heroVariant === 'challenger'
+              ? t('fanclub.pageLeadExperiment', {
+                  defaultValue: 'join / login / member-only 導線をこのページで最短確認できます。',
+                })
+              : t('fanclub.pageLead', {
+                  defaultValue: '今週の更新・限定公開・会員向け導線をまとめて確認できます。',
+                })}
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">

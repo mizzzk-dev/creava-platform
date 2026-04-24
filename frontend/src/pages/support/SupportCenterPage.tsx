@@ -31,6 +31,7 @@ import { buildLocaleSupportSummary, normalizeLocale, resolveLocalizedGuides } fr
 import { buildMultilingualOptimizationSummary } from '@/modules/support/multilingualOptimization'
 import { buildMultilingualOpsAutomationSummary, buildMultilingualOpsQueryParams } from '@/modules/support/multilingualOpsAutomation'
 import { buildPolicyGovernanceQueryParams, buildSupportPolicyGovernanceSummary } from '@/modules/support/policyGovernance'
+import { useExperiment } from '@/modules/analytics/experimentOps'
 
 const detectSite = (): SourceSite => {
   if (isStoreSite) return 'store'
@@ -61,6 +62,8 @@ export default function SupportCenterPage() {
   const [optimizationSummary, setOptimizationSummary] = useState<ProactiveOptimizationSummary | null>(null)
   const [replyState, setReplyState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const site = detectSite()
+  const supportExperiment = useExperiment('support-search-placement-2026q2')
+  const isSupportChallenger = supportExperiment.variantId === 'challenger'
   const sourceSite = site === 'all' ? 'main' : site
   const locale = normalizeLocale(document.documentElement.lang || 'ja')
   const benefitState = resolveBenefitExperienceState({ user, lifecycle, sourceSite })
@@ -96,6 +99,10 @@ export default function SupportCenterPage() {
       { to: '/legal/privacy-policy', label: t('support.quickLinks.privacy') },
     ]
   }, [site, t])
+  const orderedQuickLinks = useMemo(() => {
+    if (!isSupportChallenger) return quickLinks
+    return [...quickLinks].sort((a, b) => Number(a.to.includes('guide') || a.to.includes('faq')) - Number(b.to.includes('guide') || b.to.includes('faq')))
+  }, [isSupportChallenger, quickLinks])
 
   const filteredFaqs = useMemo(() => {
     const keyword = search.trim().toLowerCase()
@@ -490,7 +497,7 @@ export default function SupportCenterPage() {
         <h1 className="text-3xl font-semibold text-gray-900 dark:text-gray-100">{t('support.title')}</h1>
         <p className="text-sm text-gray-600 dark:text-gray-300">{t('support.description')}</p>
         <div className="flex flex-wrap gap-2">
-          {quickLinks.map((link) => (
+          {orderedQuickLinks.map((link) => (
             <Link key={link.to} to={link.to} className="rounded-full border border-gray-200 px-3 py-1 text-xs text-gray-600 hover:border-violet-400 hover:text-violet-600 dark:border-gray-700 dark:text-gray-300 dark:hover:border-violet-500 dark:hover:text-violet-300">
               {link.label}
             </Link>
