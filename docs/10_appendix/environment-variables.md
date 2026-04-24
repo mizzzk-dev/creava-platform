@@ -46,6 +46,9 @@
 | `VITE_SUPPORT_GLOSSARY_DRIFT_ALERT_THRESHOLD` | glossary drift alert 閾値（0-1） | 任意 | 推奨 | 推奨 |
 | `VITE_SUPPORT_LOCALE_RETRIEVAL_LOW_CONFIDENCE_THRESHOLD` | locale retrieval low confidence 閾値（0-1） | 任意 | 推奨 | 推奨 |
 | `VITE_SUPPORT_REGIONAL_POLICY_TEMPLATE_DEFAULT` | regional policy template の既定キー | 任意 | 推奨 | 推奨 |
+| `VITE_SUPPORT_POLICY_GOVERNANCE_ENABLED` | support policy governance UI/連携の有効化 | 任意 | 推奨 | 推奨 |
+| `VITE_SUPPORT_GOVERNANCE_GUARDRAIL_WARN_THRESHOLD` | governance guardrail warning 判定閾値（0-1） | 任意 | 推奨 | 推奨 |
+| `VITE_SUPPORT_GOVERNANCE_GUARDRAIL_BREACH_THRESHOLD` | governance guardrail breach 判定閾値（0-1） | 任意 | 推奨 | 推奨 |
 | `VITE_ONBOARDING_REMINDER_DAYS` | onboarding 再表示までの日数 | 任意 | 任意 | 推奨 |
 | `VITE_MEMBERSHIP_STATE_SYNC_INTERVAL_SEC` | frontend で state summary を再同期する間隔（秒） | 任意 | 推奨 | 推奨 |
 | `VITE_RENEWAL_REMINDER_DAYS` | renewal前 notice 表示開始日数 | 任意 | 推奨 | 推奨 |
@@ -146,6 +149,9 @@
 | `INQUIRY_GLOSSARY_DRIFT_ALERT_THRESHOLD` | glossary drift を alert 化する閾値（0-1） | 任意 |
 | `INQUIRY_LOCALE_RETRIEVAL_WEAK_THRESHOLD` | locale retrieval weak 判定閾値（0-1） | 任意 |
 | `INQUIRY_REGIONAL_POLICY_TEMPLATE_DEFAULT` | regional policy template の backend 既定キー | 任意 |
+| `SUPPORT_POLICY_GOVERNANCE_ENABLED` | support policy governance control plane を有効化 | 任意 |
+| `SUPPORT_POLICY_GUARDRAIL_BREACH_THRESHOLD` | support policy guardrail breach 判定閾値（0-1） | 任意 |
+| `SUPPORT_POLICY_GOVERNANCE_AUDIT_WINDOW_HOURS` | governance audit 集計対象時間（h） | 任意 |
 | `INQUIRY_COACHING_SUGGESTION_ENABLED` | coaching suggestion の生成有効化 | 推奨 |
 | `INQUIRY_TEMPLATE_OVERUSE_RATIO` | template overuse 判定の比率閾値（0-1） | 任意 |
 | `INQUIRY_MY_HISTORY_PAGE_MAX` | `/inquiry-submissions/me/history` の最大 pageSize | 推奨 |
@@ -255,6 +261,9 @@
 - `VITE_SUPPORT_GLOSSARY_DRIFT_ALERT_THRESHOLD`
 - `VITE_SUPPORT_LOCALE_RETRIEVAL_LOW_CONFIDENCE_THRESHOLD`
 - `VITE_SUPPORT_REGIONAL_POLICY_TEMPLATE_DEFAULT`
+- `VITE_SUPPORT_POLICY_GOVERNANCE_ENABLED`
+- `VITE_SUPPORT_GOVERNANCE_GUARDRAIL_WARN_THRESHOLD`
+- `VITE_SUPPORT_GOVERNANCE_GUARDRAIL_BREACH_THRESHOLD`
 - `VITE_STATUS_FETCH_TIMEOUT_MS`
 - `VITE_STATUS_FETCH_RETRY_COUNT`
 - `VITE_INTERNAL_ADMIN_CONSOLE_ENABLED`
@@ -276,6 +285,9 @@
 - `INQUIRY_GLOSSARY_DRIFT_ALERT_THRESHOLD`
 - `INQUIRY_LOCALE_RETRIEVAL_WEAK_THRESHOLD`
 - `INQUIRY_REGIONAL_POLICY_TEMPLATE_DEFAULT`
+- `SUPPORT_POLICY_GOVERNANCE_ENABLED`
+- `SUPPORT_POLICY_GUARDRAIL_BREACH_THRESHOLD`
+- `SUPPORT_POLICY_GOVERNANCE_AUDIT_WINDOW_HOURS`
 - `ANALYTICS_OPS_TOKEN`
 - `BI_DEFAULT_RANGE_DAYS`
 - `BI_MAX_FETCH_ROWS`

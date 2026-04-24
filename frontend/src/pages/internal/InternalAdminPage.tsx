@@ -21,6 +21,7 @@ import {
   type InternalReleaseDashboardResponse,
   type InternalFlagDashboardResponse,
   type InternalFlagEvaluationResponse,
+  type InternalSupportPolicyDashboardResponse,
 } from '@/modules/internal-admin/api'
 import { trackMizzzEvent } from '@/modules/analytics/tracking'
 
@@ -54,6 +55,9 @@ export default function InternalAdminPage() {
   const [flagEvaluation, setFlagEvaluation] = useState<InternalFlagEvaluationResponse | null>(null)
   const [flagReason, setFlagReason] = useState('preview / simulation で exposure 影響を確認')
   const [flagActionResult, setFlagActionResult] = useState<Record<string, unknown> | null>(null)
+  const [supportPolicyDashboard, setSupportPolicyDashboard] = useState<InternalSupportPolicyDashboardResponse | null>(null)
+  const [supportPolicyReason, setSupportPolicyReason] = useState('policy review / multilingual safety / rollback readiness を確認')
+  const [supportPolicyActionResult, setSupportPolicyActionResult] = useState<Record<string, unknown> | null>(null)
   const [incidentDashboard, setIncidentDashboard] = useState<InternalIncidentDashboardResponse | null>(null)
   const [scheduledChecksResult, setScheduledChecksResult] = useState<InternalScheduledChecksResponse | null>(null)
   const [triageReason, setTriageReason] = useState('scheduled check で検知した異常を確認')
@@ -184,6 +188,125 @@ export default function InternalAdminPage() {
           </div>
           {safeActionResult && (
             <pre className="mt-2 overflow-auto rounded bg-gray-50 p-3 text-xs dark:bg-gray-900">{JSON.stringify(safeActionResult, null, 2)}</pre>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-6 rounded border border-gray-200 p-4 dark:border-gray-800">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-gray-500">support policy governance / multilingual safety / guardrail / rollback</p>
+          <button
+            type="button"
+            className="rounded bg-gray-900 px-3 py-2 text-xs text-white"
+            onClick={() => {
+              setMessage(null)
+              trackMizzzEvent('support_policy_dashboard_view', { actorRole: internalRole, sourceSection: 'support_policy_dashboard', sourceArea: 'cross' })
+              api.getSupportPolicyDashboard().then(setSupportPolicyDashboard).catch((e: Error) => setMessage(e.message))
+            }}
+          >support policy summary 更新</button>
+        </div>
+
+        {supportPolicyDashboard && (
+          <div className="mt-3 space-y-3 text-xs">
+            <p className="text-gray-500">next: {supportPolicyDashboard.policySummary.nextRecommendedAction}</p>
+            <div className="grid gap-2 md:grid-cols-2">
+              <div className="rounded border border-gray-200 p-3 dark:border-gray-700">
+                <p className="font-medium">policy registry / review queue</p>
+                <p>total: {supportPolicyDashboard.policySummary.totalCount}</p>
+                <p>active: {supportPolicyDashboard.policySummary.activeCount}</p>
+                <p>under review: {supportPolicyDashboard.policySummary.underReviewCount}</p>
+                <p>review needed: {supportPolicyDashboard.policySummary.reviewNeededCount}</p>
+                <p>rolled back: {supportPolicyDashboard.policySummary.rolledBackCount}</p>
+              </div>
+              <div className="rounded border border-gray-200 p-3 dark:border-gray-700">
+                <p className="font-medium">guardrail / safety / rollback / audit</p>
+                <p>guardrail breached: {supportPolicyDashboard.guardrailSummary.breachedCount}</p>
+                <p>safety review needed: {supportPolicyDashboard.multilingualSafetySummary.reviewNeededCount}</p>
+                <p>rollback recommended: {supportPolicyDashboard.rollbackSummary.recommendedCount}</p>
+                <p>audit anomaly: {supportPolicyDashboard.auditSummary.anomalyCount}</p>
+                <p>high+critical locale impact: {supportPolicyDashboard.localeImpactSummary.highCount + supportPolicyDashboard.localeImpactSummary.criticalCount}</p>
+              </div>
+            </div>
+            <pre className="overflow-auto rounded bg-gray-50 p-3 dark:bg-gray-900">{JSON.stringify({
+              reviewQueue: supportPolicyDashboard.reviewQueue.slice(0, 8),
+              guardrailBreaches: supportPolicyDashboard.guardrailBreaches.slice(0, 8),
+              rollbackReadyItems: supportPolicyDashboard.rollbackReadyItems.slice(0, 8),
+            }, null, 2)}</pre>
+          </div>
+        )}
+        <div className="mt-4 rounded border border-gray-200 p-3 dark:border-gray-700">
+          <p className="text-xs text-gray-500">support policy safe actions (review / activate / rollback / audit)</p>
+          <div className="mt-2 flex flex-col gap-2 md:flex-row">
+            <input value={supportPolicyReason} onChange={(e) => setSupportPolicyReason(e.target.value)} className="w-full rounded border border-gray-300 px-2 py-2 text-xs" placeholder="support policy action reason を入力" />
+            <button
+              type="button"
+              className="rounded border border-gray-300 px-3 py-2 text-xs"
+              onClick={() => {
+                setMessage(null)
+                api.runSupportPolicyAction({
+                  actionType: 'request_review',
+                  sourceSite: 'cross',
+                  reason: supportPolicyReason,
+                  dryRun: true,
+                  policyState: 'under_review',
+                  policyReviewState: 'in_review',
+                  multilingualSafetyReviewState: 'in_review',
+                  auditState: 'recorded',
+                }).then((result) => {
+                  setSupportPolicyActionResult(result)
+                  return api.getSupportPolicyDashboard().then(setSupportPolicyDashboard)
+                }).catch((e: Error) => setMessage(e.message))
+              }}
+            >review queue dry-run</button>
+            <button
+              type="button"
+              className="rounded border border-amber-300 px-3 py-2 text-xs text-amber-700"
+              onClick={() => {
+                setMessage(null)
+                api.runSupportPolicyAction({
+                  actionType: 'activate',
+                  sourceSite: 'cross',
+                  reason: supportPolicyReason,
+                  dryRun: false,
+                  confirmed: true,
+                  policyState: 'active',
+                  policyActivationState: 'staged_rollout',
+                  experimentState: 'running',
+                  experimentGuardrailState: 'warning',
+                  guardrailState: 'warning',
+                  multilingualSafetyState: 'review_needed',
+                  rollbackState: 'prepared',
+                  rollbackPreparednessState: 'ready',
+                }).then((result) => {
+                  setSupportPolicyActionResult(result)
+                  return api.getSupportPolicyDashboard().then(setSupportPolicyDashboard)
+                }).catch((e: Error) => setMessage(e.message))
+              }}
+            >staged activation</button>
+            <button
+              type="button"
+              className="rounded border border-red-300 px-3 py-2 text-xs text-red-700"
+              onClick={() => {
+                setMessage(null)
+                api.runSupportPolicyAction({
+                  actionType: 'rollback_execute',
+                  sourceSite: 'cross',
+                  reason: supportPolicyReason,
+                  dryRun: false,
+                  confirmed: true,
+                  policyState: 'rolled_back',
+                  rollbackState: 'completed',
+                  auditState: 'recorded',
+                  changeRiskState: 'high',
+                }).then((result) => {
+                  setSupportPolicyActionResult(result)
+                  return api.getSupportPolicyDashboard().then(setSupportPolicyDashboard)
+                }).catch((e: Error) => setMessage(e.message))
+              }}
+            >rollback execute</button>
+          </div>
+          {supportPolicyActionResult && (
+            <pre className="mt-2 overflow-auto rounded bg-gray-50 p-3 text-xs dark:bg-gray-900">{JSON.stringify(supportPolicyActionResult, null, 2)}</pre>
           )}
         </div>
       </div>

@@ -31,6 +31,9 @@ export type InternalPermission =
   | 'internal.flag.approve'
   | 'internal.flag.execute'
   | 'internal.flag.emergency'
+  | 'internal.support.read'
+  | 'internal.support.policy.approve'
+  | 'internal.support.policy.execute'
 
 const ROLE_PERMISSIONS: Record<InternalRole, InternalPermission[]> = {
   super_admin: [
@@ -55,6 +58,9 @@ const ROLE_PERMISSIONS: Record<InternalRole, InternalPermission[]> = {
     'internal.flag.approve',
     'internal.flag.execute',
     'internal.flag.emergency',
+    'internal.support.read',
+    'internal.support.policy.approve',
+    'internal.support.policy.execute',
   ],
   internal_admin: [
     'internal.user.read',
@@ -76,12 +82,15 @@ const ROLE_PERMISSIONS: Record<InternalRole, InternalPermission[]> = {
     'internal.flag.approve',
     'internal.flag.execute',
     'internal.flag.emergency',
+    'internal.support.read',
+    'internal.support.policy.approve',
+    'internal.support.policy.execute',
   ],
-  support: ['internal.user.read', 'internal.notification.reset', 'internal.session.revoke', 'internal.playbook.run', 'internal.audit.read', 'internal.status.read', 'internal.release.read', 'internal.flag.read'],
-  crm: ['internal.user.read', 'internal.user.update', 'internal.notification.reset', 'internal.playbook.run', 'internal.audit.read', 'internal.status.read', 'internal.release.read', 'internal.flag.read'],
-  moderation: ['internal.user.read', 'internal.moderation.override', 'internal.audit.read', 'internal.status.read', 'internal.flag.read'],
-  campaign: ['internal.user.read', 'internal.campaign.override', 'internal.audit.read', 'internal.status.read', 'internal.release.read', 'internal.flag.read', 'internal.flag.approve'],
-  read_only: ['internal.user.read', 'internal.audit.read', 'internal.status.read', 'internal.release.read', 'internal.flag.read'],
+  support: ['internal.user.read', 'internal.notification.reset', 'internal.session.revoke', 'internal.playbook.run', 'internal.audit.read', 'internal.status.read', 'internal.release.read', 'internal.flag.read', 'internal.support.read'],
+  crm: ['internal.user.read', 'internal.user.update', 'internal.notification.reset', 'internal.playbook.run', 'internal.audit.read', 'internal.status.read', 'internal.release.read', 'internal.flag.read', 'internal.support.read'],
+  moderation: ['internal.user.read', 'internal.moderation.override', 'internal.audit.read', 'internal.status.read', 'internal.flag.read', 'internal.support.read'],
+  campaign: ['internal.user.read', 'internal.campaign.override', 'internal.audit.read', 'internal.status.read', 'internal.release.read', 'internal.flag.read', 'internal.flag.approve', 'internal.support.read'],
+  read_only: ['internal.user.read', 'internal.audit.read', 'internal.status.read', 'internal.release.read', 'internal.flag.read', 'internal.support.read'],
 }
 
 function normalizeInternalRoles(rawRoles: unknown): InternalRole[] {

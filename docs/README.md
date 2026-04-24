@@ -71,6 +71,7 @@
 - [proactive support / recommendation scoring / issue prevention runbook (2026-04-23)](./09_operations/proactive-support-recommendation-issue-prevention-runbook-2026-04-23.md)
 - [multilingual support knowledge / localization / translation QA / locale-aware orchestration runbook (2026-04-24)](./09_operations/multilingual-support-knowledge-localization-runbook-2026-04-24.md)
 - [multilingual support optimization / translation memory / glossary / locale retrieval runbook (2026-04-24)](./09_operations/multilingual-support-optimization-foundation-2026-04-24.md)
+- [support policy governance / optimization audit / rollback / experiment guardrails / multilingual safety review runbook (2026-04-24)](./09_operations/support-policy-governance-rollback-guardrail-runbook-2026-04-24.md)
 - [分析基盤・改善運用ガイド](./09_operations/analytics-improvement-foundation.md)
 - [SEO/コンテンツ流入基盤メモ（2026-04）](./seo-content-growth-foundation.md)
 - [パーソナライズ導線運用メモ](./personalization-notification-center.md)

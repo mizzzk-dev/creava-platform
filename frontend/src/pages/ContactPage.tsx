@@ -59,6 +59,23 @@ export default function ContactPage() {
     experimentVariantState: searchParams.get('experiment_variant_state') ?? '',
     policyState: searchParams.get('policy_state') ?? '',
     policyEffectivenessState: searchParams.get('policy_effectiveness_state') ?? '',
+    policyDraftState: searchParams.get('policy_draft_state') ?? '',
+    policyReviewState: searchParams.get('policy_review_state') ?? '',
+    policyApprovalState: searchParams.get('policy_approval_state') ?? '',
+    policyActivationState: searchParams.get('policy_activation_state') ?? '',
+    experimentGuardrailState: searchParams.get('experiment_guardrail_state') ?? '',
+    guardrailState: searchParams.get('guardrail_state') ?? '',
+    guardrailReason: searchParams.get('guardrail_reason') ?? '',
+    multilingualSafetyState: searchParams.get('multilingual_safety_state') ?? '',
+    multilingualSafetyReviewState: searchParams.get('multilingual_safety_review_state') ?? '',
+    rollbackState: searchParams.get('rollback_state') ?? '',
+    rollbackReason: searchParams.get('rollback_reason') ?? '',
+    rollbackPreparednessState: searchParams.get('rollback_preparedness_state') ?? '',
+    auditState: searchParams.get('audit_state') ?? '',
+    auditTrailState: searchParams.get('audit_trail_state') ?? '',
+    auditVisibilityState: searchParams.get('audit_visibility_state') ?? '',
+    localeImpactState: searchParams.get('locale_impact_state') ?? '',
+    changeRiskState: searchParams.get('change_risk_state') ?? '',
   }), [searchParams])
 
   useEffect(() => {

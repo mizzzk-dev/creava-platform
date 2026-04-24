@@ -27,6 +27,23 @@ interface Props {
     experimentVariantState?: string
     policyState?: string
     policyEffectivenessState?: string
+    policyDraftState?: string
+    policyReviewState?: string
+    policyApprovalState?: string
+    policyActivationState?: string
+    experimentGuardrailState?: string
+    guardrailState?: string
+    guardrailReason?: string
+    multilingualSafetyState?: string
+    multilingualSafetyReviewState?: string
+    rollbackState?: string
+    rollbackReason?: string
+    rollbackPreparednessState?: string
+    auditState?: string
+    auditTrailState?: string
+    auditVisibilityState?: string
+    localeImpactState?: string
+    changeRiskState?: string
   }
 }
 
@@ -75,6 +92,16 @@ export default function SupportAssistPanel({ formDefinition, handoffContext }: P
       {(handoffContext?.experimentState || handoffContext?.policyState) && (
         <p className="mt-2 rounded-md border border-amber-900/50 bg-amber-950/40 px-2 py-1 text-[11px] text-amber-100">
           lifecycle: {handoffContext.lifecycleAwareState ?? '-'} / experiment: {handoffContext.experimentState ?? '-'} ({handoffContext.experimentVariantState ?? '-'}) / policy: {handoffContext.policyState ?? '-'} ({handoffContext.policyEffectivenessState ?? '-'})
+        </p>
+      )}
+      {(handoffContext?.guardrailState || handoffContext?.rollbackState || handoffContext?.multilingualSafetyState) && (
+        <p className="mt-2 rounded-md border border-rose-900/50 bg-rose-950/40 px-2 py-1 text-[11px] text-rose-100">
+          governance: review={handoffContext.policyReviewState ?? '-'} / guardrail={handoffContext.guardrailState ?? '-'} / multilingualSafety={handoffContext.multilingualSafetyState ?? '-'} / rollback={handoffContext.rollbackState ?? '-'}
+        </p>
+      )}
+      {(handoffContext?.auditState || handoffContext?.changeRiskState) && (
+        <p className="mt-2 rounded-md border border-slate-700/60 bg-slate-900/60 px-2 py-1 text-[11px] text-slate-100">
+          audit={handoffContext.auditState ?? '-'} ({handoffContext.auditTrailState ?? '-'}) / visibility={handoffContext.auditVisibilityState ?? '-'} / localeImpact={handoffContext.localeImpactState ?? '-'} / risk={handoffContext.changeRiskState ?? '-'}
         </p>
       )}
 

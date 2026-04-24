@@ -73,6 +73,7 @@ const ALLOWED_EVENTS = new Set([
   'rollback_execute_complete', 'hotfix_start', 'freeze_exception_request', 'release_note_publish',
   'related_incident_open',
   'flag_dashboard_view', 'flag_summary_view', 'flag_evaluation_view',
+  'support_policy_dashboard_view', 'support_policy_review_queue_view', 'support_policy_rollback_execute',
   'rollout_percentage_change', 'staged_rollout_start', 'staged_rollout_pause', 'staged_rollout_resume',
   'experiment_start', 'experiment_pause', 'experiment_complete', 'experiment_stop',
   'kill_switch_preview_view', 'kill_switch_trigger_start', 'kill_switch_trigger_complete',
@@ -335,6 +336,41 @@ type FlagAuditItem = {
   nextRecommendedAction: string
 }
 
+type SupportPolicyAuditItem = {
+  policyId: string
+  sourceSite: string
+  sourceArea: string
+  policySummary: string
+  policyState: string
+  policyDraftState: string
+  policyReviewState: string
+  policyApprovalState: string
+  policyActivationState: string
+  policyEffectivenessState: string
+  experimentState: string
+  experimentVariantState: string
+  experimentGuardrailState: string
+  guardrailState: string
+  guardrailReason: string
+  multilingualSafetyState: string
+  multilingualSafetyReviewState: string
+  rollbackState: string
+  rollbackReason: string
+  rollbackPreparednessState: string
+  auditState: string
+  auditTrailState: string
+  auditVisibilityState: string
+  localeImpactState: string
+  changeRiskState: string
+  regionalPolicyTemplateState: string
+  policyLastReviewedAt: string | null
+  policyLastActivatedAt: string | null
+  policyLastRolledBackAt: string | null
+  policyLastAuditedAt: string | null
+  nextRecommendedAction: string
+  createdAt: string | null
+}
+
 function toReleaseAuditItem(row: Record<string, unknown>): ReleaseAuditItem {
   const metadata = parseJsonObject(row.metadata)
   return {
@@ -399,6 +435,44 @@ function toFlagAuditItem(row: Record<string, unknown>): FlagAuditItem {
     lastChangedAt: metadata.lastChangedAt ? String(metadata.lastChangedAt) : null,
     lastDisabledAt: metadata.lastDisabledAt ? String(metadata.lastDisabledAt) : null,
     nextRecommendedAction: String(metadata.nextRecommendedAction ?? 'preview / simulation で評価結果を確認'),
+  }
+}
+
+function toSupportPolicyAuditItem(row: Record<string, unknown>): SupportPolicyAuditItem {
+  const metadata = parseJsonObject(row.metadata)
+  return {
+    policyId: String(row.targetId ?? metadata.policyId ?? `support-policy:${Date.now()}`),
+    sourceSite: String(row.sourceSite ?? metadata.sourceSite ?? 'cross'),
+    sourceArea: String(metadata.sourceArea ?? 'support-governance'),
+    policySummary: String(metadata.policySummary ?? 'support optimization governance summary'),
+    policyState: String(metadata.policyState ?? 'draft'),
+    policyDraftState: String(metadata.policyDraftState ?? 'drafting'),
+    policyReviewState: String(metadata.policyReviewState ?? 'not_started'),
+    policyApprovalState: String(metadata.policyApprovalState ?? 'pending'),
+    policyActivationState: String(metadata.policyActivationState ?? 'not_scheduled'),
+    policyEffectivenessState: String(metadata.policyEffectivenessState ?? 'unknown'),
+    experimentState: String(metadata.experimentState ?? 'none'),
+    experimentVariantState: String(metadata.experimentVariantState ?? 'control'),
+    experimentGuardrailState: String(metadata.experimentGuardrailState ?? 'not_configured'),
+    guardrailState: String(metadata.guardrailState ?? 'not_configured'),
+    guardrailReason: String(metadata.guardrailReason ?? 'not evaluated'),
+    multilingualSafetyState: String(metadata.multilingualSafetyState ?? 'not_checked'),
+    multilingualSafetyReviewState: String(metadata.multilingualSafetyReviewState ?? 'not_started'),
+    rollbackState: String(metadata.rollbackState ?? 'not_needed'),
+    rollbackReason: String(metadata.rollbackReason ?? 'not required'),
+    rollbackPreparednessState: String(metadata.rollbackPreparednessState ?? 'not_ready'),
+    auditState: String(metadata.auditState ?? 'not_recorded'),
+    auditTrailState: String(metadata.auditTrailState ?? 'missing'),
+    auditVisibilityState: String(metadata.auditVisibilityState ?? 'internal_only'),
+    localeImpactState: String(metadata.localeImpactState ?? 'not_evaluated'),
+    changeRiskState: String(metadata.changeRiskState ?? 'low'),
+    regionalPolicyTemplateState: String(metadata.regionalPolicyTemplateState ?? 'draft'),
+    policyLastReviewedAt: metadata.policyLastReviewedAt ? String(metadata.policyLastReviewedAt) : null,
+    policyLastActivatedAt: metadata.policyLastActivatedAt ? String(metadata.policyLastActivatedAt) : null,
+    policyLastRolledBackAt: metadata.policyLastRolledBackAt ? String(metadata.policyLastRolledBackAt) : null,
+    policyLastAuditedAt: metadata.policyLastAuditedAt ? String(metadata.policyLastAuditedAt) : null,
+    nextRecommendedAction: String(metadata.nextRecommendedAction ?? 'review queue で multilingual safety / locale impact を確認'),
+    createdAt: row.createdAt ? String(row.createdAt) : null,
   }
 }
 
@@ -2057,6 +2131,201 @@ export default factories.createCoreController('api::analytics-event.analytics-ev
       if (message.includes('Internal permission denied')) return ctx.forbidden('flag action の権限がありません。')
       strapi.log.error(`[analytics-event] internalFlagAction failed: ${message}`)
       return ctx.internalServerError('flag action 実行に失敗しました。')
+    }
+  },
+
+  async internalSupportPolicyDashboard(ctx) {
+    try {
+      await requireInternalPermission(ctx, 'internal.support.read')
+      const rows = await strapi.documents('api::internal-audit-log.internal-audit-log').findMany({
+        filters: { action: { $containsi: 'ops-support-policy' } },
+        fields: ['id', 'status', 'sourceSite', 'targetId', 'metadata', 'createdAt'],
+        sort: ['createdAt:desc'],
+        limit: BI_MAX_FETCH_ROWS,
+      })
+      const policies = (rows as Array<Record<string, unknown>>).map(toSupportPolicyAuditItem).slice(0, 120)
+      const reviewQueue = policies.filter((item) => ['under_review', 'draft'].includes(item.policyState) || ['in_review', 'changes_requested'].includes(item.policyReviewState))
+      const guardrailBreaches = policies.filter((item) => ['breached', 'auto_paused_like'].includes(item.experimentGuardrailState) || item.guardrailState === 'breached')
+      const rollbackReadyItems = policies.filter((item) => ['prepared', 'recommended'].includes(item.rollbackState))
+
+      ctx.body = {
+        sourceOfTruth: {
+          auth: 'supabase-auth(auth.users)',
+          supportPolicyControlPlane: 'internal_audit_log + support policy governance metadata',
+          audit: 'internal_audit_log',
+        },
+        policySummary: {
+          totalCount: policies.length,
+          draftCount: policies.filter((item) => item.policyState === 'draft').length,
+          underReviewCount: policies.filter((item) => item.policyState === 'under_review').length,
+          activeCount: policies.filter((item) => item.policyState === 'active').length,
+          pausedCount: policies.filter((item) => item.policyState === 'paused').length,
+          rolledBackCount: policies.filter((item) => item.policyState === 'rolled_back').length,
+          reviewNeededCount: reviewQueue.length,
+          nextRecommendedAction: guardrailBreaches.length > 0
+            ? 'guardrail breach の rollback recommendation を優先確認'
+            : reviewQueue.length > 0
+              ? 'review queue で multilingual safety check を処理'
+              : 'staged rollout 後の effectiveness / audit を確認',
+        },
+        experimentSummary: {
+          runningCount: policies.filter((item) => item.experimentState === 'running').length,
+          pausedCount: policies.filter((item) => item.experimentState === 'paused').length,
+          completedCount: policies.filter((item) => item.experimentState === 'completed').length,
+          invalidatedCount: policies.filter((item) => item.experimentState === 'invalidated').length,
+        },
+        guardrailSummary: {
+          healthyCount: policies.filter((item) => item.experimentGuardrailState === 'healthy').length,
+          warningCount: policies.filter((item) => ['warning'].includes(item.experimentGuardrailState)).length,
+          breachedCount: policies.filter((item) => item.experimentGuardrailState === 'breached' || item.guardrailState === 'breached').length,
+          autoPausedLikeCount: policies.filter((item) => item.experimentGuardrailState === 'auto_paused_like').length,
+        },
+        rollbackSummary: {
+          preparedCount: policies.filter((item) => item.rollbackState === 'prepared').length,
+          recommendedCount: policies.filter((item) => item.rollbackState === 'recommended').length,
+          runningCount: policies.filter((item) => item.rollbackState === 'running').length,
+          completedCount: policies.filter((item) => item.rollbackState === 'completed').length,
+          failedCount: policies.filter((item) => item.rollbackState === 'failed').length,
+        },
+        multilingualSafetySummary: {
+          safeCount: policies.filter((item) => item.multilingualSafetyState === 'safe').length,
+          reviewNeededCount: policies.filter((item) => item.multilingualSafetyState === 'review_needed').length,
+          blockedCount: policies.filter((item) => item.multilingualSafetyState === 'blocked').length,
+          degradedLikeCount: policies.filter((item) => item.multilingualSafetyState === 'degraded_like').length,
+        },
+        auditSummary: {
+          recordedCount: policies.filter((item) => item.auditState === 'recorded').length,
+          reviewedCount: policies.filter((item) => item.auditState === 'reviewed').length,
+          anomalyCount: policies.filter((item) => item.auditState === 'anomaly_detected').length,
+          completeTrailCount: policies.filter((item) => item.auditTrailState === 'complete').length,
+        },
+        localeImpactSummary: {
+          lowCount: policies.filter((item) => item.localeImpactState === 'low').length,
+          mediumCount: policies.filter((item) => item.localeImpactState === 'medium').length,
+          highCount: policies.filter((item) => item.localeImpactState === 'high').length,
+          criticalCount: policies.filter((item) => item.localeImpactState === 'critical').length,
+        },
+        riskSummary: {
+          lowCount: policies.filter((item) => item.changeRiskState === 'low').length,
+          mediumCount: policies.filter((item) => item.changeRiskState === 'medium').length,
+          highCount: policies.filter((item) => item.changeRiskState === 'high').length,
+          criticalCount: policies.filter((item) => item.changeRiskState === 'critical').length,
+        },
+        reviewQueue: reviewQueue.slice(0, 30),
+        guardrailBreaches: guardrailBreaches.slice(0, 30),
+        rollbackReadyItems: rollbackReadyItems.slice(0, 30),
+        policies,
+      }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Internal permission denied')) return ctx.forbidden('support policy dashboard の権限がありません。')
+      strapi.log.error(`[analytics-event] internalSupportPolicyDashboard failed: ${message}`)
+      return ctx.internalServerError('support policy dashboard の取得に失敗しました。')
+    }
+  },
+
+  async internalSupportPolicyAction(ctx) {
+    try {
+      const body = (ctx.request.body ?? {}) as Record<string, unknown>
+      const actionType = sanitizeText(body.actionType, 40) ?? 'draft'
+      const permission = actionType === 'approve'
+        ? 'internal.support.policy.approve'
+        : ['activate', 'rollback_execute'].includes(actionType)
+          ? 'internal.support.policy.execute'
+          : 'internal.support.read'
+      const access = await requireInternalPermission(ctx, permission)
+      const reason = sanitizeText(body.reason, 240)
+      if (!reason || reason.length < 8) return ctx.badRequest('reason は8文字以上で入力してください。')
+
+      const policyId = sanitizeText(body.policyId, 140) ?? `support-policy:${Date.now()}`
+      const sourceSite = sanitizeSourceSite(body.sourceSite) === 'unknown' ? 'cross' : sanitizeSourceSite(body.sourceSite)
+      const dryRun = body.dryRun !== false
+      const confirmed = Boolean(body.confirmed)
+      if (['activate', 'rollback_execute'].includes(actionType) && !confirmed) return ctx.badRequest('activate / rollback_execute は confirmed=true が必要です。')
+
+      const nowIso = new Date().toISOString()
+      const policyState = sanitizeText(body.policyState, 32)
+        ?? (actionType === 'activate' ? 'active' : actionType === 'rollback_execute' ? 'rolled_back' : actionType === 'pause' ? 'paused' : actionType === 'request_review' ? 'under_review' : 'draft')
+      const policyReviewState = sanitizeText(body.policyReviewState, 32)
+        ?? (actionType === 'request_review' ? 'in_review' : actionType === 'approve' ? 'approved' : 'not_started')
+      const policyApprovalState = sanitizeText(body.policyApprovalState, 32)
+        ?? (actionType === 'approve' ? 'approved' : 'pending')
+      const rollbackState = sanitizeText(body.rollbackState, 32)
+        ?? (actionType === 'rollback_execute' ? 'completed' : actionType === 'rollback_prepare' ? 'prepared' : 'not_needed')
+
+      await strapi.documents('api::internal-audit-log.internal-audit-log').create({
+        data: {
+          actorLogtoUserId: access.authUser.userId,
+          actorInternalRoles: access.internalRoles,
+          targetType: 'support-policy-item',
+          targetId: policyId,
+          action: `ops-support-policy:${actionType}`,
+          status: ['activate', 'rollback_execute'].includes(actionType) && dryRun ? 'pending' : 'success',
+          reason,
+          sourceSite,
+          beforeState: { policyState: 'draft', rollbackState: 'not_needed' },
+          afterState: { policyState, rollbackState },
+          metadata: {
+            policyId,
+            actionType,
+            sourceArea: sanitizeText(body.sourceArea, 64) ?? 'support-governance',
+            dryRun,
+            confirmed,
+            policySummary: sanitizeText(body.policySummary, 240) ?? 'support optimization governance update',
+            policyState,
+            policyDraftState: sanitizeText(body.policyDraftState, 32) ?? (actionType === 'draft' ? 'drafting' : 'ready_for_review'),
+            policyReviewState,
+            policyApprovalState,
+            policyActivationState: sanitizeText(body.policyActivationState, 32) ?? (actionType === 'activate' ? 'staged_rollout' : 'not_scheduled'),
+            policyEffectivenessState: sanitizeText(body.policyEffectivenessState, 32) ?? 'unknown',
+            experimentState: sanitizeText(body.experimentState, 32) ?? (actionType === 'activate' ? 'running' : 'draft'),
+            experimentVariantState: sanitizeText(body.experimentVariantState, 40) ?? 'control',
+            experimentGuardrailState: sanitizeText(body.experimentGuardrailState, 32) ?? 'healthy',
+            guardrailState: sanitizeText(body.guardrailState, 32) ?? 'healthy',
+            guardrailReason: sanitizeText(body.guardrailReason, 240) ?? 'initial guardrail check',
+            multilingualSafetyState: sanitizeText(body.multilingualSafetyState, 32) ?? 'not_checked',
+            multilingualSafetyReviewState: sanitizeText(body.multilingualSafetyReviewState, 32) ?? 'not_started',
+            rollbackState,
+            rollbackReason: sanitizeText(body.rollbackReason, 240) ?? (actionType === 'rollback_execute' ? 'guardrail breach detected' : 'rollback plan maintained'),
+            rollbackPreparednessState: sanitizeText(body.rollbackPreparednessState, 32) ?? (['rollback_prepare', 'activate'].includes(actionType) ? 'ready' : 'not_ready'),
+            auditState: sanitizeText(body.auditState, 32) ?? 'recorded',
+            auditTrailState: sanitizeText(body.auditTrailState, 32) ?? 'complete',
+            auditVisibilityState: sanitizeText(body.auditVisibilityState, 32) ?? 'ops_and_support',
+            localeImpactState: sanitizeText(body.localeImpactState, 32) ?? 'medium',
+            changeRiskState: sanitizeText(body.changeRiskState, 32) ?? (actionType === 'rollback_execute' ? 'high' : 'medium'),
+            regionalPolicyTemplateState: sanitizeText(body.regionalPolicyTemplateState, 32) ?? 'active',
+            policyLastReviewedAt: nowIso,
+            policyLastActivatedAt: actionType === 'activate' ? nowIso : null,
+            policyLastRolledBackAt: actionType === 'rollback_execute' ? nowIso : null,
+            policyLastAuditedAt: nowIso,
+            nextRecommendedAction: sanitizeText(body.nextRecommendedAction, 240)
+              ?? (actionType === 'request_review'
+                ? 'multilingual safety review queue で locale impact を確認'
+                : actionType === 'activate'
+                  ? 'guardrail dashboard で breach 監視を継続'
+                  : actionType === 'rollback_execute'
+                    ? 'rollback 後に policy effectiveness / support quality を監査'
+                    : 'policy registry で次アクションを確認'),
+          },
+          requestId: String(ctx.request.headers['x-request-id'] ?? ''),
+        },
+      })
+
+      ctx.body = {
+        policyId,
+        actionType,
+        dryRun,
+        confirmed,
+        policyState,
+        policyReviewState,
+        policyApprovalState,
+        rollbackState,
+      }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Internal permission denied')) return ctx.forbidden('support policy action の権限がありません。')
+      strapi.log.error(`[analytics-event] internalSupportPolicyAction failed: ${message}`)
+      return ctx.internalServerError('support policy action 実行に失敗しました。')
     }
   },
 

@@ -29,6 +29,7 @@ import type { ProactiveSupportSummary } from '@/modules/support/proactiveSupport
 import { buildOptimizationQueryParams, type ProactiveOptimizationSummary } from '@/modules/support/proactiveOptimization'
 import { buildLocaleSupportSummary, normalizeLocale, resolveLocalizedGuides } from '@/modules/support/localeSupportOps'
 import { buildMultilingualOptimizationSummary } from '@/modules/support/multilingualOptimization'
+import { buildPolicyGovernanceQueryParams, buildSupportPolicyGovernanceSummary } from '@/modules/support/policyGovernance'
 
 const detectSite = (): SourceSite => {
   if (isStoreSite) return 'store'
@@ -151,6 +152,15 @@ export default function SupportCenterPage() {
     sourceSite,
     localeSummary: localeSupportSummary,
   }), [localeSupportSummary, sourceSite])
+  const policyGovernanceSummary = useMemo(() => buildSupportPolicyGovernanceSummary({
+    sourceSite,
+    searchResultCount: filteredFaqs.length + filteredGuides.length,
+    localeFallbackState: localeSupportSummary.localeFallbackState,
+    retrievalQualityState: localeSupportSummary.retrievalQualityState,
+    glossaryConsistencyState: localeSupportSummary.glossaryConsistencyState,
+    localeEffectivenessState: localeSupportSummary.localeEffectivenessState,
+    regionalPolicyTemplateState: localeSupportSummary.regionalPolicyTemplateState,
+  }), [filteredFaqs.length, filteredGuides.length, localeSupportSummary.glossaryConsistencyState, localeSupportSummary.localeEffectivenessState, localeSupportSummary.localeFallbackState, localeSupportSummary.regionalPolicyTemplateState, localeSupportSummary.retrievalQualityState, sourceSite])
 
   const articleSuggestions = useMemo(() => {
     const topFaq = filteredFaqs.slice(0, 2).map((item) => ({ title: item.question, to: ROUTES.FAQ }))
@@ -308,6 +318,7 @@ export default function SupportCenterPage() {
     () => (optimizationSummary ? buildOptimizationQueryParams(optimizationSummary) : {}),
     [optimizationSummary],
   )
+  const governanceQuery = useMemo(() => buildPolicyGovernanceQueryParams(policyGovernanceSummary), [policyGovernanceSummary])
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-14">
@@ -624,6 +635,7 @@ export default function SupportCenterPage() {
           locale_retrieval_state: multilingualOptimizationSummary.localeRetrievalState,
           regional_policy_template_state: multilingualOptimizationSummary.regionalPolicyTemplateState,
           ...optimizationQuery,
+          ...governanceQuery,
         }).toString()}`}
         isSignedIn={isSignedIn}
         membershipStatus={benefitState.membershipStatus}

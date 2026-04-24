@@ -73,6 +73,12 @@ export default {
       config: { auth: false },
     },
     {
+      method: 'GET',
+      path: '/internal/support-policies/dashboard',
+      handler: 'analytics-event.internalSupportPolicyDashboard',
+      config: { auth: false },
+    },
+    {
       method: 'POST',
       path: '/internal/flags/action',
       handler: 'analytics-event.internalFlagAction',
@@ -82,6 +88,12 @@ export default {
       method: 'POST',
       path: '/internal/releases/action',
       handler: 'analytics-event.internalReleaseAction',
+      config: { auth: false },
+    },
+    {
+      method: 'POST',
+      path: '/internal/support-policies/action',
+      handler: 'analytics-event.internalSupportPolicyAction',
       config: { auth: false },
     },
     {
