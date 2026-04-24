@@ -1,146 +1,135 @@
-# Strapi → WordPress 移行計画（PR #231 次段 / 実運用化）
+# Strapi → WordPress 移行計画（full migration execution / staged cutover / decommission readiness）
 
-## 0. 今回の到達点
-- PR #231 の基盤（provider 切替・WP ルート雛形・移行スクリプト骨組み）から、次段として **本番切替可能性を評価/実行できる状態** まで拡張。
-- 重点は次の 6 分離：
-  1. API parity
-  2. migration execution
-  3. parity verification / diff audit
-  4. Stripe / webhook correctness
-  5. membership / gated access
-  6. staged cutover / rollback readiness
+## 0. このPRで進めた範囲
+- migration script を **dry-run / verify-only / actual-run** の明示モードに分離し、report に execution state / trace / rollback state を出力。
+- frontend discovery 検索を provider 対応にし、WordPress API (`/discovery/search`) 経由でも既存 `DiscoverySearchResponse` shape を返せるようにした。
+- WordPress plugin に preview verify endpoint (`/preview/verify`) と discovery search endpoint (`/discovery/search`) を追加。
+- staged cutover 対応として `VITE_CMS_WORDPRESS_ROLLOUT_DISCOVERY_SEARCH` を追加し、route単位で Strapi fallback 可能化。
+- docs/runbook に migration execution / cutover / rollback / decommission readiness checklist を追記。
 
 ---
 
-## 1. PR #231 時点の切り分け
+## 1. 現在 still Strapi-dependent な部分
+1. webhook起点の publish/revalidation 本体は Strapi backend (`/api/cms-sync/*`) が主系。
+2. preview verify の既定値は依然として Strapi endpoint を参照（WordPress endpoint は opt-in）。
+3. discovery 以外の検索系（support FAQ/guide 内部検索）は Strapi/Supabase依存が残る。
+4. editor運用（revision/approval/dashboard）は Strapi/既存runbook中心。
+5. analytics event の一部に Strapi運用用 action 名が残る。
 
-### 1-1. 本実装だった部分
-- `frontend/src/lib/cms/*` に CMS Provider 層が存在し、`VITE_CMS_PROVIDER` で strapi/wordpress を切替可能。
-- blog / news / events / works / store / fanclub / settings の frontend API は provider 経由化済み。
-- CMS fetch で `response.ok / content-type / HTML 混入 / timeout / retry` のガードが追加済み。
+## 2. 現在 WordPress で置き換え可能な部分
+1. blog/news/events/works/store/fanclub/settings の content fetch。
+2. Stripe checkout / portal / webhook の WordPress headless auth 経路（前段対応）。
+3. discovery 検索導線（route rollout で WordPress 化可能）。
+4. preview verify endpoint（WordPress secret運用に切替可能）。
+5. migration upsert route + verify/diff report。
 
-### 1-2. PR #231 review で残っていた blocker
-- WordPress content payload に `limitedEndAt` / `archiveVisibleForFC` の扱い揺れがあり、limited-window の表示制御が frontend semantics とズレるリスク。
-- list endpoint の `pageSize` fallback が不安定で、`meta.pagination` が欠落時に 1 件固定化へ寄るリスク。
-- `/billing/portal` が cookie login 前提 permission で、headless frontend の bearer/JWT auth と不整合。
-- migration verify report に severity / rollback 判定が不足し、staged cutover の可否判断が曖昧。
+## 3. readiness gap（不足）
+### migration execution readiness
+- 実データでの media relation 完全一致監査と resume strategy の自動化は次段で継続。
 
----
+### preview parity readiness
+- preview token lifecycle（TTL/revoke/audit）は未実装。
 
-## 2. 今回の実装概要
+### search parity readiness
+- relevance tuning（重み付け、同義語、N-gram）は最小。
 
-### 2-1. WordPress content API parity hardening
-- `accessStatus` を `public / fc_only / limited` に正規化し、`members_only` 互換値も吸収。
-- payload に `limitedEndAt` / `archiveVisibleForFC` / `wordpressLimitedWindowState` / `wordpressArchiveVisibilityState` を含め、frontend `canViewContent` 判定に必要な意味を保持。
-- `limitedEndAt` は malformed/null を吸収して ISO8601 に正規化（invalid は null 扱い）。
-- `creava_can_view_post()` を limited-window semantics に合わせ、**期限内 limited は guest 可 / 期限後は archiveVisibleForFC + member entitlement で制御** に統一。
-- trace 情報に `wordpressCompatibilityState` を追加し、route 単位の監査を容易化。
+### staged cutover readiness
+- discovery以外の route-level override は env flag 運用中心で、管理UIは未導入。
 
-### 2-2. migration execution 基盤
-- `scripts/migrate-strapi-to-wordpress.ts` を実行可能化。
-  - `--dry-run`
-  - `--verify-only`
-  - `--type=<content-type>`
-  - `--locale=<locale>`
-  - `--limit=<n>`
-  - report 出力（`scripts/migration/reports/*.json`）
-- `mapping.json` を idempotent に upsert 更新。
-- WordPress 側に `/wp-json/creava/v1/migration/*` upsert route を実装。
-
-### 2-3. parity verification / diff audit
-- migration verify で mismatch を `slug / locale / accessStatus / missing_target` で分類。
-- さらに severity を `critical / high / medium` に分類し、report に `rollbackReadiness` を出力。
-- `critical` または `high` が 1 件でも残る場合は staged cutover を進めない最小基準を明文化。
-
-### 2-4. Stripe / membership auth parity hardening
-- `/billing/portal` の permission を cookie login 依存から、**headless bearer/JWT 検証 + user resolve** へ変更。
-- JWT claim (`wpUserId` / `sub` / `email`) から user を解決し、`stripe_customer_id` がない場合は `customer_not_found` を返して unauthorized と分離。
-- unauthorized / missing customer / Stripe API エラーで失敗 shape を分離し、`wordpressTraceId` を返して追跡可能化。
-- checkout / portal の auth semantics をそろえ、frontend token 送信方式と整合。
-
-### 2-5. staged cutover
-- frontend で endpoint 単位の provider 判定を追加。
-- `VITE_CMS_PROVIDER=wordpress` のみでは全面切替しない構成へ変更。
-- 次の段階フラグを追加：
-  - `VITE_CMS_WORDPRESS_ROLLOUT_ENABLED`
-  - `VITE_CMS_WORDPRESS_ROLLOUT_SITE_{MAIN,STORE,FC}`
-  - `VITE_CMS_WORDPRESS_ROLLOUT_{BLOG,NEWS,EVENTS,WORKS,STORE,FANCLUB,SETTINGS}`
+### decommission readiness
+- Strapi shutdown 前の最終「ゼロ依存」監査ジョブは未導入。
 
 ---
 
-## 3. 実行手順
-
-### 3-1. Dry run
-```bash
-STRAPI_MIGRATION_SOURCE_URL=... \
-STRAPI_MIGRATION_SOURCE_TOKEN=... \
-WORDPRESS_MIGRATION_TARGET_URL=... \
-WORDPRESS_MIGRATION_APP_TOKEN=... \
-node --loader ts-node/esm scripts/migrate-strapi-to-wordpress.ts --dry-run
-```
-
-### 3-2. Verify only
-```bash
-node --loader ts-node/esm scripts/migrate-strapi-to-wordpress.ts --verify-only --type=blog-posts
-```
-
-### 3-3. 実行
-```bash
-node --loader ts-node/esm scripts/migrate-strapi-to-wordpress.ts --type=store-products --locale=ja
-```
+## 4. migration execution / verify-only / actual-run 方針
+- `--dry-run`: writeなしで migration report + diff report を出力。
+- `--verify-only`: 移行実行せず parity 検証のみ。
+- `--actual-run`: WordPress upsert を実行。
+- `--resume-failed-only`: mapping 上 failed のみ再実行。
+- report には以下を必須出力。
+  - `migrationExecutionState`
+  - `migrationDryRunState`
+  - `migrationVerifyState`
+  - `migrationReportState`
+  - `migrationDiffState`
+  - `migrationIdempotencyState`
+  - `migrationRollbackState`
+  - `migrationTraceId`
+  - `migrationStartedAt / migrationCompletedAt / migrationVerifiedAt`
 
 ---
 
-## 4. Cutover / Rollback ルール
-
-### Cutover 前チェック
-- 各 content type で verify `ng = 0` または許容理由が明文化されている
-- checkout / portal / webhook の疎通と再送耐性を確認済み
-- member-only コンテンツを未ログインで本文取得できないことを確認
-- main/store/fc 別にフラグで有効化可能であることを確認
-
-### Rollback
-- rollout flag を単位別（site or content type）で `false`
-- `VITE_CMS_PROVIDER=strapi` へ戻す
-- webhook は継続受信しつつ、front の provider のみ先に rollback 可能
-- rollback 後に verify-only 実行で差分が再現性あることを確認
+## 5. preview parity 方針
+- preview state を `cms_preview_state` に統一し provider (`strapi|wordpress`) を保持。
+- verify endpoint は provider 別に切替。
+  - Strapi: `VITE_PREVIEW_VERIFY_ENDPOINT`
+  - WordPress: `VITE_WORDPRESS_PREVIEW_VERIFY_ENDPOINT`
+- `provider` query がない場合は `VITE_CMS_PROVIDER` から既定決定。
+- fallback secret は互換用で、基本は backend verify を推奨。
 
 ---
 
-## 5. Secrets / Env
+## 6. search/list/taxonomy parity 方針
+- WordPress discovery route で以下を満たす。
+  - locale/sourceSite/contentType/category/memberState/sort/limit のクエリ受け取り
+  - `DiscoverySearchResponse` contract 準拠
+  - guest は `accessStatus != public` を除外
+  - taxonomy から category/tags を抽出して facet 生成
+- no-result 時の fallback recommendations を返す。
 
+---
+
+## 7. staged cutover / rollback 方針
+- provider 共通条件
+  - `VITE_CMS_PROVIDER=wordpress`
+  - `VITE_CMS_WORDPRESS_ROLLOUT_ENABLED=true`
+  - `VITE_CMS_WORDPRESS_ROLLOUT_SITE_{MAIN|STORE|FC}=true`
+- route別条件
+  - content routes: `VITE_CMS_WORDPRESS_ROLLOUT_{BLOG|NEWS|EVENTS|WORKS|STORE|FANCLUB|SETTINGS}`
+  - discovery: `VITE_CMS_WORDPRESS_ROLLOUT_DISCOVERY_SEARCH`
+- rollback は route flag だけ戻せる構造を維持。
+
+### rollback criteria
+- verify mismatch が `critical > 0` or `high > 0` なら rollback 推奨。
+
+---
+
+## 8. Strapi decommission readiness checklist（現段）
+- [ ] main/store/fc の主要 route が WordPress provider で 7日安定
+- [ ] preview verify が WordPress endpoint 主系化
+- [ ] discovery/search parity 検証が定常運用化
+- [ ] publish/revalidate/cdn purge が WordPress起点で監視可能
+- [ ] Stripe checkout/portal/webhook のエラーレートが基準値内
+- [ ] fallback/rollback drill を staging で月次実施
+- [ ] unresolved Strapi dependency 一覧がゼロ
+
+---
+
+## 9. GitHub Secrets / runtime env
 ### Frontend
+- `VITE_CMS_PROVIDER`
 - `VITE_WORDPRESS_API_URL`
 - `VITE_CMS_WORDPRESS_ROLLOUT_*`
-- （継続）`VITE_CMS_PROVIDER`
+- `VITE_PREVIEW_VERIFY_ENDPOINT`
+- `VITE_WORDPRESS_PREVIEW_VERIFY_ENDPOINT`
 
-### Runtime (WordPress)
+### WordPress runtime
+- `WORDPRESS_MIGRATION_APP_TOKEN`
+- `WORDPRESS_PREVIEW_SECRET`（または `PREVIEW_SHARED_SECRET`）
+- `WORDPRESS_HEADLESS_JWT_SECRET`
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
-- `STRIPE_SUCCESS_URL`
-- `STRIPE_CANCEL_URL`
-- `STRIPE_PORTAL_RETURN_URL`
-- `WORDPRESS_MIGRATION_APP_TOKEN`
-- `WORDPRESS_HEADLESS_JWT_SECRET`（billing portal bearer/JWT 検証用。frontend へ露出禁止）
 
-### Migration 実行時
+### Migration実行
 - `STRAPI_MIGRATION_SOURCE_URL`
 - `STRAPI_MIGRATION_SOURCE_TOKEN`
 - `WORDPRESS_MIGRATION_TARGET_URL`
 - `WORDPRESS_MIGRATION_APP_TOKEN`
-- `WORDPRESS_HEADLESS_JWT_SECRET`（billing portal bearer/JWT 検証用。frontend へ露出禁止）
 
 ---
 
-## 6. 残課題（次PR候補）
-- WordPress editor workflow（revision/approval/preview）最適化
-- media governance（image variants, CDN cache, alt policy）
-- search parity / preview parity の追加検証
-- Strapi full decommission 計画
-
----
-
-## 7. 仮定
-- WordPress runtime は HTTPS + app token 配布で migration route を保護できる。
-- Stripe は WordPress 直 SDK ではなく API proxy 方式でも運用要件を満たす。
-- locale は現状 `ja` 優先で、`en/ko` は同一方式で段階追加可能。
+## 10. 仮定
+1. WordPress REST は WAF/CDN 経由でも `content-type: application/json` を安定返却できる。
+2. discovery の relevance は当面「新着優先 + キーワード一致」で運用許容。
+3. preview secret は短期ローテーション運用を別runbookで実施する。
+4. Strapi shutdown はこのPRでは実施せず、parallel運用を継続する。

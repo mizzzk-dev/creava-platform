@@ -8,6 +8,7 @@ const WORDPRESS_ENDPOINT_MAP: Record<string, string> = {
   '/store-products': 'store',
   '/fanclub-contents': 'fanclub',
   '/site-setting': 'settings',
+  '/discovery-search': 'discovery_search',
 }
 
 function toBool(value: string | undefined): boolean {

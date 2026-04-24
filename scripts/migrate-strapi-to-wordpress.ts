@@ -3,6 +3,7 @@
 
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import crypto from 'node:crypto'
 
 type ContentType = 'blog-posts' | 'news-items' | 'events' | 'works' | 'store-products' | 'fanclub-contents'
 
@@ -27,10 +28,13 @@ type MappingFile = {
 type CliOptions = {
   dryRun: boolean
   verifyOnly: boolean
+  actualRun: boolean
+  resumeFailedOnly: boolean
   type?: ContentType
   locale?: string
   limit?: number
   reportPath: string
+  traceId: string
 }
 
 type VerifyReason = 'missing_target' | 'slug' | 'locale' | 'accessStatus'
@@ -59,7 +63,10 @@ function parseArgs(): CliOptions {
   const options: CliOptions = {
     dryRun: args.includes('--dry-run'),
     verifyOnly: args.includes('--verify-only'),
+    actualRun: args.includes('--actual-run'),
+    resumeFailedOnly: args.includes('--resume-failed-only'),
     reportPath: resolve(ROOT, `scripts/migration/reports/migration-report-${new Date().toISOString().replace(/[:.]/g, '-')}.json`),
+    traceId: crypto.randomUUID(),
   }
 
   for (const arg of args) {
@@ -76,6 +83,13 @@ function getEnv(name: string): string {
   const v = process.env[name]
   if (!v) throw new Error(`${name} が未設定です`)
   return v.replace(/\/$/, '')
+}
+
+function ensureMode(options: CliOptions): void {
+  const enabledModes = [options.dryRun, options.verifyOnly, options.actualRun].filter(Boolean).length
+  if (enabledModes !== 1) {
+    throw new Error('--dry-run / --verify-only / --actual-run のいずれか1つを必ず指定してください')
+  }
 }
 
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
@@ -247,6 +261,7 @@ function buildRollbackReadiness(verifyItems: Array<{ source: string; ng: number;
 
 async function main(): Promise<void> {
   const options = parseArgs()
+  ensureMode(options)
   const strapiBase = getEnv('STRAPI_MIGRATION_SOURCE_URL')
   const strapiToken = getEnv('STRAPI_MIGRATION_SOURCE_TOKEN')
   const wordpressBase = getEnv('WORDPRESS_MIGRATION_TARGET_URL')
@@ -254,11 +269,24 @@ async function main(): Promise<void> {
 
   const mapping = readMapping()
   const verifyRows: Array<{ source: string; ng: number; severity: Record<VerifySeverity, number> }> = []
+  const startedAt = new Date().toISOString()
   const report: Record<string, unknown> = {
-    startedAt: new Date().toISOString(),
+    migrationTraceId: options.traceId,
+    migrationStartedAt: startedAt,
+    migrationExecutionState: options.actualRun ? 'running' : 'not_started',
+    migrationDryRunState: options.dryRun ? 'running' : 'not_requested',
+    migrationVerifyState: 'running',
+    migrationReportState: 'running',
+    migrationDiffState: 'running',
+    migrationIdempotencyState: 'mapping_upsert_enabled',
+    migrationRollbackState: 'criteria_evaluating',
+    migrationCompletedAt: null,
+    migrationVerifiedAt: null,
     options,
     results: [],
     verify: [],
+    mismatches: [],
+    failedItems: [],
     checklist: {
       verifyOnlyReady: true,
       diffReportReady: true,
@@ -274,9 +302,17 @@ async function main(): Promise<void> {
     let migrated = 0
     let failed = 0
 
-    if (!options.verifyOnly) {
+    if (options.actualRun || options.dryRun) {
       for (const sourceItem of sourceItems) {
         const normalized = toWordPressPayload(sourceItem)
+        const mappingItem = mapping.items.find((item) => (
+          item.source === target.strapi
+          && item.sourceId === sourceItem.id
+          && item.locale === String(normalized.locale ?? 'ja')
+        ))
+        if (options.resumeFailedOnly && mappingItem && mappingItem.status !== 'failed') {
+          continue
+        }
         try {
           const migratedEntity = await pushToWordPress(wordpressBase, wordpressToken, target.route, normalized, options.dryRun)
           upsertMappingItem(mapping, {
@@ -300,6 +336,13 @@ async function main(): Promise<void> {
             status: 'failed',
             message: error instanceof Error ? error.message : String(error),
           })
+          ;(report.failedItems as Array<Record<string, unknown>>).push({
+            source: target.strapi,
+            sourceId: sourceItem.id,
+            slug: String(normalized.slug ?? ''),
+            locale: String(normalized.locale ?? 'ja'),
+            message: error instanceof Error ? error.message : String(error),
+          })
           failed += 1
         }
       }
@@ -321,11 +364,23 @@ async function main(): Promise<void> {
       severity: verify.severity,
       mismatches: verify.mismatches.slice(0, 100),
     })
+    ;(report.mismatches as Array<Record<string, unknown>>).push(...verify.mismatches.slice(0, 100).map((item) => ({
+      source: target.strapi,
+      ...item,
+    })))
 
     console.log(`[migration] ${target.strapi} done total=${sourceItems.length} migrated=${migrated} failed=${failed} verify_ng=${verify.ng}`)
   }
 
   report.rollbackReadiness = buildRollbackReadiness(verifyRows)
+  report.migrationVerifyState = 'completed'
+  report.migrationDiffState = 'completed'
+  report.migrationExecutionState = options.actualRun ? 'completed' : 'not_requested'
+  report.migrationDryRunState = options.dryRun ? 'completed' : 'not_requested'
+  report.migrationRollbackState = (report.rollbackReadiness as { rollbackRecommended: boolean }).rollbackRecommended ? 'rollback_recommended' : 'ready'
+  report.migrationReportState = 'completed'
+  report.migrationCompletedAt = new Date().toISOString()
+  report.migrationVerifiedAt = new Date().toISOString()
 
   mapping.generatedAt = new Date().toISOString()
   writeMapping(mapping)
