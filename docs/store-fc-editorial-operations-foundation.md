@@ -60,6 +60,25 @@
 ### 2-5. preview
 - `/preview` の type 解決に `store-product` を追加。
 
+### 2-6. editor dashboard / publish audit（internal admin）
+- `GET /api/internal/editorial/dashboard` を追加し、`news-item / blog-post / event / store-product / fanclub-content / campaign / guide / faq` の編集状態を横断集計できるようにした。
+- 返却データで以下を分離表示する。
+  - `draft / in_review / approved / scheduled / published / rolled_back`
+  - `locale_pending`
+  - `seo_incomplete`
+  - `media_incomplete`
+  - `failed schedule`（scheduled だが予定時刻超過かつ未公開）
+- `frontend/src/pages/internal/InternalAdminPage.tsx` に editorial summary セクションを追加し、review queue / approval queue / scheduled queue / publish audit を一画面で確認できるようにした。
+- publish audit は `internal_audit_log`（targetType: content 系）を参照し、who / what / when を追跡可能。
+
+### 2-7. role-based approval の運用整理（暫定）
+- Strapi の publish 権限だけでなく、internal admin 上の queue を運用基準にして「公開できる」と「公開してよい」を分離。
+- 推奨責務:
+  - editor: draft 更新・review 依頼
+  - reviewer: review / changes requested / approved 判断
+  - publisher: schedule / publish / rollback 実行
+  - admin: bypass が必要な緊急操作のみ実行（必ず監査ログ理由付き）
+
 ---
 
 ## 3. `topPageSections` 運用ルール（JSON）
@@ -152,4 +171,3 @@
 - Join/Login: `fc_home`, `fc_login`, `fc_join`
 - Store/FC回遊: `fc_home_store_bridge`, `store_home_member_pickup`
 - AnnouncementBar: `subdomain_announcement_click`, `subdomain_weekly_highlight_click`
-

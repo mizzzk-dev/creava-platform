@@ -220,6 +220,36 @@ function toPriority(severity: string, count: number): 'critical' | 'high' | 'med
   return 'low'
 }
 
+const EDITORIAL_COLLECTIONS = [
+  { uid: 'api::news-item.news-item', key: 'news-item', sourceSite: 'main' },
+  { uid: 'api::blog-post.blog-post', key: 'blog-post', sourceSite: 'main' },
+  { uid: 'api::event.event', key: 'event', sourceSite: 'main' },
+  { uid: 'api::store-product.store-product', key: 'store-product', sourceSite: 'store' },
+  { uid: 'api::fanclub-content.fanclub-content', key: 'fanclub-content', sourceSite: 'fc' },
+  { uid: 'api::campaign.campaign', key: 'campaign', sourceSite: 'cross' },
+  { uid: 'api::guide.guide', key: 'guide', sourceSite: 'cross' },
+  { uid: 'api::faq.faq', key: 'faq', sourceSite: 'cross' },
+] as const
+
+function classifyValidationState(warnings: string[]): string {
+  if (warnings.some((item) => item.includes('翻訳未完了'))) return 'locale_incomplete'
+  if (warnings.some((item) => item.includes('seo') || item.includes('og') || item.includes('canonical'))) return 'seo_incomplete'
+  if (warnings.some((item) => item.includes('media'))) return 'media_incomplete'
+  if (warnings.length > 0) return 'missing_required_fields'
+  return 'valid'
+}
+
+function mapWorkflowState(value: unknown): string {
+  const state = String(value ?? 'draft')
+  if (state === 'review_pending') return 'in_review'
+  if (state === 'archived') return 'rolled_back'
+  return state
+}
+
+function hasLocaleGap(coverage: Record<string, unknown>): boolean {
+  return ['ja', 'en', 'ko'].some((locale) => coverage[locale] !== true)
+}
+
 function parseJsonObject(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
   return value as Record<string, unknown>
@@ -2221,6 +2251,150 @@ export default factories.createCoreController('api::analytics-event.analytics-ev
       if (message.includes('Internal permission denied')) return ctx.forbidden('support policy dashboard の権限がありません。')
       strapi.log.error(`[analytics-event] internalSupportPolicyDashboard failed: ${message}`)
       return ctx.internalServerError('support policy dashboard の取得に失敗しました。')
+    }
+  },
+
+  async internalEditorialDashboard(ctx) {
+    try {
+      await requireInternalPermission(ctx, 'internal.support.read')
+      const nowIso = new Date().toISOString()
+      const nowTs = new Date(nowIso).getTime()
+      const timezone = sanitizeText(ctx.query.timezone, 40) ?? 'UTC'
+
+      const collectionEntries = await Promise.all(EDITORIAL_COLLECTIONS.map(async (collection) => {
+        try {
+          const rows = await strapi.documents(collection.uid).findMany({
+            fields: [
+              'documentId',
+              'title',
+              'slug',
+              'locale',
+              'sourceSite',
+              'editorialWorkflowStatus',
+              'publishAt',
+              'publishedAt',
+              'scheduledPublishAt',
+              'approvedBy',
+              'approvedAt',
+              'qualityScore',
+              'qualityWarnings',
+              'translationCoverage',
+              'updatedAt',
+              'createdAt',
+            ],
+            sort: ['updatedAt:desc'],
+            limit: 80,
+          })
+          const items = (rows as Array<Record<string, unknown>>).map((row) => {
+            const workflowState = mapWorkflowState(row.editorialWorkflowStatus)
+            const warnings = Array.isArray(row.qualityWarnings) ? row.qualityWarnings.map((item) => String(item)) : []
+            const translationCoverage = row.translationCoverage && typeof row.translationCoverage === 'object'
+              ? row.translationCoverage as Record<string, unknown>
+              : {}
+            const scheduleAt = sanitizeText(row.scheduledPublishAt, 40) ?? sanitizeText(row.publishAt, 40)
+            const scheduleAtTs = scheduleAt ? new Date(scheduleAt).getTime() : null
+            const publishState = row.publishedAt ? 'published' : workflowState === 'scheduled' ? 'scheduled' : 'draft'
+
+            return {
+              collection: collection.key,
+              sourceSite: sanitizeText(row.sourceSite, 20) ?? collection.sourceSite,
+              documentId: sanitizeText(row.documentId, 160) ?? '',
+              title: sanitizeText(row.title, 160) ?? '(untitled)',
+              slug: sanitizeText(row.slug, 200) ?? '',
+              locale: sanitizeText(row.locale, 12) ?? 'ja',
+              editorialWorkflowState: workflowState,
+              contentScheduleState: workflowState === 'scheduled'
+                ? (scheduleAtTs && scheduleAtTs < nowTs && !row.publishedAt ? 'failed' : 'scheduled')
+                : 'none',
+              contentPublishState: publishState,
+              contentLocaleState: hasLocaleGap(translationCoverage) ? 'locale_pending' : 'locale_ready',
+              contentValidationState: classifyValidationState(warnings),
+              contentSeoState: warnings.some((item) => item.includes('seo') || item.includes('og') || item.includes('canonical')) ? 'incomplete' : 'ready',
+              contentMediaState: warnings.some((item) => item.includes('media')) ? 'incomplete' : 'ready',
+              contentPreviewState: publishState === 'published' ? 'preview_equals_live' : 'preview_only',
+              contentLastApprovedAt: sanitizeText(row.approvedAt, 40) ?? null,
+              contentLastApprovedBy: sanitizeText(row.approvedBy, 80) ?? null,
+              contentScheduledAt: scheduleAt ?? null,
+              contentPublishedAt: sanitizeText(row.publishedAt, 40) ?? null,
+              qualityScore: numberValue(row.qualityScore),
+              qualityWarnings: warnings,
+              updatedAt: sanitizeText(row.updatedAt, 40) ?? sanitizeText(row.createdAt, 40) ?? nowIso,
+            }
+          })
+          return { ...collection, items }
+        } catch (error) {
+          strapi.log.warn(`[analytics-event] editorial collection fetch failed: ${collection.uid} ${(error as Error).message}`)
+          return { ...collection, items: [] as Array<Record<string, unknown>> }
+        }
+      }))
+
+      const items = collectionEntries.flatMap((entry) => entry.items)
+      const auditRows = await strapi.documents('api::internal-audit-log.internal-audit-log').findMany({
+        filters: { targetType: { $in: ['news-item', 'blog-post', 'event', 'store-product', 'fanclub-content', 'campaign', 'guide', 'faq', 'content-entry'] } },
+        fields: ['targetType', 'targetId', 'action', 'status', 'reason', 'sourceSite', 'actorLogtoUserId', 'createdAt', 'metadata'],
+        sort: ['createdAt:desc'],
+        limit: 180,
+      }).catch(() => [])
+
+      const publishAudit = (auditRows as Array<Record<string, unknown>>).map((row) => ({
+        targetType: sanitizeText(row.targetType, 60) ?? 'unknown',
+        targetId: sanitizeText(row.targetId, 160) ?? '',
+        action: sanitizeText(row.action, 120) ?? '',
+        status: sanitizeText(row.status, 40) ?? 'unknown',
+        sourceSite: sanitizeText(row.sourceSite, 20) ?? 'unknown',
+        actor: sanitizeText(row.actorLogtoUserId, 120) ?? 'unknown',
+        reason: sanitizeText(row.reason, 240) ?? null,
+        createdAt: sanitizeText(row.createdAt, 40) ?? nowIso,
+      }))
+
+      const reviewQueue = items.filter((item) => item.editorialWorkflowState === 'in_review').slice(0, 40)
+      const approvalQueue = items.filter((item) => item.editorialWorkflowState === 'approved').slice(0, 40)
+      const scheduledQueue = items.filter((item) => item.contentScheduleState === 'scheduled').slice(0, 40)
+      const failedScheduleQueue = items.filter((item) => item.contentScheduleState === 'failed').slice(0, 40)
+      const localePendingQueue = items.filter((item) => item.contentLocaleState === 'locale_pending').slice(0, 40)
+      const seoPendingQueue = items.filter((item) => item.contentSeoState === 'incomplete').slice(0, 40)
+      const mediaPendingQueue = items.filter((item) => item.contentMediaState === 'incomplete').slice(0, 40)
+
+      ctx.body = {
+        generatedAt: nowIso,
+        timezone,
+        sourceOfTruth: {
+          editorialEntries: 'news/blog/event/store-product/fanclub-content/campaign/guide/faq',
+          publishAudit: 'internal_audit_log',
+          workflow: 'editorialWorkflowStatus + qualityWarnings + translationCoverage',
+        },
+        editorialSummary: {
+          totalEntries: items.length,
+          draftCount: items.filter((item) => item.editorialWorkflowState === 'draft').length,
+          reviewPendingCount: reviewQueue.length,
+          approvalPendingCount: approvalQueue.length,
+          scheduledCount: scheduledQueue.length,
+          publishedCount: items.filter((item) => item.contentPublishState === 'published').length,
+          rollbackCount: items.filter((item) => item.editorialWorkflowState === 'rolled_back').length,
+          localePendingCount: localePendingQueue.length,
+          validationBlockedCount: items.filter((item) => item.contentValidationState !== 'valid').length,
+        },
+        publishAuditSummary: {
+          totalCount: publishAudit.length,
+          successCount: publishAudit.filter((item) => item.status === 'success').length,
+          failedCount: publishAudit.filter((item) => item.status === 'failed').length,
+          deniedCount: publishAudit.filter((item) => item.status === 'denied').length,
+        },
+        reviewQueue,
+        approvalQueue,
+        scheduledQueue,
+        failedScheduleQueue,
+        localePendingQueue,
+        seoPendingQueue,
+        mediaPendingQueue,
+        recentlyPublished: items.filter((item) => item.contentPublishState === 'published').slice(0, 20),
+        publishAudit: publishAudit.slice(0, 80),
+      }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Internal permission denied')) return ctx.forbidden('editorial dashboard の権限がありません。')
+      strapi.log.error(`[analytics-event] internalEditorialDashboard failed: ${message}`)
+      return ctx.internalServerError('editorial dashboard の取得に失敗しました。')
     }
   },
 

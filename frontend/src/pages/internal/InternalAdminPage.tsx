@@ -22,6 +22,7 @@ import {
   type InternalFlagDashboardResponse,
   type InternalFlagEvaluationResponse,
   type InternalSupportPolicyDashboardResponse,
+  type InternalEditorialDashboardResponse,
 } from '@/modules/internal-admin/api'
 import { trackMizzzEvent } from '@/modules/analytics/tracking'
 
@@ -56,6 +57,7 @@ export default function InternalAdminPage() {
   const [flagReason, setFlagReason] = useState('preview / simulation で exposure 影響を確認')
   const [flagActionResult, setFlagActionResult] = useState<Record<string, unknown> | null>(null)
   const [supportPolicyDashboard, setSupportPolicyDashboard] = useState<InternalSupportPolicyDashboardResponse | null>(null)
+  const [editorialDashboard, setEditorialDashboard] = useState<InternalEditorialDashboardResponse | null>(null)
   const [supportPolicyReason, setSupportPolicyReason] = useState('policy review / multilingual safety / rollback readiness を確認')
   const [supportPolicyActionResult, setSupportPolicyActionResult] = useState<Record<string, unknown> | null>(null)
   const [incidentDashboard, setIncidentDashboard] = useState<InternalIncidentDashboardResponse | null>(null)
@@ -190,6 +192,56 @@ export default function InternalAdminPage() {
             <pre className="mt-2 overflow-auto rounded bg-gray-50 p-3 text-xs dark:bg-gray-900">{JSON.stringify(safeActionResult, null, 2)}</pre>
           )}
         </div>
+      </div>
+
+      <div className="mt-6 rounded border border-gray-200 p-4 dark:border-gray-800">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-gray-500">editorial workflow / publish audit / scheduling / locale readiness</p>
+          <button
+            type="button"
+            className="rounded bg-gray-900 px-3 py-2 text-xs text-white"
+            onClick={() => {
+              setMessage(null)
+              trackMizzzEvent('operations_dashboard_view', { actorRole: internalRole, sourceSection: 'editorial_dashboard', sourceArea: 'cross' })
+              api.getEditorialDashboard().then(setEditorialDashboard).catch((e: Error) => setMessage(e.message))
+            }}
+          >editorial summary 更新</button>
+        </div>
+
+        {editorialDashboard && (
+          <div className="mt-3 space-y-3 text-xs">
+            <p className="text-gray-500">generatedAt: {editorialDashboard.generatedAt} ({editorialDashboard.timezone})</p>
+            <div className="grid gap-2 md:grid-cols-2">
+              <div className="rounded border border-gray-200 p-3 dark:border-gray-700">
+                <p className="font-medium">workflow summary</p>
+                <p>total: {editorialDashboard.editorialSummary.totalEntries}</p>
+                <p>draft: {editorialDashboard.editorialSummary.draftCount}</p>
+                <p>review pending: {editorialDashboard.editorialSummary.reviewPendingCount}</p>
+                <p>approval pending: {editorialDashboard.editorialSummary.approvalPendingCount}</p>
+                <p>scheduled: {editorialDashboard.editorialSummary.scheduledCount}</p>
+                <p>published: {editorialDashboard.editorialSummary.publishedCount}</p>
+                <p>locale pending: {editorialDashboard.editorialSummary.localePendingCount}</p>
+              </div>
+              <div className="rounded border border-gray-200 p-3 dark:border-gray-700">
+                <p className="font-medium">publish / audit</p>
+                <p>audit total: {editorialDashboard.publishAuditSummary.totalCount}</p>
+                <p>audit success: {editorialDashboard.publishAuditSummary.successCount}</p>
+                <p>audit failed: {editorialDashboard.publishAuditSummary.failedCount}</p>
+                <p>audit denied: {editorialDashboard.publishAuditSummary.deniedCount}</p>
+                <p>failed schedule: {editorialDashboard.failedScheduleQueue.length}</p>
+                <p>seo pending: {editorialDashboard.seoPendingQueue.length}</p>
+                <p>media pending: {editorialDashboard.mediaPendingQueue.length}</p>
+              </div>
+            </div>
+            <pre className="overflow-auto rounded bg-gray-50 p-3 dark:bg-gray-900">{JSON.stringify({
+              reviewQueue: editorialDashboard.reviewQueue.slice(0, 8),
+              approvalQueue: editorialDashboard.approvalQueue.slice(0, 8),
+              scheduledQueue: editorialDashboard.scheduledQueue.slice(0, 8),
+              localePendingQueue: editorialDashboard.localePendingQueue.slice(0, 8),
+              publishAudit: editorialDashboard.publishAudit.slice(0, 8),
+            }, null, 2)}</pre>
+          </div>
+        )}
       </div>
 
       <div className="mt-6 rounded border border-gray-200 p-4 dark:border-gray-800">
