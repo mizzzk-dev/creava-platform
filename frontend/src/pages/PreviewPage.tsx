@@ -26,12 +26,14 @@ export default function PreviewPage() {
       const slug = params.get('slug') ?? ''
       const locale = normalizeLocale(params.get('locale'))
       const theme = normalizeTheme(params.get('theme'))
+      const provider = normalizeProvider(params.get('provider'))
 
       const verified = await activatePreview({
         secret,
         type,
         slug,
         locale,
+        provider,
       })
 
       if (!verified) {
@@ -107,4 +109,9 @@ function normalizeLocale(raw: string | null): 'ja' | 'en' | 'ko' | null {
 function normalizeTheme(raw: string | null): 'light' | 'dark' | null {
   if (raw === 'light' || raw === 'dark') return raw
   return null
+}
+
+function normalizeProvider(raw: string | null): 'strapi' | 'wordpress' | undefined {
+  if (raw === 'strapi' || raw === 'wordpress') return raw
+  return undefined
 }

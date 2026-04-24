@@ -229,6 +229,134 @@ function creava_build_content_query_args(WP_REST_Request $request, string $post_
     return [$query_args, $page, $page_size];
 }
 
+function creava_discovery_post_type_map(): array {
+    return [
+        'blog' => ['postType' => 'blog', 'sourceSite' => 'main', 'contentType' => 'blog', 'pathPrefix' => '/blog/'],
+        'news' => ['postType' => 'news', 'sourceSite' => 'main', 'contentType' => 'news', 'pathPrefix' => '/news/'],
+        'event' => ['postType' => 'event', 'sourceSite' => 'main', 'contentType' => 'event', 'pathPrefix' => '/events/'],
+        'work' => ['postType' => 'work', 'sourceSite' => 'main', 'contentType' => 'page', 'pathPrefix' => '/works/'],
+        'store_product' => ['postType' => 'store_product', 'sourceSite' => 'store', 'contentType' => 'product', 'pathPrefix' => '/store/products/'],
+        'fanclub_content' => ['postType' => 'fanclub_content', 'sourceSite' => 'fc', 'contentType' => 'fanclub', 'pathPrefix' => '/fanclub/content/'],
+    ];
+}
+
+function creava_discovery_collect_items(WP_REST_Request $request): array {
+    $q = sanitize_text_field((string) $request->get_param('q'));
+    $source_site = sanitize_key((string) $request->get_param('sourceSite'));
+    $content_type = sanitize_key((string) $request->get_param('contentType'));
+    $category = sanitize_title((string) $request->get_param('category'));
+    $sort = sanitize_key((string) $request->get_param('sort'));
+    $member_state = sanitize_key((string) $request->get_param('memberState')) === 'member' ? 'member' : 'guest';
+    $limit = (int) $request->get_param('limit');
+    $limit = $limit > 0 ? min($limit, 100) : 24;
+    $locale = creava_get_locale_from_request($request);
+
+    $items = [];
+    $post_type_map = creava_discovery_post_type_map();
+    $types = array_keys($post_type_map);
+
+    $query = new WP_Query([
+        'post_type' => $types,
+        'post_status' => 'publish',
+        'posts_per_page' => 200,
+        's' => $q,
+        'orderby' => $sort === 'updated' ? 'modified' : 'date',
+        'order' => 'DESC',
+    ]);
+
+    foreach ($query->posts as $post) {
+        $mapped = $post_type_map[$post->post_type] ?? null;
+        if (!$mapped) {
+            continue;
+        }
+
+        if ($source_site !== '' && $source_site !== 'all' && $mapped['sourceSite'] !== $source_site) {
+            continue;
+        }
+
+        if ($content_type !== '' && $content_type !== 'all' && $mapped['contentType'] !== $content_type) {
+            continue;
+        }
+
+        $visibility_meta = creava_get_visibility_meta($post->ID);
+        if ($member_state === 'guest' && $visibility_meta['accessStatus'] !== 'public') {
+            continue;
+        }
+
+        $primary_category = null;
+        $tags = [];
+        $taxonomies = creava_get_post_taxonomies_payload($post->ID);
+        foreach ($taxonomies as $taxonomy_slug => $terms) {
+            if (!is_array($terms)) {
+                continue;
+            }
+            if ($primary_category === null && !empty($terms) && isset($terms[0]['slug'])) {
+                $primary_category = $terms[0]['slug'];
+            }
+            foreach ($terms as $term) {
+                if (isset($term['slug'])) {
+                    $tags[] = (string) $term['slug'];
+                }
+            }
+            if ($taxonomy_slug === 'category' && !empty($terms) && isset($terms[0]['slug'])) {
+                $primary_category = $terms[0]['slug'];
+            }
+        }
+
+        if ($category !== '' && $primary_category !== $category && !in_array($category, $tags, true)) {
+            continue;
+        }
+
+        $items[] = [
+            'id' => (string) $post->ID,
+            'sourceSite' => $mapped['sourceSite'],
+            'contentType' => $mapped['contentType'],
+            'title' => get_the_title($post),
+            'summary' => get_the_excerpt($post),
+            'bodyExtract' => wp_trim_words(wp_strip_all_tags((string) $post->post_content), 48, '…'),
+            'locale' => $locale,
+            'category' => $primary_category,
+            'tags' => array_values(array_unique($tags)),
+            'slug' => $post->post_name,
+            'path' => $mapped['pathPrefix'] . $post->post_name,
+            'visibility' => $visibility_meta['accessStatus'],
+            'requiresAuth' => $visibility_meta['accessStatus'] !== 'public',
+            'publishStatus' => 'published',
+            'displayPriority' => 0,
+            'updatedAt' => get_post_modified_time('c', true, $post) ?: null,
+            'popularityScore' => 0,
+            'related' => [],
+        ];
+    }
+
+    return array_slice($items, 0, $limit);
+}
+
+function creava_discovery_build_facets(array $items): array {
+    $content_type_counts = [];
+    $source_site_counts = [];
+
+    foreach ($items as $item) {
+        $content_type = (string) ($item['contentType'] ?? 'page');
+        $source_site = (string) ($item['sourceSite'] ?? 'main');
+        $content_type_counts[$content_type] = ($content_type_counts[$content_type] ?? 0) + 1;
+        $source_site_counts[$source_site] = ($source_site_counts[$source_site] ?? 0) + 1;
+    }
+
+    $to_pairs = static function (array $counts): array {
+        $pairs = [];
+        foreach ($counts as $key => $value) {
+            $pairs[] = [$key, $value];
+        }
+        return $pairs;
+    };
+
+    return [
+        'contentType' => $to_pairs($content_type_counts),
+        'sourceSite' => $to_pairs($source_site_counts),
+    ];
+}
+
 function creava_register_content_routes(): void {
     $routes = [
         'blog' => 'blog',
@@ -289,6 +417,66 @@ function creava_register_content_routes(): void {
                         'wordpressTraceId' => wp_generate_uuid4(),
                         'wordpressVerifiedAt' => gmdate('c'),
                     ],
+                ],
+            ]);
+        },
+        'permission_callback' => '__return_true',
+    ]);
+
+    register_rest_route('creava/v1', '/preview/verify', [
+        'methods' => WP_REST_Server::CREATABLE,
+        'callback' => static function (WP_REST_Request $request) {
+            $params = (array) $request->get_json_params();
+            $secret = sanitize_text_field((string) ($params['secret'] ?? ''));
+            $type = sanitize_text_field((string) ($params['type'] ?? ''));
+            $slug = sanitize_title((string) ($params['slug'] ?? ''));
+            $locale = sanitize_text_field((string) ($params['locale'] ?? ''));
+            $expected = getenv('WORDPRESS_PREVIEW_SECRET') ?: getenv('PREVIEW_SHARED_SECRET');
+            $valid = !empty($expected) && hash_equals((string) $expected, $secret);
+
+            if (!$valid) {
+                return new WP_REST_Response([
+                    'ok' => false,
+                    'error' => 'invalid_preview_secret',
+                    'wordpressPreviewState' => 'denied',
+                ], 401);
+            }
+
+            return rest_ensure_response([
+                'ok' => true,
+                'wordpressPreviewState' => 'verified',
+                'wordpressPreviewType' => $type,
+                'wordpressPreviewSlug' => $slug,
+                'wordpressPreviewLocale' => $locale,
+                'wordpressVerifiedAt' => gmdate('c'),
+            ]);
+        },
+        'permission_callback' => '__return_true',
+    ]);
+
+    register_rest_route('creava/v1', '/discovery/search', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => static function (WP_REST_Request $request) {
+            $items = creava_discovery_collect_items($request);
+            return rest_ensure_response([
+                'query' => [
+                    'q' => sanitize_text_field((string) $request->get_param('q')),
+                    'sourceSite' => sanitize_key((string) $request->get_param('sourceSite')) ?: 'all',
+                    'contentType' => sanitize_key((string) $request->get_param('contentType')) ?: 'all',
+                    'category' => sanitize_title((string) $request->get_param('category')),
+                    'locale' => creava_get_locale_from_request($request),
+                    'sort' => sanitize_key((string) $request->get_param('sort')) ?: 'relevance',
+                    'memberState' => sanitize_key((string) $request->get_param('memberState')) === 'member' ? 'member' : 'guest',
+                    'limit' => (int) $request->get_param('limit') ?: 24,
+                ],
+                'total' => count($items),
+                'facets' => creava_discovery_build_facets($items),
+                'items' => $items,
+                'recommendations' => [
+                    'noResultFallback' => count($items) === 0 ? [
+                        ['title' => '最新ニュースを見る', 'path' => '/news', 'contentType' => 'news'],
+                        ['title' => 'ストア商品一覧を見る', 'path' => '/store', 'contentType' => 'product'],
+                    ] : [],
                 ],
             ]);
         },
