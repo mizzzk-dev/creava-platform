@@ -1010,6 +1010,10 @@
     },
     "locale": {
       "fallbackNotice": "Some guides are shown with {{fallbackState}} because full {{locale}} localization is not ready yet."
+    },
+    "multilingualOptimization": {
+      "title": "Multilingual optimization status",
+      "summary": "TM: {{memory}} / Glossary: {{glossary}} / Retrieval: {{retrieval}} / Workflow: {{workflow}} / Policy: {{policy}}"
     }
   },
   "favoriteAdd": "Add to favorites",

@@ -1,12 +1,20 @@
 import type { GuideItem, SourceSite } from '@/types'
 
 export type LocalizationState = 'not_started' | 'draft' | 'in_translation' | 'review_pending' | 'published' | 'outdated' | 'archived'
+export type LocalizationWorkflowState = 'not_started' | 'queued' | 'in_progress' | 'review_pending' | 'published' | 'blocked' | 'outdated'
 export type LocalizationVariantState = 'source' | 'translated' | 'fallback_rendered' | 'locale_adapted'
+export type TranslationMemoryState = 'none' | 'partial' | 'matched' | 'reused' | 'needs_review'
+export type TranslationMemoryMatchState = 'no_match' | 'fuzzy_match' | 'exact_match' | 'conflicting_match'
+export type GlossaryState = 'not_defined' | 'draft' | 'active' | 'deprecated'
+export type GlossaryConsistencyState = 'consistent' | 'minor_drift' | 'inconsistent' | 'blocked'
 export type TranslationQualityState = 'unknown' | 'acceptable' | 'needs_review' | 'risky' | 'blocked'
 export type TranslationReviewState = 'not_reviewed' | 'in_review' | 'approved' | 'rejected' | 'superseded'
 export type LocaleFallbackState = 'not_needed' | 'source_language_used' | 'fallback_locale_used' | 'blocked_due_to_missing_content'
+export type LocaleRetrievalState = 'not_evaluated' | 'healthy' | 'weak' | 'fallback_heavy' | 'review_needed'
+export type RetrievalQualityState = 'unknown' | 'acceptable' | 'needs_tuning' | 'risky'
 export type LocaleRecommendationState = 'not_evaluated' | 'eligible' | 'shown' | 'clicked' | 'dismissed' | 'suppressed'
 export type LocaleRankingState = 'not_ranked' | 'ranked' | 'low_confidence' | 'fallback_applied'
+export type RegionalPolicyTemplateState = 'draft' | 'active' | 'under_review' | 'deprecated'
 export type RegionalPolicyState = 'inactive' | 'active' | 'under_review' | 'deprecated'
 export type LocaleEffectivenessState = 'unknown' | 'healthy' | 'weak' | 'underperforming' | 'review_needed'
 export type LocaleSearchState = 'idle' | 'searched' | 'fallback' | 'failed'
@@ -24,12 +32,20 @@ export interface LocaleSupportSummary {
   sourceLanguageState: string
   targetLocaleState: string
   localizationState: LocalizationState
+  localizationWorkflowState: LocalizationWorkflowState
   localizationVariantState: LocalizationVariantState
+  translationMemoryState: TranslationMemoryState
+  translationMemoryMatchState: TranslationMemoryMatchState
+  glossaryState: GlossaryState
+  glossaryConsistencyState: GlossaryConsistencyState
   translationQualityState: TranslationQualityState
   translationReviewState: TranslationReviewState
   localeFallbackState: LocaleFallbackState
+  localeRetrievalState: LocaleRetrievalState
+  retrievalQualityState: RetrievalQualityState
   localeRecommendationState: LocaleRecommendationState
   localeRankingState: LocaleRankingState
+  regionalPolicyTemplateState: RegionalPolicyTemplateState
   regionalPolicyState: RegionalPolicyState
   localeEffectivenessState: LocaleEffectivenessState
   localeSearchState: LocaleSearchState
@@ -44,6 +60,8 @@ export interface LocaleSupportSummary {
   articleState: 'published' | 'draft' | 'outdated'
   articleVisibilityState: 'public' | 'members_only' | 'support_only' | 'internal_only'
   articleLastLocalizedAt?: string
+  articleLastMemoryMatchedAt?: string
+  articleLastGlossaryCheckedAt?: string
   articleLastReviewedAt?: string
   localeLastEvaluatedAt: string
 }
@@ -129,12 +147,20 @@ export function buildLocaleSupportSummary(params: {
     sourceLanguageState: 'ja',
     targetLocaleState: locale,
     localizationState: params.coverageState === 'missing' ? 'not_started' : params.coverageState === 'partial' ? 'draft' : 'published',
+    localizationWorkflowState: params.coverageState === 'missing' ? 'queued' : params.fallbackState === 'not_needed' ? 'published' : 'review_pending',
     localizationVariantState: params.fallbackState === 'not_needed' ? 'translated' : 'fallback_rendered',
+    translationMemoryState: params.fallbackState === 'not_needed' ? 'reused' : 'partial',
+    translationMemoryMatchState: params.fallbackState === 'not_needed' ? 'exact_match' : 'fuzzy_match',
+    glossaryState: 'active',
+    glossaryConsistencyState: params.fallbackState === 'not_needed' ? 'consistent' : 'minor_drift',
     translationQualityState: params.fallbackState === 'fallback_locale_used' ? 'needs_review' : 'acceptable',
     translationReviewState: params.fallbackState === 'not_needed' ? 'approved' : 'in_review',
     localeFallbackState: params.fallbackState,
+    localeRetrievalState: noResult ? 'review_needed' : lowConfidence ? 'weak' : params.fallbackState === 'not_needed' ? 'healthy' : 'fallback_heavy',
+    retrievalQualityState: noResult ? 'risky' : lowConfidence ? 'needs_tuning' : 'acceptable',
     localeRecommendationState: noResult ? 'suppressed' : 'shown',
     localeRankingState: lowConfidence ? 'low_confidence' : 'ranked',
+    regionalPolicyTemplateState: 'active',
     regionalPolicyState: 'active',
     localeEffectivenessState: noResult ? 'review_needed' : lowConfidence ? 'weak' : 'healthy',
     localeSearchState: noResult ? 'failed' : params.fallbackState === 'not_needed' ? 'searched' : 'fallback',
@@ -149,6 +175,8 @@ export function buildLocaleSupportSummary(params: {
     articleState: 'published',
     articleVisibilityState: 'public',
     articleLastLocalizedAt: now,
+    articleLastMemoryMatchedAt: now,
+    articleLastGlossaryCheckedAt: now,
     articleLastReviewedAt: now,
     localeLastEvaluatedAt: now,
   }
