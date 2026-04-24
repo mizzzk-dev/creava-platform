@@ -87,6 +87,13 @@
 
 > `SUPABASE_SERVICE_ROLE_KEY` は backend のみで使用し、frontend に設定しないこと。
 
+### frontend Strapi 信頼性チューニング
+- `VITE_STRAPI_TIMEOUT_MS`: Strapi GET のタイムアウト（ms）。
+- `VITE_STRAPI_RETRY_COUNT`: timeout/一時的 5xx の再試行回数。
+- `VITE_STRAPI_RESPONSE_CACHE_TTL_MS`: fresh cache TTL（ms）。
+- `VITE_STRAPI_RESPONSE_CACHE_STALE_TTL_MS`: stale 許容TTL（ms）。
+- `VITE_STRAPI_DEBUG_LOG`: `true` の場合、開発環境で telemetry を console 出力。
+
 ### frontend 認証（Logto, 互換）詳細
 - `VITE_LOGTO_ENDPOINT`（Hosted Sign-in: custom domain 推奨）
 - `VITE_LOGTO_APP_ID_MAIN`
@@ -205,6 +212,10 @@
 - `MISSION_PROGRESS_SYNC_INTERVAL_MIN`
 - `ACHIEVEMENT_HIGHLIGHT_ENABLED`
 - `PERK_UNLOCK_MESSAGE_COOLDOWN_HOURS`
+
+### backend Strapi 監視チューニング
+- `API_SLOW_REQUEST_MS`: `/api/*` を slow-request と判定する閾値（ms）。
+- `API_TRACE_SAMPLE_RATE`: 通常トレースログのサンプリング率（0-1）。
 
 ### backend 認可（Supabase）詳細
 - `AUTH_PROVIDER`（`supabase` または移行期 `dual`）

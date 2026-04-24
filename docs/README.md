@@ -49,6 +49,7 @@
 - [CMS運用マニュアル](./09_operations/cms-manual.md)
 - [デプロイ手順書](./09_operations/deploy-manual.md)
 - [トラブルシューティング](./09_operations/troubleshooting.md)
+- [Strapi 遅延・不安定化 改善 runbook (2026-04-24)](./09_operations/strapi-performance-reliability-runbook-2026-04-24.md)
 - [Logto 本番運用ランブック](./09_operations/logto-production-auth-runbook.md)
 - [Supabase Auth 単一認証基盤移行計画 (2026-04-21)](./09_operations/supabase-auth-migration-plan-2026-04-21.md)
 - [Supabase Auth 前提 user domain 同期 / RLS / mypage 連携ランブック (2026-04-21)](./09_operations/supabase-user-domain-sync-runbook-2026-04-21.md)

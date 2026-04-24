@@ -12,6 +12,13 @@ export class StrapiApiError extends Error {
       responseSnippet?: string
       retried: number
       requestId?: string | null
+      traceId?: string
+      endpoint?: string
+      requestStartedAt?: string
+      responseReceivedAt?: string
+      failureAt?: string
+      latencyMs?: number
+      cacheState?: 'miss' | 'fresh_hit' | 'stale_hit' | 'revalidated'
     },
   ) {
     super(message)
@@ -27,6 +34,27 @@ const RESPONSE_CACHE_STALE_TTL_MS = Number(import.meta.env.VITE_STRAPI_RESPONSE_
 
 const responseCache = new Map<string, { expiresAt: number; staleExpiresAt: number; value: unknown }>()
 const inFlightRequests = new Map<string, Promise<unknown>>()
+const STRAPI_DEBUG_LOG = String(import.meta.env.VITE_STRAPI_DEBUG_LOG ?? 'false').toLowerCase() === 'true'
+
+function buildTraceId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `strapi-${crypto.randomUUID()}`
+  }
+  return `strapi-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+function toIso(timestamp: number): string {
+  return new Date(timestamp).toISOString()
+}
+
+function emitStrapiTelemetry(payload: Record<string, unknown>): void {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('strapi:request', { detail: payload }))
+  }
+  if (STRAPI_DEBUG_LOG && import.meta.env.DEV) {
+    console.info('[Strapi telemetry]', payload)
+  }
+}
 
 /**
  * 指定パスプレフィックスに一致するキャッシュエントリを削除する
@@ -172,15 +200,33 @@ export async function strapiGet<T>(
   const authMode = options.auth ?? 'auto'
 
   const url = `${baseUrl}/api${path}${queryString}`
+  const traceId = buildTraceId()
   const cacheKey = `${authMode}:${url}`
   const now = Date.now()
+  const endpoint = `/api${path}`
   const cached = responseCache.get(cacheKey)
   if (cached) {
     if (cached.expiresAt > now) {
+      emitStrapiTelemetry({
+        traceId,
+        endpoint,
+        cacheState: 'fresh_hit',
+        strapiRequestStartedAt: toIso(now),
+        strapiResponseReceivedAt: toIso(now),
+        strapiLatencyState: 0,
+      })
       return cached.value as T
     }
     if (cached.staleExpiresAt > now) {
       void revalidateInBackground<T>(cacheKey, url, authMode, token)
+      emitStrapiTelemetry({
+        traceId,
+        endpoint,
+        cacheState: 'stale_hit',
+        strapiRequestStartedAt: toIso(now),
+        strapiResponseReceivedAt: toIso(now),
+        strapiLatencyState: 0,
+      })
       return cached.value as T
     }
   }
@@ -190,7 +236,7 @@ export async function strapiGet<T>(
     return pending as Promise<T>
   }
 
-  return executeRequest<T>(cacheKey, url, authMode, token, options.signal, options.timeoutMs)
+  return executeRequest<T>(cacheKey, url, authMode, token, traceId, options.signal, options.timeoutMs)
 }
 
 function revalidateInBackground<T>(
@@ -200,7 +246,7 @@ function revalidateInBackground<T>(
   token: string | undefined,
 ): void {
   if (inFlightRequests.has(cacheKey)) return
-  void executeRequest<T>(cacheKey, url, authMode, token).catch(() => {
+  void executeRequest<T>(cacheKey, url, authMode, token, buildTraceId()).catch(() => {
     // stale を返した直後のバックグラウンド更新失敗は握りつぶす
   })
 }
@@ -210,6 +256,7 @@ async function executeRequest<T>(
   url: string,
   authMode: 'none' | 'required' | 'auto',
   token: string | undefined,
+  traceId: string,
   externalSignal?: AbortSignal,
   timeoutMs?: number,
 ): Promise<T> {
@@ -228,6 +275,7 @@ async function executeRequest<T>(
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
       const controller = new AbortController()
       const effectiveTimeout = timeoutMs ?? DEFAULT_TIMEOUT_MS
+      const requestStartedAt = Date.now()
       const timeout = setTimeout(() => controller.abort(), effectiveTimeout)
 
       const abortRelay = () => controller.abort()
@@ -254,6 +302,18 @@ async function executeRequest<T>(
         }
 
         const json = await parseJsonOrThrow<T>(res, url, attempt)
+        const responseReceivedAt = Date.now()
+        const endpoint = new URL(url).pathname
+        emitStrapiTelemetry({
+          traceId,
+          endpoint,
+          status: res.status,
+          retried: attempt,
+          cacheState: 'revalidated',
+          strapiRequestStartedAt: toIso(requestStartedAt),
+          strapiResponseReceivedAt: toIso(responseReceivedAt),
+          strapiLatencyState: responseReceivedAt - requestStartedAt,
+        })
         if (RESPONSE_CACHE_TTL_MS > 0) {
           responseCache.set(cacheKey, {
             value: json,
@@ -270,10 +330,17 @@ async function executeRequest<T>(
         const isTimeout = isAbortError && !externalSignal?.aborted
 
         if (isAbortError && externalSignal?.aborted) {
+          const failureAt = Date.now()
           throw new StrapiApiError(499, 'Request Cancelled', '[Strapi] リクエストがキャンセルされました。', {
             url,
             contentType: 'unknown',
             retried: attempt,
+            traceId,
+            endpoint: new URL(url).pathname,
+            requestStartedAt: toIso(requestStartedAt),
+            failureAt: toIso(failureAt),
+            latencyMs: failureAt - requestStartedAt,
+            cacheState: 'miss',
           })
         }
 
@@ -286,19 +353,65 @@ async function executeRequest<T>(
         if (err instanceof StrapiApiError) throw err
 
         if (isTimeout) {
+          const failureAt = Date.now()
+          const endpoint = new URL(url).pathname
+          emitStrapiTelemetry({
+            traceId,
+            endpoint,
+            status: 408,
+            retried: attempt,
+            cacheState: 'miss',
+            strapiFailureState: 'timeout',
+            strapiRequestStartedAt: toIso(requestStartedAt),
+            strapiFailureAt: toIso(failureAt),
+            strapiLatencyState: failureAt - requestStartedAt,
+          })
           throw new StrapiApiError(
             408,
             'Request Timeout',
             `[Strapi] リクエストがタイムアウトしました (${effectiveTimeout}ms): ${url}`,
-            { url, contentType: 'unknown', retried: attempt },
+            {
+              url,
+              contentType: 'unknown',
+              retried: attempt,
+              traceId,
+              endpoint,
+              requestStartedAt: toIso(requestStartedAt),
+              failureAt: toIso(failureAt),
+              latencyMs: failureAt - requestStartedAt,
+              cacheState: 'miss',
+            },
           )
         }
 
+        const failureAt = Date.now()
+        const endpoint = new URL(url).pathname
+        emitStrapiTelemetry({
+          traceId,
+          endpoint,
+          status: 0,
+          retried: attempt,
+          cacheState: 'miss',
+          strapiFailureState: 'network',
+          strapiRequestStartedAt: toIso(requestStartedAt),
+          strapiFailureAt: toIso(failureAt),
+          strapiLatencyState: failureAt - requestStartedAt,
+        })
         throw new StrapiApiError(
           0,
           'Network Error',
           `[Strapi] 通信に失敗しました。ネットワーク断、CORS、または Strapi 起動遅延の可能性があります: ${url}`,
-          { url, contentType: 'unknown', retried: attempt },
+          {
+            url,
+            contentType: 'unknown',
+            retried: attempt,
+            traceId,
+            endpoint,
+            requestStartedAt: toIso(requestStartedAt),
+            failureAt: toIso(failureAt),
+            latencyMs: failureAt - requestStartedAt,
+            cacheState: 'miss',
+          },
         )
       }
     }
