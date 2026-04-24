@@ -1,16 +1,26 @@
 import { trackEvent } from '@/modules/analytics'
 import { getExperimentVariant } from '@/modules/analytics/experiments'
 
-export type AnalyticsParams = Record<string, string | number | boolean | null | undefined>
+export interface EcommerceItem {
+  item_id: string
+  item_name: string
+  item_category?: string
+  price?: number
+  currency?: string
+  quantity?: number
+}
 
-function sanitize(params?: AnalyticsParams): Record<string, string | number | boolean> {
+type AnalyticsValue = string | number | boolean | EcommerceItem[] | null | undefined
+export type AnalyticsParams = Record<string, AnalyticsValue>
+
+function sanitize(params?: AnalyticsParams): Record<string, string | number | boolean | EcommerceItem[]> {
   if (!params) return {}
   return Object.fromEntries(
     Object.entries(params).filter(([, value]) => value !== undefined && value !== null),
-  ) as Record<string, string | number | boolean>
+  ) as Record<string, string | number | boolean | EcommerceItem[]>
 }
 
-function withExperiment(params?: AnalyticsParams): Record<string, string | number | boolean> {
+function withExperiment(params?: AnalyticsParams): Record<string, string | number | boolean | EcommerceItem[]> {
   const sanitized = sanitize(params)
   const experimentId = typeof sanitized.experimentId === 'string' ? sanitized.experimentId : undefined
   if (!experimentId) return sanitized
@@ -31,6 +41,27 @@ export function trackMizzzEvent(eventName: string, params?: AnalyticsParams): vo
 
 export function trackCtaClick(location: string, cta: string, extras?: AnalyticsParams): void {
   trackMizzzEvent('cta_click', { location, cta, ...extras })
+}
+
+export function trackEcommerceEvent(
+  eventName: 'view_item_list' | 'view_item' | 'select_item' | 'add_to_cart' | 'remove_from_cart' | 'view_cart' | 'begin_checkout' | 'purchase',
+  params: AnalyticsParams,
+): void {
+  trackMizzzEvent(eventName, params)
+}
+
+export function trackMembershipEvent(
+  eventName: 'sign_up_attempt' | 'sign_up_success' | 'login_attempt' | 'login_success' | 'member_gate_encounter' | 'join_cta_click' | 'join_page_view',
+  params?: AnalyticsParams,
+): void {
+  trackMizzzEvent(eventName, params)
+}
+
+export function trackSupportEvent(
+  eventName: 'help_center_search' | 'article_view' | 'article_helpful' | 'article_not_helpful' | 'contact_form_start' | 'contact_form_confirm' | 'contact_submit_success' | 'contact_submit_fail' | 'support_thread_view' | 'handoff_to_human_start' | 'support_cta_click',
+  params?: AnalyticsParams,
+): void {
+  trackMizzzEvent(eventName, params)
 }
 
 export function trackCampaignClick(location: string, campaignSlug: string, action: string, extras?: AnalyticsParams): void {

@@ -27,7 +27,7 @@ import { convertPrice, DISPLAY_CURRENCIES } from '@/modules/store/lib/currency'
 import { useDisplayCurrency } from '@/modules/store/hooks/useDisplayCurrency'
 import RestockNotifyForm from '@/modules/store/components/RestockNotifyForm'
 import { trackViewHistory } from '@/modules/store/lib/commerceOptimization'
-import { trackCtaClick } from '@/modules/analytics/tracking'
+import { trackCtaClick, trackEcommerceEvent } from '@/modules/analytics/tracking'
 import NotificationInterestButton from '@/modules/notifications/components/NotificationInterestButton'
 import { createStoreCheckoutSession } from '@/modules/payments/api'
 import FavoriteToggleButton from '@/modules/personalization/components/FavoriteToggleButton'
@@ -67,6 +67,17 @@ export default function StoreDetailPage() {
     if (!product) return
     trackViewHistory('product', product.slug)
     trackView({ kind: 'product', slug: product.slug, title: product.title, href: detailPath.product(product.slug), sourceSite: 'store' }, user?.id)
+    trackEcommerceEvent('view_item', {
+      currency: product.currency,
+      value: product.price,
+      items: [{
+        item_id: product.documentId,
+        item_name: product.title,
+        item_category: product.category ?? 'uncategorized',
+        price: product.price,
+        currency: product.currency,
+      }],
+    })
   }, [product, user?.id])
 
   const purchaseSummary =
@@ -84,6 +95,19 @@ export default function StoreDetailPage() {
       setCheckoutLoading(true)
       setCheckoutError(null)
       trackCtaClick('store_detail', 'stripe_checkout_start', { slug: product.slug })
+      trackEcommerceEvent('begin_checkout', {
+        currency: product.currency,
+        value: product.price,
+        checkout_type: 'stripe',
+        items: [{
+          item_id: product.documentId,
+          item_name: product.title,
+          item_category: product.category ?? 'uncategorized',
+          price: product.price,
+          currency: product.currency,
+          quantity: 1,
+        }],
+      })
       const session = await createStoreCheckoutSession({
         productId: product.documentId,
         quantity: 1,
@@ -308,7 +332,21 @@ export default function StoreDetailPage() {
                 <PurchaseActions
                   product={product}
                   className="mt-0"
-                  onAddToCart={canAddCart ? () => addItem(product, 1) : undefined}
+                  onAddToCart={canAddCart ? () => {
+                    addItem(product, 1)
+                    trackEcommerceEvent('add_to_cart', {
+                      currency: product.currency,
+                      value: product.price,
+                      items: [{
+                        item_id: product.documentId,
+                        item_name: product.title,
+                        item_category: product.category ?? 'uncategorized',
+                        price: product.price,
+                        currency: product.currency,
+                        quantity: 1,
+                      }],
+                    })
+                  } : undefined}
                 />
                 {checkoutError && (
                   <p className="mt-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-600 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-300">
@@ -340,7 +378,20 @@ export default function StoreDetailPage() {
 
               <Link
                 to={cartPath}
-                onClick={() => trackCtaClick('store_detail', 'go_to_cart', { slug: product.slug })}
+                onClick={() => {
+                  trackCtaClick('store_detail', 'go_to_cart', { slug: product.slug })
+                  trackEcommerceEvent('view_cart', {
+                    source: 'store_detail',
+                    items: [{
+                      item_id: product.documentId,
+                      item_name: product.title,
+                      item_category: product.category ?? 'uncategorized',
+                      price: product.price,
+                      currency: product.currency,
+                      quantity: 1,
+                    }],
+                  })
+                }}
                 className="mt-3 inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
               >
                 {t('cart.goToCart', { defaultValue: 'カートへ進む' })} →

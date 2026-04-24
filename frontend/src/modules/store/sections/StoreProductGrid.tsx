@@ -3,10 +3,11 @@ import { useTranslation } from 'react-i18next'
 import SectionReveal from '@/components/common/SectionReveal'
 import SkeletonProductCard from '@/components/common/SkeletonProductCard'
 import ProductCard from '@/modules/store/components/ProductCard'
-import { trackMizzzEvent } from '@/modules/analytics/tracking'
+import { trackEcommerceEvent, trackMizzzEvent } from '@/modules/analytics/tracking'
 import { ROUTES } from '@/lib/routeConstants'
 import type { StoreProductSummary } from '@/modules/store/types'
 import type { DisplayCurrency } from '@/modules/store/lib/currency'
+import { useEffect } from 'react'
 
 interface Props {
   products: StoreProductSummary[]
@@ -19,6 +20,23 @@ interface Props {
 
 export default function StoreProductGrid({ products, loading, error, currency, totalCount, onResetFilters }: Props) {
   const { t } = useTranslation()
+
+  useEffect(() => {
+    if (loading || products.length === 0) return
+    trackEcommerceEvent('view_item_list', {
+      item_list_id: 'store_product_grid',
+      item_list_name: 'store_product_grid',
+      item_count: products.length,
+      currency,
+      items: products.slice(0, 12).map((p) => ({
+        item_id: p.documentId,
+        item_name: p.title,
+        item_category: p.category ?? 'uncategorized',
+        price: p.price,
+        currency: p.currency,
+      })),
+    })
+  }, [currency, loading, products])
 
   if (loading) {
     return (

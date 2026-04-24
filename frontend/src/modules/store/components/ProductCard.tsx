@@ -7,7 +7,7 @@ import { formatPriceNum } from '@/utils'
 import { convertPrice, type DisplayCurrency } from '../lib/currency'
 import Badge from '@/components/common/Badge'
 import type { StoreProductSummary } from '../types'
-import { trackCtaClick, trackProductCardClick } from '@/modules/analytics/tracking'
+import { trackCtaClick, trackEcommerceEvent, trackProductCardClick } from '@/modules/analytics/tracking'
 import { motionPresets } from '@/components/common/motionPresets'
 
 interface Props {
@@ -39,6 +39,17 @@ export default function ProductCard({ product, displayCurrency = 'JPY', tracking
         to={detailPath.product(product.slug)}
         onClick={() => {
           trackCtaClick(trackingLocation, 'product_click', { slug: product.slug, status: product.purchaseStatus })
+          trackEcommerceEvent('select_item', {
+            item_list_id: trackingLocation,
+            item_list_name: trackingLocation,
+            items: [{
+              item_id: product.documentId,
+              item_name: product.title,
+              item_category: product.category ?? 'uncategorized',
+              price: product.price,
+              currency: product.currency,
+            }],
+          })
           trackProductCardClick(trackingLocation, product.slug, product.purchaseStatus)
         }}
         className="group block"

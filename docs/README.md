@@ -76,6 +76,7 @@
 - [support policy governance / optimization audit / rollback / experiment guardrails / multilingual safety review runbook (2026-04-24)](./09_operations/support-policy-governance-rollback-guardrail-runbook-2026-04-24.md)
 - [translation memory / glossary / multilingual semantic retrieval improvement / article localization workflow automation / locale-specific ranking tuning / regional policy templates runbook (2026-04-24)](./09_operations/multilingual-translation-memory-glossary-retrieval-workflow-runbook-2026-04-24.md)
 - [分析基盤・改善運用ガイド](./09_operations/analytics-improvement-foundation.md)
+- [GA4 / GTM / Search Console / Consent Mode 計測基盤 runbook (2026-04-24)](./09_operations/ga4-gtm-search-console-consent-foundation-2026-04-24.md)
 - [SEO/コンテンツ流入基盤メモ（2026-04）](./seo-content-growth-foundation.md)
 - [パーソナライズ導線運用メモ](./personalization-notification-center.md)
 - [横断検索/発見導線 基盤](./discovery-search-recommendation-foundation-2026-04-18.md)

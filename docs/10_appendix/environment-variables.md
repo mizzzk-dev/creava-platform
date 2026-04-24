@@ -492,6 +492,10 @@
 ## 11. analytics foundation / attribution / experiment measurement 追加（2026-04-22）
 
 ### frontend runtime env
+- `VITE_GA_MEASUREMENT_ID`: GA4 measurement ID（`G-XXXXXXXXXX`）。
+- `VITE_GTM_CONTAINER_ID`: GTM container ID（`GTM-XXXXXXX`）。
+- `VITE_ANALYTICS_DEBUG_MODE`: debug view / preview 時の補助フラグ（本番は false 推奨）。
+- `VITE_ANALYTICS_CONSENT_MODE`: consent mode のバージョン（現行 `v2`）。
 - `VITE_ANALYTICS_FOUNDATION_ENABLED`: cross-site analytics foundation を有効化。
 - `VITE_ANALYTICS_TAXONOMY_VERSION`: event taxonomy の運用バージョン。
 - `VITE_ANALYTICS_SESSION_TIMEOUT_MINUTES`: session 境界判定に使う閾値。
@@ -524,6 +528,8 @@
 - `ANALYTICS_OPS_TOKEN`
 - `ANALYTICS_IP_HASH_SALT`
 - `ANALYTICS_TAXONOMY_VERSION`
+- `VITE_GA_MEASUREMENT_ID`
+- `VITE_GTM_CONTAINER_ID`
 
 ### 運用注意
 - `auth.users` を analytics business state の source とせず、app 側 user domain + summary を参照する。
