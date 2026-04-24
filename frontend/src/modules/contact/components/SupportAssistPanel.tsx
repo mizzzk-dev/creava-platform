@@ -17,6 +17,16 @@ interface Props {
     proactiveIssueSignalState?: string
     proactiveInterventionState?: string
     proactivePreventionOutcomeState?: string
+    rankingState?: string
+    rankingReason?: string
+    candidateSetState?: string
+    orchestrationState?: string
+    orchestrationPolicyState?: string
+    lifecycleAwareState?: string
+    experimentState?: string
+    experimentVariantState?: string
+    policyState?: string
+    policyEffectivenessState?: string
   }
 }
 
@@ -55,6 +65,16 @@ export default function SupportAssistPanel({ formDefinition, handoffContext }: P
       {(handoffContext?.proactiveRecommendationState || handoffContext?.proactiveIssueSignalState) && (
         <p className="mt-2 rounded-md border border-violet-900/50 bg-violet-950/40 px-2 py-1 text-[11px] text-violet-100">
           proactive: {handoffContext.proactiveRecommendationState ?? '-'} / issue: {handoffContext.proactiveIssueSignalState ?? '-'} / intervention: {handoffContext.proactiveInterventionState ?? '-'} / outcome: {handoffContext.proactivePreventionOutcomeState ?? '-'}
+        </p>
+      )}
+      {(handoffContext?.rankingState || handoffContext?.orchestrationState) && (
+        <p className="mt-2 rounded-md border border-emerald-900/50 bg-emerald-950/40 px-2 py-1 text-[11px] text-emerald-100">
+          ranking: {handoffContext.rankingState ?? '-'} ({handoffContext.rankingReason ?? '-'}) / candidate: {handoffContext.candidateSetState ?? '-'} / orchestration: {handoffContext.orchestrationState ?? '-'} ({handoffContext.orchestrationPolicyState ?? '-'})
+        </p>
+      )}
+      {(handoffContext?.experimentState || handoffContext?.policyState) && (
+        <p className="mt-2 rounded-md border border-amber-900/50 bg-amber-950/40 px-2 py-1 text-[11px] text-amber-100">
+          lifecycle: {handoffContext.lifecycleAwareState ?? '-'} / experiment: {handoffContext.experimentState ?? '-'} ({handoffContext.experimentVariantState ?? '-'}) / policy: {handoffContext.policyState ?? '-'} ({handoffContext.policyEffectivenessState ?? '-'})
         </p>
       )}
 

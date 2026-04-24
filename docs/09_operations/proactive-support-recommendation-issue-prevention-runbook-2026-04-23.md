@@ -1,125 +1,117 @@
-# proactive support / recommendation scoring / issue prevention runbook (2026-04-23)
+# proactive support optimization / ranking / orchestration / experimentation runbook (2026-04-24)
 
 ## 0. 目的
 - 対象: `mizzz.jp` main / `store.mizzz.jp` / `fc.mizzz.jp`
-- 目的: 問い合わせ前の self-service を「検索して探す」中心から「文脈に応じた先回り案内」へ拡張する。
-- 本改修は **suggestion と human handoff を分離** し、強制クローズや自動解決は行わない。
+- 目的: proactive support 基盤を「表示できる状態」から「誰に何をいつどの順で出すと自己解決率が高いかを継続最適化できる状態」に進める。
+- 本段階は **assisted optimization**（提案・分析・運用補助）を優先し、完全自動 close/publish/policy rollout は行わない。
 
-## 1. 現状確認（改修前の弱点）
-1. proactive recommendation の状態管理がなく、表示・クリック・解決・handoff の区別が曖昧。
-2. issue signal を support 文脈として集約する型がなく、known issue match と no-result を同じ扱いにしやすい。
-3. conversational help と proactive intervention が分離されておらず、運用観点で最適化しづらい。
-4. 問い合わせフォームへ渡す prefill に proactive state が含まれず、support thread 側で先回り案内の効果を追跡しにくい。
+## 1. 現状の弱点（改修前）
+1. recommendation 候補生成と ranking 結果が分離されておらず、優先順位の改善理由が追いづらい。
+2. proactive intervention と lifecycle-aware branching が暗黙的で、guest / member / grace / expired ごとの差分が運用に出しづらい。
+3. experimentation / policy の状態が問い合わせ prefill に引き継がれず、support 側で改善サイクルが閉じない。
+4. ranking の低信頼（low confidence）と handoff の必要性が同一扱いになりやすい。
 
-## 2. 状態責務（混同禁止）
-- `recommendationState`: 候補評価/提示/クリック/抑制。
-- `issueSignalState`: 既知障害一致、検索失敗傾向、エスカレーション兆候。
-- `interventionState`: トリガー後の表示〜完了/handed off。
-- `preventionOutcomeState`: 自己解決できたか、部分解決か、問い合わせ移行か。
-- `assistantSessionState` / `troubleshootingState` / `handoffState`: 既存 conversational help 側。
+## 2. 責務整理（混同禁止）
+### user-facing state
+- `recommendationState`: `not_evaluated | eligible | candidate_selected | shown | clicked | dismissed | suppressed`
+- `rankingState`: `not_ranked | ranked | low_confidence | fallback_rule_applied | manual_override`
+- `orchestrationState`: `not_started | active | branching | completed | suppressed | failed`
+- `preventionOutcomeState`: `unknown | self_resolved | partially_resolved | still_need_support | handed_off_to_human | suppressed_due_to_low_confidence`
 
-> 重要: recommendation 表示 = 解決成功ではない。
+### optimization / internal state
+- `candidateSetState`: `empty | generated | filtered | ranked`
+- `rankingReason`: `known_issue_priority | semantic_retrieval_match | category_lifecycle_bias | low_confidence_fallback | member_state_priority`
+- `orchestrationPolicyState`: `default | issue_first | assistant_first | handoff_accelerated | manual_review`
+- `lifecycleAwareState`: `guest_journey | onboarding_like | membership_like | grace_like | expired_like | high_risk_journey`
+- `experimentState`: `none | draft | running | paused | completed | invalidated`
+- `policyState`: `inactive | active | under_review | deprecated`
+- `policyEffectivenessState`: `unknown | effective | watch | ineffective`
 
-## 3. 実装概要
+> 重要: candidate があること、ranked されること、表示されること、実験対象になること、解決につながることは別状態。
+
+## 3. 実装差分
 ### frontend
-- `frontend/src/modules/support/proactiveSupport.ts`
-  - proactive support の型定義。
-  - recommendation scoring（rule-based）と issue signal 判定。
-  - recommendation 生成（article/known issue/assistant/handoff）。
+- `frontend/src/modules/support/proactiveOptimization.ts`
+  - ranking / orchestration / lifecycle / experiment / policy state を集約。
+  - candidate + recommendation を site/category/lifecycle 文脈で並べ替える `rankProactiveRecommendations` を追加。
+  - Contact handoff 用の `buildOptimizationQueryParams` を追加。
 - `frontend/src/modules/support/components/ProactiveSupportPanel.tsx`
-  - context-aware proactive recommendation UI。
-  - `proactive_intervention_click` 計測。
+  - ranked result を表示し、ranking/orchestration policy を UI に可視化。
+  - `proactive_intervention_shown` / click event に rankingReason・variant を付与。
 - `frontend/src/pages/support/SupportCenterPage.tsx`
-  - 検索文脈 + sourceSite + lifecycle を入力に評価。
-  - `proactive_intervention_evaluated` 計測。
-  - Contact handoff URL に proactive state を prefill 連携。
+  - optimization summary state を保持。
+  - `proactive_ranking_logged` / `proactive_policy_evaluated` を送出。
+  - Contact への prefill に ranking/orchestration/experiment/policy state を連携。
 - `frontend/src/pages/ContactPage.tsx`
-  - handoff prefill で proactive state を受け取り。
+  - prefill parameter を拡張し、support handoff へ carry-over。
 - `frontend/src/modules/contact/components/SupportAssistPanel.tsx`
-  - 問い合わせ前パネルに proactive state を表示（サポート側文脈引き継ぎ補助）。
+  - proactive + ranking + orchestration + policy 状態を表示（ユーザー入力の再説明削減）。
 
 ### backend
 - `backend/src/api/analytics-event/controllers/analytics-event.ts`
-  - `proactive_intervention_evaluated` / `proactive_intervention_click` / `proactive_intervention_feedback` を許可イベントへ追加。
+  - 以下イベントを ALLOWED_EVENTS に追加。
+    - `proactive_intervention_shown`
+    - `proactive_ranking_logged`
+    - `proactive_policy_evaluated`
 
-## 4. recommendationState / issueSignalState / interventionState 定義
-- `recommendationState`
-  - `not_evaluated | eligible | shown | clicked | dismissed | suppressed`
-- `issueSignalState`
-  - `none | weak_signal | likely_issue | repeated_issue | known_issue_match | escalation_risk`
-- `interventionState`
-  - `not_triggered | triggered | viewed | engaged | completed | handed_off`
-- `preventionOutcomeState`
-  - `unknown | self_resolved | partially_resolved | still_need_support | handed_off_to_human`
+## 4. inquiry / handoff / case prefill の扱い
+- recommendation ranking と actual case creation は分離。
+- Contact 遷移時に state を query で引き継ぎ、フォーム送信後の support thread 文脈に接続する。
+- handoff suggestion は recommendation の一種であり、case created と同義ではない。
 
-## 5. publish / review / disable
-- publish 対象: public 記事/known issue のみ。
-- support-only / internal-only の suggestion は user-facing に出さない。
-- recommendation disable は event tracking で `recommendationState=suppressed` を確認して段階導入する。
+## 5. known issue / knowledge gap / feedback loop
+- known issue 優先度は rankingReason で説明可能化。
+- low confidence は fallback で assistant / inquiry 導線へ接続し、断定表示を回避。
+- recommendation feedback は `help_article_feedback` / proactive event と合わせて評価（単独で解釈しない）。
 
-## 6. no-result / low-confidence / repeated-handoff の確認
-1. Support Center で該当キーワードを入力。
-2. `proactive_intervention_evaluated` の `issueSignalState` と `recommendationScoreState` を確認。
-3. 問い合わせ導線へ進み、Contact prefill の proactive state が保持されることを確認。
-4. support case 側で prefill message と state を見て重複説明が減るか確認。
+## 6. セキュリティ・権限制御
+- user-facing には recommendation / ranking の結果のみ露出し、internal scoring detail や internal note は露出しない。
+- support-only / internal-only article の公開判定は既存 visibility 制御を維持。
+- policy/experiment はログ中心にし、publish 操作は既存 admin 権限前提で運用。
 
-## 7. effectiveness / analytics
-- 主要イベント
-  - `proactive_intervention_evaluated`
-  - `proactive_intervention_click`
-  - `assistant_session_start`（既存）
-  - `self_service_deflection`（既存）
-- 初期KPI
-  - intervention click-through（表示→クリック）
-  - intervention→handoff 率
-  - category/sourceSite/lifecycle 別の still_need_support 率
+## 7. 環境変数 / Secrets
+### frontend (`frontend/.env.example`)
+- `VITE_PROACTIVE_RANKING_STRATEGY`
+- `VITE_PROACTIVE_EXPERIMENT_DEFAULT_STATE`
+- `VITE_PROACTIVE_POLICY_DEFAULT_STATE`
 
-## 8. 環境変数 / Secrets
-### frontend
-- `VITE_PROACTIVE_SUPPORT_ENABLED`
-- `VITE_PROACTIVE_SUPPORT_MIN_SCORE`
-- `VITE_PROACTIVE_INTERVENTION_COOLDOWN_MINUTES`
-
-### backend
-- `SUPPORT_PROACTIVE_SCORING_VERSION`
-- `SUPPORT_PROACTIVE_KNOWN_ISSUE_WEIGHT`
-- `SUPPORT_PROACTIVE_LOW_RESULT_WEIGHT`
+### backend (`backend/.env.example`)
+- `SUPPORT_PROACTIVE_POLICY_ENGINE_VERSION`
+- `SUPPORT_PROACTIVE_EXPERIMENT_GUARDRAIL_MODE`
+- `SUPPORT_PROACTIVE_RANKING_MIN_CONFIDENCE`
 
 ### GitHub Secrets / Variables（推奨）
 - `ANALYTICS_OPS_TOKEN`
 - `ANALYTICS_IP_HASH_SALT`
 - `VITE_ANALYTICS_OPS_ENDPOINT`
-- `SUPPORT_PROACTIVE_SCORING_VERSION`
+- `SUPPORT_PROACTIVE_POLICY_ENGINE_VERSION`
 
-## 9. local / staging / production
-- local: hardcoded rule-based scoring で E2E を確認。
-- staging: known issue と category を増やして過剰表示を確認。
-- production: score threshold を高めに設定し段階ロールアウト。
+## 8. 確認手順（local/staging/production 共通）
+1. Support Center で検索語を入力。
+2. proactive panel で ranking badge（`rankingState / orchestrationPolicyState`）が表示される。
+3. suggestion click 後、analytics に `proactive_intervention_click` が記録される。
+4. Contact 遷移 URL に ranking/orchestration/experiment/policy state が付与される。
+5. Contact の pre-form panel に carry-over が表示される。
+6. backend analytics public endpoint で追加イベントが reject されない。
 
-## 10. テスト手順
-1. Support Center を開く。
-2. 検索キーワード入力で proactive panel が表示される。
-3. article / known issue / assistant / handoff の CTA 動作を確認。
-4. Contact に遷移し prefill の proactive state が見えることを確認。
-5. analytics-events/public で対象イベントが拒否されないことを確認。
+## 9. low-confidence / repeated-handoff / failure の見方
+- low-confidence: `rankingState=low_confidence` と `rankingReason=low_confidence_fallback` を優先確認。
+- repeated handoff: `proactive_intervention_click`（handoff type）と case conversion を期間比較。
+- ranking failure: candidate あり + click 低下 + still_need_support 上昇を knowledge gap 候補として扱う。
 
-## 11. 失敗時の確認
-- proactive panel が出ない
-  - score threshold、検索文字数、候補件数を確認。
-- クリックイベントが保存されない
-  - frontend `VITE_ANALYTICS_OPS_ENDPOINT` と backend `ANALYTICS_OPS_TOKEN` を確認。
-- 問い合わせ prefill が欠落
-  - URL length と query encode 状態を確認。
+## 10. よくあるトラブル
+- panel が出ない: `VITE_PROACTIVE_SUPPORT_ENABLED` / `VITE_PROACTIVE_SUPPORT_MIN_SCORE` を確認。
+- event reject: backend の ALLOWED_EVENTS 未反映を確認。
+- prefill 欠落: URLSearchParams のキー名（snake_case）不一致を確認。
 
-## 12. よくあるトラブル
-- known issue がないのに `known_issue_match` になる
-  - candidate type 判定ロジックを確認。
-- recommendation が過剰表示される
-  - min score を引き上げる。
-- handoff を押し付けに感じる
-  - CTA の優先順位を assistant / troubleshooting 先行へ調整。
+## 11. 残課題（次PR候補）
+- personalized ranking model（feature store 連携）
+- multilingual recommendation tuning / article localization feedback loop
+- policy template 管理 UI
+- proactive experiment dashboard（運用画面）
+- recommendation accuracy tracking（offline evaluation）
 
-## 13. 仮定
-- 既存の conversational help / support thread / case prefill 基盤は稼働中。
-- known issue は status API で public summary を取得できる。
-- 運用ダッシュボードは analytics event から集計可能。
+## 12. 仮定
+- support thread / inquiry trace id / case prefill の既存基盤は稼働中。
+- known issue 情報は status API から public に取得可能。
+- internal admin / operations dashboard は analytics event からサマリを構築できる。

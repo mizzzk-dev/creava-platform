@@ -49,6 +49,16 @@ export default function ContactPage() {
     proactiveIssueSignalState: searchParams.get('proactive_issue_signal_state') ?? '',
     proactiveInterventionState: searchParams.get('proactive_intervention_state') ?? '',
     proactivePreventionOutcomeState: searchParams.get('proactive_prevention_outcome_state') ?? '',
+    rankingState: searchParams.get('ranking_state') ?? '',
+    rankingReason: searchParams.get('ranking_reason') ?? '',
+    candidateSetState: searchParams.get('candidate_set_state') ?? '',
+    orchestrationState: searchParams.get('orchestration_state') ?? '',
+    orchestrationPolicyState: searchParams.get('orchestration_policy_state') ?? '',
+    lifecycleAwareState: searchParams.get('lifecycle_aware_state') ?? '',
+    experimentState: searchParams.get('experiment_state') ?? '',
+    experimentVariantState: searchParams.get('experiment_variant_state') ?? '',
+    policyState: searchParams.get('policy_state') ?? '',
+    policyEffectivenessState: searchParams.get('policy_effectiveness_state') ?? '',
   }), [searchParams])
 
   useEffect(() => {

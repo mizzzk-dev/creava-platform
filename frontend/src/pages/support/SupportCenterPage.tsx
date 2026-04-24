@@ -26,6 +26,7 @@ import ConversationalHelpAssistant from '@/modules/support/components/Conversati
 import ProactiveSupportPanel from '@/modules/support/components/ProactiveSupportPanel'
 import { retrieveKnowledgeCandidates } from '@/modules/support/conversationalHelp'
 import type { ProactiveSupportSummary } from '@/modules/support/proactiveSupport'
+import { buildOptimizationQueryParams, type ProactiveOptimizationSummary } from '@/modules/support/proactiveOptimization'
 
 const detectSite = (): SourceSite => {
   if (isStoreSite) return 'store'
@@ -53,6 +54,7 @@ export default function SupportCenterPage() {
   const [selectedCase, setSelectedCase] = useState<SupportCaseDetail | null>(null)
   const [replyBody, setReplyBody] = useState('')
   const [proactiveSummary, setProactiveSummary] = useState<ProactiveSupportSummary | null>(null)
+  const [optimizationSummary, setOptimizationSummary] = useState<ProactiveOptimizationSummary | null>(null)
   const [replyState, setReplyState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const site = detectSite()
   const sourceSite = site === 'all' ? 'main' : site
@@ -180,6 +182,28 @@ export default function SupportCenterPage() {
   }, [category, proactiveSummary, sourceSite])
 
   useEffect(() => {
+    if (!optimizationSummary) return
+    trackMizzzEvent('proactive_ranking_logged', {
+      sourceSite,
+      supportCaseType: category === 'all' ? 'general' : category,
+      rankingState: optimizationSummary.rankingState,
+      rankingReason: optimizationSummary.rankingReason,
+      candidateSetState: optimizationSummary.candidateSetState,
+      orchestrationState: optimizationSummary.orchestrationState,
+      orchestrationPolicyState: optimizationSummary.orchestrationPolicyState,
+      lifecycleAwareState: optimizationSummary.lifecycleAwareState,
+    })
+    trackMizzzEvent('proactive_policy_evaluated', {
+      sourceSite,
+      supportCaseType: category === 'all' ? 'general' : category,
+      policyState: optimizationSummary.policyState,
+      policyEffectivenessState: optimizationSummary.policyEffectivenessState,
+      experimentState: optimizationSummary.experimentState,
+      experimentVariantState: optimizationSummary.experimentVariantState,
+    })
+  }, [category, optimizationSummary, sourceSite])
+
+  useEffect(() => {
     const keyword = search.trim()
     if (keyword.length < HELP_SEARCH_MIN_QUERY_LENGTH) return
     const timer = window.setTimeout(() => {
@@ -225,6 +249,11 @@ export default function SupportCenterPage() {
       cancelled = true
     }
   }, [auth, isSignedIn, t])
+
+  const optimizationQuery = useMemo(
+    () => (optimizationSummary ? buildOptimizationQueryParams(optimizationSummary) : {}),
+    [optimizationSummary],
+  )
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-14">
@@ -511,11 +540,20 @@ export default function SupportCenterPage() {
         category={category}
         search={search}
         candidates={proactiveCandidates}
-        inquiryPath={`${ROUTES.CONTACT}?tab=${sourceSite === 'store' ? 'store_support' : sourceSite === 'fc' ? 'fc_support' : 'contact'}&prefill_category=${encodeURIComponent(category === 'all' ? 'general' : category)}&proactive_recommendation_state=${encodeURIComponent(proactiveSummary?.recommendationState ?? 'not_evaluated')}&proactive_issue_signal_state=${encodeURIComponent(proactiveSummary?.issueSignalState ?? 'none')}&proactive_intervention_state=${encodeURIComponent(proactiveSummary?.interventionState ?? 'not_triggered')}&proactive_prevention_outcome_state=${encodeURIComponent(proactiveSummary?.preventionOutcomeState ?? 'unknown')}`}
+        inquiryPath={`${ROUTES.CONTACT}?${new URLSearchParams({
+          tab: sourceSite === 'store' ? 'store_support' : sourceSite === 'fc' ? 'fc_support' : 'contact',
+          prefill_category: category === 'all' ? 'general' : category,
+          proactive_recommendation_state: proactiveSummary?.recommendationState ?? 'not_evaluated',
+          proactive_issue_signal_state: proactiveSummary?.issueSignalState ?? 'none',
+          proactive_intervention_state: proactiveSummary?.interventionState ?? 'not_triggered',
+          proactive_prevention_outcome_state: proactiveSummary?.preventionOutcomeState ?? 'unknown',
+          ...optimizationQuery,
+        }).toString()}`}
         isSignedIn={isSignedIn}
         membershipStatus={benefitState.membershipStatus}
         lifecycleStage={lifecycle?.lifecycleStage}
         onSummaryChanged={setProactiveSummary}
+        onOptimizationChanged={setOptimizationSummary}
       />
 
       <ConversationalHelpAssistant
