@@ -31,7 +31,7 @@ import { buildLocaleSupportSummary, normalizeLocale, resolveLocalizedGuides } fr
 import { buildMultilingualOptimizationSummary } from '@/modules/support/multilingualOptimization'
 import { buildMultilingualOpsAutomationSummary, buildMultilingualOpsQueryParams } from '@/modules/support/multilingualOpsAutomation'
 import { buildPolicyGovernanceQueryParams, buildSupportPolicyGovernanceSummary } from '@/modules/support/policyGovernance'
-import { useExperiment } from '@/modules/analytics/experimentOps'
+import { usePersonalization } from '@/modules/personalization/ops'
 
 const detectSite = (): SourceSite => {
   if (isStoreSite) return 'store'
@@ -62,8 +62,8 @@ export default function SupportCenterPage() {
   const [optimizationSummary, setOptimizationSummary] = useState<ProactiveOptimizationSummary | null>(null)
   const [replyState, setReplyState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const site = detectSite()
-  const supportExperiment = useExperiment('support-search-placement-2026q2')
-  const isSupportChallenger = supportExperiment.variantId === 'challenger'
+  const supportPersonalization = usePersonalization('support-recommendation-path-2026q2')
+  const isSupportChallenger = supportPersonalization.isPersonalized
   const sourceSite = site === 'all' ? 'main' : site
   const locale = normalizeLocale(document.documentElement.lang || 'ja')
   const benefitState = resolveBenefitExperienceState({ user, lifecycle, sourceSite })

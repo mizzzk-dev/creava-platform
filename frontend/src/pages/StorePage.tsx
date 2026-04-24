@@ -14,7 +14,7 @@ import {
   forecastStockout,
   getHistoryByKind,
 } from '@/modules/store/lib/commerceOptimization'
-import { useExperiment } from '@/modules/analytics/experimentOps'
+import { usePersonalization } from '@/modules/personalization/ops'
 
 import StoreHeroSection from '@/modules/store/sections/StoreHeroSection'
 import StoreFilterBar, {
@@ -51,8 +51,8 @@ export default function StorePage() {
   const [hideSoldOut, setHideSoldOut] = useState(false)
 
   const visibleProducts = filterVisible(products)
-  const storeExperiment = useExperiment('store-hero-cta-2026q2')
-  const variantLabel = storeExperiment.variantId === 'challenger' ? 'B' : 'A'
+  const storePersonalization = usePersonalization('store-listing-assist-2026q2')
+  const variantLabel = storePersonalization.isPersonalized ? 'B' : 'A'
   const heroVariant = useMemo(() => variantLabel as 'A' | 'B', [variantLabel])
   const rankingVariant = useMemo(() => variantLabel as 'A' | 'B', [variantLabel])
   const ctaVariant = useMemo(() => variantLabel as 'A' | 'B', [variantLabel])

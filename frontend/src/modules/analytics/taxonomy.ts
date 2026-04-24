@@ -80,6 +80,9 @@ const EVENT_META: Record<string, { eventType: EventType; eventCategory: EventCat
   experiment_assignment_logged: { eventType: 'experiment_event', eventCategory: 'experimentation' },
   exposure_event_logged: { eventType: 'experiment_event', eventCategory: 'experimentation' },
   experiment_decision_logged: { eventType: 'experiment_event', eventCategory: 'experimentation' },
+  personalization_assignment_logged: { eventType: 'experiment_event', eventCategory: 'experimentation' },
+  personalization_impression_logged: { eventType: 'experiment_event', eventCategory: 'experimentation' },
+  personalization_decision_logged: { eventType: 'experiment_event', eventCategory: 'experimentation' },
 }
 
 export function inferEventMeta(eventName: string): { eventType: EventType; eventCategory: EventCategory } {

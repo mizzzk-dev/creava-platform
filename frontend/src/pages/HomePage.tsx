@@ -29,7 +29,7 @@ import UserLifecycleBanner from '@/components/common/UserLifecycleBanner'
 import MemberValueExperiencePanel from '@/components/common/MemberValueExperiencePanel'
 import MemberProgressHub from '@/components/common/MemberProgressHub'
 import CampaignPersonalizationPanel from '@/components/common/CampaignPersonalizationPanel'
-import { useExperiment } from '@/modules/analytics/experimentOps'
+import { usePersonalization } from '@/modules/personalization/ops'
 
 export default function HomePage() {
   const { t, i18n } = useTranslation()
@@ -37,8 +37,8 @@ export default function HomePage() {
   const { item: settings } = useStrapiSingle(() =>
     getSiteSettings({ locale: i18n.resolvedLanguage }),
   )
-  const heroExperiment = useExperiment('main-hero-cta-2026q2')
-  const isMainChallenger = heroExperiment.variantId === 'challenger'
+  const homePersonalization = usePersonalization('main-hub-routing-2026q2')
+  const isMainChallenger = homePersonalization.isPersonalized
 
   useEffect(() => {
     const warmup = () => {
