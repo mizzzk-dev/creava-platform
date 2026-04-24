@@ -19,10 +19,20 @@ node --loader ts-node/esm scripts/migrate-strapi-to-wordpress.ts --type=blog-pos
 - `WORDPRESS_MIGRATION_TARGET_URL`
 - `WORDPRESS_MIGRATION_APP_TOKEN`
 
-## 仕様
+## verify / diff 仕様（PR #231 次段 hardening）
 - `mapping.json` を upsert 更新し idempotent を維持
 - report は `scripts/migration/reports/*.json` に保存
 - verify で `slug / locale / accessStatus / missing_target` を分類
+- mismatch は `critical / high / medium` に severity 分類
+  - `critical`: missing_target
+  - `high`: accessStatus mismatch
+  - `medium`: slug / locale mismatch
+- report に `rollbackReadiness` を必ず出力（staged cutover 可否の最小判定）
+
+## rollback criteria（最小）
+- `critical > 0` または `high > 0` の場合は rollout を進めない
+- `medium` は許容理由を issue/PR に明記したうえで段階移行する
+- rollback は frontend の provider rollout flag を unit 単位で Strapi 側へ戻す
 
 ## 失敗時の再開
 - `status=failed` のアイテムだけ対象にして `--type` + `--limit` で部分再実行

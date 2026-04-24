@@ -35,6 +35,9 @@ const ENDPOINT_MAP: Record<string, string> = {
   '/site-setting': '/site-settings',
 }
 
+const DEFAULT_PAGE = 1
+const DEFAULT_PAGE_SIZE = 12
+
 function getWordPressApiBaseUrl(): string {
   const baseUrl = import.meta.env.VITE_WORDPRESS_API_URL
   if (!baseUrl) {
@@ -47,13 +50,19 @@ function normalizeEndpoint(endpoint: string): string {
   return ENDPOINT_MAP[endpoint] ?? endpoint
 }
 
+function normalizePositiveInt(value: unknown, fallback: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return fallback
+  const normalized = Math.floor(value)
+  return normalized > 0 ? normalized : fallback
+}
+
 function toWordPressQuery(params?: CmsQueryParams, slug?: string): string {
   const qs = new URLSearchParams()
   const page = params?.pagination?.page
   const pageSize = params?.pagination?.pageSize
 
-  if (page) qs.set('page', String(page))
-  if (pageSize) qs.set('pageSize', String(pageSize))
+  if (typeof page === 'number') qs.set('page', String(page))
+  if (typeof pageSize === 'number') qs.set('pageSize', String(pageSize))
 
   const sort = Array.isArray(params?.sort) ? params?.sort[0] : params?.sort
   if (sort) qs.set('sort', sort)
@@ -75,12 +84,21 @@ function toWordPressQuery(params?: CmsQueryParams, slug?: string): string {
   return query ? `?${query}` : ''
 }
 
-function toCmsListResponse<T>(response: WordPressListResponse<T>): CmsListResponse<T> {
+function toCmsListResponse<T>(response: WordPressListResponse<T>, params?: CmsQueryParams): CmsListResponse<T> {
   const pagination = response.meta?.pagination
-  const page = pagination?.page ?? response.meta?.page ?? 1
-  const pageSize = pagination?.pageSize ?? response.meta?.pageSize ?? Math.max(response.data.length, 1)
-  const pageCount = pagination?.pageCount ?? response.meta?.pageCount ?? (response.data.length > 0 ? 1 : 0)
-  const total = pagination?.total ?? response.meta?.total ?? response.data.length
+  const requestedPage = params?.pagination?.page
+  const requestedPageSize = params?.pagination?.pageSize
+
+  const page = normalizePositiveInt(pagination?.page ?? response.meta?.page ?? requestedPage, DEFAULT_PAGE)
+  const pageSize = normalizePositiveInt(
+    pagination?.pageSize ?? response.meta?.pageSize ?? requestedPageSize,
+    DEFAULT_PAGE_SIZE,
+  )
+  const total = normalizePositiveInt(pagination?.total ?? response.meta?.total ?? response.data.length, response.data.length)
+  const pageCount = normalizePositiveInt(
+    pagination?.pageCount ?? response.meta?.pageCount ?? (total > 0 ? Math.ceil(total / pageSize) : 0),
+    total > 0 ? 1 : 0,
+  )
 
   return {
     data: response.data,
@@ -100,7 +118,7 @@ export async function fetchCollection<T>(endpoint: string, params?: CmsQueryPara
   const path = normalizeEndpoint(endpoint)
   const url = `${baseUrl}${path}${toWordPressQuery(params)}`
   const response = await cmsGet<WordPressListResponse<T>>(url, requestOptions?.signal)
-  return toCmsListResponse(response)
+  return toCmsListResponse(response, params)
 }
 
 export async function fetchSingle<T>(endpoint: string, params?: CmsQueryParams, requestOptions?: CmsRequestOptions): Promise<CmsSingleResponse<T>> {

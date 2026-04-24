@@ -9,6 +9,102 @@ function creava_get_stripe_base_url(): string {
     return (string) (getenv('STRIPE_API_BASE') ?: 'https://api.stripe.com/v1');
 }
 
+function creava_get_headless_jwt_secret(): string {
+    return (string) (getenv('WORDPRESS_HEADLESS_JWT_SECRET') ?: '');
+}
+
+function creava_decode_base64url(string $value): string {
+    $remainder = strlen($value) % 4;
+    if ($remainder > 0) {
+        $value .= str_repeat('=', 4 - $remainder);
+    }
+    return (string) base64_decode(strtr($value, '-_', '+/'));
+}
+
+function creava_extract_bearer_token(WP_REST_Request $request): string {
+    $header = (string) ($request->get_header('authorization') ?: $request->get_header('Authorization'));
+    if (!preg_match('/Bearer\s+(.+)/i', $header, $matches)) {
+        return '';
+    }
+
+    return trim((string) ($matches[1] ?? ''));
+}
+
+function creava_validate_headless_jwt(string $token): ?array {
+    $secret = creava_get_headless_jwt_secret();
+    if ($secret === '') {
+        return null;
+    }
+
+    $parts = explode('.', $token);
+    if (count($parts) !== 3) {
+        return null;
+    }
+
+    [$encoded_header, $encoded_payload, $encoded_signature] = $parts;
+    $expected_signature = rtrim(strtr(base64_encode(hash_hmac('sha256', $encoded_header . '.' . $encoded_payload, $secret, true)), '+/', '-_'), '=');
+
+    if (!hash_equals($expected_signature, $encoded_signature)) {
+        return null;
+    }
+
+    $payload_json = creava_decode_base64url($encoded_payload);
+    $payload = json_decode($payload_json, true);
+    if (!is_array($payload)) {
+        return null;
+    }
+
+    $now = time();
+    if (!empty($payload['exp']) && (int) $payload['exp'] < $now) {
+        return null;
+    }
+    if (!empty($payload['nbf']) && (int) $payload['nbf'] > $now) {
+        return null;
+    }
+
+    return $payload;
+}
+
+function creava_resolve_user_from_claims(array $claims): int {
+    if (!empty($claims['wpUserId'])) {
+        $user_id = absint($claims['wpUserId']);
+        return $user_id > 0 ? $user_id : 0;
+    }
+
+    if (!empty($claims['sub']) && is_numeric($claims['sub'])) {
+        $user_id = absint($claims['sub']);
+        return $user_id > 0 ? $user_id : 0;
+    }
+
+    if (!empty($claims['email'])) {
+        $user = get_user_by('email', sanitize_email((string) $claims['email']));
+        if ($user instanceof WP_User) {
+            return (int) $user->ID;
+        }
+    }
+
+    return 0;
+}
+
+function creava_get_authenticated_user_id(WP_REST_Request $request): int {
+    $current_user_id = get_current_user_id();
+    if ($current_user_id > 0) {
+        return $current_user_id;
+    }
+
+    $token = creava_extract_bearer_token($request);
+    if ($token === '') {
+        return 0;
+    }
+
+    $claims = creava_validate_headless_jwt($token);
+    if (!$claims) {
+        return 0;
+    }
+
+    return creava_resolve_user_from_claims($claims);
+}
+
 function creava_register_stripe_routes(): void {
     register_rest_route('creava/v1', '/checkout/session', [
         'methods' => WP_REST_Server::CREATABLE,
@@ -19,7 +115,9 @@ function creava_register_stripe_routes(): void {
     register_rest_route('creava/v1', '/billing/portal', [
         'methods' => WP_REST_Server::CREATABLE,
         'callback' => 'creava_create_billing_portal_session',
-        'permission_callback' => static function () { return is_user_logged_in(); },
+        'permission_callback' => static function (WP_REST_Request $request) {
+            return creava_get_authenticated_user_id($request) > 0;
+        },
     ]);
 }
 
@@ -91,21 +189,77 @@ function creava_create_checkout_session(WP_REST_Request $request) {
 }
 
 function creava_create_billing_portal_session(WP_REST_Request $request) {
-    $user_id = get_current_user_id();
+    $trace_id = wp_generate_uuid4();
+    $user_id = creava_get_authenticated_user_id($request);
+
+    if ($user_id <= 0) {
+        return new WP_REST_Response([
+            'error' => 'unauthorized',
+            'message' => '有効な bearer トークンが必要です。',
+            'trace' => [
+                'wordpressTraceId' => $trace_id,
+                'wordpressAuthState' => 'unauthorized',
+                'wordpressVerifiedAt' => gmdate('c'),
+            ],
+        ], 401);
+    }
+
     $customer_id = (string) get_user_meta($user_id, 'stripe_customer_id', true);
     if ($customer_id === '') {
-        return new WP_REST_Response(['error' => 'customer_not_found'], 404);
+        return new WP_REST_Response([
+            'error' => 'customer_not_found',
+            'message' => 'Stripe customer が紐づいていません。',
+            'trace' => [
+                'wordpressTraceId' => $trace_id,
+                'wordpressAuthState' => 'authenticated',
+                'wordpressCustomerState' => 'missing',
+                'wordpressVerifiedAt' => gmdate('c'),
+            ],
+        ], 404);
+    }
+
+    $return_url = (string) (getenv('STRIPE_PORTAL_RETURN_URL') ?: home_url('/member'));
+    if ($return_url === '') {
+        return new WP_REST_Response([
+            'error' => 'portal_return_url_missing',
+            'message' => 'STRIPE_PORTAL_RETURN_URL が未設定です。',
+            'trace' => [
+                'wordpressTraceId' => $trace_id,
+                'wordpressAuthState' => 'authenticated',
+                'wordpressCustomerState' => 'ready',
+                'wordpressConfigState' => 'invalid',
+                'wordpressVerifiedAt' => gmdate('c'),
+            ],
+        ], 500);
     }
 
     $result = creava_stripe_post('/billing_portal/sessions', [
         'customer' => $customer_id,
-        'return_url' => (string) (getenv('STRIPE_PORTAL_RETURN_URL') ?: home_url('/member')),
+        'return_url' => $return_url,
     ]);
 
     if (isset($result['error'])) {
-        return new WP_REST_Response($result, 502);
+        return new WP_REST_Response([
+            ...$result,
+            'trace' => [
+                'wordpressTraceId' => $trace_id,
+                'wordpressAuthState' => 'authenticated',
+                'wordpressCustomerState' => 'ready',
+                'wordpressStripeState' => 'failed',
+                'wordpressVerifiedAt' => gmdate('c'),
+            ],
+        ], 502);
     }
 
     $session = (array) ($result['data'] ?? []);
-    return rest_ensure_response(['url' => $session['url'] ?? null]);
+    return rest_ensure_response([
+        'url' => $session['url'] ?? null,
+        'trace' => [
+            'wordpressTraceId' => $trace_id,
+            'wordpressAuthState' => 'authenticated',
+            'wordpressCustomerState' => 'ready',
+            'wordpressStripeState' => 'ready',
+            'wordpressVerifiedAt' => gmdate('c'),
+        ],
+    ]);
 }

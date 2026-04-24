@@ -33,6 +33,15 @@ type CliOptions = {
   reportPath: string
 }
 
+type VerifyReason = 'missing_target' | 'slug' | 'locale' | 'accessStatus'
+type VerifySeverity = 'critical' | 'high' | 'medium'
+
+type VerifyMismatch = {
+  slug: string
+  reasons: VerifyReason[]
+  severity: VerifySeverity
+}
+
 const CONTENT_TYPES: Array<{ strapi: ContentType; wordpress: string; route: string }> = [
   { strapi: 'blog-posts', wordpress: 'blog', route: 'blog' },
   { strapi: 'news-items', wordpress: 'news', route: 'news' },
@@ -143,6 +152,8 @@ function toWordPressPayload(item: any): Record<string, unknown> {
     body: attr.body ?? attr.description ?? '',
     excerpt: attr.excerpt ?? '',
     accessStatus: attr.accessStatus ?? 'public',
+    limitedEndAt: attr.limitedEndAt ?? null,
+    archiveVisibleForFC: attr.archiveVisibleForFC ?? false,
     publishAt: attr.publishAt ?? attr.publishedAt ?? null,
     updatedAt: attr.updatedAt ?? null,
     locale: attr.locale ?? 'ja',
@@ -166,8 +177,8 @@ async function pushToWordPress(base: string, appToken: string, route: string, pa
   })
 }
 
-function classifyMismatch(source: any, target: any): string[] {
-  const mismatches: string[] = []
+function classifyMismatch(source: any, target: any): VerifyReason[] {
+  const mismatches: VerifyReason[] = []
   if (!target) return ['missing_target']
   if ((source.slug ?? '') !== (target.slug ?? '')) mismatches.push('slug')
   if ((source.locale ?? 'ja') !== (target.locale ?? 'ja')) mismatches.push('locale')
@@ -175,12 +186,28 @@ function classifyMismatch(source: any, target: any): string[] {
   return mismatches
 }
 
-async function verifyParity(base: string, route: string, sourceItems: any[]): Promise<{ ok: number; ng: number; mismatches: Array<{ slug: string; reasons: string[] }> }> {
+function classifyMismatchSeverity(reasons: VerifyReason[]): VerifySeverity {
+  if (reasons.includes('missing_target')) return 'critical'
+  if (reasons.includes('accessStatus')) return 'high'
+  return 'medium'
+}
+
+function createSeveritySummary(mismatches: VerifyMismatch[]): Record<VerifySeverity, number> {
+  return mismatches.reduce<Record<VerifySeverity, number>>(
+    (acc, mismatch) => {
+      acc[mismatch.severity] += 1
+      return acc
+    },
+    { critical: 0, high: 0, medium: 0 },
+  )
+}
+
+async function verifyParity(base: string, route: string, sourceItems: any[]): Promise<{ ok: number; ng: number; mismatches: VerifyMismatch[]; severity: Record<VerifySeverity, number> }> {
   const wp = await fetchJson<{ data: any[] }>(`${base}/wp-json/creava/v1/${route}?page=1&pageSize=200`)
   const bySlug = new Map((wp.data ?? []).map((item) => [item.slug, item]))
   let ok = 0
   let ng = 0
-  const mismatches: Array<{ slug: string; reasons: string[] }> = []
+  const mismatches: VerifyMismatch[] = []
 
   for (const source of sourceItems) {
     const normalized = toWordPressPayload(source)
@@ -189,11 +216,33 @@ async function verifyParity(base: string, route: string, sourceItems: any[]): Pr
     if (reasons.length === 0) ok += 1
     else {
       ng += 1
-      mismatches.push({ slug: String(normalized.slug ?? ''), reasons })
+      mismatches.push({
+        slug: String(normalized.slug ?? ''),
+        reasons,
+        severity: classifyMismatchSeverity(reasons),
+      })
     }
   }
 
-  return { ok, ng, mismatches }
+  return { ok, ng, mismatches, severity: createSeveritySummary(mismatches) }
+}
+
+function buildRollbackReadiness(verifyItems: Array<{ source: string; ng: number; severity: Record<VerifySeverity, number> }>): Record<string, unknown> {
+  const hasCritical = verifyItems.some((item) => item.severity.critical > 0)
+  const hasHigh = verifyItems.some((item) => item.severity.high > 0)
+
+  return {
+    rollbackRecommended: hasCritical || hasHigh,
+    reasons: [
+      hasCritical ? 'critical mismatch が残っているため staged cutover 実施不可' : null,
+      hasHigh ? 'accessStatus mismatch が残っているため limited/fc_only の誤表示リスクあり' : null,
+    ].filter(Boolean),
+    criteria: {
+      maxCritical: 0,
+      maxHigh: 0,
+      maxMedium: 10,
+    },
+  }
 }
 
 async function main(): Promise<void> {
@@ -204,11 +253,17 @@ async function main(): Promise<void> {
   const wordpressToken = getEnv('WORDPRESS_MIGRATION_APP_TOKEN')
 
   const mapping = readMapping()
+  const verifyRows: Array<{ source: string; ng: number; severity: Record<VerifySeverity, number> }> = []
   const report: Record<string, unknown> = {
     startedAt: new Date().toISOString(),
     options,
     results: [],
     verify: [],
+    checklist: {
+      verifyOnlyReady: true,
+      diffReportReady: true,
+      rollbackCriteriaReady: true,
+    },
   }
 
   const targets = CONTENT_TYPES.filter((contentType) => !options.type || options.type === contentType.strapi)
@@ -251,6 +306,7 @@ async function main(): Promise<void> {
     }
 
     const verify = await verifyParity(wordpressBase, target.route, sourceItems)
+    verifyRows.push({ source: target.strapi, ng: verify.ng, severity: verify.severity })
     ;(report.results as Array<Record<string, unknown>>).push({
       source: target.strapi,
       target: target.wordpress,
@@ -262,11 +318,14 @@ async function main(): Promise<void> {
       source: target.strapi,
       ok: verify.ok,
       ng: verify.ng,
+      severity: verify.severity,
       mismatches: verify.mismatches.slice(0, 100),
     })
 
     console.log(`[migration] ${target.strapi} done total=${sourceItems.length} migrated=${migrated} failed=${failed} verify_ng=${verify.ng}`)
   }
+
+  report.rollbackReadiness = buildRollbackReadiness(verifyRows)
 
   mapping.generatedAt = new Date().toISOString()
   writeMapping(mapping)

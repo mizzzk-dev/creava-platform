@@ -19,23 +19,22 @@
 - blog / news / events / works / store / fanclub / settings の frontend API は provider 経由化済み。
 - CMS fetch で `response.ok / content-type / HTML 混入 / timeout / retry` のガードが追加済み。
 
-### 1-2. 雛形 / TODO が残っていた部分
-- WordPress content route は最低限の一覧返却のみで、locale / taxonomy / access / media parity が不足。
-- Stripe route は `not_implemented`、webhook 署名検証も TODO。
-- migration script はログ出力のみで、dry-run/verify/report/idempotent 実行は未完成。
-- rollback 可能性を判断できる parity report・差分分類・手順 docs が不足。
+### 1-2. PR #231 review で残っていた blocker
+- WordPress content payload に `limitedEndAt` / `archiveVisibleForFC` の扱い揺れがあり、limited-window の表示制御が frontend semantics とズレるリスク。
+- list endpoint の `pageSize` fallback が不安定で、`meta.pagination` が欠落時に 1 件固定化へ寄るリスク。
+- `/billing/portal` が cookie login 前提 permission で、headless frontend の bearer/JWT auth と不整合。
+- migration verify report に severity / rollback 判定が不足し、staged cutover の可否判断が曖昧。
 
 ---
 
 ## 2. 今回の実装概要
 
-### 2-1. WordPress content API の本実装化
-- `wp-json/creava/v1/{blog,news,events,works,store-products,fanclub-contents}` で次をサポート：
-  - `page/pageSize`, `sort`, `slug`, `locale`, `accessStatus`, taxonomy フィルタ
-  - Strapi 互換の `data + meta.pagination` 形式
-  - `accessStatus` と entitlement による本文出し分け
-  - thumbnail / taxonomy / SEO meta の正規化
-- trace 情報（`wordpressTraceId`, `wordpressVerifiedAt` など）を `meta.trace` へ格納し監査可能化。
+### 2-1. WordPress content API parity hardening
+- `accessStatus` を `public / fc_only / limited` に正規化し、`members_only` 互換値も吸収。
+- payload に `limitedEndAt` / `archiveVisibleForFC` / `wordpressLimitedWindowState` / `wordpressArchiveVisibilityState` を含め、frontend `canViewContent` 判定に必要な意味を保持。
+- `limitedEndAt` は malformed/null を吸収して ISO8601 に正規化（invalid は null 扱い）。
+- `creava_can_view_post()` を limited-window semantics に合わせ、**期限内 limited は guest 可 / 期限後は archiveVisibleForFC + member entitlement で制御** に統一。
+- trace 情報に `wordpressCompatibilityState` を追加し、route 単位の監査を容易化。
 
 ### 2-2. migration execution 基盤
 - `scripts/migrate-strapi-to-wordpress.ts` を実行可能化。
@@ -49,18 +48,15 @@
 - WordPress 側に `/wp-json/creava/v1/migration/*` upsert route を実装。
 
 ### 2-3. parity verification / diff audit
-- migration 処理内で Strapi source と WordPress target の差分比較を実施。
-- mismatch は `slug / locale / accessStatus / missing_target` で分類。
-- report に `ok/ng` と mismatches を残し、cutover 判定の材料を提供。
+- migration verify で mismatch を `slug / locale / accessStatus / missing_target` で分類。
+- さらに severity を `critical / high / medium` に分類し、report に `rollbackReadiness` を出力。
+- `critical` または `high` が 1 件でも残る場合は staged cutover を進めない最小基準を明文化。
 
-### 2-4. Stripe / membership 実装
-- checkout / portal を Stripe API 実行に接続（WordPress から安全側 proxy）。
-- webhook で以下を実装：
-  - `stripe-signature` 検証（timestamp tolerance + HMAC）
-  - duplicate event ガード
-  - allowlist 相当のイベント処理（checkout completed / subscription created,updated,deleted）
-  - order / subscription / entitlement 同期
-- entitlement を access control に接続し、member-only の本文漏えいを防止。
+### 2-4. Stripe / membership auth parity hardening
+- `/billing/portal` の permission を cookie login 依存から、**headless bearer/JWT 検証 + user resolve** へ変更。
+- JWT claim (`wpUserId` / `sub` / `email`) から user を解決し、`stripe_customer_id` がない場合は `customer_not_found` を返して unauthorized と分離。
+- unauthorized / missing customer / Stripe API エラーで失敗 shape を分離し、`wordpressTraceId` を返して追跡可能化。
+- checkout / portal の auth semantics をそろえ、frontend token 送信方式と整合。
 
 ### 2-5. staged cutover
 - frontend で endpoint 単位の provider 判定を追加。
@@ -125,12 +121,14 @@ node --loader ts-node/esm scripts/migrate-strapi-to-wordpress.ts --type=store-pr
 - `STRIPE_CANCEL_URL`
 - `STRIPE_PORTAL_RETURN_URL`
 - `WORDPRESS_MIGRATION_APP_TOKEN`
+- `WORDPRESS_HEADLESS_JWT_SECRET`（billing portal bearer/JWT 検証用。frontend へ露出禁止）
 
 ### Migration 実行時
 - `STRAPI_MIGRATION_SOURCE_URL`
 - `STRAPI_MIGRATION_SOURCE_TOKEN`
 - `WORDPRESS_MIGRATION_TARGET_URL`
 - `WORDPRESS_MIGRATION_APP_TOKEN`
+- `WORDPRESS_HEADLESS_JWT_SECRET`（billing portal bearer/JWT 検証用。frontend へ露出禁止）
 
 ---
 
