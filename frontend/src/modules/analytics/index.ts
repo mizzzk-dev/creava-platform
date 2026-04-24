@@ -4,8 +4,12 @@ import { inferEventMeta } from '@/modules/analytics/taxonomy'
 let initialized = false
 let lastTrackedPath: string | null = null
 let gtmInitialized = false
+let clarityInitialized = false
+
 type AnalyticsPrimitive = string | number | boolean
 type AnalyticsValue = AnalyticsPrimitive | unknown[]
+
+type ClarityCommand = (command: string, ...args: unknown[]) => void
 
 function getMeasurementId(): string | null {
   const id = import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined
@@ -14,6 +18,11 @@ function getMeasurementId(): string | null {
 
 function getGtmContainerId(): string | null {
   const id = import.meta.env.VITE_GTM_CONTAINER_ID as string | undefined
+  return id && id.trim() ? id.trim() : null
+}
+
+function getClarityProjectId(): string | null {
+  const id = import.meta.env.VITE_CLARITY_PROJECT_ID as string | undefined
   return id && id.trim() ? id.trim() : null
 }
 
@@ -29,6 +38,18 @@ function isAnalyticsAllowed(): boolean {
 
 function makeEventId(eventName: string, timestamp: string, sessionId: string): string {
   return `${eventName}:${sessionId}:${timestamp}`
+}
+
+function detectTrafficQualityState(): 'production' | 'internal' | 'preview' | 'bot_like' {
+  if (typeof window === 'undefined') return 'production'
+  const hostname = window.location.hostname.toLowerCase()
+  if (hostname === 'localhost' || hostname.endsWith('.local') || hostname.includes('internal')) return 'internal'
+  if (hostname.includes('staging') || hostname.includes('preview') || hostname.includes('vercel.app') || hostname.includes('netlify.app')) return 'preview'
+
+  const ua = window.navigator.userAgent.toLowerCase()
+  if (/bot|crawler|spider|headless|lighthouse/.test(ua)) return 'bot_like'
+
+  return 'production'
 }
 
 function initializeDataLayer(): Window & { dataLayer?: unknown[]; gtag?: (...args: unknown[]) => void } {
@@ -49,6 +70,30 @@ function updateConsentMode(enabled: boolean): void {
   })
 }
 
+function initializeClarity(projectId: string): void {
+  if (typeof window === 'undefined' || clarityInitialized) return
+
+  const w = window as Window & {
+    clarity?: ClarityCommand
+  }
+
+  const clarity = ((...args: unknown[]) => {
+    const host = window as Window & { clarity?: { q?: unknown[] } }
+    const fn = host.clarity as unknown as { q?: unknown[] }
+    fn.q = fn.q || []
+    fn.q.push(args)
+  }) as unknown as ClarityCommand
+
+  w.clarity = w.clarity ?? clarity
+
+  const script = document.createElement('script')
+  script.async = true
+  script.src = `https://www.clarity.ms/tag/${projectId}`
+  script.dataset.mizzzAnalytics = 'clarity'
+  document.head.appendChild(script)
+  clarityInitialized = true
+}
+
 async function forwardToOps(eventName: string, params: Record<string, AnalyticsValue>): Promise<void> {
   const endpoint = getOpsEndpoint()
   if (!endpoint) return
@@ -65,11 +110,36 @@ async function forwardToOps(eventName: string, params: Record<string, AnalyticsV
   }
 }
 
+function buildOpsStates(base: ReturnType<typeof getAnalyticsBaseContext>, eventName: string): Record<string, AnalyticsValue> {
+  const trafficQuality = detectTrafficQualityState()
+  return {
+    analyticsRawEventState: 'captured',
+    analyticsKpiState: 'modeled_pending',
+    analyticsFunnelState: 'defined',
+    analyticsAttributionState: base.attributionState,
+    analyticsReplayState: 'disabled_or_not_sampled',
+    analyticsConsentState: isAnalyticsAllowed() ? 'granted' : 'denied',
+    analyticsTrafficQualityState: trafficQuality,
+    analyticsSourceSiteState: base.sourceSite,
+    analyticsLocaleState: base.locale,
+    analyticsThemeState: base.theme,
+    analyticsMembershipState: base.userState,
+    analyticsEcommerceState: eventName.includes('cart') || eventName.includes('checkout') || eventName.includes('item') ? 'commerce_related' : 'not_commerce',
+    analyticsSupportState: eventName.includes('support') || eventName.includes('contact') || eventName.includes('help') ? 'support_related' : 'not_support',
+    analyticsErrorState: eventName.includes('error') || eventName.includes('fallback') ? 'error_related' : 'not_error',
+    analyticsReportState: 'ready_for_bq_export',
+    analyticsAlertState: 'normal',
+    analyticsTraceId: `${base.sessionId}:${Date.now().toString(36)}`,
+    analyticsCollectedAt: base.timestamp,
+  }
+}
+
 export function initializeAnalytics(enabled: boolean): void {
   if (typeof window === 'undefined') return
   const w = initializeDataLayer()
   const gtmContainerId = getGtmContainerId()
   const measurementId = getMeasurementId()
+  const clarityProjectId = getClarityProjectId()
 
   if (!gtmInitialized && gtmContainerId) {
     const gtmScript = document.createElement('script')
@@ -106,6 +176,10 @@ export function initializeAnalytics(enabled: boolean): void {
     })
 
     initialized = true
+  }
+
+  if (enabled && clarityProjectId) {
+    initializeClarity(clarityProjectId)
   }
 
   updateConsentMode(enabled)
@@ -146,6 +220,7 @@ export function trackPageView(pathname: string): void {
     replayState: 'none',
     eventId: makeEventId('page_view', base.timestamp, base.sessionId),
     timestamp: base.timestamp,
+    ...buildOpsStates(base, 'page_view'),
   }
 
   if (measurementId && analyticsAllowed && gtag) {
@@ -185,6 +260,7 @@ export function trackEvent(eventName: string, params?: Record<string, AnalyticsV
     replayState: 'none',
     eventId: makeEventId(eventName, base.timestamp, base.sessionId),
     timestamp: base.timestamp,
+    ...buildOpsStates(base, eventName),
     ...(params ?? {}),
   }
 

@@ -535,3 +535,45 @@
 - `auth.users` を analytics business state の source とせず、app 側 user domain + summary を参照する。
 - release dashboard / flag dashboard / analytics dashboard の責務を分離する。
 - raw event と KPI/derived metric/attribution result を混同しない。
+
+## 8. analytics ops 拡張変数（BigQuery / Looker Studio / Clarity / anomaly）
+
+### frontend
+- `VITE_CLARITY_PROJECT_ID`: Clarity project ID。
+- `VITE_CLARITY_SAMPLE_RATE`: replay 収集率（0〜1）。
+- `VITE_CLARITY_MASKING_MODE`: `strict` / `balanced`。既定は `strict` 推奨。
+- `VITE_CLARITY_ALLOWED_PATHS`: replay/heatmap 対象パス（カンマ区切り）。
+- `VITE_ANALYTICS_ALERT_WEBHOOK_URL`: frontend から alert gateway を叩く場合のURL（通常は未使用）。
+- `VITE_ANALYTICS_ALERT_MIN_SESSIONS`: alert 判定の最小セッション数。
+- `VITE_ANALYTICS_ALERT_DROP_THRESHOLD`: 低下 alert 閾値（例: `0.3` = 30%）。
+- `VITE_ANALYTICS_ALERT_SPIKE_THRESHOLD`: 増加 alert 閾値（例: `0.45` = 45%）。
+- `VITE_ANALYTICS_ALERT_COOLDOWN_MINUTES`: alert 再通知間隔。
+- `VITE_ANALYTICS_WEEKLY_REPORT_DAY`: 週次レポート作成曜日（`mon` など）。
+- `VITE_ANALYTICS_MONTHLY_REPORT_DAY`: 月次レポート作成日（`1` など）。
+- `VITE_LOOKER_STUDIO_DASHBOARD_URL`: 統合 dashboard URL（運用者リンク）。
+- `VITE_SEARCH_CONSOLE_PROPERTY_MAIN`: main 用 Search Console property。
+- `VITE_SEARCH_CONSOLE_PROPERTY_STORE`: store 用 Search Console property。
+- `VITE_SEARCH_CONSOLE_PROPERTY_FC`: fc 用 Search Console property。
+
+### backend
+- `ANALYTICS_BIGQUERY_EXPORT_ENABLED`: BigQuery export の有効化。
+- `ANALYTICS_BIGQUERY_PROJECT_ID`: BigQuery project ID。
+- `ANALYTICS_BIGQUERY_DATASET`: export 先 dataset。
+- `ANALYTICS_BIGQUERY_LOCATION`: dataset location（例: `asia-northeast1`）。
+- `ANALYTICS_BIGQUERY_SERVICE_ACCOUNT`: export 実行権限を持つ service account。
+- `ANALYTICS_BIGQUERY_EXPORT_SCHEDULE_CRON`: export / sync バッチの cron。
+- `ANALYTICS_LOOKER_STUDIO_MAIN_URL`: main dashboard URL。
+- `ANALYTICS_LOOKER_STUDIO_STORE_URL`: store dashboard URL。
+- `ANALYTICS_LOOKER_STUDIO_FC_URL`: fc dashboard URL。
+- `ANALYTICS_LOOKER_STUDIO_UNIFIED_URL`: 統合 dashboard URL。
+- `ANALYTICS_CLARITY_ENABLED`: Clarity 連携の有効化。
+- `ANALYTICS_CLARITY_PROJECT_MAIN`: main 用 Clarity project ID。
+- `ANALYTICS_CLARITY_PROJECT_STORE`: store 用 Clarity project ID。
+- `ANALYTICS_CLARITY_PROJECT_FC`: fc 用 Clarity project ID。
+- `ANALYTICS_ANOMALY_ALERT_WEBHOOK`: anomaly 通知先 webhook。
+- `ANALYTICS_ANOMALY_ALERT_CHANNEL`: 通知チャネル識別子（`analytics-ops` など）。
+- `ANALYTICS_ANOMALY_ALERT_COOLDOWN_MINUTES`: anomaly alert 再通知間隔。
+- `ANALYTICS_ANOMALY_MIN_SESSIONS`: anomaly 判定の最小セッション数。
+- `ANALYTICS_ANOMALY_CONVERSION_DROP_RATIO`: CVR 低下判定閾値。
+- `ANALYTICS_ANOMALY_ERROR_SPIKE_RATIO`: error 増加判定閾値。
+- `ANALYTICS_INTERNAL_HOST_PATTERNS`: internal / preview 除外ホスト判定。
