@@ -6,8 +6,6 @@ interface CheckoutSessionResponse {
   sessionId: string
 }
 
-const IS_WORDPRESS = import.meta.env.VITE_CMS_PROVIDER === 'wordpress'
-
 export async function createStoreCheckoutSession(input: {
   productId: string
   quantity: number
@@ -16,7 +14,7 @@ export async function createStoreCheckoutSession(input: {
 }): Promise<CheckoutSessionResponse> {
   trackMizzzEvent('store_checkout_started', { productId: input.productId, quantity: input.quantity })
 
-  if (IS_WORDPRESS) {
+  if (import.meta.env.VITE_CMS_PROVIDER === 'wordpress') {
     return postPaymentsJson<CheckoutSessionResponse>('/checkout/session', {
       productId: input.productId,
       quantity: input.quantity,
@@ -35,7 +33,7 @@ export async function createFanclubCheckoutSession(input: {
 }): Promise<CheckoutSessionResponse> {
   trackMizzzEvent('fanclub_checkout_started', { planId: input.planId })
 
-  if (IS_WORDPRESS) {
+  if (import.meta.env.VITE_CMS_PROVIDER === 'wordpress') {
     return postPaymentsJson<CheckoutSessionResponse>('/checkout/session', {
       planId: input.planId,
       locale: input.locale,
@@ -52,7 +50,7 @@ export async function createFanclubCheckoutSession(input: {
 
 export async function createCustomerPortalSession(input: { authToken: string }): Promise<{ url: string }> {
   trackMizzzEvent('customer_portal_started')
-  return IS_WORDPRESS
+  return import.meta.env.VITE_CMS_PROVIDER === 'wordpress'
     ? postPaymentsJson<{ url: string }>('/billing/portal', {}, input.authToken)
     : postPaymentsJson<{ url: string }>('/customer-portal/session', {}, input.authToken)
 }

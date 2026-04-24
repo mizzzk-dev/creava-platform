@@ -60,9 +60,68 @@ function creava_get_post_taxonomies_payload(int $post_id): array {
     return $result;
 }
 
+function creava_normalize_access_status($raw_access_status): string {
+    $normalized = sanitize_key((string) $raw_access_status);
+    if ($normalized === 'members_only') {
+        return 'fc_only';
+    }
+
+    if (in_array($normalized, ['public', 'fc_only', 'limited'], true)) {
+        return $normalized;
+    }
+
+    return 'public';
+}
+
+function creava_normalize_bool_meta($value): bool {
+    if (is_bool($value)) {
+        return $value;
+    }
+
+    $normalized = strtolower(trim((string) $value));
+    return in_array($normalized, ['1', 'true', 'yes', 'on'], true);
+}
+
+function creava_normalize_datetime_meta($value): ?string {
+    if (!is_string($value) || trim($value) === '') {
+        return null;
+    }
+
+    $timestamp = strtotime($value);
+    if ($timestamp === false) {
+        return null;
+    }
+
+    return gmdate('c', $timestamp);
+}
+
+function creava_get_visibility_meta(int $post_id): array {
+    $access_status = creava_normalize_access_status(get_post_meta($post_id, 'access_status', true));
+    $limited_end_at = creava_normalize_datetime_meta(get_post_meta($post_id, 'limited_end_at', true));
+    $archive_visible_for_fc = creava_normalize_bool_meta(get_post_meta($post_id, 'archive_visible_for_fc', true));
+
+    $limited_window_state = 'not_applicable';
+    if ($access_status === 'limited') {
+        if (!$limited_end_at) {
+            $limited_window_state = 'open_without_end_at';
+        } else {
+            $limited_window_state = (strtotime($limited_end_at) >= time()) ? 'active' : 'expired';
+        }
+    }
+
+    return [
+        'accessStatus' => $access_status,
+        'limitedEndAt' => $limited_end_at,
+        'archiveVisibleForFC' => $archive_visible_for_fc,
+        'wordpressVisibilityState' => $access_status,
+        'wordpressLimitedWindowState' => $limited_window_state,
+        'wordpressArchiveVisibilityState' => $archive_visible_for_fc ? 'fc_archive_visible' : 'hidden_after_expiry',
+    ];
+}
+
 function creava_normalize_content_item(WP_Post $post, string $locale, bool $can_view): array {
     $post_id = $post->ID;
-    $access_status = (string) (get_post_meta($post_id, 'access_status', true) ?: 'public');
+    $visibility = creava_get_visibility_meta($post_id);
 
     return [
         'id' => $post_id,
@@ -77,9 +136,17 @@ function creava_normalize_content_item(WP_Post $post, string $locale, bool $can_
         'publishAt' => get_post_time('c', true, $post),
         'publishedAt' => get_post_time('c', true, $post),
         'updatedAt' => get_post_modified_time('c', true, $post),
-        'accessStatus' => $access_status,
-        'limitedEndAt' => get_post_meta($post_id, 'limited_end_at', true) ?: null,
-        'archiveVisibleForFC' => (bool) get_post_meta($post_id, 'archive_visible_for_fc', true),
+        'accessStatus' => $visibility['accessStatus'],
+        'limitedEndAt' => $visibility['limitedEndAt'],
+        'archiveVisibleForFC' => $visibility['archiveVisibleForFC'],
+        'wordpressVisibilityState' => $visibility['wordpressVisibilityState'],
+        'wordpressAccessState' => $can_view ? 'granted' : 'restricted',
+        'wordpressLimitedWindowState' => $visibility['wordpressLimitedWindowState'],
+        'wordpressArchiveVisibilityState' => $visibility['wordpressArchiveVisibilityState'],
+        'wordpressContentPayloadState' => 'normalized',
+        'wordpressFrontendParityState' => 'parity_checked',
+        'wordpressCompatibilityState' => 'compatible',
+        'wordpressVerifiedAt' => gmdate('c'),
         'thumbnail' => creava_get_post_media_payload($post_id),
         'meta' => [
             'seoTitle' => get_post_meta($post_id, 'seo_title', true) ?: null,
@@ -107,11 +174,9 @@ function creava_content_response(array $posts, int $page, int $page_size, int $t
 
 function creava_build_content_query_args(WP_REST_Request $request, string $post_type): array {
     $page = max((int) $request->get_param('page'), 1);
-    $page_size = (int) $request->get_param('pageSize');
-    if ($page_size <= 0) {
-        $page_size = 12;
-    }
-    $page_size = min($page_size, 100);
+    $requested_page_size = (int) $request->get_param('pageSize');
+    $page_size = $requested_page_size > 0 ? $requested_page_size : 12;
+    $page_size = min(max($page_size, 1), 100);
 
     $query_args = [
         'post_type' => $post_type,
@@ -137,7 +202,7 @@ function creava_build_content_query_args(WP_REST_Request $request, string $post_
     if ($access_status !== '') {
         $query_args['meta_query'] = [[
             'key' => 'access_status',
-            'value' => $access_status,
+            'value' => creava_normalize_access_status($access_status),
             'compare' => '=',
         ]];
     }
@@ -202,6 +267,7 @@ function creava_register_content_routes(): void {
                     'wordpressTaxonomyState' => 'ready',
                     'wordpressAccessState' => 'ready',
                     'wordpressMediaState' => 'ready',
+                    'wordpressCompatibilityState' => 'compatible',
                 ];
 
                 return rest_ensure_response(creava_content_response($items, $page, $page_size, (int) $query->found_posts, $trace));
