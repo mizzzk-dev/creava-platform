@@ -77,6 +77,9 @@ const EVENT_META: Record<string, { eventType: EventType; eventCategory: EventCat
   experiment_pause: { eventType: 'experiment_event', eventCategory: 'experimentation' },
   experiment_complete: { eventType: 'experiment_event', eventCategory: 'experimentation' },
   experiment_stop: { eventType: 'experiment_event', eventCategory: 'experimentation' },
+  experiment_assignment_logged: { eventType: 'experiment_event', eventCategory: 'experimentation' },
+  exposure_event_logged: { eventType: 'experiment_event', eventCategory: 'experimentation' },
+  experiment_decision_logged: { eventType: 'experiment_event', eventCategory: 'experimentation' },
 }
 
 export function inferEventMeta(eventName: string): { eventType: EventType; eventCategory: EventCategory } {

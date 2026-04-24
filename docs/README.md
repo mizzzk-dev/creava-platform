@@ -78,6 +78,7 @@
 - [分析基盤・改善運用ガイド](./09_operations/analytics-improvement-foundation.md)
 - [GA4 / GTM / Search Console / Consent Mode 計測基盤 runbook (2026-04-24)](./09_operations/ga4-gtm-search-console-consent-foundation-2026-04-24.md)
 - [analytics ops 基盤 runbook（BigQuery / Looker Studio / Clarity / funnel / attribution / anomaly）(2026-04-24)](./09_operations/analytics-ops-bigquery-looker-clarity-runbook-2026-04-24.md)
+- [experimentation platform / feature flags / KPI guardrails / rollout workflow runbook (2026-04-24)](./09_operations/experimentation-platform-guardrails-runbook-2026-04-24.md)
 - [SEO/コンテンツ流入基盤メモ（2026-04）](./seo-content-growth-foundation.md)
 - [パーソナライズ導線運用メモ](./personalization-notification-center.md)
 - [横断検索/発見導線 基盤](./discovery-search-recommendation-foundation-2026-04-18.md)

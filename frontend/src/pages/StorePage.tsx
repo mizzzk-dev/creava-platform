@@ -12,9 +12,9 @@ import { useDisplayCurrency } from '@/modules/store/hooks/useDisplayCurrency'
 import { getRankedProducts, type RankingRange } from '@/modules/store/lib/ranking'
 import {
   forecastStockout,
-  getAbVariant,
   getHistoryByKind,
 } from '@/modules/store/lib/commerceOptimization'
+import { useExperiment } from '@/modules/analytics/experimentOps'
 
 import StoreHeroSection from '@/modules/store/sections/StoreHeroSection'
 import StoreFilterBar, {
@@ -51,9 +51,11 @@ export default function StorePage() {
   const [hideSoldOut, setHideSoldOut] = useState(false)
 
   const visibleProducts = filterVisible(products)
-  const heroVariant = useMemo(() => getAbVariant('storeHero') as 'A' | 'B', [])
-  const rankingVariant = useMemo(() => getAbVariant('storeRanking') as 'A' | 'B', [])
-  const ctaVariant = useMemo(() => getAbVariant('storeCta') as 'A' | 'B', [])
+  const storeExperiment = useExperiment('store-hero-cta-2026q2')
+  const variantLabel = storeExperiment.variantId === 'challenger' ? 'B' : 'A'
+  const heroVariant = useMemo(() => variantLabel as 'A' | 'B', [variantLabel])
+  const rankingVariant = useMemo(() => variantLabel as 'A' | 'B', [variantLabel])
+  const ctaVariant = useMemo(() => variantLabel as 'A' | 'B', [variantLabel])
   const rankingProducts = getRankedProducts(visibleProducts, rankingRange, 5)
   const categories = useMemo(
     () => ['all', ...new Set(visibleProducts.map((p) => p.category).filter(Boolean))],
