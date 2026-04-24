@@ -320,6 +320,16 @@ export type InternalOperationsDashboardResponse = {
     securityReviews: number
     reconciliationNeededCount: number
   }
+  multilingualOptimizationSummary?: {
+    trackedLocales: number
+    translationMemoryReuseRate: number
+    glossaryConsistencyRate: number
+    weakRetrievalLocales: number
+    fallbackHeavyLocales: number
+    regionalPolicyCoverageRate: number
+    reviewNeededLocales: number
+    lastEvaluatedAt: string | null
+  }
   queueSummary: Array<{
     queueType: string
     queueState: string

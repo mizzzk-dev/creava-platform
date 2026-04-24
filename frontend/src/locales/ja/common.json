@@ -1010,6 +1010,10 @@
     },
     "locale": {
       "fallbackNotice": "一部ガイドは {{locale}} 向け翻訳が未整備のため、{{fallbackState}} で表示しています。"
+    },
+    "multilingualOptimization": {
+      "title": "多言語最適化の運用状態",
+      "summary": "TM: {{memory}} / Glossary: {{glossary}} / Retrieval: {{retrieval}} / Workflow: {{workflow}} / Policy: {{policy}}"
     }
   },
   "favoriteAdd": "お気に入りに追加",

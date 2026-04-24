@@ -28,6 +28,7 @@ import { retrieveKnowledgeCandidates } from '@/modules/support/conversationalHel
 import type { ProactiveSupportSummary } from '@/modules/support/proactiveSupport'
 import { buildOptimizationQueryParams, type ProactiveOptimizationSummary } from '@/modules/support/proactiveOptimization'
 import { buildLocaleSupportSummary, normalizeLocale, resolveLocalizedGuides } from '@/modules/support/localeSupportOps'
+import { buildMultilingualOptimizationSummary } from '@/modules/support/multilingualOptimization'
 
 const detectSite = (): SourceSite => {
   if (isStoreSite) return 'store'
@@ -146,6 +147,10 @@ export default function SupportCenterPage() {
     coverageState: localizedGuideResult.coverageState,
     hasKnownIssue: proactiveCandidates.some((item) => item.type === 'known_issue'),
   }), [filteredFaqs.length, filteredGuides.length, locale, localizedGuideResult.coverageState, localizedGuideResult.fallbackState, proactiveCandidates, sourceSite])
+  const multilingualOptimizationSummary = useMemo(() => buildMultilingualOptimizationSummary({
+    sourceSite,
+    localeSummary: localeSupportSummary,
+  }), [localeSupportSummary, sourceSite])
 
   const articleSuggestions = useMemo(() => {
     const topFaq = filteredFaqs.slice(0, 2).map((item) => ({ title: item.question, to: ROUTES.FAQ }))
@@ -231,6 +236,26 @@ export default function SupportCenterPage() {
       localeKnowledgeGapState: localeSupportSummary.localeKnowledgeGapState,
     })
   }, [localeSupportSummary, sourceSite])
+
+  useEffect(() => {
+    trackMizzzEvent('multilingual_optimization_summary_logged', {
+      sourceSite,
+      localizationWorkflowState: multilingualOptimizationSummary.localizationWorkflowState,
+      translationMemoryState: multilingualOptimizationSummary.translationMemoryState,
+      translationMemoryMatchState: multilingualOptimizationSummary.translationMemoryMatchState,
+      glossaryState: multilingualOptimizationSummary.glossaryState,
+      glossaryConsistencyState: multilingualOptimizationSummary.glossaryConsistencyState,
+      localeRetrievalState: multilingualOptimizationSummary.localeRetrievalState,
+      retrievalQualityState: multilingualOptimizationSummary.retrievalQualityState,
+      localeRankingState: multilingualOptimizationSummary.localeRankingState,
+      regionalPolicyTemplateState: multilingualOptimizationSummary.regionalPolicyTemplateState,
+      regionalPolicyState: multilingualOptimizationSummary.regionalPolicyState,
+      localeEffectivenessState: multilingualOptimizationSummary.localeEffectivenessState,
+      localeHandoffState: multilingualOptimizationSummary.localeHandoffState,
+      localeCasePrefillState: multilingualOptimizationSummary.localeCasePrefillState,
+      localeKnowledgeGapState: multilingualOptimizationSummary.localeKnowledgeGapState,
+    })
+  }, [multilingualOptimizationSummary, sourceSite])
 
   useEffect(() => {
     const keyword = search.trim()
@@ -476,6 +501,18 @@ export default function SupportCenterPage() {
             {t('support.locale.fallbackNotice', { locale, fallbackState: localizedGuideResult.fallbackState })}
           </p>
         )}
+        <div className="mt-3 rounded-xl border border-violet-200 bg-violet-50/80 px-3 py-2 text-xs text-violet-800 dark:border-violet-900/70 dark:bg-violet-950/20 dark:text-violet-200">
+          <p className="font-semibold">{t('support.multilingualOptimization.title')}</p>
+          <p className="mt-1">
+            {t('support.multilingualOptimization.summary', {
+              memory: multilingualOptimizationSummary.translationMemoryState,
+              glossary: multilingualOptimizationSummary.glossaryConsistencyState,
+              retrieval: multilingualOptimizationSummary.localeRetrievalState,
+              workflow: multilingualOptimizationSummary.localizationWorkflowState,
+              policy: multilingualOptimizationSummary.regionalPolicyTemplateState,
+            })}
+          </p>
+        </div>
       </div>
 
       <div className="mt-10 grid gap-6 lg:grid-cols-2">
@@ -581,6 +618,11 @@ export default function SupportCenterPage() {
           proactive_issue_signal_state: proactiveSummary?.issueSignalState ?? 'none',
           proactive_intervention_state: proactiveSummary?.interventionState ?? 'not_triggered',
           proactive_prevention_outcome_state: proactiveSummary?.preventionOutcomeState ?? 'unknown',
+          localization_workflow_state: multilingualOptimizationSummary.localizationWorkflowState,
+          translation_memory_state: multilingualOptimizationSummary.translationMemoryState,
+          glossary_consistency_state: multilingualOptimizationSummary.glossaryConsistencyState,
+          locale_retrieval_state: multilingualOptimizationSummary.localeRetrievalState,
+          regional_policy_template_state: multilingualOptimizationSummary.regionalPolicyTemplateState,
           ...optimizationQuery,
         }).toString()}`}
         isSignedIn={isSignedIn}

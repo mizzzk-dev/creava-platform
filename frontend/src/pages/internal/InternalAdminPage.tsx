@@ -118,11 +118,24 @@ export default function InternalAdminPage() {
                 <p>playbook ready: {operationsDashboard.playbookSummary.filter((item) => item.playbookTriggerState === 'triggered').length}</p>
               </div>
             </div>
+            {operationsDashboard.multilingualOptimizationSummary && (
+              <div className="rounded border border-violet-200 bg-violet-50 p-3 dark:border-violet-800 dark:bg-violet-950/20">
+                <p className="font-medium">multilingual optimization</p>
+                <p>tracked locales: {operationsDashboard.multilingualOptimizationSummary.trackedLocales}</p>
+                <p>TM reuse rate: {(operationsDashboard.multilingualOptimizationSummary.translationMemoryReuseRate * 100).toFixed(1)}%</p>
+                <p>glossary consistency: {(operationsDashboard.multilingualOptimizationSummary.glossaryConsistencyRate * 100).toFixed(1)}%</p>
+                <p>weak retrieval locales: {operationsDashboard.multilingualOptimizationSummary.weakRetrievalLocales}</p>
+                <p>fallback heavy locales: {operationsDashboard.multilingualOptimizationSummary.fallbackHeavyLocales}</p>
+                <p>regional policy coverage: {(operationsDashboard.multilingualOptimizationSummary.regionalPolicyCoverageRate * 100).toFixed(1)}%</p>
+                <p>review needed locales: {operationsDashboard.multilingualOptimizationSummary.reviewNeededLocales}</p>
+              </div>
+            )}
             <pre className="overflow-auto rounded bg-gray-50 p-3 dark:bg-gray-900">{JSON.stringify({
               queueSummary: operationsDashboard.queueSummary,
               anomalySummary: operationsDashboard.anomalySummary,
               reconciliationSummary: operationsDashboard.reconciliationSummary,
               playbookSummary: operationsDashboard.playbookSummary,
+              multilingualOptimizationSummary: operationsDashboard.multilingualOptimizationSummary ?? null,
             }, null, 2)}</pre>
           </div>
         )}

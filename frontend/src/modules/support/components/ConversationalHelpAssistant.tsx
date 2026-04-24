@@ -97,9 +97,18 @@ export default function ConversationalHelpAssistant({ sourceSite, category, sear
       locale_target_state: localeSummary.targetLocaleState,
       locale_fallback_state: localeSummary.localeFallbackState,
       translation_quality_state: localeSummary.translationQualityState,
+      localization_workflow_state: localeSummary.localizationWorkflowState,
+      translation_memory_state: localeSummary.translationMemoryState,
+      translation_memory_match_state: localeSummary.translationMemoryMatchState,
+      glossary_state: localeSummary.glossaryState,
+      glossary_consistency_state: localeSummary.glossaryConsistencyState,
+      locale_retrieval_state: localeSummary.localeRetrievalState,
+      retrieval_quality_state: localeSummary.retrievalQualityState,
+      regional_policy_template_state: localeSummary.regionalPolicyTemplateState,
+      regional_policy_state: localeSummary.regionalPolicyState,
     })
     return `${ROUTES.CONTACT}?${params.toString()}`
-  }, [casePrefill.message, casePrefill.subject, category, localeSummary.localeFallbackState, localeSummary.targetLocaleState, localeSummary.translationQualityState, retrieval.retrievalConfidenceState, retrieval.semanticRetrievalState, sourceSite, summary.assistantSessionState])
+  }, [casePrefill.message, casePrefill.subject, category, localeSummary.glossaryConsistencyState, localeSummary.glossaryState, localeSummary.localeFallbackState, localeSummary.localeRetrievalState, localeSummary.localizationWorkflowState, localeSummary.regionalPolicyState, localeSummary.regionalPolicyTemplateState, localeSummary.retrievalQualityState, localeSummary.targetLocaleState, localeSummary.translationMemoryMatchState, localeSummary.translationMemoryState, localeSummary.translationQualityState, retrieval.retrievalConfidenceState, retrieval.semanticRetrievalState, sourceSite, summary.assistantSessionState])
 
   const runAssistant = () => {
     if (query.trim().length < ASSISTANT_MIN_QUERY_LENGTH) return

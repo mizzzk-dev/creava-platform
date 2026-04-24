@@ -41,6 +41,11 @@
 | `VITE_SUPPORT_LOCALE_MIN_COVERAGE` | locale coverage を healthy 判定する閾値 | 任意 | 推奨 | 推奨 |
 | `VITE_SUPPORT_TRANSLATION_QA_ENABLED` | translation QA 表示/集計の有効化 | 任意 | 推奨 | 推奨 |
 | `VITE_SUPPORT_LOCALE_ANALYTICS_ENABLED` | locale effectiveness 計測イベント送信を有効化 | 任意 | 推奨 | 推奨 |
+| `VITE_SUPPORT_TRANSLATION_MEMORY_MIN_MATCH_SCORE` | translation memory の再利用候補とする最小一致率 | 任意 | 推奨 | 推奨 |
+| `VITE_SUPPORT_TRANSLATION_WORKFLOW_AUTOMATION_ENABLED` | localization workflow 自動キュー連携フラグ | 任意 | 推奨 | 推奨 |
+| `VITE_SUPPORT_GLOSSARY_DRIFT_ALERT_THRESHOLD` | glossary drift alert 閾値（0-1） | 任意 | 推奨 | 推奨 |
+| `VITE_SUPPORT_LOCALE_RETRIEVAL_LOW_CONFIDENCE_THRESHOLD` | locale retrieval low confidence 閾値（0-1） | 任意 | 推奨 | 推奨 |
+| `VITE_SUPPORT_REGIONAL_POLICY_TEMPLATE_DEFAULT` | regional policy template の既定キー | 任意 | 推奨 | 推奨 |
 | `VITE_ONBOARDING_REMINDER_DAYS` | onboarding 再表示までの日数 | 任意 | 任意 | 推奨 |
 | `VITE_MEMBERSHIP_STATE_SYNC_INTERVAL_SEC` | frontend で state summary を再同期する間隔（秒） | 任意 | 推奨 | 推奨 |
 | `VITE_RENEWAL_REMINDER_DAYS` | renewal前 notice 表示開始日数 | 任意 | 推奨 | 推奨 |
@@ -137,6 +142,10 @@
 | `INQUIRY_KNOWLEDGE_GAP_MIN_CASES` | knowledge gap 疑いの最小件数 | 推奨 |
 | `INQUIRY_KNOWLEDGE_NO_RESULT_MIN_DAILY` | no-result query を gap 候補化する最小日次件数 | 任意 |
 | `INQUIRY_KNOWLEDGE_EFFECTIVENESS_LOOKBACK_DAYS` | article effectiveness 集計期間（日） | 任意 |
+| `INQUIRY_TRANSLATION_MEMORY_MIN_REUSE` | translation memory 再利用 summary の最小件数 | 任意 |
+| `INQUIRY_GLOSSARY_DRIFT_ALERT_THRESHOLD` | glossary drift を alert 化する閾値（0-1） | 任意 |
+| `INQUIRY_LOCALE_RETRIEVAL_WEAK_THRESHOLD` | locale retrieval weak 判定閾値（0-1） | 任意 |
+| `INQUIRY_REGIONAL_POLICY_TEMPLATE_DEFAULT` | regional policy template の backend 既定キー | 任意 |
 | `INQUIRY_COACHING_SUGGESTION_ENABLED` | coaching suggestion の生成有効化 | 推奨 |
 | `INQUIRY_TEMPLATE_OVERUSE_RATIO` | template overuse 判定の比率閾値（0-1） | 任意 |
 | `INQUIRY_MY_HISTORY_PAGE_MAX` | `/inquiry-submissions/me/history` の最大 pageSize | 推奨 |
@@ -241,6 +250,11 @@
 - `VITE_SUPPORT_LOCALE_MIN_COVERAGE`
 - `VITE_SUPPORT_TRANSLATION_QA_ENABLED`
 - `VITE_SUPPORT_LOCALE_ANALYTICS_ENABLED`
+- `VITE_SUPPORT_TRANSLATION_MEMORY_MIN_MATCH_SCORE`
+- `VITE_SUPPORT_TRANSLATION_WORKFLOW_AUTOMATION_ENABLED`
+- `VITE_SUPPORT_GLOSSARY_DRIFT_ALERT_THRESHOLD`
+- `VITE_SUPPORT_LOCALE_RETRIEVAL_LOW_CONFIDENCE_THRESHOLD`
+- `VITE_SUPPORT_REGIONAL_POLICY_TEMPLATE_DEFAULT`
 - `VITE_STATUS_FETCH_TIMEOUT_MS`
 - `VITE_STATUS_FETCH_RETRY_COUNT`
 - `VITE_INTERNAL_ADMIN_CONSOLE_ENABLED`
@@ -258,6 +272,10 @@
 - `INQUIRY_OPS_TOKEN`
 - `INQUIRY_MY_HISTORY_PAGE_MAX`
 - `INQUIRY_MY_SUMMARY_MAX_ROWS`
+- `INQUIRY_TRANSLATION_MEMORY_MIN_REUSE`
+- `INQUIRY_GLOSSARY_DRIFT_ALERT_THRESHOLD`
+- `INQUIRY_LOCALE_RETRIEVAL_WEAK_THRESHOLD`
+- `INQUIRY_REGIONAL_POLICY_TEMPLATE_DEFAULT`
 - `ANALYTICS_OPS_TOKEN`
 - `BI_DEFAULT_RANGE_DAYS`
 - `BI_MAX_FETCH_ROWS`

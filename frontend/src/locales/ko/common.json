@@ -1010,6 +1010,10 @@
     },
     "locale": {
       "fallbackNotice": "일부 가이드는 {{locale}} 번역이 충분하지 않아 {{fallbackState}} 상태로 표시됩니다."
+    },
+    "multilingualOptimization": {
+      "title": "다국어 최적화 운영 상태",
+      "summary": "TM: {{memory}} / 용어집: {{glossary}} / 검색: {{retrieval}} / 워크플로: {{workflow}} / 정책: {{policy}}"
     }
   },
   "favoriteAdd": "즐겨찾기에 추가",
