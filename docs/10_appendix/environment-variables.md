@@ -36,6 +36,11 @@
 | `VITE_SUPPORT_CENTER_SUGGESTION_MAX` | self-service article 提案件数 | 任意 | 推奨 | 推奨 |
 | `VITE_HELP_SEARCH_MIN_QUERY_LENGTH` | help center 検索ログを送る最小文字数 | 任意 | 推奨 | 推奨 |
 | `VITE_HELP_SEARCH_DEBOUNCE_MS` | help center 検索ログ送信の debounce | 任意 | 推奨 | 推奨 |
+| `VITE_SUPPORT_LOCALE_DEFAULT` | support locale の既定値（`ja` など） | 任意 | 推奨 | 推奨 |
+| `VITE_SUPPORT_LOCALE_FALLBACK_CHAIN` | locale fallback 優先順（例: `ja,en,ko`） | 任意 | 推奨 | 推奨 |
+| `VITE_SUPPORT_LOCALE_MIN_COVERAGE` | locale coverage を healthy 判定する閾値 | 任意 | 推奨 | 推奨 |
+| `VITE_SUPPORT_TRANSLATION_QA_ENABLED` | translation QA 表示/集計の有効化 | 任意 | 推奨 | 推奨 |
+| `VITE_SUPPORT_LOCALE_ANALYTICS_ENABLED` | locale effectiveness 計測イベント送信を有効化 | 任意 | 推奨 | 推奨 |
 | `VITE_ONBOARDING_REMINDER_DAYS` | onboarding 再表示までの日数 | 任意 | 任意 | 推奨 |
 | `VITE_MEMBERSHIP_STATE_SYNC_INTERVAL_SEC` | frontend で state summary を再同期する間隔（秒） | 任意 | 推奨 | 推奨 |
 | `VITE_RENEWAL_REMINDER_DAYS` | renewal前 notice 表示開始日数 | 任意 | 推奨 | 推奨 |
@@ -231,6 +236,11 @@
 - `VITE_NOTIFICATION_DIGEST_DEFAULT`
 - `VITE_SUPPORT_CENTER_HISTORY_PAGE_SIZE`
 - `VITE_SUPPORT_CENTER_SUGGESTION_MAX`
+- `VITE_SUPPORT_LOCALE_DEFAULT`
+- `VITE_SUPPORT_LOCALE_FALLBACK_CHAIN`
+- `VITE_SUPPORT_LOCALE_MIN_COVERAGE`
+- `VITE_SUPPORT_TRANSLATION_QA_ENABLED`
+- `VITE_SUPPORT_LOCALE_ANALYTICS_ENABLED`
 - `VITE_STATUS_FETCH_TIMEOUT_MS`
 - `VITE_STATUS_FETCH_RETRY_COUNT`
 - `VITE_INTERNAL_ADMIN_CONSOLE_ENABLED`

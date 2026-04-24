@@ -13,6 +13,7 @@ import {
   retrieveKnowledgeCandidates,
   type ConversationalHelpSummary,
 } from '@/modules/support/conversationalHelp'
+import type { LocaleSupportSummary } from '@/modules/support/localeSupportOps'
 
 const ASSISTANT_MIN_QUERY_LENGTH = Number(import.meta.env.VITE_HELP_ASSISTANT_MIN_QUERY_LENGTH ?? 4)
 const ASSISTANT_MAX_CANDIDATES = Number(import.meta.env.VITE_HELP_ASSISTANT_MAX_CANDIDATES ?? 3)
@@ -28,6 +29,7 @@ interface Props {
   faqs: FAQItem[]
   guides: GuideItem[]
   statusSummary: PublicStatusResponse | null
+  localeSummary: LocaleSupportSummary
 }
 
 const resolveInitialSummary = (query: string): ConversationalHelpSummary => ({
@@ -55,7 +57,7 @@ const resolveInitialSummary = (query: string): ConversationalHelpSummary => ({
   articleEffectivenessState: 'unknown',
 })
 
-export default function ConversationalHelpAssistant({ sourceSite, category, search, faqs, guides, statusSummary }: Props) {
+export default function ConversationalHelpAssistant({ sourceSite, category, search, faqs, guides, statusSummary, localeSummary }: Props) {
   const { t } = useTranslation()
   const [query, setQuery] = useState(search)
   const [summary, setSummary] = useState<ConversationalHelpSummary>(() => resolveInitialSummary(search))
@@ -92,9 +94,12 @@ export default function ConversationalHelpAssistant({ sourceSite, category, sear
       assistant_session_state: summary.assistantSessionState,
       semantic_retrieval_state: retrieval.semanticRetrievalState,
       retrieval_confidence_state: retrieval.retrievalConfidenceState,
+      locale_target_state: localeSummary.targetLocaleState,
+      locale_fallback_state: localeSummary.localeFallbackState,
+      translation_quality_state: localeSummary.translationQualityState,
     })
     return `${ROUTES.CONTACT}?${params.toString()}`
-  }, [casePrefill.message, casePrefill.subject, category, retrieval.retrievalConfidenceState, retrieval.semanticRetrievalState, sourceSite, summary.assistantSessionState])
+  }, [casePrefill.message, casePrefill.subject, category, localeSummary.localeFallbackState, localeSummary.targetLocaleState, localeSummary.translationQualityState, retrieval.retrievalConfidenceState, retrieval.semanticRetrievalState, sourceSite, summary.assistantSessionState])
 
   const runAssistant = () => {
     if (query.trim().length < ASSISTANT_MIN_QUERY_LENGTH) return
@@ -154,6 +159,7 @@ export default function ConversationalHelpAssistant({ sourceSite, category, sear
       {summary.assistantSessionState !== 'idle' && (
         <div className="mt-4 space-y-3 text-xs text-gray-600 dark:text-gray-300">
           <p>{t('support.assistant.stateLabel')}: {summary.assistantSessionState} / {summary.semanticRetrievalState} ({summary.retrievalConfidenceState})</p>
+          <p>{t('support.assistant.localeStateLabel')}: {localeSummary.targetLocaleState} / {localeSummary.localeFallbackState} / {localeSummary.translationQualityState}</p>
 
           <ul className="space-y-2">
             {candidates.map((candidate) => (
@@ -250,6 +256,9 @@ export default function ConversationalHelpAssistant({ sourceSite, category, sear
                   supportCaseType: category === 'all' ? 'general' : category,
                   handoffState: 'preparing',
                   semanticRetrievalState: summary.semanticRetrievalState,
+                  targetLocaleState: localeSummary.targetLocaleState,
+                  localeFallbackState: localeSummary.localeFallbackState,
+                  translationQualityState: localeSummary.translationQualityState,
                 })
               }}
             >

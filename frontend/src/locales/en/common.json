@@ -996,7 +996,8 @@
       "markDone": "Mark done",
       "completed": "Done",
       "resolved": "Issue resolved",
-      "handoff": "Handoff to human support"
+      "handoff": "Handoff to human support",
+      "localeStateLabel": "Locale state"
     },
     "searchResultState": {
       "results_found": "Relevant results found",
@@ -1006,6 +1007,9 @@
     },
     "proactive": {
       "title": "proactive support"
+    },
+    "locale": {
+      "fallbackNotice": "Some guides are shown with {{fallbackState}} because full {{locale}} localization is not ready yet."
     }
   },
   "favoriteAdd": "Add to favorites",
