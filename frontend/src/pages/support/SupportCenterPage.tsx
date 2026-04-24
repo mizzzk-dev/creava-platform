@@ -29,6 +29,7 @@ import type { ProactiveSupportSummary } from '@/modules/support/proactiveSupport
 import { buildOptimizationQueryParams, type ProactiveOptimizationSummary } from '@/modules/support/proactiveOptimization'
 import { buildLocaleSupportSummary, normalizeLocale, resolveLocalizedGuides } from '@/modules/support/localeSupportOps'
 import { buildMultilingualOptimizationSummary } from '@/modules/support/multilingualOptimization'
+import { buildMultilingualOpsAutomationSummary, buildMultilingualOpsQueryParams } from '@/modules/support/multilingualOpsAutomation'
 import { buildPolicyGovernanceQueryParams, buildSupportPolicyGovernanceSummary } from '@/modules/support/policyGovernance'
 
 const detectSite = (): SourceSite => {
@@ -152,6 +153,8 @@ export default function SupportCenterPage() {
     sourceSite,
     localeSummary: localeSupportSummary,
   }), [localeSupportSummary, sourceSite])
+  const multilingualOpsAutomationSummary = useMemo(() => buildMultilingualOpsAutomationSummary(multilingualOptimizationSummary), [multilingualOptimizationSummary])
+
   const policyGovernanceSummary = useMemo(() => buildSupportPolicyGovernanceSummary({
     sourceSite,
     searchResultCount: filteredFaqs.length + filteredGuides.length,
@@ -267,6 +270,18 @@ export default function SupportCenterPage() {
     })
   }, [multilingualOptimizationSummary, sourceSite])
 
+
+  useEffect(() => {
+    trackMizzzEvent('multilingual_ops_automation_logged', {
+      sourceSite,
+      translationReuseCoverageState: multilingualOpsAutomationSummary.translationReuseCoverageState,
+      localizationWorkflowAutomationState: multilingualOpsAutomationSummary.localizationWorkflowAutomationState,
+      localeRankingTuningState: multilingualOpsAutomationSummary.localeRankingTuningState,
+      regionalPolicyTemplateCoverageState: multilingualOpsAutomationSummary.regionalPolicyTemplateCoverageState,
+      retrievalQualityState: multilingualOpsAutomationSummary.retrievalQualityState,
+      localeEffectivenessState: multilingualOpsAutomationSummary.localeEffectivenessState,
+    })
+  }, [multilingualOpsAutomationSummary, sourceSite])
   useEffect(() => {
     const keyword = search.trim()
     if (keyword.length < HELP_SEARCH_MIN_QUERY_LENGTH) return
@@ -319,6 +334,7 @@ export default function SupportCenterPage() {
     [optimizationSummary],
   )
   const governanceQuery = useMemo(() => buildPolicyGovernanceQueryParams(policyGovernanceSummary), [policyGovernanceSummary])
+  const multilingualOpsQuery = useMemo(() => buildMultilingualOpsQueryParams(multilingualOpsAutomationSummary), [multilingualOpsAutomationSummary])
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-14">
@@ -634,6 +650,7 @@ export default function SupportCenterPage() {
           glossary_consistency_state: multilingualOptimizationSummary.glossaryConsistencyState,
           locale_retrieval_state: multilingualOptimizationSummary.localeRetrievalState,
           regional_policy_template_state: multilingualOptimizationSummary.regionalPolicyTemplateState,
+          ...multilingualOpsQuery,
           ...optimizationQuery,
           ...governanceQuery,
         }).toString()}`}
@@ -652,6 +669,7 @@ export default function SupportCenterPage() {
         guides={filteredGuides}
         statusSummary={statusData}
         localeSummary={localeSupportSummary}
+        multilingualOpsSummary={multilingualOpsAutomationSummary}
       />
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">

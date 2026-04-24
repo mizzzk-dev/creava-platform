@@ -76,6 +76,10 @@ export default function ContactPage() {
     auditVisibilityState: searchParams.get('audit_visibility_state') ?? '',
     localeImpactState: searchParams.get('locale_impact_state') ?? '',
     changeRiskState: searchParams.get('change_risk_state') ?? '',
+    translationReuseCoverageState: searchParams.get('translation_reuse_coverage_state') ?? '',
+    localizationWorkflowAutomationState: searchParams.get('localization_workflow_automation_state') ?? '',
+    localeRankingTuningState: searchParams.get('locale_ranking_tuning_state') ?? '',
+    regionalPolicyTemplateCoverageState: searchParams.get('regional_policy_template_coverage_state') ?? '',
   }), [searchParams])
 
   useEffect(() => {

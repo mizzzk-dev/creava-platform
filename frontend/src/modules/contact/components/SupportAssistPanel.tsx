@@ -44,6 +44,10 @@ interface Props {
     auditVisibilityState?: string
     localeImpactState?: string
     changeRiskState?: string
+    translationReuseCoverageState?: string
+    localizationWorkflowAutomationState?: string
+    localeRankingTuningState?: string
+    regionalPolicyTemplateCoverageState?: string
   }
 }
 
@@ -102,6 +106,11 @@ export default function SupportAssistPanel({ formDefinition, handoffContext }: P
       {(handoffContext?.auditState || handoffContext?.changeRiskState) && (
         <p className="mt-2 rounded-md border border-slate-700/60 bg-slate-900/60 px-2 py-1 text-[11px] text-slate-100">
           audit={handoffContext.auditState ?? '-'} ({handoffContext.auditTrailState ?? '-'}) / visibility={handoffContext.auditVisibilityState ?? '-'} / localeImpact={handoffContext.localeImpactState ?? '-'} / risk={handoffContext.changeRiskState ?? '-'}
+        </p>
+      )}
+      {(handoffContext?.translationReuseCoverageState || handoffContext?.localizationWorkflowAutomationState || handoffContext?.localeRankingTuningState) && (
+        <p className="mt-2 rounded-md border border-indigo-900/50 bg-indigo-950/40 px-2 py-1 text-[11px] text-indigo-100">
+          localization ops: reuse={handoffContext.translationReuseCoverageState ?? '-'} / workflow={handoffContext.localizationWorkflowAutomationState ?? '-'} / ranking={handoffContext.localeRankingTuningState ?? '-'} / policyCoverage={handoffContext.regionalPolicyTemplateCoverageState ?? '-'}
         </p>
       )}
 

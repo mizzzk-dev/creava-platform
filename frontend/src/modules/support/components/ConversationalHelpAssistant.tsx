@@ -14,6 +14,7 @@ import {
   type ConversationalHelpSummary,
 } from '@/modules/support/conversationalHelp'
 import type { LocaleSupportSummary } from '@/modules/support/localeSupportOps'
+import type { MultilingualOpsAutomationSummary } from '@/modules/support/multilingualOpsAutomation'
 
 const ASSISTANT_MIN_QUERY_LENGTH = Number(import.meta.env.VITE_HELP_ASSISTANT_MIN_QUERY_LENGTH ?? 4)
 const ASSISTANT_MAX_CANDIDATES = Number(import.meta.env.VITE_HELP_ASSISTANT_MAX_CANDIDATES ?? 3)
@@ -30,6 +31,7 @@ interface Props {
   guides: GuideItem[]
   statusSummary: PublicStatusResponse | null
   localeSummary: LocaleSupportSummary
+  multilingualOpsSummary: MultilingualOpsAutomationSummary
 }
 
 const resolveInitialSummary = (query: string): ConversationalHelpSummary => ({
@@ -57,7 +59,7 @@ const resolveInitialSummary = (query: string): ConversationalHelpSummary => ({
   articleEffectivenessState: 'unknown',
 })
 
-export default function ConversationalHelpAssistant({ sourceSite, category, search, faqs, guides, statusSummary, localeSummary }: Props) {
+export default function ConversationalHelpAssistant({ sourceSite, category, search, faqs, guides, statusSummary, localeSummary, multilingualOpsSummary }: Props) {
   const { t } = useTranslation()
   const [query, setQuery] = useState(search)
   const [summary, setSummary] = useState<ConversationalHelpSummary>(() => resolveInitialSummary(search))
@@ -106,9 +108,13 @@ export default function ConversationalHelpAssistant({ sourceSite, category, sear
       retrieval_quality_state: localeSummary.retrievalQualityState,
       regional_policy_template_state: localeSummary.regionalPolicyTemplateState,
       regional_policy_state: localeSummary.regionalPolicyState,
+      translation_reuse_coverage_state: multilingualOpsSummary.translationReuseCoverageState,
+      localization_workflow_automation_state: multilingualOpsSummary.localizationWorkflowAutomationState,
+      locale_ranking_tuning_state: multilingualOpsSummary.localeRankingTuningState,
+      regional_policy_template_coverage_state: multilingualOpsSummary.regionalPolicyTemplateCoverageState,
     })
     return `${ROUTES.CONTACT}?${params.toString()}`
-  }, [casePrefill.message, casePrefill.subject, category, localeSummary.glossaryConsistencyState, localeSummary.glossaryState, localeSummary.localeFallbackState, localeSummary.localeRetrievalState, localeSummary.localizationWorkflowState, localeSummary.regionalPolicyState, localeSummary.regionalPolicyTemplateState, localeSummary.retrievalQualityState, localeSummary.targetLocaleState, localeSummary.translationMemoryMatchState, localeSummary.translationMemoryState, localeSummary.translationQualityState, retrieval.retrievalConfidenceState, retrieval.semanticRetrievalState, sourceSite, summary.assistantSessionState])
+  }, [casePrefill.message, casePrefill.subject, category, localeSummary.glossaryConsistencyState, localeSummary.glossaryState, localeSummary.localeFallbackState, localeSummary.localeRetrievalState, localeSummary.localizationWorkflowState, localeSummary.regionalPolicyState, localeSummary.regionalPolicyTemplateState, localeSummary.retrievalQualityState, localeSummary.targetLocaleState, localeSummary.translationMemoryMatchState, localeSummary.translationMemoryState, localeSummary.translationQualityState, multilingualOpsSummary.localizationWorkflowAutomationState, multilingualOpsSummary.localeRankingTuningState, multilingualOpsSummary.regionalPolicyTemplateCoverageState, multilingualOpsSummary.translationReuseCoverageState, retrieval.retrievalConfidenceState, retrieval.semanticRetrievalState, sourceSite, summary.assistantSessionState])
 
   const runAssistant = () => {
     if (query.trim().length < ASSISTANT_MIN_QUERY_LENGTH) return
