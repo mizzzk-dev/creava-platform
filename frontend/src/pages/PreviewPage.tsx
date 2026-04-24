@@ -17,32 +17,55 @@ export default function PreviewPage() {
   const [error, setError] = useState(false)
 
   useEffect(() => {
-    const secret = params.get('secret') ?? ''
-    const type = params.get('type') ?? ''
-    const slug = params.get('slug') ?? ''
-    const locale = normalizeLocale(params.get('locale'))
-    const theme = normalizeTheme(params.get('theme'))
+    let isMounted = true
+    let timeoutId: ReturnType<typeof setTimeout> | null = null
 
-    if (!activatePreview(secret)) {
-      setError(true)
-      const t = setTimeout(() => navigate('/', { replace: true }), 2000)
-      return () => clearTimeout(t)
-    }
+    const run = async () => {
+      const secret = params.get('secret') ?? ''
+      const type = params.get('type') ?? ''
+      const slug = params.get('slug') ?? ''
+      const locale = normalizeLocale(params.get('locale'))
+      const theme = normalizeTheme(params.get('theme'))
 
-    if (locale) {
-      void i18n.changeLanguage(locale)
-    }
+      const verified = await activatePreview({
+        secret,
+        type,
+        slug,
+        locale,
+      })
 
-    if (theme) {
-      try {
-        localStorage.setItem('theme', theme)
-      } catch {
-        // noop
+      if (!verified) {
+        if (isMounted) {
+          setError(true)
+          timeoutId = setTimeout(() => navigate('/', { replace: true }), 2000)
+        }
+        return
+      }
+
+      if (locale) {
+        void i18n.changeLanguage(locale)
+      }
+
+      if (theme) {
+        try {
+          localStorage.setItem('theme', theme)
+        } catch {
+          // noop
+        }
+      }
+
+      const path = resolveDetailPath(type, slug)
+      if (isMounted) {
+        navigate(path, { replace: true })
       }
     }
 
-    const path = resolveDetailPath(type, slug)
-    navigate(path, { replace: true })
+    void run()
+
+    return () => {
+      isMounted = false
+      if (timeoutId) clearTimeout(timeoutId)
+    }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (error) {

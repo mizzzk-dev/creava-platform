@@ -72,7 +72,8 @@
 | `VITE_PERSONALIZATION_MAX_HISTORY` | 閲覧履歴の保存上限 | 任意 | 任意 | 任意 |
 | `VITE_PERSONALIZATION_MAX_FAVORITES` | お気に入り保存上限 | 任意 | 任意 | 任意 |
 | `VITE_ANALYTICS_OPS_ENDPOINT` | 主要イベントをStrapiへ保存するエンドポイント | 任意 | 推奨 | 推奨 |
-| `VITE_PREVIEW_SECRET` | Strapi previewエントリー用シークレット | 必須 | 必須 | 必須 |
+| `VITE_PREVIEW_VERIFY_ENDPOINT` | backend preview verify endpoint（推奨: `/api/cms-sync/preview/verify`） | 推奨 | 推奨 | 推奨 |
+| `VITE_PREVIEW_SECRET` | preview secret fallback（段階移行用。最終的に未設定推奨） | 任意 | 任意 | 任意 |
 
 ### frontend 認証（Supabase）詳細
 - `VITE_AUTH_PROVIDER=supabase`
@@ -163,6 +164,9 @@
 | `INQUIRY_MY_HISTORY_PAGE_MAX` | `/inquiry-submissions/me/history` の最大 pageSize | 推奨 |
 | `INQUIRY_MY_SUMMARY_MAX_ROWS` | `/inquiry-submissions/me/summary` 集計上限 | 推奨 |
 | `INQUIRY_MAILBOX_WEBHOOK_SECRET` | mailbox inbound/delivery webhook 保護シークレット | 必須 |
+| `STRAPI_PUBLISH_WEBHOOK_SECRET` | Strapi publish webhook 検証シークレット（`x-strapi-webhook-secret`） | 必須 |
+| `PREVIEW_SHARED_SECRET` | preview verify endpoint 用シークレット | 必須 |
+| `CMS_REVALIDATE_OPS_TOKEN` | manual revalidate endpoint 用 ops token | 必須 |
 | `INQUIRY_MAILBOX_PROVIDER` | mailbox bridge プロバイダ名（監査ログ用） | 任意 |
 | `INQUIRY_MAILBOX_DEFAULT_FROM` | support outbound メール送信元 | 推奨 |
 | `INQUIRY_MAILBOX_DEFAULT_REPLY_TO` | user reply のデフォルト返信先 | 推奨 |
@@ -280,12 +284,15 @@
 - `VITE_SHOPIFY_STORE_DOMAIN`
 - `VITE_SHOPIFY_STOREFRONT_TOKEN`
 - `VITE_STRIPE_PUBLISHABLE_KEY`
-- `VITE_PREVIEW_SECRET`
+- `VITE_PREVIEW_VERIFY_ENDPOINT`
+- `VITE_PREVIEW_SECRET`（fallback only）
 - FTP 系 (`FTP_SERVER_*`, `FTP_USERNAME_*`, `FTP_PASSWORD_*`, `FTP_SERVER_DIR_*`)
 
 ### Backend deploy/runtime
 - `STRAPI_DEPLOY_TOKEN`
-- `STRAPI_PREVIEW_SECRET`（frontend `VITE_PREVIEW_SECRET` と同値）
+- `PREVIEW_SHARED_SECRET`（`/api/cms-sync/preview/verify` 用）
+- `STRAPI_PUBLISH_WEBHOOK_SECRET`（`/api/cms-sync/strapi-webhook` 用）
+- `CMS_REVALIDATE_OPS_TOKEN`（`/api/cms-sync/revalidate` 用）
 - `INQUIRY_IP_HASH_SALT`
 - `INQUIRY_OPS_TOKEN`
 - `INQUIRY_MY_HISTORY_PAGE_MAX`

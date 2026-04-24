@@ -46,6 +46,7 @@
 
 ### 運用
 - [運用マニュアル](./09_operations/operations-manual.md)
+- [Strapi publish / preview / webhook revalidation / cache invalidation 運用 runbook (2026-04-24)](./09_operations/strapi-publish-preview-revalidation-runbook-2026-04-24.md)
 - [CMS運用マニュアル](./09_operations/cms-manual.md)
 - [デプロイ手順書](./09_operations/deploy-manual.md)
 - [トラブルシューティング](./09_operations/troubleshooting.md)

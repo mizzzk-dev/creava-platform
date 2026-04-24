@@ -44,6 +44,7 @@ interface ImportMetaEnv {
   readonly VITE_STRIPE_PUBLISHABLE_KEY?: string
   readonly VITE_GA_MEASUREMENT_ID?: string
   readonly VITE_PREVIEW_SECRET?: string
+  readonly VITE_PREVIEW_VERIFY_ENDPOINT?: string
   readonly VITE_AVAILABILITY_STATUS?: string
   readonly VITE_GITHUB_USERNAME?: string
   readonly VITE_SNS_X_URL?: string
