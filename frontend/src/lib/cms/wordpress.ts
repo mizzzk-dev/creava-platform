@@ -8,11 +8,21 @@ type WordPressListResponse<T> = {
     pageSize?: number
     pageCount?: number
     total?: number
+    pagination?: {
+      page?: number
+      pageSize?: number
+      pageCount?: number
+      total?: number
+    }
+    trace?: Record<string, unknown>
   }
 }
 
 type WordPressSingleResponse<T> = {
   data: T
+  meta?: {
+    trace?: Record<string, unknown>
+  }
 }
 
 const ENDPOINT_MAP: Record<string, string> = {
@@ -58,15 +68,19 @@ function toWordPressQuery(params?: CmsQueryParams, slug?: string): string {
   const locale = params?.locale
   if (locale) qs.set('locale', locale)
 
+  const accessStatus = (params?.filters as { accessStatus?: { $eq?: string } } | undefined)?.accessStatus?.$eq
+  if (accessStatus) qs.set('accessStatus', accessStatus)
+
   const query = qs.toString()
   return query ? `?${query}` : ''
 }
 
 function toCmsListResponse<T>(response: WordPressListResponse<T>): CmsListResponse<T> {
-  const page = response.meta?.page ?? 1
-  const pageSize = response.meta?.pageSize ?? Math.max(response.data.length, 1)
-  const pageCount = response.meta?.pageCount ?? (response.data.length > 0 ? 1 : 0)
-  const total = response.meta?.total ?? response.data.length
+  const pagination = response.meta?.pagination
+  const page = pagination?.page ?? response.meta?.page ?? 1
+  const pageSize = pagination?.pageSize ?? response.meta?.pageSize ?? Math.max(response.data.length, 1)
+  const pageCount = pagination?.pageCount ?? response.meta?.pageCount ?? (response.data.length > 0 ? 1 : 0)
+  const total = pagination?.total ?? response.meta?.total ?? response.data.length
 
   return {
     data: response.data,

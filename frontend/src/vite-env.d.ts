@@ -22,6 +22,17 @@ interface ImportMetaEnv {
   readonly VITE_STRAPI_USE_TOKEN_FOR_PUBLIC?: string
   readonly VITE_CMS_PROVIDER?: 'strapi' | 'wordpress'
   readonly VITE_WORDPRESS_API_URL?: string
+  readonly VITE_CMS_WORDPRESS_ROLLOUT_ENABLED?: string
+  readonly VITE_CMS_WORDPRESS_ROLLOUT_SITE_MAIN?: string
+  readonly VITE_CMS_WORDPRESS_ROLLOUT_SITE_STORE?: string
+  readonly VITE_CMS_WORDPRESS_ROLLOUT_SITE_FC?: string
+  readonly VITE_CMS_WORDPRESS_ROLLOUT_BLOG?: string
+  readonly VITE_CMS_WORDPRESS_ROLLOUT_NEWS?: string
+  readonly VITE_CMS_WORDPRESS_ROLLOUT_EVENTS?: string
+  readonly VITE_CMS_WORDPRESS_ROLLOUT_WORKS?: string
+  readonly VITE_CMS_WORDPRESS_ROLLOUT_STORE?: string
+  readonly VITE_CMS_WORDPRESS_ROLLOUT_FANCLUB?: string
+  readonly VITE_CMS_WORDPRESS_ROLLOUT_SETTINGS?: string
   readonly VITE_AUTH_PROVIDER?: 'logto' | 'supabase'
   readonly VITE_SUPABASE_URL?: string
   readonly VITE_SUPABASE_ANON_KEY?: string

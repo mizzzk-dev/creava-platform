@@ -18,6 +18,7 @@ require_once __DIR__ . '/includes/subscriptions.php';
 require_once __DIR__ . '/includes/entitlements.php';
 require_once __DIR__ . '/includes/access-control.php';
 require_once __DIR__ . '/includes/rest-content.php';
+require_once __DIR__ . '/includes/rest-migration.php';
 require_once __DIR__ . '/includes/rest-stripe.php';
 require_once __DIR__ . '/includes/stripe-webhook.php';
 require_once __DIR__ . '/includes/rest-api.php';

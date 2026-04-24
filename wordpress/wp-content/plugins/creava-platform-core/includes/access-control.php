@@ -15,6 +15,27 @@ function creava_can_view_post(int $post_id, ?int $user_id = null): bool {
         return false;
     }
 
-    // TODO: entitlement 判定を実装
-    return $access === 'members_only';
+    if (user_can($user_id, 'manage_options')) {
+        return true;
+    }
+
+    $entitlement = creava_get_customer_entitlement($user_id);
+    if (!$entitlement) {
+        return false;
+    }
+
+    $membership_status = $entitlement['membership_status'] ?? 'inactive';
+    if ($membership_status !== 'active' && $membership_status !== 'trialing') {
+        return false;
+    }
+
+    if ($access === 'members_only') {
+        return true;
+    }
+
+    if ($access === 'limited') {
+        return true;
+    }
+
+    return false;
 }

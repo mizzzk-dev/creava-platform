@@ -2,10 +2,8 @@
 if (!defined('ABSPATH')) { exit; }
 
 function creava_save_subscription(array $payload): int {
-    return wp_insert_post([
-        'post_type' => 'creava_subscription',
-        'post_status' => 'publish',
-        'post_title' => sprintf('sub_%s', sanitize_text_field($payload['stripe_subscription_id'] ?? 'unknown')),
-        'meta_input' => $payload,
-    ]);
+    $subscription_id = sanitize_text_field((string) ($payload['stripe_subscription_id'] ?? 'unknown'));
+    $payload['stripe_subscription_id'] = $subscription_id;
+
+    return creava_upsert_record('creava_subscription', 'stripe_subscription_id', $subscription_id, $payload);
 }
