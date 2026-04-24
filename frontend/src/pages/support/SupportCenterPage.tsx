@@ -27,6 +27,7 @@ import ProactiveSupportPanel from '@/modules/support/components/ProactiveSupport
 import { retrieveKnowledgeCandidates } from '@/modules/support/conversationalHelp'
 import type { ProactiveSupportSummary } from '@/modules/support/proactiveSupport'
 import { buildOptimizationQueryParams, type ProactiveOptimizationSummary } from '@/modules/support/proactiveOptimization'
+import { buildLocaleSupportSummary, normalizeLocale, resolveLocalizedGuides } from '@/modules/support/localeSupportOps'
 
 const detectSite = (): SourceSite => {
   if (isStoreSite) return 'store'
@@ -58,6 +59,7 @@ export default function SupportCenterPage() {
   const [replyState, setReplyState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const site = detectSite()
   const sourceSite = site === 'all' ? 'main' : site
+  const locale = normalizeLocale(document.documentElement.lang || 'ja')
   const benefitState = resolveBenefitExperienceState({ user, lifecycle, sourceSite })
   const benefitPresentation = buildBenefitPresentation(benefitState)
   const campaignState = resolveCampaignPersonalizationState({ user, lifecycle, sourceSite: 'support' })
@@ -103,16 +105,21 @@ export default function SupportCenterPage() {
     })
   }, [faqs, site, category, search])
 
+  const localizedGuideResult = useMemo(() => resolveLocalizedGuides({
+    guides: guides ?? [],
+    locale,
+    sourceSite: site,
+    category,
+  }), [category, guides, locale, site])
+
   const filteredGuides = useMemo(() => {
     const keyword = search.trim().toLowerCase()
-    return (guides ?? []).filter((item) => {
-      if (item.sourceSite !== 'all' && item.sourceSite !== site) return false
-      if (category !== 'all' && item.category !== category) return false
+    return localizedGuideResult.guides.filter((item) => {
       if (!keyword) return true
       const text = [item.title, item.summary ?? '', item.body ?? '', ...(item.tags ?? [])].join(' ').toLowerCase()
       return text.includes(keyword)
     })
-  }, [guides, site, category, search])
+  }, [localizedGuideResult.guides, search])
 
   const featuredFaqs = useMemo(() => filteredFaqs.filter((item) => item.featured).slice(0, 3), [filteredFaqs])
   const featuredGuides = useMemo(() => filteredGuides.filter((item) => item.featured).slice(0, 3), [filteredGuides])
@@ -131,6 +138,14 @@ export default function SupportCenterPage() {
     guides: guides ?? [],
     statusSummary: statusData,
   }), [category, faqs, guides, search, sourceSite, statusData])
+  const localeSupportSummary = useMemo(() => buildLocaleSupportSummary({
+    locale,
+    sourceSite,
+    searchResultCount: filteredFaqs.length + filteredGuides.length,
+    fallbackState: localizedGuideResult.fallbackState,
+    coverageState: localizedGuideResult.coverageState,
+    hasKnownIssue: proactiveCandidates.some((item) => item.type === 'known_issue'),
+  }), [filteredFaqs.length, filteredGuides.length, locale, localizedGuideResult.coverageState, localizedGuideResult.fallbackState, proactiveCandidates, sourceSite])
 
   const articleSuggestions = useMemo(() => {
     const topFaq = filteredFaqs.slice(0, 2).map((item) => ({ title: item.question, to: ROUTES.FAQ }))
@@ -202,6 +217,20 @@ export default function SupportCenterPage() {
       experimentVariantState: optimizationSummary.experimentVariantState,
     })
   }, [category, optimizationSummary, sourceSite])
+
+  useEffect(() => {
+    trackMizzzEvent('locale_support_summary_logged', {
+      sourceSite,
+      targetLocaleState: localeSupportSummary.targetLocaleState,
+      localizationState: localeSupportSummary.localizationState,
+      translationQualityState: localeSupportSummary.translationQualityState,
+      localeFallbackState: localeSupportSummary.localeFallbackState,
+      localeCoverageState: localeSupportSummary.localeCoverageState,
+      localeSearchResultState: localeSupportSummary.localeSearchResultState,
+      localeEffectivenessState: localeSupportSummary.localeEffectivenessState,
+      localeKnowledgeGapState: localeSupportSummary.localeKnowledgeGapState,
+    })
+  }, [localeSupportSummary, sourceSite])
 
   useEffect(() => {
     const keyword = search.trim()
@@ -442,6 +471,11 @@ export default function SupportCenterPage() {
             {t('support.searchResultStateLabel')}: {t(`support.searchResultState.${searchResultState}`)}
           </p>
         )}
+        {localizedGuideResult.fallbackState !== 'not_needed' && (
+          <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
+            {t('support.locale.fallbackNotice', { locale, fallbackState: localizedGuideResult.fallbackState })}
+          </p>
+        )}
       </div>
 
       <div className="mt-10 grid gap-6 lg:grid-cols-2">
@@ -563,6 +597,7 @@ export default function SupportCenterPage() {
         faqs={filteredFaqs}
         guides={filteredGuides}
         statusSummary={statusData}
+        localeSummary={localeSupportSummary}
       />
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">

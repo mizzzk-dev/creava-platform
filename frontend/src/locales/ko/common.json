@@ -996,7 +996,8 @@
       "markDone": "완료로 표시",
       "completed": "완료",
       "resolved": "자체 해결됨",
-      "handoff": "상담원에게 전달"
+      "handoff": "상담원에게 전달",
+      "localeStateLabel": "로케일 상태"
     },
     "searchResultState": {
       "results_found": "관련 결과를 찾았습니다",
@@ -1006,6 +1007,9 @@
     },
     "proactive": {
       "title": "선제 지원"
+    },
+    "locale": {
+      "fallbackNotice": "일부 가이드는 {{locale}} 번역이 충분하지 않아 {{fallbackState}} 상태로 표시됩니다."
     }
   },
   "favoriteAdd": "즐겨찾기에 추가",

@@ -996,7 +996,8 @@
       "markDone": "実施済みにする",
       "completed": "完了",
       "resolved": "自己解決できた",
-      "handoff": "human support に引き継ぐ"
+      "handoff": "human support に引き継ぐ",
+      "localeStateLabel": "locale 状態"
     },
     "searchResultState": {
       "results_found": "候補が見つかりました",
@@ -1006,6 +1007,9 @@
     },
     "proactive": {
       "title": "先回りサポート"
+    },
+    "locale": {
+      "fallbackNotice": "一部ガイドは {{locale}} 向け翻訳が未整備のため、{{fallbackState}} で表示しています。"
     }
   },
   "favoriteAdd": "お気に入りに追加",

@@ -69,6 +69,7 @@
 - [お問い合わせフォーム復旧 runbook (2026-04-22)](./09_operations/contact-inquiry-recovery-runbook-2026-04-22.md)
 - [support forecasting / staffing / capacity / surge / coverage 基盤整備 (2026-04-23)](./support-forecasting-staffing-capacity-foundation-2026-04-23.md)
 - [proactive support / recommendation scoring / issue prevention runbook (2026-04-23)](./09_operations/proactive-support-recommendation-issue-prevention-runbook-2026-04-23.md)
+- [multilingual support knowledge / localization / translation QA / locale-aware orchestration runbook (2026-04-24)](./09_operations/multilingual-support-knowledge-localization-runbook-2026-04-24.md)
 - [分析基盤・改善運用ガイド](./09_operations/analytics-improvement-foundation.md)
 - [SEO/コンテンツ流入基盤メモ（2026-04）](./seo-content-growth-foundation.md)
 - [パーソナライズ導線運用メモ](./personalization-notification-center.md)
