@@ -189,6 +189,20 @@ export type PlanningReviewSnapshot = {
   opsUpdatedAt: string
 }
 
+export type RouteDiagnosticsSnapshot = {
+  generatedAt: string
+  opsTraceId: string
+  wordpressTraceId: string
+  wordpressLocaleState: string
+  wordpressRouteDiagnosticsState: string
+  rewrite: Record<string, unknown>
+  pageResolution: Record<string, unknown>
+  postResolution: Record<string, unknown>
+  hypothesis: Record<string, boolean>
+  nextActions: string[]
+  meta: Record<string, unknown>
+}
+
 function getBaseUrl(): string {
   const base = import.meta.env.VITE_WORDPRESS_API_URL
   if (!base) {
@@ -297,4 +311,12 @@ export async function fetchWordPressOperatorCopilotSnapshot(): Promise<OperatorC
 
 export async function fetchWordPressPlanningReviewSnapshot(): Promise<PlanningReviewSnapshot> {
   return fetchOps<PlanningReviewSnapshot>('/ops/planning-review')
+}
+
+export async function fetchWordPressRouteDiagnosticsSnapshot(pageSlug?: string, postSlug?: string): Promise<RouteDiagnosticsSnapshot> {
+  const query = new URLSearchParams()
+  if (pageSlug) query.set('pageSlug', pageSlug)
+  if (postSlug) query.set('postSlug', postSlug)
+  const suffix = query.toString()
+  return fetchOps<RouteDiagnosticsSnapshot>(`/ops/route-diagnostics${suffix ? `?${suffix}` : ''}`)
 }

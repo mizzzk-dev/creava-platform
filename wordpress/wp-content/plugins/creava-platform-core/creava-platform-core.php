@@ -20,10 +20,20 @@ require_once __DIR__ . '/includes/access-control.php';
 require_once __DIR__ . '/includes/security-hardening.php';
 require_once __DIR__ . '/includes/editorial-ops.php';
 require_once __DIR__ . '/includes/rest-content.php';
+require_once __DIR__ . '/includes/route-diagnostics.php';
 require_once __DIR__ . '/includes/rest-migration.php';
 require_once __DIR__ . '/includes/rest-stripe.php';
 require_once __DIR__ . '/includes/stripe-webhook.php';
 require_once __DIR__ . '/includes/rest-api.php';
+
+register_activation_hook(__FILE__, static function () {
+    creava_register_post_types();
+    flush_rewrite_rules(false);
+});
+
+register_deactivation_hook(__FILE__, static function () {
+    flush_rewrite_rules(false);
+});
 
 add_action('plugins_loaded', function () {
     do_action('creava_platform_core_loaded');
