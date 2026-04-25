@@ -1035,6 +1035,350 @@ function creava_ops_build_workload_balancing_payload(WP_REST_Request $request): 
     ];
 }
 
+function creava_ops_build_planning_bottleneck_payload(WP_REST_Request $request): array {
+    $dashboard = creava_ops_build_editorial_dashboard_payload($request);
+    $release = creava_ops_build_release_calendar_payload($request);
+
+    $queue = $dashboard['editorialQueueState'] ?? [];
+    $sla = $dashboard['editorialSlaState'] ?? [];
+    $blocked = $dashboard['blockedState'] ?? [];
+
+    return [
+        'generatedAt' => gmdate('c'),
+        'planningBottleneckState' => 'visible',
+        'summary' => [
+            'dependencyBottleneckCount' => (int) ($queue['dependency_warning_queue'] ?? 0),
+            'localeRolloutBottleneckCount' => (int) ($queue['locale_incomplete_queue'] ?? 0),
+            'reviewBacklogCount' => (int) ($sla['waiting_review'] ?? 0),
+            'publishDelayCount' => (int) ($release['publishQueueState']['overdue'] ?? 0),
+            'blockedLaunchCount' => (int) ($blocked['blockedCount'] ?? 0),
+        ],
+        'bottleneckAreas' => [
+            [
+                'area' => 'campaign_planning',
+                'blockingState' => ($queue['dependency_warning_queue'] ?? 0) > 0 ? 'waiting_dependency' : 'healthy',
+                'description' => 'taxonomy / featured / membership dependency の整理不足で公開順序判断が遅延',
+            ],
+            [
+                'area' => 'locale_rollout',
+                'blockingState' => ($queue['locale_incomplete_queue'] ?? 0) > 0 ? 'missing_locale' : 'healthy',
+                'description' => 'locale 別 rollout 差分が queue から即時判断しづらい',
+            ],
+            [
+                'area' => 'approval_flow',
+                'blockingState' => ($sla['waiting_review'] ?? 0) > 0 ? 'review_backlog' : 'healthy',
+                'description' => 'review / approval の手戻り理由が分散し launch 判断が遅れる',
+            ],
+            [
+                'area' => 'launch_safety',
+                'blockingState' => ($release['publishQueueState']['blocked'] ?? 0) > 0 ? 'blocked_launch_detected' : 'healthy',
+                'description' => 'calendar と publish risk の突合が手作業化しやすい',
+            ],
+        ],
+        'nextActions' => [
+            'cross-site campaign workspace で依存関係付き公開順序を先に固定',
+            'release simulation で locale / cache / search / membership 影響を同時確認',
+            'SLA prediction と workload forecast の週次レビューを運用化',
+        ],
+        'opsTraceId' => wp_generate_uuid4(),
+        'opsUpdatedAt' => gmdate('c'),
+    ];
+}
+
+function creava_ops_build_campaign_orchestration_payload(WP_REST_Request $request): array {
+    $dashboard = creava_ops_build_editorial_dashboard_payload($request);
+    $release = creava_ops_build_release_calendar_payload($request);
+    $dependency = creava_ops_build_dependency_graph_payload($request);
+    $queue_items = is_array($dashboard['queueItems'] ?? null) ? $dashboard['queueItems'] : [];
+    $calendar = is_array($release['calendar'] ?? null) ? $release['calendar'] : [];
+
+    $campaign_groups = [];
+    foreach ($queue_items as $item) {
+        $site = (string) ($item['sourceSite'] ?? 'main');
+        $locale = (string) ($item['locale'] ?? 'ja');
+        $key = sprintf('%s:%s', $site, $locale);
+        if (!isset($campaign_groups[$key])) {
+            $campaign_groups[$key] = [
+                'campaignId' => 'campaign-' . md5($key),
+                'campaignName' => sprintf('%s rollout (%s)', strtoupper($site), $locale),
+                'crossSiteCampaignState' => 'active',
+                'campaignOrchestrationState' => 'planning',
+                'sourceSite' => $site,
+                'locale' => $locale,
+                'contentCount' => 0,
+                'dependencyCount' => 0,
+                'publishRiskScoreState' => 'low',
+                'releaseWindowState' => 'draft',
+                'opsTraceId' => wp_generate_uuid4(),
+            ];
+        }
+
+        $campaign_groups[$key]['contentCount'] += 1;
+        $campaign_groups[$key]['dependencyCount'] += (int) ($item['dependencyCount'] ?? 0);
+        if (($item['publishRiskState'] ?? 'low') === 'high') {
+            $campaign_groups[$key]['publishRiskScoreState'] = 'high';
+        } elseif (($item['publishRiskState'] ?? 'low') === 'medium' && $campaign_groups[$key]['publishRiskScoreState'] === 'low') {
+            $campaign_groups[$key]['publishRiskScoreState'] = 'medium';
+        }
+    }
+
+    $locale_rollout = [];
+    foreach ($calendar as $day) {
+        $items = is_array($day['items'] ?? null) ? $day['items'] : [];
+        foreach ($items as $item) {
+            $locale = (string) ($item['locale'] ?? 'ja');
+            if (!isset($locale_rollout[$locale])) {
+                $locale_rollout[$locale] = [
+                    'locale' => $locale,
+                    'plannedCount' => 0,
+                    'blockedCount' => 0,
+                    'campaignOrchestrationState' => 'planning',
+                ];
+            }
+            $locale_rollout[$locale]['plannedCount'] += 1;
+            if (($item['releaseRiskState'] ?? 'healthy') !== 'healthy') {
+                $locale_rollout[$locale]['blockedCount'] += 1;
+                $locale_rollout[$locale]['campaignOrchestrationState'] = 'waiting_dependency';
+            }
+        }
+    }
+
+    return [
+        'generatedAt' => gmdate('c'),
+        'campaignOrchestrationState' => 'planning',
+        'crossSiteCampaignState' => 'active',
+        'releaseWindowState' => 'planning',
+        'dependencyForecastState' => ($dependency['impactSummary']['publishRiskImpactCount'] ?? 0) > 0 ? 'risk_detected' : 'healthy',
+        'impactForecastState' => 'ready',
+        'campaigns' => array_values($campaign_groups),
+        'localeRolloutPlan' => array_values($locale_rollout),
+        'impactPreview' => [
+            'dependencyImpactCount' => (int) ($dependency['impactSummary']['publishRiskImpactCount'] ?? 0),
+            'searchImpactCount' => (int) ($dependency['impactSummary']['searchImpactCount'] ?? 0),
+            'membershipImpactCount' => (int) ($dependency['impactSummary']['membershipImpactCount'] ?? 0),
+            'localeImpactCount' => (int) ($dependency['impactSummary']['localeImpactCount'] ?? 0),
+        ],
+        'opsTraceId' => wp_generate_uuid4(),
+        'opsUpdatedAt' => gmdate('c'),
+    ];
+}
+
+function creava_ops_build_release_simulation_payload(WP_REST_Request $request): array {
+    $dashboard = creava_ops_build_editorial_dashboard_payload($request);
+    $release = creava_ops_build_release_calendar_payload($request);
+    $dependency = creava_ops_build_dependency_graph_payload($request);
+    $queue = is_array($release['publishQueue'] ?? null) ? $release['publishQueue'] : [];
+    $top = array_slice($queue, 0, 20);
+
+    $has_blocked = count(array_filter($top, static fn ($item) => (string) ($item['blockedState'] ?? 'not_blocked') !== 'not_blocked')) > 0;
+    $has_high = count(array_filter($top, static fn ($item) => (string) ($item['publishRiskState'] ?? 'low') === 'high')) > 0;
+    $state = 'simulated';
+    if ($has_blocked) {
+        $state = 'blocked';
+    } elseif ($has_high) {
+        $state = 'warning_detected';
+    }
+
+    return [
+        'generatedAt' => gmdate('c'),
+        'releaseSimulationState' => $state,
+        'launchChecklistState' => 'generated',
+        'dependencyForecastState' => ($dependency['impactSummary']['publishRiskImpactCount'] ?? 0) > 0 ? 'risk_detected' : 'healthy',
+        'impactForecastState' => $has_high ? 'warning' : 'normal',
+        'simulationScope' => [
+            'siteCount' => 3,
+            'queueCount' => count($queue),
+            'simulatedCount' => count($top),
+        ],
+        'impactPreview' => [
+            'dependencyImpact' => (int) ($dependency['impactSummary']['publishRiskImpactCount'] ?? 0),
+            'localeImpact' => (int) ($dependency['impactSummary']['localeImpactCount'] ?? 0),
+            'cacheImpact' => count($top),
+            'searchImpact' => (int) ($dependency['impactSummary']['searchImpactCount'] ?? 0),
+            'membershipImpact' => (int) ($dependency['impactSummary']['membershipImpactCount'] ?? 0),
+            'workloadImpact' => (int) (($dashboard['blockedState']['blockedCount'] ?? 0) + ($dashboard['editorialSlaState']['at_risk'] ?? 0)),
+            'slaRisk' => (int) ($dashboard['editorialSlaState']['at_risk'] ?? 0),
+        ],
+        'missingPrerequisites' => array_values(array_map(static function (array $item): array {
+            return [
+                'id' => $item['id'] ?? null,
+                'title' => $item['title'] ?? '',
+                'site' => $item['site'] ?? 'main',
+                'reason' => ($item['finalCheckState'] ?? 'ready') === 'ready' ? 'none' : 'preview_or_dependency_check_required',
+                'blockedState' => $item['blockedState'] ?? 'not_blocked',
+            ];
+        }, array_filter($top, static fn ($item) => (string) ($item['finalCheckState'] ?? 'ready') !== 'ready'))),
+        'launchChecklist' => [
+            'dependency graph と publish queue の差分確認',
+            'locale rollout / slug / taxonomy の整合確認',
+            'preview と live の差分確認',
+            'revalidation / cache invalidation の対象確認',
+            'search / notification / membership 影響確認',
+        ],
+        'opsTraceId' => wp_generate_uuid4(),
+        'opsUpdatedAt' => gmdate('c'),
+    ];
+}
+
+function creava_ops_build_planning_intelligence_payload(WP_REST_Request $request): array {
+    $dashboard = creava_ops_build_editorial_dashboard_payload($request);
+    $workload = creava_ops_build_workload_balancing_payload($request);
+    $release = creava_ops_build_release_calendar_payload($request);
+
+    $at_risk = (int) ($dashboard['editorialSlaState']['at_risk'] ?? 0);
+    $overdue = (int) ($dashboard['editorialSlaState']['overdue'] ?? 0);
+    $blocked = (int) ($release['publishQueueState']['blocked'] ?? 0);
+    $critical = (int) ($release['publishQueueState']['critical'] ?? 0);
+    $risk_score = $critical * 3 + $blocked * 2 + $at_risk + $overdue * 2;
+
+    $risk_state = 'low';
+    if ($risk_score >= 25) $risk_state = 'critical';
+    elseif ($risk_score >= 14) $risk_state = 'high';
+    elseif ($risk_score >= 6) $risk_state = 'medium';
+
+    $sla_state = 'on_track';
+    if ($blocked > 0) $sla_state = 'blocked_by_dependency';
+    elseif (($workload['operatorLoadState']['overloadedCount'] ?? 0) > 0) $sla_state = 'blocked_by_capacity';
+    elseif ($overdue > 0) $sla_state = 'likely_overdue';
+    elseif ($at_risk > 0) $sla_state = 'at_risk';
+
+    $workload_state = ($workload['operatorLoadState']['overloadedCount'] ?? 0) > 0 ? 'high' : 'balanced';
+
+    return [
+        'generatedAt' => gmdate('c'),
+        'editorialPlanningIntelligenceState' => 'active',
+        'slaPredictionState' => $sla_state,
+        'publishRiskScoreState' => $risk_state,
+        'workloadForecastState' => $workload_state,
+        'readinessForecastState' => $blocked > 0 ? 'needs_intervention' : 'ready_for_review',
+        'escalationForecastState' => $risk_state === 'critical' ? 'escalate_now' : ($risk_state === 'high' ? 'escalate_if_no_progress_24h' : 'monitor'),
+        'slaPrediction' => [
+            'atRiskCount' => $at_risk,
+            'likelyOverdueCount' => $overdue,
+            'blockedByDependencyCount' => $blocked,
+            'blockedByCapacityCount' => (int) ($workload['operatorLoadState']['overloadedCount'] ?? 0),
+        ],
+        'publishRiskScore' => [
+            'score' => $risk_score,
+            'state' => $risk_state,
+            'explanations' => [
+                sprintf('critical queue: %d', $critical),
+                sprintf('blocked queue: %d', $blocked),
+                sprintf('sla at risk: %d', $at_risk),
+            ],
+            'manualReviewRequired' => in_array($risk_state, ['high', 'critical'], true),
+        ],
+        'workloadForecast' => [
+            'overloadedOwners' => (int) ($workload['operatorLoadState']['overloadedCount'] ?? 0),
+            'blockedByDependencyOwners' => (int) ($workload['operatorLoadState']['blockedByDependencyCount'] ?? 0),
+            'dailyReviewQueueCount' => (int) ($workload['reviewCadenceState']['dailyReviewQueueCount'] ?? 0),
+            'weeklyReviewQueueCount' => (int) ($workload['reviewCadenceState']['weeklyReviewQueueCount'] ?? 0),
+        ],
+        'manualOverrideState' => 'available',
+        'opsTraceId' => wp_generate_uuid4(),
+        'opsUpdatedAt' => gmdate('c'),
+    ];
+}
+
+function creava_ops_build_operator_copilot_payload(WP_REST_Request $request): array {
+    $campaign = creava_ops_build_campaign_orchestration_payload($request);
+    $simulation = creava_ops_build_release_simulation_payload($request);
+    $planning = creava_ops_build_planning_intelligence_payload($request);
+
+    $warnings = [];
+    if (($simulation['releaseSimulationState'] ?? 'simulated') === 'blocked') {
+        $warnings[] = 'blocked dependency があるため launch 前に依存解消が必要';
+    }
+    if (in_array(($planning['publishRiskScoreState'] ?? 'low'), ['high', 'critical'], true)) {
+        $warnings[] = 'publish risk が高いため reviewer / publisher に escalation を推奨';
+    }
+
+    return [
+        'generatedAt' => gmdate('c'),
+        'operatorCopilotState' => empty($warnings) ? 'ready_for_review' : 'warning',
+        'approvalAssistState' => 'ready_for_review',
+        'planningSummaryState' => 'generated',
+        'launchChecklistState' => (string) ($simulation['launchChecklistState'] ?? 'generated'),
+        'campaignSummary' => [
+            'campaignOrchestrationState' => $campaign['campaignOrchestrationState'] ?? 'planning',
+            'crossSiteCampaignState' => $campaign['crossSiteCampaignState'] ?? 'active',
+            'campaignCount' => count($campaign['campaigns'] ?? []),
+        ],
+        'dependencySummary' => [
+            'dependencyForecastState' => $simulation['dependencyForecastState'] ?? 'healthy',
+            'missingPrerequisiteCount' => count($simulation['missingPrerequisites'] ?? []),
+        ],
+        'approvalAssist' => [
+            'manualApprovalRequired' => in_array(($planning['publishRiskScoreState'] ?? 'low'), ['high', 'critical'], true),
+            'reviewerSuggestion' => 'release simulation と launch checklist を比較し、差分理由を記録',
+            'publisherSuggestion' => 'preview/live 差分と revalidation 対象を最終確認',
+            'operatorSuggestion' => 'blocked queue を先に解消し、campaign 単位で公開順序を再計算',
+        ],
+        'copilotSuggestions' => [
+            'suggest' => 'high-risk campaign は locale rollout を分割して公開',
+            'compare' => 'predicted SLA と actual backlog の差分を weekly review で確認',
+            'summarize' => 'campaign / release / workload の要点を日次 digest 化',
+            'warn' => empty($warnings) ? '重大な警告なし' : implode(' / ', $warnings),
+            'propose' => 'launch checklist の不足項目を補完して approval に添付',
+            'prepare' => 'reviewer / publisher 向け承認メモを自動下書き',
+        ],
+        'guardrailPolicy' => [
+            'autoPublishDefault' => 'disabled',
+            'autoAssignDefault' => 'disabled',
+            'riskOverrideDefault' => 'manual_review_required',
+            'suppressionState' => 'available',
+            'muteState' => 'available',
+            'snoozeState' => 'available',
+        ],
+        'opsTraceId' => wp_generate_uuid4(),
+        'opsUpdatedAt' => gmdate('c'),
+    ];
+}
+
+function creava_ops_build_planning_review_payload(WP_REST_Request $request): array {
+    $planning = creava_ops_build_planning_intelligence_payload($request);
+    $simulation = creava_ops_build_release_simulation_payload($request);
+
+    return [
+        'generatedAt' => gmdate('c'),
+        'planningReviewCadenceState' => 'active',
+        'weeklyPlanningReviewTemplate' => [
+            'predicted_vs_actual_sla_diff',
+            'blocked_dependency_resolution_progress',
+            'locale_rollout_slip_review',
+            'operator_workload_imbalance_review',
+            'high_risk_launch_followup',
+        ],
+        'launchReadinessReviewTemplate' => [
+            'simulation_result_review',
+            'launch_checklist_completion',
+            'approval_assist_notes',
+            'revalidation_cache_scope_confirmation',
+        ],
+        'monthlyCampaignRetrospectiveTemplate' => [
+            'campaign_throughput_vs_quality',
+            'approval_latency_trend',
+            'dependency_failure_pattern',
+            'prediction_precision_review',
+            'runbook_update_actions',
+        ],
+        'reportingSummary' => [
+            'predictedSlaState' => $planning['slaPredictionState'] ?? 'on_track',
+            'predictedRiskState' => $planning['publishRiskScoreState'] ?? 'low',
+            'simulationState' => $simulation['releaseSimulationState'] ?? 'simulated',
+        ],
+        'ownership' => [
+            'editorialPlanningOwner' => 'editorial-ops',
+            'campaignOrchestrationOwner' => 'release-ops',
+            'simulationOwner' => 'release-ops',
+            'predictionOwner' => 'ops-analytics',
+            'copilotOwner' => 'operator-enable',
+        ],
+        'opsTraceId' => wp_generate_uuid4(),
+        'opsUpdatedAt' => gmdate('c'),
+    ];
+}
+
 function creava_ops_can_access_dashboard(WP_REST_Request $request): bool {
     if (current_user_can('edit_posts')) {
         return true;
@@ -1154,6 +1498,78 @@ function creava_register_editorial_ops_routes(): void {
         },
         'permission_callback' => '__return_true',
     ]);
+
+    register_rest_route('creava/v1', '/ops/planning-bottlenecks', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => static function (WP_REST_Request $request) {
+            if (!creava_ops_can_access_dashboard($request)) {
+                return new WP_REST_Response(['error' => 'forbidden'], 403);
+            }
+
+            return rest_ensure_response(creava_ops_build_planning_bottleneck_payload($request));
+        },
+        'permission_callback' => '__return_true',
+    ]);
+
+    register_rest_route('creava/v1', '/ops/campaign-orchestration', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => static function (WP_REST_Request $request) {
+            if (!creava_ops_can_access_dashboard($request)) {
+                return new WP_REST_Response(['error' => 'forbidden'], 403);
+            }
+
+            return rest_ensure_response(creava_ops_build_campaign_orchestration_payload($request));
+        },
+        'permission_callback' => '__return_true',
+    ]);
+
+    register_rest_route('creava/v1', '/ops/release-simulation', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => static function (WP_REST_Request $request) {
+            if (!creava_ops_can_access_dashboard($request)) {
+                return new WP_REST_Response(['error' => 'forbidden'], 403);
+            }
+
+            return rest_ensure_response(creava_ops_build_release_simulation_payload($request));
+        },
+        'permission_callback' => '__return_true',
+    ]);
+
+    register_rest_route('creava/v1', '/ops/planning-intelligence', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => static function (WP_REST_Request $request) {
+            if (!creava_ops_can_access_dashboard($request)) {
+                return new WP_REST_Response(['error' => 'forbidden'], 403);
+            }
+
+            return rest_ensure_response(creava_ops_build_planning_intelligence_payload($request));
+        },
+        'permission_callback' => '__return_true',
+    ]);
+
+    register_rest_route('creava/v1', '/ops/operator-copilot', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => static function (WP_REST_Request $request) {
+            if (!creava_ops_can_access_dashboard($request)) {
+                return new WP_REST_Response(['error' => 'forbidden'], 403);
+            }
+
+            return rest_ensure_response(creava_ops_build_operator_copilot_payload($request));
+        },
+        'permission_callback' => '__return_true',
+    ]);
+
+    register_rest_route('creava/v1', '/ops/planning-review', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => static function (WP_REST_Request $request) {
+            if (!creava_ops_can_access_dashboard($request)) {
+                return new WP_REST_Response(['error' => 'forbidden'], 403);
+            }
+
+            return rest_ensure_response(creava_ops_build_planning_review_payload($request));
+        },
+        'permission_callback' => '__return_true',
+    ]);
 }
 
 function creava_render_ops_dashboard_page(): void {
@@ -1171,6 +1587,12 @@ function creava_render_ops_dashboard_page(): void {
     $release = creava_ops_build_release_calendar_payload($request);
     $automation = creava_ops_build_workflow_automation_payload($request);
     $workload = creava_ops_build_workload_balancing_payload($request);
+    $bottlenecks = creava_ops_build_planning_bottleneck_payload($request);
+    $campaign = creava_ops_build_campaign_orchestration_payload($request);
+    $simulation = creava_ops_build_release_simulation_payload($request);
+    $planning = creava_ops_build_planning_intelligence_payload($request);
+    $copilot = creava_ops_build_operator_copilot_payload($request);
+    $review = creava_ops_build_planning_review_payload($request);
 
     echo '<div class="wrap">';
     echo '<h1>Creava Editorial Ops Dashboard</h1>';
@@ -1232,6 +1654,22 @@ function creava_render_ops_dashboard_page(): void {
 
     echo '<h2>10) Workload Balancing / Review Cadence / Ops Reporting</h2>';
     echo '<pre>' . esc_html(wp_json_encode($workload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) . '</pre>';
+
+    echo '<h2>11) Planning bottlenecks / campaign orchestration / release simulation</h2>';
+    echo '<p>planning可視化と公開判断を混同しないため、詰まり・計画・simulationを分離して表示します。</p>';
+    echo '<pre>' . esc_html(wp_json_encode([
+        'planningBottlenecks' => $bottlenecks,
+        'campaignOrchestration' => $campaign,
+        'releaseSimulation' => $simulation,
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) . '</pre>';
+
+    echo '<h2>12) Planning intelligence / operator copilot / approval assist / review cadence</h2>';
+    echo '<p>copilot は suggestion / compare / summarize / warn / propose / prepare を基本とし、auto publish は無効を維持します。</p>';
+    echo '<pre>' . esc_html(wp_json_encode([
+        'planningIntelligence' => $planning,
+        'operatorCopilot' => $copilot,
+        'planningReview' => $review,
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) . '</pre>';
 
     echo '<p><strong>Actionability:</strong> queue と audit と quality は別物です。Queue で「何を直すか」、Audit で「誰が何を出したか」、Quality で「公開前後の品質」を判断してください。</p>';
     echo '</div>';

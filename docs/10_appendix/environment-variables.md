@@ -75,6 +75,13 @@
 | `VITE_PREVIEW_VERIFY_ENDPOINT` | backend preview verify endpoint（推奨: `/api/cms-sync/preview/verify`） | 推奨 | 推奨 | 推奨 |
 | `VITE_PREVIEW_SECRET` | preview secret fallback（段階移行用。最終的に未設定推奨） | 任意 | 任意 | 任意 |
 | `VITE_WORDPRESS_EDITORIAL_OPS_TIMEOUT_MS` | WordPress editorial ops endpoint 取得タイムアウト（ms） | 任意 | 推奨 | 推奨 |
+| `VITE_WORDPRESS_CAMPAIGN_ORCHESTRATION_ENABLED` | cross-site campaign orchestration UI/取得を有効化 | 任意 | 推奨 | 推奨 |
+| `VITE_WORDPRESS_RELEASE_SIMULATION_ENABLED` | release simulation UI/取得を有効化 | 任意 | 推奨 | 推奨 |
+| `VITE_WORDPRESS_PLANNING_INTELLIGENCE_ENABLED` | SLA prediction / workload forecast 表示を有効化 | 任意 | 推奨 | 推奨 |
+| `VITE_WORDPRESS_OPERATOR_COPILOT_ENABLED` | operator copilot / approval assist 表示を有効化 | 任意 | 推奨 | 推奨 |
+| `VITE_WORDPRESS_SLA_PREDICTION_ENABLED` | SLA prediction summary の生成/表示を有効化 | 任意 | 推奨 | 推奨 |
+| `VITE_WORDPRESS_PUBLISH_RISK_MODEL_VERSION` | publish risk score 算出モデルの識別子 | 任意 | 推奨 | 推奨 |
+| `VITE_WORDPRESS_WORKLOAD_FORECAST_MODEL_VERSION` | workload forecast 算出モデルの識別子 | 任意 | 推奨 | 推奨 |
 
 ### frontend 認証（Supabase）詳細
 - `VITE_AUTH_PROVIDER=supabase`
@@ -174,6 +181,12 @@
 | `CREAVA_EDITORIAL_SLA_OVERDUE_HOURS` | SLA overdue 判定のしきい値（h、運用チューニング用） | 任意 |
 | `CREAVA_EDITORIAL_ESCALATION_GRACE_MINUTES` | escalation 実行までの猶予（min、通知過多抑制） | 任意 |
 | `CREAVA_EDITORIAL_WORKLOAD_OVERLOAD_THRESHOLD` | operator overload 判定件数しきい値 | 任意 |
+| `CREAVA_CAMPAIGN_ORCHESTRATION_LOOKAHEAD_DAYS` | campaign orchestration で参照する公開計画の先読み日数 | 任意 |
+| `CREAVA_RELEASE_SIMULATION_SAMPLE_LIMIT` | release simulation で評価する publish queue 件数上限 | 任意 |
+| `CREAVA_PUBLISH_RISK_SCORE_CRITICAL_THRESHOLD` | publish risk score を critical 判定する閾値 | 任意 |
+| `CREAVA_SLA_PREDICTION_AT_RISK_HOURS` | SLA prediction で at_risk 判定する残時間（h） | 任意 |
+| `CREAVA_WORKLOAD_FORECAST_OVERLOAD_THRESHOLD` | workload forecast で overloaded 判定する件数 | 任意 |
+| `CREAVA_OPERATOR_COPILOT_SUGGESTION_DAILY_CAP` | operator copilot 提案の1日上限（noisy抑制） | 任意 |
 | `STRAPI_SCHEMA_VERSION` | 現在運用中の schema バージョン識別子（runbook / migration と突合） | 推奨 |
 | `STRAPI_SCHEMA_COMPAT_MODE` | 互換 mapper を有効化する切替フラグ（段階移行時） | 推奨 |
 | `STRAPI_SCHEMA_MIGRATION_DRY_RUN` | migration script の dry-run 実行可否 | 推奨 |

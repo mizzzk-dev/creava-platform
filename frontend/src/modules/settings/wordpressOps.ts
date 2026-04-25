@@ -108,6 +108,87 @@ export type WorkloadBalancingSnapshot = {
   kpi: Record<string, number>
 }
 
+export type PlanningBottleneckSnapshot = {
+  generatedAt: string
+  planningBottleneckState: string
+  summary: Record<string, number>
+  bottleneckAreas: Array<Record<string, unknown>>
+  nextActions: string[]
+  opsTraceId: string
+  opsUpdatedAt: string
+}
+
+export type CampaignOrchestrationSnapshot = {
+  generatedAt: string
+  campaignOrchestrationState: string
+  crossSiteCampaignState: string
+  releaseWindowState: string
+  dependencyForecastState: string
+  impactForecastState: string
+  campaigns: Array<Record<string, unknown>>
+  localeRolloutPlan: Array<Record<string, unknown>>
+  impactPreview: Record<string, number>
+  opsTraceId: string
+  opsUpdatedAt: string
+}
+
+export type ReleaseSimulationSnapshot = {
+  generatedAt: string
+  releaseSimulationState: string
+  launchChecklistState: string
+  dependencyForecastState: string
+  impactForecastState: string
+  simulationScope: Record<string, number>
+  impactPreview: Record<string, number>
+  missingPrerequisites: Array<Record<string, unknown>>
+  launchChecklist: string[]
+  opsTraceId: string
+  opsUpdatedAt: string
+}
+
+export type PlanningIntelligenceSnapshot = {
+  generatedAt: string
+  editorialPlanningIntelligenceState: string
+  slaPredictionState: string
+  publishRiskScoreState: string
+  workloadForecastState: string
+  readinessForecastState: string
+  escalationForecastState: string
+  slaPrediction: Record<string, number>
+  publishRiskScore: Record<string, unknown>
+  workloadForecast: Record<string, number>
+  manualOverrideState: string
+  opsTraceId: string
+  opsUpdatedAt: string
+}
+
+export type OperatorCopilotSnapshot = {
+  generatedAt: string
+  operatorCopilotState: string
+  approvalAssistState: string
+  planningSummaryState: string
+  launchChecklistState: string
+  campaignSummary: Record<string, unknown>
+  dependencySummary: Record<string, unknown>
+  approvalAssist: Record<string, unknown>
+  copilotSuggestions: Record<string, string>
+  guardrailPolicy: Record<string, string>
+  opsTraceId: string
+  opsUpdatedAt: string
+}
+
+export type PlanningReviewSnapshot = {
+  generatedAt: string
+  planningReviewCadenceState: string
+  weeklyPlanningReviewTemplate: string[]
+  launchReadinessReviewTemplate: string[]
+  monthlyCampaignRetrospectiveTemplate: string[]
+  reportingSummary: Record<string, string>
+  ownership: Record<string, string>
+  opsTraceId: string
+  opsUpdatedAt: string
+}
+
 function getBaseUrl(): string {
   const base = import.meta.env.VITE_WORDPRESS_API_URL
   if (!base) {
@@ -192,4 +273,28 @@ export async function fetchWordPressWorkflowAutomationSnapshot(): Promise<Workfl
 
 export async function fetchWordPressWorkloadBalancingSnapshot(): Promise<WorkloadBalancingSnapshot> {
   return fetchOps<WorkloadBalancingSnapshot>('/ops/workload-balancing')
+}
+
+export async function fetchWordPressPlanningBottleneckSnapshot(): Promise<PlanningBottleneckSnapshot> {
+  return fetchOps<PlanningBottleneckSnapshot>('/ops/planning-bottlenecks')
+}
+
+export async function fetchWordPressCampaignOrchestrationSnapshot(): Promise<CampaignOrchestrationSnapshot> {
+  return fetchOps<CampaignOrchestrationSnapshot>('/ops/campaign-orchestration')
+}
+
+export async function fetchWordPressReleaseSimulationSnapshot(): Promise<ReleaseSimulationSnapshot> {
+  return fetchOps<ReleaseSimulationSnapshot>('/ops/release-simulation')
+}
+
+export async function fetchWordPressPlanningIntelligenceSnapshot(): Promise<PlanningIntelligenceSnapshot> {
+  return fetchOps<PlanningIntelligenceSnapshot>('/ops/planning-intelligence')
+}
+
+export async function fetchWordPressOperatorCopilotSnapshot(): Promise<OperatorCopilotSnapshot> {
+  return fetchOps<OperatorCopilotSnapshot>('/ops/operator-copilot')
+}
+
+export async function fetchWordPressPlanningReviewSnapshot(): Promise<PlanningReviewSnapshot> {
+  return fetchOps<PlanningReviewSnapshot>('/ops/planning-review')
 }
