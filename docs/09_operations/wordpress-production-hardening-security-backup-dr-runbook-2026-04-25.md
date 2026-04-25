@@ -2,6 +2,8 @@
 
 - 対象: `mizzz.jp` / `store.mizzz.jp` / `fc.mizzz.jp`
 - 目的: **WordPress 単独運用を「公開できる状態」から「事故時に守れて戻せる状態」へ進める**。
+
+- 次段の editorial ops / publish audit / search diagnostics / media governance は [WordPress editor dashboard parity / publish audit / search diagnostics / media dedupe / content quality runbook（2026-04-25）](./wordpress-editorial-ops-dashboard-publish-audit-search-media-quality-runbook-2026-04-25.md) を参照。
 - スコープ: security hardening / backup & restore / update governance / observability / incident response / disaster recovery
 
 ## 0. 責務分離（最重要）

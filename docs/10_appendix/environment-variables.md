@@ -74,6 +74,7 @@
 | `VITE_ANALYTICS_OPS_ENDPOINT` | 主要イベントをStrapiへ保存するエンドポイント | 任意 | 推奨 | 推奨 |
 | `VITE_PREVIEW_VERIFY_ENDPOINT` | backend preview verify endpoint（推奨: `/api/cms-sync/preview/verify`） | 推奨 | 推奨 | 推奨 |
 | `VITE_PREVIEW_SECRET` | preview secret fallback（段階移行用。最終的に未設定推奨） | 任意 | 任意 | 任意 |
+| `VITE_WORDPRESS_EDITORIAL_OPS_TIMEOUT_MS` | WordPress editorial ops endpoint 取得タイムアウト（ms） | 任意 | 推奨 | 推奨 |
 
 ### frontend 認証（Supabase）詳細
 - `VITE_AUTH_PROVIDER=supabase`
@@ -167,6 +168,9 @@
 | `STRAPI_PUBLISH_WEBHOOK_SECRET` | Strapi publish webhook 検証シークレット（`x-strapi-webhook-secret`） | 必須 |
 | `PREVIEW_SHARED_SECRET` | preview verify endpoint 用シークレット | 必須 |
 | `CMS_REVALIDATE_OPS_TOKEN` | manual revalidate endpoint 用 ops token | 必須 |
+| `WORDPRESS_EDITORIAL_OPS_TOKEN` | WordPress editorial ops REST を外部から参照する際の server-only token | 推奨 |
+| `CREAVA_EDITORIAL_AUDIT_LOG_LIMIT` | publish audit ログ保存上限（件） | 任意 |
+| `CREAVA_SEARCH_DIAGNOSTICS_LIMIT` | search diagnostics ログ保存上限（件） | 任意 |
 | `STRAPI_SCHEMA_VERSION` | 現在運用中の schema バージョン識別子（runbook / migration と突合） | 推奨 |
 | `STRAPI_SCHEMA_COMPAT_MODE` | 互換 mapper を有効化する切替フラグ（段階移行時） | 推奨 |
 | `STRAPI_SCHEMA_MIGRATION_DRY_RUN` | migration script の dry-run 実行可否 | 推奨 |

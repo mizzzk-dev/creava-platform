@@ -487,6 +487,28 @@ function creava_register_content_routes(): void {
 
             $trace_id = wp_generate_uuid4();
             $items = creava_discovery_collect_items($request);
+            $result_count = count($items);
+            $raw_query = sanitize_text_field((string) $request->get_param('q'));
+            $search_quality_state = 'healthy';
+            if ($result_count === 0) {
+                $search_quality_state = 'zero_result_risk';
+            } elseif ($result_count < 3) {
+                $search_quality_state = 'low_click_risk';
+            }
+
+            if (function_exists('creava_ops_record_search_diagnostics')) {
+                creava_ops_record_search_diagnostics([
+                    'traceId' => $trace_id,
+                    'query' => $raw_query,
+                    'locale' => creava_get_locale_from_request($request),
+                    'sourceSite' => sanitize_key((string) $request->get_param('sourceSite')) ?: 'all',
+                    'contentType' => sanitize_key((string) $request->get_param('contentType')) ?: 'all',
+                    'resultCount' => $result_count,
+                    'searchQualityState' => $search_quality_state,
+                    'at' => gmdate('c'),
+                ]);
+            }
+
             return rest_ensure_response([
                 'query' => [
                     'q' => sanitize_text_field((string) $request->get_param('q')),
@@ -498,13 +520,15 @@ function creava_register_content_routes(): void {
                     'memberState' => sanitize_key((string) $request->get_param('memberState')) === 'member' ? 'member' : 'guest',
                     'limit' => (int) $request->get_param('limit') ?: 24,
                 ],
-                'total' => count($items),
+                'total' => $result_count,
                 'facets' => creava_discovery_build_facets($items),
                 'items' => $items,
                 'trace' => [
                     ...creava_security_base_state($trace_id),
                     'wordpressTraceId' => $trace_id,
                     'wordpressSearchObservabilityState' => 'enabled',
+                    'wordpressSearchQualityState' => $search_quality_state,
+                    'wordpressSearchResultCount' => $result_count,
                     'wordpressVerifiedAt' => gmdate('c'),
                 ],
                 'recommendations' => [
