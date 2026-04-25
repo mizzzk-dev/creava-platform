@@ -583,3 +583,21 @@
 - `ANALYTICS_ANOMALY_CONVERSION_DROP_RATIO`: CVR 低下判定閾値。
 - `ANALYTICS_ANOMALY_ERROR_SPIKE_RATIO`: error 増加判定閾値。
 - `ANALYTICS_INTERNAL_HOST_PATTERNS`: internal / preview 除外ホスト判定。
+
+## 6. WordPress production hardening / backup / DR 追加変数（2026-04-25）
+
+| 変数 | 用途 | 必須度 |
+|---|---|---|
+| `CREAVA_ALLOWED_ORIGINS` | REST/preview/checkout の許可 origin host allowlist（カンマ区切り） | 推奨 |
+| `CREAVA_PUBLIC_RATE_LIMIT` | 公開 endpoint のリクエスト上限（window内） | 推奨 |
+| `CREAVA_PUBLIC_RATE_WINDOW_SEC` | 公開 endpoint レート制限の window 秒数 | 推奨 |
+| `CREAVA_DISABLE_XMLRPC` | XML-RPC 無効化フラグ（既定 true） | 推奨 |
+| `CREAVA_ENABLE_SECURITY_HEADERS` | `nosniff`/`SAMEORIGIN` 等の security header 付与 | 推奨 |
+| `CREAVA_MEDIA_ALLOWED_MIME_TYPES` | media upload 許可MIME一覧 | 推奨 |
+| `CREAVA_MEDIA_MAX_UPLOAD_BYTES` | media upload の最大サイズ | 推奨 |
+| `CREAVA_SECURITY_AUDIT_LOG` | security audit log（preview/webhook/checkout）の出力制御 | 推奨 |
+| `WORDPRESS_PREVIEW_SECRET` | preview verify の共有secret | 必須 |
+| `WORDPRESS_HEADLESS_JWT_SECRET` | billing portal 等 bearer JWT 検証secret | 必須 |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook 署名検証secret | 必須 |
+
+> 注: `WORDPRESS_PREVIEW_SECRET` / `WORDPRESS_HEADLESS_JWT_SECRET` / `STRIPE_WEBHOOK_SECRET` は frontend に露出しない。GitHub Secrets と runtime env は責務分離する。

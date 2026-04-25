@@ -109,7 +109,9 @@ function creava_register_stripe_routes(): void {
     register_rest_route('creava/v1', '/checkout/session', [
         'methods' => WP_REST_Server::CREATABLE,
         'callback' => 'creava_create_checkout_session',
-        'permission_callback' => '__return_true',
+        'permission_callback' => static function (WP_REST_Request $request) {
+            return creava_security_is_allowed_origin($request);
+        },
     ]);
 
     register_rest_route('creava/v1', '/billing/portal', [
@@ -155,10 +157,20 @@ function creava_stripe_post(string $path, array $payload): array {
 }
 
 function creava_create_checkout_session(WP_REST_Request $request) {
+    $security_validation = creava_security_validate_public_rest_request($request, 'stripe_checkout_session');
+    if ($security_validation instanceof WP_REST_Response) {
+        return $security_validation;
+    }
+
+    $trace_id = wp_generate_uuid4();
     $payload = $request->get_json_params();
     $price_id = sanitize_text_field((string) ($payload['priceId'] ?? $payload['planId'] ?? $payload['productId'] ?? ''));
     if ($price_id === '') {
-        return new WP_REST_Response(['error' => 'missing_price_or_plan_id'], 400);
+        creava_security_audit_log('stripe_checkout_invalid_payload', ['traceId' => $trace_id]);
+        return new WP_REST_Response([
+            'error' => 'missing_price_or_plan_id',
+            ...creava_security_base_state($trace_id),
+        ], 400);
     }
 
     $mode = !empty($payload['membership']) ? 'subscription' : 'payment';
@@ -172,7 +184,11 @@ function creava_create_checkout_session(WP_REST_Request $request) {
     ]);
 
     if (isset($result['error'])) {
-        return new WP_REST_Response($result, 502);
+        creava_security_audit_log('stripe_checkout_failed', ['traceId' => $trace_id, 'error' => (string) ($result['error'] ?? 'unknown')]);
+        return new WP_REST_Response([
+            ...$result,
+            ...creava_security_base_state($trace_id),
+        ], 502);
     }
 
     $session = (array) ($result['data'] ?? []);
@@ -182,13 +198,25 @@ function creava_create_checkout_session(WP_REST_Request $request) {
         'raw' => wp_json_encode($session),
     ]);
 
+    creava_security_audit_log('stripe_checkout_created', ['traceId' => $trace_id, 'sessionId' => (string) ($session['id'] ?? '')]);
     return rest_ensure_response([
         'url' => $session['url'] ?? null,
         'sessionId' => $session['id'] ?? null,
+        'trace' => [
+            ...creava_security_base_state($trace_id),
+            'wordpressTraceId' => $trace_id,
+            'wordpressStripeState' => 'session_created',
+            'wordpressVerifiedAt' => gmdate('c'),
+        ],
     ]);
 }
 
 function creava_create_billing_portal_session(WP_REST_Request $request) {
+    $security_validation = creava_security_validate_public_rest_request($request, 'stripe_billing_portal');
+    if ($security_validation instanceof WP_REST_Response) {
+        return $security_validation;
+    }
+
     $trace_id = wp_generate_uuid4();
     $user_id = creava_get_authenticated_user_id($request);
 

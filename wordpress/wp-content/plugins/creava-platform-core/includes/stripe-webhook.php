@@ -98,29 +98,50 @@ function creava_handle_webhook_event(array $event): void {
 }
 
 function creava_handle_stripe_webhook(WP_REST_Request $request) {
+    $security_validation = creava_security_validate_public_rest_request($request, 'stripe_webhook');
+    if ($security_validation instanceof WP_REST_Response) {
+        return $security_validation;
+    }
+
+    $trace_id = wp_generate_uuid4();
     $signature = (string) $request->get_header('stripe-signature');
     $payload = (string) $request->get_body();
     $secret = (string) (getenv('STRIPE_WEBHOOK_SECRET') ?: '');
 
     if (!creava_verify_stripe_signature($payload, $signature, $secret)) {
-        return new WP_REST_Response(['error' => 'invalid_signature'], 400);
+        creava_security_audit_log('stripe_webhook_invalid_signature', ['traceId' => $trace_id]);
+        return new WP_REST_Response([
+            'error' => 'invalid_signature',
+            ...creava_security_base_state($trace_id),
+        ], 400);
     }
 
     $event = json_decode($payload, true);
     if (!is_array($event) || empty($event['id']) || empty($event['type'])) {
-        return new WP_REST_Response(['error' => 'invalid_payload'], 400);
+        creava_security_audit_log('stripe_webhook_invalid_payload', ['traceId' => $trace_id]);
+        return new WP_REST_Response([
+            'error' => 'invalid_payload',
+            ...creava_security_base_state($trace_id),
+        ], 400);
     }
 
     $event_id = sanitize_text_field((string) $event['id']);
-    if (creava_is_duplicate_event($event_id)) {
-        return new WP_REST_Response(['received' => true, 'duplicate' => true], 200);
+    if (creava_security_is_replayed_webhook($event_id) || creava_is_duplicate_event($event_id)) {
+        creava_security_audit_log('stripe_webhook_duplicate', ['traceId' => $trace_id, 'eventId' => $event_id]);
+        return new WP_REST_Response([
+            'received' => true,
+            'duplicate' => true,
+            ...creava_security_base_state($trace_id),
+        ], 200);
     }
 
     creava_handle_webhook_event($event);
 
+    creava_security_audit_log('stripe_webhook_processed', ['traceId' => $trace_id, 'eventId' => $event_id, 'eventType' => sanitize_text_field((string) $event['type'])]);
     return new WP_REST_Response([
         'received' => true,
         'eventId' => $event_id,
         'type' => sanitize_text_field((string) $event['type']),
+        ...creava_security_base_state($trace_id),
     ], 200);
 }

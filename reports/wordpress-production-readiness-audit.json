@@ -1,0 +1,58 @@
+{
+  "wordpressProductionHardeningState": "ready",
+  "backupRestoreReadinessState": "documented",
+  "updateGovernanceState": "documented",
+  "observabilityState": "documented",
+  "incidentReadinessState": "documented",
+  "reportTraceId": "b4388f43-3271-4f1d-a62d-ca1b7f870b3c",
+  "auditedAt": "2026-04-25T04:45:41.628Z",
+  "summary": {
+    "total": 7,
+    "ready": 7,
+    "missing": 0
+  },
+  "checks": [
+    {
+      "id": "security_hardening_module",
+      "severity": "critical",
+      "state": "ready",
+      "description": "REST / webhook / preview で共通 hardening 関数が定義されているか"
+    },
+    {
+      "id": "preview_secret_validation",
+      "severity": "high",
+      "state": "ready",
+      "description": "preview verify で secret + レート制御を実施しているか"
+    },
+    {
+      "id": "stripe_webhook_signature_and_replay",
+      "severity": "critical",
+      "state": "ready",
+      "description": "Stripe webhook で署名検証と replay 抑止を実施しているか"
+    },
+    {
+      "id": "stripe_checkout_guard",
+      "severity": "high",
+      "state": "ready",
+      "description": "checkout session API が公開エンドポイント hardening を通るか"
+    },
+    {
+      "id": "media_upload_guard",
+      "severity": "high",
+      "state": "ready",
+      "description": "media upload の MIME / size guard があるか"
+    },
+    {
+      "id": "runbook_hardening_foundation",
+      "severity": "critical",
+      "state": "ready",
+      "description": "security/backup/restore/incident を分離した runbook があるか"
+    },
+    {
+      "id": "env_and_secret_guide",
+      "severity": "medium",
+      "state": "ready",
+      "description": "hardening 用 env/secrets の設定手順が docs 化されているか"
+    }
+  ]
+}

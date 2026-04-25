@@ -48,6 +48,7 @@
 - [運用マニュアル](./09_operations/operations-manual.md)
 - [Strapi publish / preview / webhook revalidation / cache invalidation 運用 runbook (2026-04-24)](./09_operations/strapi-publish-preview-revalidation-runbook-2026-04-24.md)
 - [WordPress 単独運用移行 / Strapi shutdown execution / decommission runbook (2026-04-25)](./09_operations/wordpress-strapi-shutdown-and-operations-hardening-runbook-2026-04-25.md)
+- [WordPress production hardening / security / backup / restore / observability / DR runbook (2026-04-25)](./09_operations/wordpress-production-hardening-security-backup-dr-runbook-2026-04-25.md)
 - [Strapi content model / relation / media / locale 再整理 runbook (2026-04-24)](./09_operations/strapi-content-model-restructure-runbook-2026-04-24.md)
 - [CMS運用マニュアル](./09_operations/cms-manual.md)
 - [デプロイ手順書](./09_operations/deploy-manual.md)

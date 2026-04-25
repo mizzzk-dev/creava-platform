@@ -370,7 +370,12 @@ function creava_register_content_routes(): void {
     foreach ($routes as $route => $post_type) {
         register_rest_route('creava/v1', '/' . $route, [
             'methods' => WP_REST_Server::READABLE,
-            'callback' => static function (WP_REST_Request $request) use ($post_type) {
+            'callback' => static function (WP_REST_Request $request) use ($post_type, $route) {
+                $security_validation = creava_security_validate_public_rest_request($request, 'content_' . $route);
+                if ($security_validation instanceof WP_REST_Response) {
+                    return $security_validation;
+                }
+
                 [$query_args, $page, $page_size] = creava_build_content_query_args($request, $post_type);
                 $trace_id = wp_generate_uuid4();
                 $started_at = gmdate('c');
@@ -384,6 +389,7 @@ function creava_register_content_routes(): void {
                 }, $query->posts);
 
                 $trace = [
+                    ...creava_security_base_state($trace_id),
                     'wordpressTraceId' => $trace_id,
                     'wordpressRequestStartedAt' => $started_at,
                     'wordpressResponseReceivedAt' => gmdate('c'),
@@ -406,7 +412,13 @@ function creava_register_content_routes(): void {
 
     register_rest_route('creava/v1', '/site-settings', [
         'methods' => WP_REST_Server::READABLE,
-        'callback' => static function () {
+        'callback' => static function (WP_REST_Request $request) {
+            $security_validation = creava_security_validate_public_rest_request($request, 'site_settings');
+            if ($security_validation instanceof WP_REST_Response) {
+                return $security_validation;
+            }
+
+            $trace_id = wp_generate_uuid4();
             return rest_ensure_response([
                 'data' => [
                     'siteName' => get_bloginfo('name'),
@@ -414,7 +426,8 @@ function creava_register_content_routes(): void {
                 ],
                 'meta' => [
                     'trace' => [
-                        'wordpressTraceId' => wp_generate_uuid4(),
+                        ...creava_security_base_state($trace_id),
+                        'wordpressTraceId' => $trace_id,
                         'wordpressVerifiedAt' => gmdate('c'),
                     ],
                 ],
@@ -426,6 +439,12 @@ function creava_register_content_routes(): void {
     register_rest_route('creava/v1', '/preview/verify', [
         'methods' => WP_REST_Server::CREATABLE,
         'callback' => static function (WP_REST_Request $request) {
+            $security_validation = creava_security_validate_public_rest_request($request, 'preview_verify');
+            if ($security_validation instanceof WP_REST_Response) {
+                return $security_validation;
+            }
+
+            $trace_id = wp_generate_uuid4();
             $params = (array) $request->get_json_params();
             $secret = sanitize_text_field((string) ($params['secret'] ?? ''));
             $type = sanitize_text_field((string) ($params['type'] ?? ''));
@@ -435,15 +454,19 @@ function creava_register_content_routes(): void {
             $valid = !empty($expected) && hash_equals((string) $expected, $secret);
 
             if (!$valid) {
+                creava_security_audit_log('preview_verify_denied', ['traceId' => $trace_id, 'type' => $type, 'slug' => $slug]);
                 return new WP_REST_Response([
                     'ok' => false,
                     'error' => 'invalid_preview_secret',
                     'wordpressPreviewState' => 'denied',
+                    ...creava_security_base_state($trace_id),
                 ], 401);
             }
 
+            creava_security_audit_log('preview_verify_success', ['traceId' => $trace_id, 'type' => $type, 'slug' => $slug]);
             return rest_ensure_response([
                 'ok' => true,
+                ...creava_security_base_state($trace_id),
                 'wordpressPreviewState' => 'verified',
                 'wordpressPreviewType' => $type,
                 'wordpressPreviewSlug' => $slug,
@@ -457,6 +480,12 @@ function creava_register_content_routes(): void {
     register_rest_route('creava/v1', '/discovery/search', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => static function (WP_REST_Request $request) {
+            $security_validation = creava_security_validate_public_rest_request($request, 'discovery_search');
+            if ($security_validation instanceof WP_REST_Response) {
+                return $security_validation;
+            }
+
+            $trace_id = wp_generate_uuid4();
             $items = creava_discovery_collect_items($request);
             return rest_ensure_response([
                 'query' => [
@@ -472,6 +501,12 @@ function creava_register_content_routes(): void {
                 'total' => count($items),
                 'facets' => creava_discovery_build_facets($items),
                 'items' => $items,
+                'trace' => [
+                    ...creava_security_base_state($trace_id),
+                    'wordpressTraceId' => $trace_id,
+                    'wordpressSearchObservabilityState' => 'enabled',
+                    'wordpressVerifiedAt' => gmdate('c'),
+                ],
                 'recommendations' => [
                     'noResultFallback' => count($items) === 0 ? [
                         ['title' => '最新ニュースを見る', 'path' => '/news', 'contentType' => 'news'],
