@@ -363,6 +363,8 @@ function creava_register_content_routes(): void {
         'news' => 'news',
         'events' => 'event',
         'works' => 'work',
+        'posts' => 'post',
+        'pages' => 'page',
         'store-products' => 'store_product',
         'fanclub-contents' => 'fanclub_content',
     ];
