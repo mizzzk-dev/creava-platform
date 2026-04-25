@@ -697,6 +697,45 @@ export type InternalEditorialDashboardResponse = {
   publishAudit: Array<Record<string, unknown>>
 }
 
+export type InternalGrowthDashboardResponse = {
+  range: { from: string; to: string }
+  sourceOfTruth: Record<string, string>
+  bottlenecks: {
+    launchReviewBottleneck: number
+    attributionBottleneck: number
+    experimentFeedbackBottleneck: number
+    prioritizationBottleneck: number
+    simulationAuditCount: number
+  }
+  campaignRoiState: string
+  postLaunchAttributionState: string
+  channelContributionState: string
+  contentRoiState: string
+  experimentFeedbackState: string
+  launchOutcomeState: string
+  learningLoopState: string
+  budgetImpactState: string
+  prioritizationScoreState: string
+  nextBestActionState: string
+  growthReviewState: string
+  retroState: string
+  releaseOutcomeState: string
+  forecastConfidenceState: string
+  opsTraceId: string
+  opsUpdatedAt: string
+  siteSummary: Array<Record<string, unknown>>
+  campaignRoi: Array<Record<string, unknown>>
+  channelContribution: Array<Record<string, unknown>>
+  experimentFeedback: Array<Record<string, unknown>>
+  prioritizationCandidates: Array<Record<string, unknown>>
+  learningQueue: Array<Record<string, unknown>>
+  reviewCadence: {
+    weeklyLaunchOutcomeReviewTemplate: string[]
+    weeklyPrioritizationReviewTemplate: string[]
+    monthlyCampaignRetroTemplate: string[]
+  }
+}
+
 function getApiBaseUrl(): string {
   const baseUrl = import.meta.env.VITE_STRAPI_API_URL
   if (!baseUrl) throw new Error('VITE_STRAPI_API_URL が未設定です。')
@@ -794,6 +833,12 @@ export function useInternalAdminApi() {
     getFlagDashboard: async () => withToken((token) => internalFetch<InternalFlagDashboardResponse>('/internal/flags/dashboard', token)),
     getSupportPolicyDashboard: async () => withToken((token) => internalFetch<InternalSupportPolicyDashboardResponse>('/internal/support-policies/dashboard', token)),
     getEditorialDashboard: async () => withToken((token) => internalFetch<InternalEditorialDashboardResponse>('/internal/editorial/dashboard', token)),
+    getGrowthDashboard: async (from?: string, to?: string) => withToken((token) => {
+      const query = new URLSearchParams()
+      if (from) query.set('from', from)
+      if (to) query.set('to', to)
+      return internalFetch<InternalGrowthDashboardResponse>(`/internal/growth/dashboard${query.toString() ? `?${query.toString()}` : ''}`, token)
+    }),
     getFlagEvaluation: async (query: {
       flagKey?: string
       sourceSite?: 'main' | 'store' | 'fc' | 'cross'

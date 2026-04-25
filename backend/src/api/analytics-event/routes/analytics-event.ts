@@ -85,6 +85,12 @@ export default {
       config: { auth: false },
     },
     {
+      method: 'GET',
+      path: '/internal/growth/dashboard',
+      handler: 'analytics-event.internalGrowthDashboard',
+      config: { auth: false },
+    },
+    {
       method: 'POST',
       path: '/internal/flags/action',
       handler: 'analytics-event.internalFlagAction',

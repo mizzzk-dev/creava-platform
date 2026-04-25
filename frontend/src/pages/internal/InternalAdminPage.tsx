@@ -23,6 +23,7 @@ import {
   type InternalFlagEvaluationResponse,
   type InternalSupportPolicyDashboardResponse,
   type InternalEditorialDashboardResponse,
+  type InternalGrowthDashboardResponse,
 } from '@/modules/internal-admin/api'
 import { trackMizzzEvent } from '@/modules/analytics/tracking'
 
@@ -58,6 +59,7 @@ export default function InternalAdminPage() {
   const [flagActionResult, setFlagActionResult] = useState<Record<string, unknown> | null>(null)
   const [supportPolicyDashboard, setSupportPolicyDashboard] = useState<InternalSupportPolicyDashboardResponse | null>(null)
   const [editorialDashboard, setEditorialDashboard] = useState<InternalEditorialDashboardResponse | null>(null)
+  const [growthDashboard, setGrowthDashboard] = useState<InternalGrowthDashboardResponse | null>(null)
   const [supportPolicyReason, setSupportPolicyReason] = useState('policy review / multilingual safety / rollback readiness を確認')
   const [supportPolicyActionResult, setSupportPolicyActionResult] = useState<Record<string, unknown> | null>(null)
   const [incidentDashboard, setIncidentDashboard] = useState<InternalIncidentDashboardResponse | null>(null)
@@ -239,6 +241,64 @@ export default function InternalAdminPage() {
               scheduledQueue: editorialDashboard.scheduledQueue.slice(0, 8),
               localePendingQueue: editorialDashboard.localePendingQueue.slice(0, 8),
               publishAudit: editorialDashboard.publishAudit.slice(0, 8),
+            }, null, 2)}</pre>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-6 rounded border border-gray-200 p-4 dark:border-gray-800">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-gray-500">campaign ROI / post-launch attribution / experiment feedback / prioritization</p>
+          <button
+            type="button"
+            className="rounded bg-gray-900 px-3 py-2 text-xs text-white"
+            onClick={() => {
+              setMessage(null)
+              trackMizzzEvent('analytics_dashboard_view', { actorRole: internalRole, sourceSection: 'growth_dashboard', sourceArea: 'cross' })
+              api.getGrowthDashboard().then(setGrowthDashboard).catch((e: Error) => setMessage(e.message))
+            }}
+          >growth summary 更新</button>
+        </div>
+
+        {growthDashboard && (
+          <div className="mt-3 space-y-3 text-xs">
+            <p className="text-gray-500">range: {growthDashboard.range.from} ~ {growthDashboard.range.to}</p>
+            <div className="grid gap-2 md:grid-cols-2">
+              <div className="rounded border border-gray-200 p-3 dark:border-gray-700">
+                <p className="font-medium">state separation</p>
+                <p>campaignRoiState: {growthDashboard.campaignRoiState}</p>
+                <p>postLaunchAttributionState: {growthDashboard.postLaunchAttributionState}</p>
+                <p>channelContributionState: {growthDashboard.channelContributionState}</p>
+                <p>contentRoiState: {growthDashboard.contentRoiState}</p>
+                <p>experimentFeedbackState: {growthDashboard.experimentFeedbackState}</p>
+                <p>learningLoopState: {growthDashboard.learningLoopState}</p>
+              </div>
+              <div className="rounded border border-gray-200 p-3 dark:border-gray-700">
+                <p className="font-medium">prioritization / budget / review</p>
+                <p>budgetImpactState: {growthDashboard.budgetImpactState}</p>
+                <p>prioritizationScoreState: {growthDashboard.prioritizationScoreState}</p>
+                <p>nextBestActionState: {growthDashboard.nextBestActionState}</p>
+                <p>forecastConfidenceState: {growthDashboard.forecastConfidenceState}</p>
+                <p>growthReviewState: {growthDashboard.growthReviewState}</p>
+                <p>retroState: {growthDashboard.retroState}</p>
+              </div>
+            </div>
+            <div className="rounded border border-gray-200 p-3 dark:border-gray-700">
+              <p className="font-medium">launch bottlenecks</p>
+              <p>launch review: {growthDashboard.bottlenecks.launchReviewBottleneck}</p>
+              <p>attribution: {growthDashboard.bottlenecks.attributionBottleneck}</p>
+              <p>experiment feedback: {growthDashboard.bottlenecks.experimentFeedbackBottleneck}</p>
+              <p>prioritization: {growthDashboard.bottlenecks.prioritizationBottleneck}</p>
+            </div>
+            <pre className="overflow-auto rounded bg-gray-50 p-3 dark:bg-gray-900">{JSON.stringify({
+              siteSummary: growthDashboard.siteSummary,
+              campaignRoi: growthDashboard.campaignRoi.slice(0, 12),
+              channelContribution: growthDashboard.channelContribution.slice(0, 12),
+              experimentFeedback: growthDashboard.experimentFeedback.slice(0, 12),
+              prioritizationCandidates: growthDashboard.prioritizationCandidates.slice(0, 12),
+              reviewCadence: growthDashboard.reviewCadence,
+              opsTraceId: growthDashboard.opsTraceId,
+              opsUpdatedAt: growthDashboard.opsUpdatedAt,
             }, null, 2)}</pre>
           </div>
         )}

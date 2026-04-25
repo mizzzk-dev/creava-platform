@@ -2398,6 +2398,276 @@ export default factories.createCoreController('api::analytics-event.analytics-ev
     }
   },
 
+  async internalGrowthDashboard(ctx) {
+    try {
+      await requireInternalPermission(ctx, 'internal.support.read')
+      const to = parseDateInput(ctx.query.to) ?? new Date()
+      const from = parseDateInput(ctx.query.from) ?? new Date(to.getTime() - 28 * 24 * 60 * 60 * 1000)
+      const nowIso = new Date().toISOString()
+      const excludePreview = String(ctx.query.excludePreview ?? 'true').toLowerCase() !== 'false'
+      const excludeInternal = String(ctx.query.excludeInternal ?? 'true').toLowerCase() !== 'false'
+
+      const eventRows = await strapi.documents('api::analytics-event.analytics-event').findMany({
+        fields: [
+          'eventName', 'sourceSite', 'locale', 'eventAt', 'payload', 'eventReason', 'attributionState',
+          'contentType', 'entitySlug', 'sourceSection', 'membershipStatus', 'experimentId', 'variantId',
+        ],
+        filters: {
+          eventAt: { $gte: from.toISOString(), $lte: to.toISOString() },
+        },
+        sort: ['eventAt:desc'],
+        limit: BI_MAX_FETCH_ROWS,
+      })
+      const orderRows = await strapi.documents('api::store-order.store-order').findMany({
+        fields: ['sourceSite', 'orderedAt', 'totalAmount', 'paymentStatus', 'refundStatus', 'campaignId', 'currency', 'locale'],
+        filters: {
+          orderedAt: { $gte: from.toISOString(), $lte: to.toISOString() },
+        },
+        limit: BI_MAX_FETCH_ROWS,
+      }).catch(() => [])
+      const auditRows = await strapi.documents('api::internal-audit-log.internal-audit-log').findMany({
+        fields: ['targetType', 'targetId', 'action', 'status', 'reason', 'sourceSite', 'metadata', 'createdAt'],
+        filters: {
+          createdAt: { $gte: from.toISOString(), $lte: to.toISOString() },
+        },
+        sort: ['createdAt:desc'],
+        limit: BI_MAX_FETCH_ROWS,
+      }).catch(() => [])
+
+      const filteredEvents = (eventRows as Array<Record<string, unknown>>).filter((row) => {
+        const payload = parseJsonObject(row.payload)
+        const sourceSection = String(row.sourceSection ?? payload.sourceSection ?? '')
+        const sourceReason = String(row.eventReason ?? payload.eventReason ?? '')
+        const isPreview = sourceSection.includes('preview') || sourceReason.includes('preview') || String(payload.previewState ?? '') === 'preview'
+        const isInternal = String(payload.actorRole ?? '').includes('admin') || sourceSection.includes('internal_admin') || sourceReason.includes('internal')
+        if (excludePreview && isPreview) return false
+        if (excludeInternal && isInternal) return false
+        return true
+      })
+
+      const purchaseEvents = filteredEvents.filter((row) => ['purchase_complete', 'checkout_complete', 'form_submit_success'].includes(String(row.eventName ?? '')))
+      const channelEvents = filteredEvents.filter((row) => ['campaign_click', 'search_result_click', 'notification_click', 'notification_settings_save', 'recommendation_click', 'message_detail_view'].includes(String(row.eventName ?? '')))
+      const experimentEvents = filteredEvents.filter((row) => ['experiment_start', 'experiment_complete', 'experiment_outcome_logged', 'conversion_event_logged', 'experiment_summary_view'].includes(String(row.eventName ?? '')))
+      const simulationAudit = (auditRows as Array<Record<string, unknown>>).filter((row) => String(row.action ?? '').includes('release'))
+
+      const siteSummary = ['main', 'store', 'fc'].map((site) => {
+        const siteEvents = filteredEvents.filter((row) => String(row.sourceSite ?? 'unknown') === site)
+        const siteOrders = (orderRows as Array<Record<string, unknown>>).filter((row) => String(row.sourceSite ?? 'unknown') === site)
+        const revenue = sumBy(siteOrders, (row) => numberValue(row.totalAmount))
+        const orders = siteOrders.filter((row) => String(row.paymentStatus ?? '') === 'paid').length
+        const conversions = siteEvents.filter((row) => ['purchase_complete', 'checkout_complete', 'join_click', 'form_submit_success'].includes(String(row.eventName ?? ''))).length
+        const costProxy = Math.max(1, Math.round(siteEvents.length * 0.07 + conversions * 0.8))
+        const roiRatio = revenue / costProxy
+        const campaignRoiState = orders === 0 ? 'low_signal' : roiRatio > 6 ? 'positive' : roiRatio > 2 ? 'mixed' : 'negative'
+        return {
+          site,
+          eventCount: siteEvents.length,
+          orderCount: orders,
+          paidRevenue: revenue,
+          roiRatio,
+          campaignRoiState,
+          postLaunchAttributionState: siteEvents.length < 20 ? 'partial' : 'stable',
+          channelContributionState: conversions === 0 ? 'unknown' : conversions > 30 ? 'high' : conversions > 10 ? 'moderate' : 'low',
+          contentRoiState: revenue <= 0 ? 'unknown' : roiRatio >= 5 ? 'high_leverage' : roiRatio >= 2 ? 'healthy' : 'underperforming',
+        }
+      })
+
+      const campaignMap = new Map<string, { campaignId: string; sourceSite: string; locale: string; events: number; conversions: number; revenue: number; costProxy: number; channelCount: Record<string, number>; contentTypeCount: Record<string, number>; membershipConversions: number }>()
+      filteredEvents.forEach((row) => {
+        const payload = parseJsonObject(row.payload)
+        const campaignId = String(payload.campaignId ?? payload.campaignSlug ?? row.entitySlug ?? 'unknown')
+        const sourceSite = String(row.sourceSite ?? payload.sourceSite ?? 'unknown')
+        const locale = String(row.locale ?? payload.locale ?? 'ja')
+        const eventName = String(row.eventName ?? '')
+        const channel = String(payload.channel ?? payload.sourceChannel ?? row.sourceSection ?? 'unknown')
+        const contentType = String(row.contentType ?? payload.contentType ?? 'unknown')
+        const conversion = ['purchase_complete', 'checkout_complete', 'join_click', 'form_submit_success'].includes(eventName) ? 1 : 0
+        const revenue = numberValue(payload.orderValue ?? payload.revenueAmount)
+        const cost = numberValue(payload.costAmount) || (eventName === 'campaign_click' ? 0.45 : 0.08)
+        const current = campaignMap.get(campaignId) ?? {
+          campaignId,
+          sourceSite,
+          locale,
+          events: 0,
+          conversions: 0,
+          revenue: 0,
+          costProxy: 0,
+          channelCount: {},
+          contentTypeCount: {},
+          membershipConversions: 0,
+        }
+        current.events += 1
+        current.conversions += conversion
+        current.revenue += revenue
+        current.costProxy += cost
+        current.channelCount[channel] = (current.channelCount[channel] ?? 0) + 1
+        current.contentTypeCount[contentType] = (current.contentTypeCount[contentType] ?? 0) + 1
+        if (conversion === 1 && ['active', 'grace', 'premium'].includes(String(row.membershipStatus ?? payload.membershipStatus ?? ''))) current.membershipConversions += 1
+        campaignMap.set(campaignId, current)
+      })
+
+      const campaignRoi = Array.from(campaignMap.values()).map((item) => {
+        const roi = item.revenue / Math.max(1, item.costProxy)
+        const topChannel = Object.entries(item.channelCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'unknown'
+        const topContentType = Object.entries(item.contentTypeCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'unknown'
+        return {
+          campaignId: item.campaignId,
+          sourceSite: item.sourceSite,
+          locale: item.locale,
+          campaignRoiState: item.events < 12 ? 'low_signal' : roi >= 4 ? 'positive' : roi >= 1.8 ? 'mixed' : 'negative',
+          postLaunchAttributionState: item.events < 10 ? 'partial' : item.conversions === 0 ? 'needs_review' : 'stable',
+          channelContributionState: item.conversions === 0 ? 'unknown' : item.membershipConversions > item.conversions * 0.75 ? 'disproportionate' : item.conversions > 12 ? 'high' : 'moderate',
+          contentRoiState: roi >= 5 ? 'high_leverage' : roi >= 2 ? 'healthy' : roi > 0.8 ? 'declining' : 'underperforming',
+          revenue: item.revenue,
+          costProxy: item.costProxy,
+          roiRatio: roi,
+          conversionCount: item.conversions,
+          topChannel,
+          topContentType,
+        }
+      }).sort((a, b) => b.roiRatio - a.roiRatio).slice(0, 40)
+
+      type AttributionSignal = {
+        sourceSite: string
+        channel: string
+        interactions: number
+        attributedConversions: number
+        postLaunchAttributionState: string
+      }
+
+      const attributionSignals = channelEvents.reduce<Record<string, AttributionSignal>>((acc, row) => {
+        const payload = parseJsonObject(row.payload)
+        const channel = String(payload.channel ?? payload.sourceChannel ?? row.sourceSection ?? row.eventName ?? 'unknown')
+        const site = String(row.sourceSite ?? 'unknown')
+        const key = `${site}:${channel}`
+        if (!acc[key]) acc[key] = { sourceSite: site, channel, interactions: 0, attributedConversions: 0, postLaunchAttributionState: 'partial' as string }
+        acc[key].interactions += 1
+        if (String(row.attributionState ?? payload.attributionState ?? '') !== 'unattributed') acc[key].attributedConversions += 1
+        acc[key].postLaunchAttributionState = acc[key].interactions > 20 ? 'stable' : 'partial'
+        return acc
+      }, {})
+
+      const channelContribution = (Object.values(attributionSignals) as AttributionSignal[]).map((item) => ({
+        ...item,
+        channelContributionState: item.attributedConversions === 0 ? 'unknown' : item.attributedConversions > 18 ? 'high' : item.attributedConversions > 6 ? 'moderate' : 'low',
+      })).sort((a, b) => b.attributedConversions - a.attributedConversions).slice(0, 40)
+
+      const experimentFeedback = Array.from(new Map(experimentEvents.map((row) => {
+        const payload = parseJsonObject(row.payload)
+        const experimentId = String(row.experimentId ?? payload.experimentId ?? 'exp-unknown')
+        const variantId = String(row.variantId ?? payload.variantId ?? 'control')
+        const state = String(payload.experimentOutcomeState ?? row.eventName ?? 'inconclusive')
+        const key = `${experimentId}:${variantId}`
+        const score = numberValue(payload.deltaScore ?? payload.liftScore ?? (state.includes('complete') ? 1 : 0))
+        return [key, {
+          experimentId,
+          variantId,
+          sourceSite: String(row.sourceSite ?? payload.sourceSite ?? 'cross'),
+          hypothesis: sanitizeText(payload.hypothesis, 200) ?? 'publish outcome と conversion uplift を評価',
+          experimentFeedbackState: state.includes('complete') && score > 0 ? 'positive_learning' : state.includes('complete') && score < 0 ? 'negative_learning' : state.includes('start') ? 'linked' : 'inconclusive',
+          launchOutcomeState: score > 1 ? 'positive' : score < -1 ? 'negative' : 'mixed',
+          learningLoopState: state.includes('complete') ? 'captured' : 'pending',
+          predictedLift: numberValue(payload.predictedLift ?? 0),
+          actualLift: numberValue(payload.actualLift ?? score),
+          opsUpdatedAt: sanitizeText(row.eventAt, 40) ?? nowIso,
+        }]
+      })).values()).slice(0, 30)
+
+      const prioritizationCandidates = campaignRoi.map((item) => {
+        const effort = item.conversionCount <= 2 ? 1.2 : item.conversionCount >= 15 ? 0.75 : 1
+        const riskPenalty = item.postLaunchAttributionState === 'stable' ? 0 : 15
+        const budgetImpact = item.costProxy > 80 ? 'high_cost' : item.costProxy > 25 ? 'medium_cost' : 'low_cost'
+        const score = Math.round(item.roiRatio * 20 + item.conversionCount * 2 - riskPenalty - effort * 10)
+        return {
+          campaignId: item.campaignId,
+          sourceSite: item.sourceSite,
+          prioritizationScore: score,
+          prioritizationScoreState: score >= 140 ? 'critical_priority' : score >= 100 ? 'high_priority' : score >= 60 ? 'medium_priority' : score >= 30 ? 'low_priority' : 'manual_review_required',
+          budgetImpactState: budgetImpact,
+          forecastConfidenceState: item.postLaunchAttributionState === 'stable' ? 'medium' : 'low',
+          nextBestActionState: item.contentRoiState === 'underperforming'
+            ? 'refresh_candidate'
+            : item.channelContributionState === 'disproportionate'
+              ? 'relaunch_candidate'
+              : item.contentRoiState === 'high_leverage'
+                ? 'support_candidate'
+                : 'needs_review',
+          whyThisScore: [
+            `ROI ratio=${item.roiRatio.toFixed(2)}`,
+            `conversionCount=${item.conversionCount}`,
+            `attributionState=${item.postLaunchAttributionState}`,
+            `budgetImpact=${budgetImpact}`,
+          ],
+          manualOverrideState: 'available',
+          reviewRequired: item.postLaunchAttributionState !== 'stable',
+        }
+      }).sort((a, b) => b.prioritizationScore - a.prioritizationScore).slice(0, 40)
+
+      const reviewCadence = {
+        weeklyLaunchOutcomeReviewTemplate: [
+          'campaignRoiState と postLaunchAttributionState を別軸で確認',
+          'predicted vs actual uplift の乖離と要因を記録',
+          'low_signal / inconclusive を断定扱いしない',
+          'manual override rationale を残す',
+        ],
+        weeklyPrioritizationReviewTemplate: [
+          'high score でも review gate を通す',
+          'budgetImpactState / dependency / effort を確認',
+          'refresh / relaunch / retire / support の候補を比較',
+        ],
+        monthlyCampaignRetroTemplate: [
+          'site・locale・membership・search・notification の寄与比較',
+          'cost vs outcome / effort vs impact をレビュー',
+          '繰り返し失敗パターンを backlog に戻す',
+        ],
+      }
+
+      ctx.body = {
+        range: { from: from.toISOString(), to: to.toISOString() },
+        sourceOfTruth: {
+          analyticsEvents: 'api::analytics-event.analytics-event',
+          orders: 'api::store-order.store-order',
+          audit: 'api::internal-audit-log.internal-audit-log',
+        },
+        bottlenecks: {
+          launchReviewBottleneck: campaignRoi.filter((item) => item.campaignRoiState === 'low_signal').length,
+          attributionBottleneck: channelContribution.filter((item) => item.postLaunchAttributionState !== 'stable').length,
+          experimentFeedbackBottleneck: experimentFeedback.filter((item) => item.learningLoopState !== 'captured').length,
+          prioritizationBottleneck: prioritizationCandidates.filter((item) => item.prioritizationScoreState === 'manual_review_required').length,
+          simulationAuditCount: simulationAudit.length,
+        },
+        campaignRoiState: campaignRoi.length === 0 ? 'not_evaluated' : campaignRoi.some((item) => item.campaignRoiState === 'positive') ? 'positive' : 'mixed',
+        postLaunchAttributionState: channelContribution.length === 0 ? 'not_computed' : channelContribution.some((item) => item.postLaunchAttributionState !== 'stable') ? 'needs_review' : 'stable',
+        channelContributionState: channelContribution.length === 0 ? 'unknown' : 'moderate',
+        contentRoiState: campaignRoi.some((item) => item.contentRoiState === 'high_leverage') ? 'high_leverage' : campaignRoi.length > 0 ? 'healthy' : 'unknown',
+        experimentFeedbackState: experimentFeedback.length === 0 ? 'not_linked' : experimentFeedback.some((item) => item.experimentFeedbackState === 'negative_learning') ? 'negative_learning' : 'linked',
+        launchOutcomeState: campaignRoi.some((item) => item.campaignRoiState === 'negative') ? 'mixed' : 'positive',
+        learningLoopState: experimentFeedback.some((item) => item.learningLoopState === 'pending') ? 'needs_review' : 'captured',
+        budgetImpactState: prioritizationCandidates.some((item) => item.budgetImpactState === 'high_cost') ? 'review_needed' : 'within_budget',
+        prioritizationScoreState: prioritizationCandidates.length === 0 ? 'not_scored' : prioritizationCandidates[0]?.prioritizationScoreState ?? 'manual_review_required',
+        nextBestActionState: prioritizationCandidates[0]?.nextBestActionState ?? 'needs_review',
+        growthReviewState: 'ready',
+        retroState: 'ready',
+        releaseOutcomeState: simulationAudit.length > 0 ? 'recorded' : 'partial',
+        forecastConfidenceState: prioritizationCandidates.filter((item) => item.forecastConfidenceState === 'low').length > 6 ? 'low' : 'medium',
+        opsTraceId: `growth-${Date.now()}`,
+        opsUpdatedAt: nowIso,
+        siteSummary,
+        campaignRoi,
+        channelContribution,
+        experimentFeedback,
+        prioritizationCandidates,
+        learningQueue: prioritizationCandidates.filter((item) => item.reviewRequired).slice(0, 20),
+        reviewCadence,
+      }
+    } catch (error) {
+      const message = (error as Error).message
+      if (message.includes('Internal permission denied')) return ctx.forbidden('growth dashboard の権限がありません。')
+      strapi.log.error(`[analytics-event] internalGrowthDashboard failed: ${message}`)
+      return ctx.internalServerError('growth dashboard の取得に失敗しました。')
+    }
+  },
+
   async internalSupportPolicyAction(ctx) {
     try {
       const body = (ctx.request.body ?? {}) as Record<string, unknown>

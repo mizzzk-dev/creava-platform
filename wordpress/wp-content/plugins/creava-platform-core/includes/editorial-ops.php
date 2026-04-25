@@ -1379,6 +1379,74 @@ function creava_ops_build_planning_review_payload(WP_REST_Request $request): arr
     ];
 }
 
+function creava_ops_build_growth_outcome_payload(WP_REST_Request $request): array {
+    $campaign = creava_ops_build_campaign_orchestration_payload($request);
+    $simulation = creava_ops_build_release_simulation_payload($request);
+    $planning = creava_ops_build_planning_intelligence_payload($request);
+    $review = creava_ops_build_planning_review_payload($request);
+
+    $campaigns = is_array($campaign['campaigns'] ?? null) ? $campaign['campaigns'] : [];
+    $locale_rollout = is_array($campaign['localeRolloutPlan'] ?? null) ? $campaign['localeRolloutPlan'] : [];
+    $impact_preview = is_array($campaign['impactPreview'] ?? null) ? $campaign['impactPreview'] : [];
+
+    $low_signal_count = count(array_filter($campaigns, static fn ($item) => ((int) ($item['contentCount'] ?? 0)) < 2));
+    $high_risk_count = count(array_filter($campaigns, static fn ($item) => ($item['publishRiskScoreState'] ?? '') === 'high'));
+    $blocked_locale_count = count(array_filter($locale_rollout, static fn ($item) => ($item['campaignOrchestrationState'] ?? '') === 'waiting_dependency'));
+
+    $campaign_roi_state = 'mixed';
+    if (count($campaigns) === 0) {
+        $campaign_roi_state = 'not_evaluated';
+    } elseif ($high_risk_count === 0 && $low_signal_count === 0) {
+        $campaign_roi_state = 'positive';
+    } elseif ($low_signal_count >= count($campaigns)) {
+        $campaign_roi_state = 'low_signal';
+    }
+
+    $prioritization_score = count($campaigns) * 20 - $high_risk_count * 15 - $blocked_locale_count * 10;
+    $channel_contribution_state = ((int) ($impact_preview['searchImpactCount'] ?? 0)) > 0 ? 'moderate' : 'unknown';
+    if (($impact_preview['membershipImpactCount'] ?? 0) > ($impact_preview['searchImpactCount'] ?? 0) * 2 && ($impact_preview['membershipImpactCount'] ?? 0) > 0) {
+        $channel_contribution_state = 'disproportionate';
+    }
+
+    return [
+        'generatedAt' => gmdate('c'),
+        'campaignRoiState' => $campaign_roi_state,
+        'postLaunchAttributionState' => $low_signal_count > 0 ? 'partial' : ($high_risk_count > 0 ? 'needs_review' : 'stable'),
+        'channelContributionState' => $channel_contribution_state,
+        'contentRoiState' => ($impact_preview['dependencyImpactCount'] ?? 0) > 0 ? 'needs_refresh' : 'healthy',
+        'experimentFeedbackState' => in_array(($planning['publishRiskScoreState'] ?? 'low'), ['high', 'critical'], true) ? 'inconclusive' : 'linked',
+        'launchOutcomeState' => ($simulation['releaseSimulationState'] ?? 'simulated') === 'blocked' ? 'mixed' : 'positive',
+        'learningLoopState' => $review['planningReviewCadenceState'] ?? 'active',
+        'budgetImpactState' => $high_risk_count > 0 ? 'review_needed' : 'within_budget',
+        'prioritizationScoreState' => $prioritization_score >= 80 ? 'high_priority' : ($prioritization_score >= 40 ? 'medium_priority' : 'manual_review_required'),
+        'nextBestActionState' => $high_risk_count > 0 ? 'review_blocked_locale_rollout' : 'promote_high_leverage_campaign',
+        'growthReviewState' => 'ready',
+        'retroState' => 'ready',
+        'releaseOutcomeState' => $simulation['releaseSimulationState'] ?? 'simulated',
+        'forecastConfidenceState' => $high_risk_count > 0 ? 'low' : 'medium',
+        'summary' => [
+            'campaignCount' => count($campaigns),
+            'highRiskCount' => $high_risk_count,
+            'lowSignalCount' => $low_signal_count,
+            'blockedLocaleCount' => $blocked_locale_count,
+            'dependencyImpactCount' => (int) ($impact_preview['dependencyImpactCount'] ?? 0),
+            'searchImpactCount' => (int) ($impact_preview['searchImpactCount'] ?? 0),
+            'membershipImpactCount' => (int) ($impact_preview['membershipImpactCount'] ?? 0),
+        ],
+        'reviewTemplates' => [
+            'weeklyLaunchOutcomeReview' => $review['weeklyPlanningReviewTemplate'] ?? [],
+            'weeklyPrioritizationReview' => [
+                'score と final decision を混同しない',
+                'budget / effort / risk / dependency を同時確認',
+                'manual override rationale を記録',
+            ],
+            'monthlyCampaignRetro' => $review['monthlyCampaignRetrospectiveTemplate'] ?? [],
+        ],
+        'opsTraceId' => wp_generate_uuid4(),
+        'opsUpdatedAt' => gmdate('c'),
+    ];
+}
+
 function creava_ops_can_access_dashboard(WP_REST_Request $request): bool {
     if (current_user_can('edit_posts')) {
         return true;
@@ -1570,6 +1638,18 @@ function creava_register_editorial_ops_routes(): void {
         },
         'permission_callback' => '__return_true',
     ]);
+
+    register_rest_route('creava/v1', '/ops/growth-outcome', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => static function (WP_REST_Request $request) {
+            if (!creava_ops_can_access_dashboard($request)) {
+                return new WP_REST_Response(['error' => 'forbidden'], 403);
+            }
+
+            return rest_ensure_response(creava_ops_build_growth_outcome_payload($request));
+        },
+        'permission_callback' => '__return_true',
+    ]);
 }
 
 function creava_render_ops_dashboard_page(): void {
@@ -1593,6 +1673,7 @@ function creava_render_ops_dashboard_page(): void {
     $planning = creava_ops_build_planning_intelligence_payload($request);
     $copilot = creava_ops_build_operator_copilot_payload($request);
     $review = creava_ops_build_planning_review_payload($request);
+    $growth = creava_ops_build_growth_outcome_payload($request);
 
     echo '<div class="wrap">';
     echo '<h1>Creava Editorial Ops Dashboard</h1>';
@@ -1670,6 +1751,10 @@ function creava_render_ops_dashboard_page(): void {
         'operatorCopilot' => $copilot,
         'planningReview' => $review,
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) . '</pre>';
+
+    echo '<h2>13) Post-launch growth outcome / ROI / attribution / prioritization</h2>';
+    echo '<p>campaign ROI と attribution と prioritization は同義ではありません。state を分離して weekly / monthly review に渡します。</p>';
+    echo '<pre>' . esc_html(wp_json_encode($growth, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) . '</pre>';
 
     echo '<p><strong>Actionability:</strong> queue と audit と quality は別物です。Queue で「何を直すか」、Audit で「誰が何を出したか」、Quality で「公開前後の品質」を判断してください。</p>';
     echo '</div>';

@@ -621,3 +621,28 @@
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook 署名検証secret | 必須 |
 
 > 注: `WORDPRESS_PREVIEW_SECRET` / `WORDPRESS_HEADLESS_JWT_SECRET` / `STRIPE_WEBHOOK_SECRET` は frontend に露出しない。GitHub Secrets と runtime env は責務分離する。
+
+## 12. campaign ROI / post-launch attribution / prioritization 追加変数（2026-04-25）
+
+### frontend
+- `VITE_WORDPRESS_GROWTH_OUTCOME_ENABLED`: WordPress の growth outcome endpoint (`/wp-json/creava/v1/ops/growth-outcome`) を利用する UI を有効化。
+- `VITE_GROWTH_REVIEW_DEFAULT_RANGE_DAYS`: launch outcome review の既定期間（日）。
+- `VITE_GROWTH_PRIORITIZATION_REVIEW_REQUIRED`: 高スコアでも manual review を強制するフラグ。
+- `VITE_GROWTH_LOW_SIGNAL_THRESHOLD`: low-signal 判定に使う最低イベント件数。
+
+### backend
+- `GROWTH_DASHBOARD_DEFAULT_RANGE_DAYS`: `/api/internal/growth/dashboard` の既定集計期間。
+- `GROWTH_PRIORITIZATION_MODEL_VERSION`: prioritization score モデル識別子（監査/比較用）。
+- `GROWTH_LOW_SIGNAL_EVENT_THRESHOLD`: attribution/ROI の low-signal 閾値。
+- `GROWTH_REVIEW_REQUIRE_MANUAL_APPROVAL`: suggestion を自動確定させず review を必須にするフラグ。
+
+### GitHub Secrets / Variables
+- `GROWTH_PRIORITIZATION_MODEL_VERSION`（Variable）
+- `GROWTH_REVIEW_REQUIRE_MANUAL_APPROVAL`（Variable）
+- `ANALYTICS_OPS_TOKEN`（Secret）
+- `WORDPRESS_EDITORIAL_OPS_TOKEN`（Secret）
+
+### 運用注意
+- ROI と attribution は別で評価し、`prioritizationScoreState` と最終承認を同一視しない。
+- preview/internal/bot を growth 判断に混ぜないよう、集計時の除外条件を固定する。
+- dashboard は “可視化” であり、weekly/monthly review と runbook 実行を前提に運用する。
