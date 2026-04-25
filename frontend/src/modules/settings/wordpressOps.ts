@@ -4,10 +4,22 @@ export type EditorialOpsSnapshot = {
   generatedAt: string
   opsTraceId: string
   editorialOpsState: string
+  editorialSlaState: Record<string, number>
   editorialQueueState: Record<string, number>
+  queuePriorityState: Record<string, number>
+  operatorLoadState: Array<Record<string, unknown>>
+  reviewCadenceState: Record<string, number>
+  publishRiskState: Record<string, number>
+  releaseRiskState: Record<string, number>
+  dependencyImpactState: Record<string, number>
+  escalationState: Record<string, number>
+  reminderState: Record<string, number>
+  overdueState: Record<string, number>
+  blockedState: Record<string, number>
   publishReadinessState: Record<string, number>
   operatorActionState: { nextRecommendedAction: string; highPriorityCount: number }
   opsPriorityState: string
+  opsUpdatedAt?: string
   queueItems: Array<Record<string, unknown>>
   qualityActionItems: Array<Record<string, unknown>>
   auditState: Record<string, unknown>
@@ -50,6 +62,50 @@ export type ContentQualitySnapshot = {
   postPublishChecklist: string[]
   weeklyReviewFocus: string[]
   monthlyReviewFocus: string[]
+}
+
+export type DependencyGraphSnapshot = {
+  generatedAt: string
+  opsTraceId: string
+  dependencyGraphState: string
+  dependencySeverityState: Record<string, number>
+  brokenDependencyState: Record<string, number>
+  impactSummary: Record<string, number>
+  publishImpactPreview: Array<Record<string, unknown>>
+  nodes: Array<Record<string, unknown>>
+  edges: Array<Record<string, unknown>>
+}
+
+export type ReleaseCalendarSnapshot = {
+  generatedAt: string
+  releaseCalendarState: string
+  publishQueueState: Record<string, number>
+  publishWindowState: string
+  freezeWindowState: string
+  releaseReadinessChecklist: string[]
+  calendar: Array<Record<string, unknown>>
+  publishQueue: Array<Record<string, unknown>>
+}
+
+export type WorkflowAutomationSnapshot = {
+  generatedAt: string
+  workflowAutomationState: string
+  guardedAutomationPolicy: Record<string, string>
+  reminderState: Record<string, number>
+  escalationState: Record<string, number>
+  dailyDigestState: string
+  weeklyOpsSummaryState: string
+  items: Array<Record<string, unknown>>
+}
+
+export type WorkloadBalancingSnapshot = {
+  generatedAt: string
+  operatorLoadState: Record<string, number>
+  reviewCadenceState: Record<string, number>
+  queueBacklogState: Record<string, number>
+  opsReportingState: Record<string, string>
+  owners: Array<Record<string, unknown>>
+  kpi: Record<string, number>
 }
 
 function getBaseUrl(): string {
@@ -120,4 +176,20 @@ export async function fetchWordPressAssetHealthSnapshot(): Promise<AssetHealthSn
 
 export async function fetchWordPressContentQualitySnapshot(): Promise<ContentQualitySnapshot> {
   return fetchOps<ContentQualitySnapshot>('/ops/content-quality')
+}
+
+export async function fetchWordPressDependencyGraphSnapshot(): Promise<DependencyGraphSnapshot> {
+  return fetchOps<DependencyGraphSnapshot>('/ops/dependency-graph')
+}
+
+export async function fetchWordPressReleaseCalendarSnapshot(): Promise<ReleaseCalendarSnapshot> {
+  return fetchOps<ReleaseCalendarSnapshot>('/ops/release-calendar')
+}
+
+export async function fetchWordPressWorkflowAutomationSnapshot(): Promise<WorkflowAutomationSnapshot> {
+  return fetchOps<WorkflowAutomationSnapshot>('/ops/workflow-automation')
+}
+
+export async function fetchWordPressWorkloadBalancingSnapshot(): Promise<WorkloadBalancingSnapshot> {
+  return fetchOps<WorkloadBalancingSnapshot>('/ops/workload-balancing')
 }

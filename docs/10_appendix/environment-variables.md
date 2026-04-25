@@ -171,6 +171,9 @@
 | `WORDPRESS_EDITORIAL_OPS_TOKEN` | WordPress editorial ops REST を外部から参照する際の server-only token | 推奨 |
 | `CREAVA_EDITORIAL_AUDIT_LOG_LIMIT` | publish audit ログ保存上限（件） | 任意 |
 | `CREAVA_SEARCH_DIAGNOSTICS_LIMIT` | search diagnostics ログ保存上限（件） | 任意 |
+| `CREAVA_EDITORIAL_SLA_OVERDUE_HOURS` | SLA overdue 判定のしきい値（h、運用チューニング用） | 任意 |
+| `CREAVA_EDITORIAL_ESCALATION_GRACE_MINUTES` | escalation 実行までの猶予（min、通知過多抑制） | 任意 |
+| `CREAVA_EDITORIAL_WORKLOAD_OVERLOAD_THRESHOLD` | operator overload 判定件数しきい値 | 任意 |
 | `STRAPI_SCHEMA_VERSION` | 現在運用中の schema バージョン識別子（runbook / migration と突合） | 推奨 |
 | `STRAPI_SCHEMA_COMPAT_MODE` | 互換 mapper を有効化する切替フラグ（段階移行時） | 推奨 |
 | `STRAPI_SCHEMA_MIGRATION_DRY_RUN` | migration script の dry-run 実行可否 | 推奨 |
